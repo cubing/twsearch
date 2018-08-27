@@ -146,6 +146,21 @@ struct puzdef {
             return 0 ;
       return 1 ;
    }
+   int numwrong(const setvals a) const {
+      int r = 0 ;
+      const uchar *ap = a.dat ;
+      const uchar *bp = solved.dat ;
+      for (int i=0; i<(int)setdefs.size(); i++) {
+         const setdef &sd = setdefs[i] ;
+         int n = sd.size ;
+         for (int j=0; j<n; j++)
+            if (ap[j] != bp[j] || ap[j+n] != bp[j+n])
+               r++ ;
+         ap += 2 * n ;
+         bp += 2 * n ;
+      }
+      return r ;
+   }
    void assignpos(setvals a, const setvals b) const {
       memcpy(a.dat, b.dat, totsize) ;
    }
@@ -2427,7 +2442,100 @@ void *threadworker(void *o) {
    solveworkers[wp->tid].dowork(wp->pd, wp->pt) ;
    return 0 ;
 }
+struct popentry {
+   setval pos ;
+   int wr, d, sd ;
+} *pops;
+int popcnt, popmask ;
+int usegreedy = 0 ;
+ll greedybetter(const puzdef &pd, prunetable &pt, int togo,
+                int sp, int st, int sd, int owr) {
+   int wr = pd.numwrong(posns[sp]) + 256 * pt.lookup(posns[sp]) ;
+   pt.addlookups(1) ;
+   ll r = 0 ;
+   int h = fasthash(pd.totsize, posns[sp]) & popmask ;
+   if (wr < pops[h].wr) {
+// cout << "A " << pops[h].wr << " -> " << wr << endl ;
+      pd.assignpos(pops[h].pos, posns[sp]) ;
+      pops[h].wr = wr ;
+      pops[h].sd = 0 ;
+      pops[h].d = sp + sd ;
+      r++ ;
+   }
+   if (wr == 0)
+      return -1 ;
+   if (togo == 0)
+      return r ;
+   ull mask = canonmask[st] ;
+   const vector<int> &ns = canonnext[st] ;
+   for (int m=0; m<(int)pd.moves.size(); m++) {
+      const moove &mv = pd.moves[m] ;
+      if ((mask >> mv.base) & 1)
+         continue ;
+      pd.mul(posns[sp], mv.pos, posns[sp+1]) ;
+      movehist[sp] = m ;
+      int tr = greedybetter(pd, pt, togo-1, sp+1, ns[mv.base], sd, owr) ;
+      if (tr < 0)
+         return tr ;
+      r += tr ;
+   }
+   return r ;
+}
+void greedysolve(const puzdef &pd, prunetable &pt, const setval p0) {
+   if (popcnt == 0) {
+      ll perentry = pd.totsize + 16 + sizeof(popentry) ;
+      popcnt = 1 ;
+      while (popcnt * perentry * 2LL < maxmem)
+         popcnt <<= 1 ;
+      popmask = popcnt - 1 ;
+      pops = (struct popentry *)calloc(popcnt, sizeof(popentry)) ;
+      for (ll i=0; i<popcnt; i++)
+         pops[i].pos = allocsetval(pd, pd.solved) ;
+      cout << "Popcnt is " << popcnt << endl ;
+   }
+   const int HIWR = 1000000000 ;
+   for (ll i=0; i<popcnt; i++)
+      pops[i].wr = HIWR ;
+   stacksetval p(pd), p2(pd) ;
+   pd.assignpos(p, p0) ;
+   while (posns.size() <= 100) {
+      posns.push_back(allocsetval(pd, pd.solved)) ;
+      movehist.push_back(-1) ;
+   }
+   pt.checkextend(pd) ;
+   pd.assignpos(posns[0], p) ;
+   greedybetter(pd, pt, 0, 0, 0, 0, 0) ;
+   int d = 1 ;
+   ll h = 0 ;
+   while (1) {
+      ll r = 0 ;
+      for (ll hh=0; hh<popcnt; hh++) {
+         h = (h + 1) & popmask ;
+         if (pops[h].wr < HIWR && pops[h].sd < d) {
+            pd.assignpos(posns[0], pops[h].pos) ;
+            ll tr = greedybetter(pd, pt, d, 0, 0, pops[h].d, pops[h].wr) ;
+            if (tr < 0) {
+               cout << "Solved in " << d + pops[h].d << endl ;
+               return ;
+            }
+            pops[h].sd = d ;
+            r += tr ;
+            if (tr && d > 1)
+               break ;
+         }
+      }
+      if (r == 0) {
+         d++ ;
+ cout << " " << d << flush ;
+      } else
+         d = 1 ;
+   }
+}
 void solve(const puzdef &pd, prunetable &pt, const setval p) {
+   if (usegreedy) {
+      greedysolve(pd, pt, p) ;
+      return ;
+   }
    solutionsfound = solutionsneeded ;
    double starttime = walltime() ;
    ull totlookups = 0 ;
@@ -2783,6 +2891,9 @@ case 'c':
             break ;
 case 'g':
             dogod++ ;
+            break ;
+case 'G':
+            usegreedy++ ;
             break ;
 case 'C':
             docanon++ ;

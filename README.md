@@ -34,6 +34,8 @@ What is working so far:
 
 Things to do:
 
+* Make algorithm search give multiple solutions according to -c
+* Make algorithm search handle identical pieces better
 * Symmetry reduction
 * Add grip information; derive moves according to SiGN
 * QTM solves/pruning tables

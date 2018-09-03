@@ -133,11 +133,12 @@ struct moove {
    int cost, base, twist ;
 } ;
 struct puzdef {
-   puzdef() : name(0), setdefs(), solved(0), totsize(0), id(0),
+   puzdef() : name(0), setdefs(), solved(0), ignore(0), totsize(0), id(0),
               logstates(0), llstates(0), checksum(0) {}
    const char *name ;
    setdefs_t setdefs ;
    setvals solved ;
+   setvals ignore ;
    vector<moove> basemoves, moves, parsemoves ;
    vector<int> basemoveorders ;
    int totsize ;
@@ -148,6 +149,16 @@ struct puzdef {
    ull optionssum ;
    int comparepos(const setvals a, const setvals b) const {
       return memcmp(a.dat, b.dat, totsize) ;
+   }
+   int compareposignore(const setvals a, const setvals b) const {
+      if (ignore.dat == 0)
+         return comparepos(a, b) ;
+      const uchar *ap = a.dat ;
+      const uchar *bp = b.dat ;
+      for (int i=0; i<totsize; i++)
+         if (ap[i] != 255 && ap[i] != bp[i])
+            return ap[i] - bp[i] ;
+      return 0 ;
    }
    int canpackdense() const {
       for (int i=0; i<(int)setdefs.size(); i++)
@@ -231,30 +242,60 @@ struct puzdef {
             r = lcm(r, i) ;
       return r ;
    }
+   // ignore information must always stay on the left hand side of any
+   // multiply
    void mul(const setvals a, const setvals b, setvals c) const {
       const uchar *ap = a.dat ;
       const uchar *bp = b.dat ;
       uchar *cp = c.dat ;
       memset(cp, 0, totsize) ;
-      for (int i=0; i<(int)setdefs.size(); i++) {
-         const setdef &sd = setdefs[i] ;
-         int n = sd.size ;
-         for (int j=0; j<n; j++)
-            cp[j] = ap[bp[j]] ;
-         ap += n ;
-         bp += n ;
-         cp += n ;
-         if (sd.omod > 1) {
-            uchar *moda = gmoda[sd.omod] ;
+      if (ignore.dat) {
+         for (int i=0; i<(int)setdefs.size(); i++) {
+            const setdef &sd = setdefs[i] ;
+            int n = sd.size ;
             for (int j=0; j<n; j++)
-               cp[j] = moda[ap[bp[j-n]]+bp[j]] ;
-         } else {
-            for (int j=0; j<n; j++)
-               cp[j] = 0 ;
+               cp[j] = ap[bp[j]] ;
+            ap += n ;
+            bp += n ;
+            cp += n ;
+            if (sd.omod > 1) {
+               uchar *moda = gmoda[sd.omod] ;
+               for (int j=0; j<n; j++) {
+                  int ov = ap[bp[j-n]] ;
+                  if (ov == 255)
+                     cp[j] = 255 ;
+                  else
+                     cp[j] = moda[ap[bp[j-n]]+bp[j]] ;
+               }
+            } else {
+               for (int j=0; j<n; j++)
+                  cp[j] = 0 ;
+            }
+            ap += n ;
+            bp += n ;
+            cp += n ;
          }
-         ap += n ;
-         bp += n ;
-         cp += n ;
+      } else {
+         for (int i=0; i<(int)setdefs.size(); i++) {
+            const setdef &sd = setdefs[i] ;
+            int n = sd.size ;
+            for (int j=0; j<n; j++)
+               cp[j] = ap[bp[j]] ;
+            ap += n ;
+            bp += n ;
+            cp += n ;
+            if (sd.omod > 1) {
+               uchar *moda = gmoda[sd.omod] ;
+               for (int j=0; j<n; j++)
+                  cp[j] = moda[ap[bp[j-n]]+bp[j]] ;
+            } else {
+               for (int j=0; j<n; j++)
+                  cp[j] = 0 ;
+            }
+            ap += n ;
+            bp += n ;
+            cp += n ;
+         }
       }
    }
    void pow(const setvals a, setvals b, ll cnt) const ;
@@ -273,8 +314,11 @@ struct allocsetval : setval {
    allocsetval(const puzdef &pd, const setvals iv) : setval(new uchar[pd.totsize]) {
       memcpy(dat, iv.dat, pd.totsize) ;
    }
+   allocsetval(allocsetval &&a) : setval(0) {
+      swap(dat, a.dat) ;
+   }
    ~allocsetval() {
-      // we drop memory here; need fix
+      // these stay around forever
    }
 } ;
 void puzdef::pow(const setvals a, setvals b, ll cnt) const {
@@ -386,8 +430,10 @@ void expect(const vector<string> &toks, int cnt) {
       error("! wrong number of tokens on line") ;
 }
 // must be a number under 256.
-int getnumber(int minval, const string &s) {
+int getnumber(int minval, const string &s, bool allowQ=0) {
    int r = 0 ;
+   if (allowQ && s.size() == 1 && s[0] == '?')
+      return 255 ;
    for (int i=0; i<(int)s.size(); i++) {
       if ('0' <= s[i] && s[i] <= '9')
          r = r * 10 + s[i] - '0' ;
@@ -452,16 +498,20 @@ setvals readposition(puzdef &pz, char typ, FILE *f, ull &checksum) {
          ignore = 0 ;
          break ;
       }
-      if (isnumber(toks[0])) {
+      if (isnumber(toks[0]) || (typ == 'S' && toks[0] == "?")) {
          if (ignore)
             continue ;
          if (curset < 0 || numseq > 1)
             error("! unexpected number sequence") ;
          int n = pz.setdefs[curset].size ;
          expect(toks, n) ;
-         uchar *p = r.dat + pz.setdefs[curset].off + numseq * n ;
-         for (int i=0; i<n; i++)
-            p[i] = getnumber(1-numseq, toks[i]) ;
+         int totoff = pz.setdefs[curset].off + numseq * n ;
+         uchar *p = r.dat + totoff ;
+         for (int i=0; i<n; i++) {
+            p[i] = getnumber(typ == 'i' ? 0 : 1-numseq, toks[i],
+                             typ == 'S' && pz.ignore.dat != 0 &&
+                             pz.ignore.dat[i+totoff] == 255) ;
+         }
          numseq++ ;
       } else {
          if (curset >= 0 && numseq == 0)
@@ -488,7 +538,15 @@ setvals readposition(puzdef &pz, char typ, FILE *f, ull &checksum) {
    for (int i=0; i<(int)pz.setdefs.size(); i++) {
       uchar *p = r.dat + pz.setdefs[i].off ;
       int n = pz.setdefs[i].size ;
-      if (p[0] == 0) {
+      if (typ == 'i') {
+         int nonz = 0 ;
+         for (int j=0; j<2*n; j++)
+            if (p[j] == 1) {
+               p[j] = 255 ; // we use masks
+               nonz++ ;
+            } else if (p[j] != 0)
+               error("! ignored values must be zero or one") ;
+      } else if (p[0] == 0) {
          if (typ == 'S') {
             for (int j=0; j<n; j++)
                p[j] = pz.solved.dat[pz.setdefs[i].off+j] ;
@@ -517,26 +575,28 @@ setvals readposition(puzdef &pz, char typ, FILE *f, ull &checksum) {
             if (typ == 'S') {
                if (!(cnts == pz.setdefs[i].cnts))
                   error("! scramble position permutation doesn't match solved") ;
-            } else if (typ != 's')
+            } else if (typ != 's') {
                error("! expected, but did not see, a proper permutation") ;
-            else {
+            } else {
                pz.setdefs[i].uniq = 0 ;
                pz.setdefs[i].cnts = cnts ;
                pz.setdefs[i].pbits = ceillog2(cnts.size()) ;
             }
          } else {
-            if (typ != 'S' && oddperm(p, n))
+            if (typ != 'S' && typ != 'i' && oddperm(p, n))
                pz.setdefs[i].pparity = 0 ;
          }
       }
       p += n ;
       int s = 0 ;
       for (int j=0; j<n; j++) {
-         if (p[j] >= pz.setdefs[i].omod)
-            error("! modulo value too large") ;
-         s += p[j] ;
+         if (p[j] != 255) {
+            if (p[j] >= pz.setdefs[i].omod)
+               error("! modulo value too large") ;
+            s += p[j] ;
+         }
       }
-      if (s % pz.setdefs[i].omod != 0)
+      if ((typ == 's' || typ == 'm') && s % pz.setdefs[i].omod != 0)
          pz.setdefs[i].oparity = 0 ;
       if (typ == 'm') { // fix moves
          static uchar f[256] ;
@@ -596,6 +656,11 @@ puzdef readdef(FILE *f) {
          state++ ;
          expect(toks, 1) ;
          pz.solved = readposition(pz, 's', f, checksum) ;
+      } else if (toks[0] == "Ignore") {
+         if (state != 2)
+            error("! Ignore in wrong place") ;
+         expect(toks, 1) ;
+         pz.ignore = readposition(pz, 'i', f, checksum) ;
       } else if (toks[0] == "Move") {
          if (state != 2)
             error("! Move in wrong place") ;
@@ -1160,7 +1225,7 @@ void dotwobitgod2(puzdef &pd) {
       numsym++ ;
       symcoordsize = tsymcoordsize ;
    }
-   // can't split, fall back to simpler way
+   // can't split, or ignore dat; fall back to simpler way
    if (numsym == 0) {
       dotwobitgod(pd) ;
       return ;
@@ -1800,17 +1865,31 @@ void findalgos3(const puzdef &pd) {
    }
 }
 // we take advantage of the fact that the totsize is always divisible by 2.
-ull fasthash(int n, const setvals sv) {
+ull fasthash(const puzdef &pd, const setvals sv) {
+   int n = pd.totsize ;
    ull r = 0 ;
    const uchar *p = sv.dat ;
-   while (n > 4) {
-      r = r + (r << 8) + (r >> 3) + p[0] + p[1] * 31 + p[2] * 127
-          + p[3] * 8191 ;
-      n -= 4 ;
-      p += 4 ;
+   const uchar *ig = pd.ignore.dat ;
+   if (ig) {
+      while (n > 4) {
+         r = r + (r << 8) + (r >> 3) + (p[0]|ig[0]) + (p[1]|ig[1]) * 31
+               + (p[2]|ig[2]) * 127 + (p[3]|ig[3]) * 8191 ;
+         n -= 4 ;
+         p += 4 ;
+         ig += 4 ;
+      }
+      if (n)
+         r = r + (r << 8) + (r >> 3) + (p[0]|ig[0]) + (p[1]|ig[1]) * 31 ;
+   } else {
+      while (n > 4) {
+         r = r + (r << 8) + (r >> 3) + p[0] + p[1] * 31
+               + p[2] * 127 + p[3] * 8191 ;
+         n -= 4 ;
+         p += 4 ;
+      }
+      if (n)
+         r = r + (r << 8) + (r >> 3) + p[0] + p[1] * 31 ;
    }
-   if (n)
-      r = r + (r << 8) + (r >> 3) + p[0] + p[1] * 31 ;
    // this little hack ensures that at least one of bits 1..7
    // (numbered from zero) is set.
    r ^= ((r | (1LL << 43)) & ((r & 0xfe) - 2)) >> 42 ;
@@ -1980,7 +2059,7 @@ struct ioqueue {
    FILE *f ;
 } ioqueue ;
 struct prunetable {
-   prunetable(const puzdef &pd, ull maxmem) {
+   prunetable(const puzdef &pd_, ull maxmem) : pd(pd_) {
       totsize = pd.totsize ;
       ull bytesize = 16 ;
       while (2 * bytesize <= maxmem &&
@@ -2081,7 +2160,7 @@ struct prunetable {
       __builtin_prefetch(mem+((h & hmask) >> 5)) ;
    }
    int lookup(const setval sv) const {
-      ull h = fasthash(totsize, sv) & hmask ;
+      ull h = fasthash(pd, sv) & hmask ;
       int v = 3 & (mem[h >> 5] >> ((h & 31) * 2)) ;
       if (v == 0)
          return mem[(h >> 5) & ~7] & 15 ;
@@ -2476,6 +2555,7 @@ struct prunetable {
       justread = 1 ;
       return 1 ;
    }
+   const puzdef &pd ;
    ull size, hmask, popped, totpop ;
    ull lookupcnt ;
    ull fillcnt ;
@@ -2557,7 +2637,7 @@ ull fillworker::filltable(const puzdef &pd, prunetable &pt, int togo,
                           int sp, int st) {
    ull r = 0 ;
    if (togo == 0) {
-      ull h = fasthash(pd.totsize, posns[sp]) & pt.hmask ;
+      ull h = fasthash(pd, posns[sp]) & pt.hmask ;
       int shard = (h >> pt.shardshift) ;
       fillbuf &fb = fillbufs[shard] ;
       fb.chunks[fb.nchunks++] = h ;
@@ -2601,7 +2681,7 @@ struct solveworker {
       if (v > togo)
          return 0 ;
       if (togo == 0) {
-         if (pd.comparepos(posns[sp], pd.solved) == 0) {
+         if (pd.compareposignore(posns[sp], pd.solved) == 0) {
             int r = 1 ;
             get_global_lock() ;
             solutionsfound++ ;
@@ -2612,8 +2692,9 @@ struct solveworker {
                r = 0 ;
             release_global_lock() ;
             return r ;
-         } else
+         } else {
             return 0 ;
+         }
       }
       ull mask = canonmask[st] ;
       const vector<int> &ns = canonnext[st] ;
@@ -2728,10 +2809,10 @@ void timingtest(puzdef &pd) {
    for (int i=0; i<cnt; i += 2) {
       int rmv = myrand(pd.moves.size()) ;
       pd.mul(p1, pd.moves[rmv].pos, p2) ;
-      sum += fasthash(pd.totsize, p2) ;
+      sum += fasthash(pd, p2) ;
       rmv = myrand(pd.moves.size()) ;
       pd.mul(p2, pd.moves[rmv].pos, p1) ;
-      sum += fasthash(pd.totsize, p1) ;
+      sum += fasthash(pd, p1) ;
    }
    tim = duration() ;
    cout << "Did " << cnt << " in " << tim << " rate " << cnt/tim/1e6 << " sum " << sum << endl << flush ;
@@ -2764,12 +2845,12 @@ void timingtest(puzdef &pd) {
          int rmv = myrand(pd.moves.size()) ;
          pd.mul(p1, pd.moves[rmv].pos, p2) ;
          sum += pt.lookuph(tgo[i&mask]) ;
-         tgo[i&mask] = fasthash(pd.totsize, p2) ;
+         tgo[i&mask] = fasthash(pd, p2) ;
          pt.prefetch(tgo[i&mask]) ;
          rmv = myrand(pd.moves.size()) ;
          pd.mul(p2, pd.moves[rmv].pos, p1) ;
          sum += pt.lookuph(tgo[1+(i&mask)]) ;
-         tgo[1+(i&mask)] = fasthash(pd.totsize, p1) ;
+         tgo[1+(i&mask)] = fasthash(pd, p1) ;
          pt.prefetch(tgo[1+(i&mask)]) ;
       }
       tim = duration() ;

@@ -44,14 +44,18 @@
 using namespace std ;
 using uchar = unsigned char ;
 using seq = vector<uchar> ;
+struct onebm {
+   seq **dat ;
+   int togo ;
+} ;
 struct bestgeneratingset {
    bestgeneratingset(const puzdef &pd) ;
    void fillrecur(int togo, int sp, int st) ;
    const puzdef &pd ;
-   seq ***bm ;
+   onebm *bm ;
    int bmbits, numpos, hival ;
    seq solseq ;
-   ll filled, sols, bms, slots ;
+   ll filled, sols, bms, slots, fincnt ;
 } ;
 #define BESTSTRONG
 #endif

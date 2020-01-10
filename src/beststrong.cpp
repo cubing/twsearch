@@ -60,20 +60,35 @@ void bestgeneratingset::fillrecur(int togo, int sp, int st) {
       if ((sbm + 1) >> bmbits)
          return ;
       do {
-         if (bm[tbm] == 0) {
+         if (bm[tbm].dat == 0) {
             bms++ ;
-            bm[tbm] = (seq **)calloc(bmbits*hival, sizeof(*bm[tbm])) ;
+            int tog = 0 ;
+            int bmat = 0 ;
+            for (int i=0; i<(int)pd.setdefs.size(); i++) {
+               const setdef &sd = pd.setdefs[i] ;
+               int ssz = sd.size ;
+               int frepos = 0 ;
+               for (int j=0; j<ssz; j++)
+                  if (0 == ((tbm >> (bmat + j)) & 1))
+                     frepos++ ;
+               for (int j=0; j<ssz; j++, bmat++, at++)
+                  if (0 == ((tbm >> bmat) & 1))
+                     tog += (frepos * sd.omod) - 1 ;
+            }
+            bm[tbm].dat = (seq **)calloc(bmbits*hival, sizeof(*(bm[tbm].dat))) ;
+            bm[tbm].togo = tog ;
          }
          at = 0 ;
-         seq **dat = bm[tbm] ;
-         for (int i=0; i<(int)pd.setdefs.size(); i++) {
+         bmat = 0 ;
+         onebm &dat = bm[tbm] ;
+         if (dat.togo) for (int i=0; i<(int)pd.setdefs.size(); i++) {
             const setdef &sd = pd.setdefs[i] ;
-            for (int j=0; j<(int)sd.size; j++, at++) {
-               if ((sbm >> at) & 1)
+            for (int j=0; j<(int)sd.size; j++, at++, bmat++) {
+               if ((sbm >> bmat) & 1)
                   continue ;
                int val = s[at] * sd.omod + s[at+sd.size] ;
-               int off = j * hival + val ;
-               if (dat[off] == 0) {
+               int off = bmat * hival + val ;
+               if (dat.dat[off] == 0) {
                   if (sol == 0) {
 //                   cout << hex << sbm << dec ;
 //                   for (int k=0; k<pd.totsize; k++)
@@ -82,12 +97,24 @@ void bestgeneratingset::fillrecur(int togo, int sp, int st) {
                      sols++ ;
                      sol = new seq(solseq) ;
                   }
-                  dat[off] = sol ;
+                  dat.dat[off] = sol ;
+                  dat.togo-- ;
                   filled++ ;
                   slots++ ;
                   if ((slots & (slots - 1)) == 0) {
                      cout << " " << slots << flush ;
                   }
+                  if (dat.togo == 0) {
+                     cout << endl ;
+                     fincnt++ ;
+                     cout << fincnt << " finished " << hex << tbm << dec ;
+                     for (int ii=0; ii<hival*bmbits; ii++)
+                        if (dat.dat[ii] != 0)
+                           cout << " " << dat.dat[ii]->size() ;
+                     cout << endl << flush ;
+                  }
+                  if (dat.togo < 0)
+                     error("! went negative") ;
                }
             }
             at += sd.size ;
@@ -120,10 +147,11 @@ bestgeneratingset::bestgeneratingset(const puzdef &pd) : pd(pd) {
       if (tsz > hival)
          hival = tsz ;
    }
-   bm = (seq ***)calloc(1LL<<bmbits, sizeof(bm[0])) ;
+   bm = (onebm *)calloc(1LL<<bmbits, sizeof(bm[0])) ;
    filled = 0 ;
    sols = 0 ;
    bms = 0 ;
+   fincnt = 0 ;
    slots = 0 ;
    for (int d=1; ; d++) {
       slots = 0 ;

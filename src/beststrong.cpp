@@ -57,6 +57,8 @@ void bestgeneratingset::fillrecur(int togo, int sp, int st) {
       }
       ull tbm = 0 ;
       seq *sol = 0 ;
+      if ((sbm + 1) >> bmbits)
+         return ;
       do {
          if (bm[tbm] == 0) {
             bms++ ;
@@ -70,7 +72,7 @@ void bestgeneratingset::fillrecur(int togo, int sp, int st) {
                if ((sbm >> at) & 1)
                   continue ;
                int val = s[at] * sd.omod + s[at+sd.size] ;
-               int off = at * hival + val ;
+               int off = j * hival + val ;
                if (dat[off] == 0) {
                   if (sol == 0) {
 //                   cout << hex << sbm << dec ;

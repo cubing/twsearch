@@ -10,6 +10,7 @@
 #include "threads.h"
 #include "puzdef.h"
 #include "generatingset.h"
+#include "beststrong.h"
 #include "readksolve.h"
 #include "index.h"
 #include "antipode.h"
@@ -47,7 +48,7 @@ void dophase2(const puzdef &pd, setval scr, setval p1sol, prunetable &pt,
 }
 int dogod, docanon, doalgo, dosolvetest, dotimingtest, douniq,
     dosolvelines, doorder, doshowmoves, doshowpositions, genrand,
-    checksolvable, doss, dosyms ;
+    checksolvable, doss, dobsgs, dosyms ;
 const char *scramblealgo = 0 ;
 const char *legalmovelist = 0 ;
 int main(int argc, const char **argv) {
@@ -98,6 +99,8 @@ int main(int argc, const char **argv) {
             argv++ ;
          } else if (strcmp(argv[0], "--schreiersims") == 0) {
             doss = 1 ;
+         } else if (strcmp(argv[0], "--bestsgs") == 0) {
+            dobsgs = 1 ;
          } else if (strcmp(argv[0], "--showsymmetry") == 0) {
             dosyms = 1 ;
          } else {
@@ -243,6 +246,8 @@ default:
       makecanonstates2(pd) ;
    cout << "Calculated canonical states in " << duration() << endl << flush ;
    showcanon(pd, docanon) ;
+   if (dobsgs)
+      new bestgeneratingset(pd) ;
 //   gensymm(pd) ;
    if (dogod) {
       int statesfit2 = pd.logstates <= 50 && ((ll)(pd.llstates >> 2)) <= maxmem ;

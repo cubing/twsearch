@@ -11,6 +11,13 @@
  *   God's algorithm using two bits per state.
  */
 vector<ull> cnts, scnts ;
+int ishard(const char *s) {
+   if (*s == 'U' || *s == 'D') {
+      return 1 ;
+   } else {
+      return 0 ;
+   }
+}
 void dotwobitgod(puzdef &pd) {
    ull nlongs = (pd.llstates + 31) >> 5 ;
    ull memneeded = nlongs * 8 ;
@@ -31,6 +38,8 @@ void dotwobitgod(puzdef &pd) {
            << duration() << endl << flush ;
       if (cnts[d] == 0 || tot == pd.llstates)
          break ;
+ for (int tryhard=0; tryhard<2; tryhard++) {
+ cout << "At level " << d << " tryhard is " << tryhard << endl ;
       ull newseen = 0 ;
 // don't be too aggressive, because we might see parity and this might slow
 // things down dramatically; only go backwards after more than 50% full.
@@ -53,6 +62,8 @@ void dotwobitgod(puzdef &pd) {
                denseunpack(pd, (bigi << 5) + (smi >> 1), p1) ;
                for (int i=0; i<(int)pd.moves.size(); i++) {
                   if (quarter && pd.moves[i].cost > 1)
+                     continue ;
+                  if (ishard(pd.moves[i].name) != tryhard)
                      continue ;
                   pd.mul(p1, pd.moves[i].pos, p2) ;
                   off = densepack(pd, p2) ;
@@ -86,6 +97,8 @@ void dotwobitgod(puzdef &pd) {
                for (int i=0; i<(int)pd.moves.size(); i++) {
                   if (quarter && pd.moves[i].cost > 1)
                      continue ;
+                  if (ishard(pd.moves[i].name) != tryhard)
+                     continue ;
                   pd.mul(p1, pd.moves[i].pos, p2) ;
                   off = densepack(pd, p2) ;
                   int v = 3 & (mem[off >> 5] >> (2 * (off & 31))) ;
@@ -98,8 +111,12 @@ void dotwobitgod(puzdef &pd) {
             }
          }
       }
+      if (newseen == 0)
+         continue ;
       cnts.push_back(newseen) ;
       tot += newseen ;
+      break ;
+ }
    }
    showantipodesdense(pd, 0) ;
 }

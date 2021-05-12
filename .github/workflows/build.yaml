@@ -19,3 +19,16 @@ jobs:
       - run: make clean
       - run: make -f Makefile-j
       - run: ./twsearch -g samples/2x2x2.tws
+
+  build-wasm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: make clean
+      # https://medium.com/wasmer/wasienv-wasi-development-workflow-for-humans-1811d9a50345
+      - run: pip install wasienv --upgrade
+      - run: wasienv install-sdk unstable
+      - run: curl https://get.wasmer.io -sSfL | sh
+      - run: make -f Makefile-wasm
+      - run: source /home/runner/.wasmer/wasmer.sh && wasmer twsearch.wasm

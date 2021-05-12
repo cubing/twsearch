@@ -1,0 +1,21 @@
+name: make build
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: make
+      - run: ./twsearch -g samples/2x2x2.tws
+
+  build-parallel:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: make clean
+      - run: make -f Makefile-j
+      - run: ./twsearch -g samples/2x2x2.tws

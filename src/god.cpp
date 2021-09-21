@@ -742,15 +742,17 @@ void doarraygod2(const puzdef &pd) {
 ull calcsymseen(const puzdef &pd, loosetype *p, ull cnt, vector<int> *rotmul) {
    int symoff = basebits / (sizeof(loosetype) * 8) ;
    loosetype symbit = (1LL << (basebits & ((sizeof(loosetype) * 8) - 1))) ;
-   int rots = pd.rotgroup.size() ;
+   ll rots = pd.rotgroup.size() * (ll)pd.rotgroup.size() ;
    ull r = cnt * rots ;
    stacksetval p1(pd), p2(pd) ;
    for (ull i=0; i<cnt; i++, p+=looseper) {
       if (p[symoff] & symbit) {
          looseunpack(pd, p1, p) ;
          int sym = slowmodm2(pd, p1, p2) ;
-         if ((*rotmul)[sym] == 0 || (*rotmul)[sym] > rots)
+         if ((*rotmul)[sym] == 0 || (*rotmul)[sym] > rots) {
+            cout << "Got " << sym << " " << (*rotmul)[sym] << endl ;
             error("! bad symmetry calculation") ;
+         }
          r += (*rotmul)[sym] - rots ;
       }
    }
@@ -787,7 +789,7 @@ static void *docswork(void *o) {
  *   of states represented by these, unpacking the symmetry.
  */
 ull calcsymseen(const puzdef &pd, loosetype *p, ull cnt) {
-   int rots = pd.rotgroup.size() ;
+   ll rots = pd.rotgroup.size() * (ll)pd.rotgroup.size() ;
    vector<int> rotmul(rots+1) ;
    for (int i=1; i*i<=rots; i++)
       if (rots % i == 0) {
@@ -832,9 +834,9 @@ void doarraygodsymm(const puzdef &pd) {
    cnts.clear() ;
    cnts.push_back(1) ;
    scnts.clear() ;
-   scnts.push_back(1) ;
    ull tot = 1 ;
-   ull stot = 1 ;
+   ull stot = calcsymseen(pd, mem, 1) ;
+   scnts.push_back(stot) ;
    lim = mem + memneeded / (sizeof(loosetype) * looseper) * looseper ;
    reader = mem ;
    writer = mem + looseper ;

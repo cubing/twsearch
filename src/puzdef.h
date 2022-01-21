@@ -148,6 +148,32 @@ struct puzdef {
          cp += n ;
       }
    }
+   void mulinv(const setval a, const setval b, setval c) const {
+      const uchar *ap = a.dat ;
+      const uchar *bp = b.dat ;
+      uchar *cp = c.dat ;
+      memset(cp, 0, totsize) ;
+      for (int i=0; i<(int)setdefs.size(); i++) {
+         const setdef &sd = setdefs[i] ;
+         int n = sd.size ;
+         for (int j=0; j<n; j++)
+            cp[bp[j]] = ap[j] ;
+         ap += n ;
+         bp += n ;
+         cp += n ;
+         if (sd.omod > 1) {
+            uchar *moda = gmoda[sd.omod] ;
+            for (int j=0; j<n; j++)
+               cp[bp[j-n]] = moda[ap[j]+sd.omod-bp[j]] ;
+         } else {
+            for (int j=0; j<n; j++)
+               cp[j] = 0 ;
+         }
+         ap += n ;
+         bp += n ;
+         cp += n ;
+      }
+   }
    void mul3(const setval a, const setval b, const setval c, setval d) const {
       const uchar *ap = a.dat ;
       const uchar *bp = b.dat ;

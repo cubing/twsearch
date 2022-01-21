@@ -44,10 +44,17 @@ void fillworker::init(const puzdef &pd, int d_) {
       delete looktmp ;
       looktmp = 0 ;
    }
-   looktmp = new allocsetval(pd, pd.solved) ;
-   while (posns.size() <= 100 || (int)posns.size() <= d_+1)
-      posns.push_back(allocsetval(pd, pd.solved)) ;
-   pd.assignpos(posns[0], pd.solved) ;
+   if (quarter < 2) {
+      looktmp = new allocsetval(pd, pd.solved) ;
+      while (posns.size() <= 100 || (int)posns.size() <= d_+2)
+         posns.push_back(allocsetval(pd, pd.solved)) ;
+      pd.assignpos(posns[0], pd.solved) ;
+   } else {
+      looktmp = new allocsetval(pd, pd.id) ;
+      while (posns.size() <= 100 || (int)posns.size() <= d_+2)
+         posns.push_back(allocsetval(pd, pd.id)) ;
+      pd.assignpos(posns[0], pd.id) ;
+   }
    d = d_ ;
    for (int i=0; i<MEMSHARDS; i++)
       fillbufs[i].nchunks = 0 ;
@@ -118,11 +125,21 @@ ull fillworker::filltable(const puzdef &pd, prunetable &pt, int togo,
    ull r = 0 ;
    if (togo == 0) {
       ull h ;
-      if ((int)pd.rotgroup.size() > 1) {
-         slowmodm2(pd, posns[sp], *looktmp) ;
-         h = pt.indexhash(pd.totsize, *looktmp) ;
+      if (quarter >= 2) {
+         pd.mulinv(pd.solved, posns[sp], posns[sp+1]) ;
+         if ((int)pd.rotgroup.size() > 1) {
+            slowmodm2(pd, posns[sp+1], *looktmp) ;
+            h = pt.indexhash(pd.totsize, *looktmp) ;
+         } else {
+            h = pt.indexhash(pd.totsize, posns[sp+1]) ;
+         }
       } else {
-         h = pt.indexhash(pd.totsize, posns[sp]) ;
+         if ((int)pd.rotgroup.size() > 1) {
+            slowmodm2(pd, posns[sp], *looktmp) ;
+            h = pt.indexhash(pd.totsize, *looktmp) ;
+         } else {
+            h = pt.indexhash(pd.totsize, posns[sp]) ;
+         }
       }
       int shard = (h >> pt.shardshift) ;
       fillbuf &fb = fillbufs[shard] ;
@@ -363,6 +380,8 @@ void prunetable::addsumdat(const puzdef &pd, string &filename) const {
 }
 string prunetable::makefilename(const puzdef &pd) const {
    string filename = "tws5-" + inputbasename + "-" ;
+   if (quarter > 1)
+      filename += "q" ;
    if (quarter)
       filename += "q-" ;
    ull bytes = size >> 2 ;

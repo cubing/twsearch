@@ -121,10 +121,17 @@ void makecanonstates(puzdef &pd) {
                continue ;
             }
             if (ms == prevm) {
-               if (2*(prevcnt+1)+(pd.moves[ms].twist != 1) >
-                   pd.basemoveorders[pd.moves[ms].base]) {
-                  canonmask[fromst] |= 1LL << m ;
-                  continue ;
+               if (quarter == 1) {
+                  if (2*(prevcnt+1)+(pd.moves[ms].twist != 1) >
+                      pd.basemoveorders[pd.moves[ms].base]) {
+                     canonmask[fromst] |= 1LL << m ;
+                     continue ;
+                  }
+               } else {
+                  if ((prevcnt+1) == pd.basemoveorders[pd.moves[ms].base]) {
+                     canonmask[fromst] |= 1LL << m ;
+                     continue ;
+                  }
                }
             }
             thism = ms ;

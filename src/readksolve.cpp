@@ -410,7 +410,7 @@ void addmovepowers(puzdef &pd) {
       pd.basemoveorders.push_back(order) ;
       for (int j=0; j<(int)movepowers.size(); j++) {
          int tw = j + 1 ;
-         if (order - tw < tw)
+         if (quarter <= 1 && order - tw < tw)
             tw -= order ;
          moove m2 = m ;
          m2.pos = movepowers[j] ;

@@ -657,7 +657,11 @@ void doarraygod(const puzdef &pd) {
       newseen = (writer - levend) / looseper ;
       cnts.push_back(newseen) ;
       tot += newseen ;
-      s_2 = s_1 ;
+      if (quarter > 1) {
+         sortuniq(s_2, s_2, s_2, levend, 0, lim) ;
+      } else {
+         s_2 = s_1 ;
+      }
       s_1 = levend ;
       reader = levend ;
       if (s_2 != mem) {
@@ -891,7 +895,11 @@ void doarraygodsymm(const puzdef &pd) {
       ull newsseen = calcsymseen(pd, levend, newseen) ;
       scnts.push_back(newsseen) ;
       stot += newsseen ;
-      s_2 = s_1 ;
+      if (quarter > 1) {
+         sortuniq(s_2, s_2, s_2, levend, 0, lim) ;
+      } else {
+         s_2 = s_1 ;
+      }
       s_1 = levend ;
       reader = levend ;
       if (s_2 != mem) {

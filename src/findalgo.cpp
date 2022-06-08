@@ -45,14 +45,14 @@ struct algo1worker {
    void recurfindalgo(const puzdef &pd, int togo, int sp, int st) {
       if (togo == 0) {
          bigcnt++ ;
-         int wr = pd.numwrong(posns[sp], pd.solved) ;
+         int wr = pd.numwrongsolved(posns[sp], pd.id) ;
          if (wr > HIWR || wr == 0)
             return ;
          ll key = 0 ;
          for (int i=0; i<(int)pd.setdefs.size(); i++) {
             key = extendkey(key,
-                             pd.numwrong(posns[sp], pd.solved, 1LL << i),
-                             pd.permwrong(posns[sp], pd.solved, 1LL << i)) ;
+                             pd.numwrongsolved(posns[sp], pd.id, 1LL << i),
+                             pd.permwrongsolved(posns[sp], pd.id, 1LL << i)) ;
          }
          int mvs = sp ;
          get_global_lock() ;
@@ -95,8 +95,10 @@ struct algo1worker {
 } algo1worker ;
 void *doalgo1work(void *o) {
    const puzdef *pd = (const puzdef *)o ;
-   for (int d=max(1, optmindepth); ; d++)
+   for (int d=max(1, optmindepth); ; d++) {
+ cout << "Working on depth " << d << endl << flush ;
       algo1worker.findalgos1(*pd, d) ;
+   }
    return 0 ;
 }
 struct algo2worker {
@@ -178,13 +180,13 @@ struct algo3worker {
          pd.mul(posns[fp], posns[sp], posns[sp+2]) ;
          pd.mul(posns[sp+2], posns[fp+1], posns[sp+3]) ;
          pd.mul(posns[sp+3], posns[sp+1], posns[sp+2]) ;
-         int wr = pd.numwrong(posns[sp+2], pd.id) ;
+         int wr = pd.numwrongsolved(posns[sp+2], pd.id) ;
          if (wr > HIWR || wr == 0)
             return ;
          ll key = 0 ;
          for (int i=0; i<(int)pd.setdefs.size(); i++) {
-            key = extendkey(key, pd.numwrong(posns[sp+2], pd.id, 1LL << i),
-                             pd.permwrong(posns[sp+2], pd.id, 1LL << i)) ;
+            key = extendkey(key, pd.numwrongsolved(posns[sp+2], pd.id, 1LL << i),
+                             pd.permwrongsolved(posns[sp+2], pd.id, 1LL << i)) ;
          }
          int mvs = 2 * (fp + (sp - (fp + 2))) ;
          get_global_lock() ;

@@ -52,6 +52,34 @@ int puzdef::numwrong(const setval a, const setval b, ull mask) const {
    }
    return r ;
 }
+int puzdef::numwrongsolved(const setval a, const setval b, ull mask) const {
+   const uchar *ap = a.dat ;
+   const uchar *bp = b.dat ;
+   const uchar *s = solved.dat ;
+   int r = 0 ;
+   for (int i=0; i<(int)setdefs.size(); i++) {
+      const setdef &sd = setdefs[i] ;
+      int n = sd.size ;
+      if ((mask >> i) & 1) {
+         if (origroup == 0) {
+            for (int j=0; j<n; j++)
+               if (s[ap[j]] != s[bp[j]] || ap[j+n] != bp[j+n])
+                  r++ ;
+         } else {
+            for (int j=0; j<n; j += origroup)
+               for (int k=0; k<origroup; k++)
+                  if (s[ap[j+k]] != s[bp[j+k]]) {
+                     r++ ;
+                     break ;
+                  }
+         }
+      }
+      ap += 2*n ;
+      bp += 2*n ;
+      s += 2*n ;
+   }
+   return r ;
+}
 int puzdef::permwrong(const setval a, const setval b, ull mask) const {
    const uchar *ap = a.dat ;
    const uchar *bp = b.dat ;
@@ -78,6 +106,37 @@ int puzdef::permwrong(const setval a, const setval b, ull mask) const {
       }
       ap += 2*n ;
       bp += 2*n ;
+   }
+   return r ;
+}
+int puzdef::permwrongsolved(const setval a, const setval b, ull mask) const {
+   const uchar *ap = a.dat ;
+   const uchar *bp = b.dat ;
+   const uchar *s = solved.dat ;
+   int r = 0 ;
+   for (int i=0; i<(int)setdefs.size(); i++) {
+      const setdef &sd = setdefs[i] ;
+      int n = sd.size ;
+      if ((mask >> i) & 1) {
+         if (origroup == 0) {
+            for (int j=0; j<n; j++)
+               if (s[ap[j]] != s[bp[j]])
+                  r++ ;
+         } else {
+            for (int j=0; j<n; j += origroup) {
+               int sa = 0, sb = 0 ;
+               for (int k=0; k<origroup; k++) {
+                  sa += ap[j+k] ;
+                  sb += bp[j+k] ;
+               }
+               if (sa != sb)
+                  r++ ;
+            }
+         }
+      }
+      ap += 2*n ;
+      bp += 2*n ;
+      s += 2*n ;
    }
    return r ;
 }

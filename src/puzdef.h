@@ -118,7 +118,9 @@ struct puzdef {
       while (*p)
          optionssum = 37 * optionssum + *p++ ;
    }
+   int numwrongsolved(const setval a, const setval b, ull mask=-1) const ;
    int numwrong(const setval a, const setval b, ull mask=-1) const ;
+   int permwrongsolved(const setval a, const setval b, ull mask=-1) const ;
    int permwrong(const setval a, const setval b, ull mask=-1) const ;
    vector<int> cyccnts(const setval a, ull sets=-1) const ;
    static ll order(const vector<int> cc) ;

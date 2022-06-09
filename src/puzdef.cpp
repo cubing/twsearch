@@ -141,8 +141,13 @@ int puzdef::permwrongsolved(const setval a, const setval b, ull mask) const {
    return r ;
 }
 vector<int> puzdef::cyccnts(const setval a, ull sets) const {
-   const uchar *ap = a.dat ;
    vector<int> r ;
+   cyccnts(r, a, sets) ;
+   return r ;
+}
+void puzdef::cyccnts(vector<int> &r, const setval a, ull sets) const {
+   const uchar *ap = a.dat ;
+   r.clear() ;
    for (int i=0; i<(int)setdefs.size(); i++) {
       const setdef &sd = setdefs[i] ;
       int n = sd.size ;
@@ -168,7 +173,6 @@ vector<int> puzdef::cyccnts(const setval a, ull sets) const {
       }
       ap += 2*n ;
    }
-   return r ;
 }
 ll puzdef::order(const vector<int> cc) {
    ll r = 1 ;

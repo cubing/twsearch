@@ -123,6 +123,7 @@ struct puzdef {
    int permwrongsolved(const setval a, const setval b, ull mask=-1) const ;
    int permwrong(const setval a, const setval b, ull mask=-1) const ;
    vector<int> cyccnts(const setval a, ull sets=-1) const ;
+   void cyccnts(vector<int> &r, const setval a, ull sets=-1) const ;
    static ll order(const vector<int> cc) ;
    void mul(const setval a, const setval b, setval c) const {
       const uchar *ap = a.dat ;

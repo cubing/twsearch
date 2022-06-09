@@ -11,10 +11,11 @@ vector<ull> solfound ;
 ll otcnt = 0 ;
 static vector<pair<int, int>> primes ;
 static vector<ll> fa ;
+static vector<int> cc ;
 void recurorder(const puzdef &pd, int togo, int sp, int st, int fm) {
    if (togo == 0) {
       otcnt++ ;
-      vector<int> cc = pd.cyccnts(posns[sp]) ;
+      pd.cyccnts(cc, posns[sp]) ;
 /*
  for (int i=1; i<(int)cc.size(); i++)
    if (cc[i])

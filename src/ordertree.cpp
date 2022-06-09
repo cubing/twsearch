@@ -9,6 +9,8 @@ ll tot = 0 ;
 vector<ll> best ;
 vector<ull> solfound ;
 ll otcnt = 0 ;
+static vector<pair<int, int>> primes ;
+static vector<ll> fa ;
 void recurorder(const puzdef &pd, int togo, int sp, int st, int fm) {
    if (togo == 0) {
       otcnt++ ;
@@ -26,7 +28,7 @@ void recurorder(const puzdef &pd, int togo, int sp, int st, int fm) {
          best.resize(ps+1, -1) ;
          solfound.resize(ps+1, -1) ;
       }
-      vector<pair<int, int>> primes ;
+      primes.clear() ;
       for (int p=2; p<(int)cc.size(); p++)
          if (isprime(p)) {
             int cnt = 0 ;
@@ -40,7 +42,7 @@ void recurorder(const puzdef &pd, int togo, int sp, int st, int fm) {
                primes.push_back({p, cnt}) ;
             }
          }
-      vector<ll> fa ;
+      fa.clear() ;
       fa.push_back(1) ;
       for (auto pp: primes) {
          ll nsz = fa.size() * pp.second ;
@@ -50,7 +52,7 @@ void recurorder(const puzdef &pd, int togo, int sp, int st, int fm) {
       for (auto f: fa) {
          int fixed = cc[1] ;
          for (int i=2; i<(int)cc.size(); i++)
-            if (cc[i] != 0 && f % i == 0)
+            if (cc[i] && f % i == 0)
                fixed += i * cc[i] ;
          if (fixed != 0 && ps != fixed) {
             if (best[ps-fixed] < 0 || best[ps-fixed] > sp * f ||

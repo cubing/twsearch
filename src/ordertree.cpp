@@ -11,6 +11,7 @@ vector<ull> solfound ;
 ll otcnt = 0 ;
 static vector<pair<int, int>> primes ;
 static vector<ll> fa ;
+static vector<int> fac ;
 static vector<int> cc ;
 void recurorder(const puzdef &pd, int togo, int sp, int st, int fm) {
    if (togo == 0) {
@@ -50,11 +51,18 @@ void recurorder(const puzdef &pd, int togo, int sp, int st, int fm) {
          for (ll i=0; i<nsz; i++)
             fa.push_back(fa[i]*pp.first) ;
       }
-      for (auto f: fa) {
-         int fixed = cc[1] ;
-         for (int i=2; i<(int)cc.size(); i++)
-            if (cc[i] && f % i == 0)
-               fixed += i * cc[i] ;
+      fac.clear() ;
+      fac.resize(fa.size()) ;
+      for (int i=1; i<(int)cc.size(); i++)
+         if (cc[i]) {
+            int v = i * cc[i] ;
+            for (int j=0; j<(int)fa.size(); j++)
+               if (fa[j] % i == 0)
+                  fac[j] += v ;
+         }
+      for (int j=0; j<(int)fa.size(); j++) {
+         auto f = fa[j] ;
+         int fixed = fac[j] ;
          if (fixed != 0 && ps != fixed) {
             if (best[ps-fixed] < 0 || best[ps-fixed] > sp * f ||
       (best[ps-fixed] == sp * f && solfound[ps-fixed] < solutionsneeded)) {

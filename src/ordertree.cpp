@@ -7,6 +7,7 @@
 static map<ll, ll> cnts ;
 ll tot = 0 ;
 vector<ll> best ;
+vector<ull> solfound ;
 ll otcnt = 0 ;
 void recurorder(const puzdef &pd, int togo, int sp, int st, int fm) {
    if (togo == 0) {
@@ -23,6 +24,7 @@ void recurorder(const puzdef &pd, int togo, int sp, int st, int fm) {
          ps += i * cc[i] ;
       if ((int)best.size() <= ps) {
          best.resize(ps+1, -1) ;
+         solfound.resize(ps+1, -1) ;
       }
       vector<pair<int, int>> primes ;
       for (int p=2; p<(int)cc.size(); p++)
@@ -47,12 +49,17 @@ void recurorder(const puzdef &pd, int togo, int sp, int st, int fm) {
       }
       for (auto f: fa) {
          int fixed = cc[1] ;
-         for (ll i=2; i<(int)cc.size(); i++)
+         for (int i=2; i<(int)cc.size(); i++)
             if (cc[i] != 0 && f % i == 0)
                fixed += i * cc[i] ;
          if (fixed != 0 && ps != fixed) {
-            if (best[ps-fixed] < 0 || best[ps-fixed] >= sp * f) {
-               best[ps-fixed] = sp * f ;
+            if (best[ps-fixed] < 0 || best[ps-fixed] > sp * f ||
+      (best[ps-fixed] == sp * f && solfound[ps-fixed] < solutionsneeded)) {
+               if (sp * f != best[ps-fixed]) {
+                  best[ps-fixed] = sp * f ;
+                  solfound[ps-fixed] = 0 ;
+               }
+               solfound[ps-fixed]++ ;
                cout << ps-fixed << " " << sp * f << " " << f ;
                for (int i=0; i<sp; i++)
                   cout << " " << pd.moves[movehist[i]].name ;

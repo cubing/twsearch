@@ -6,7 +6,7 @@
 static map<ll, ll> cnts ;
 ll tot = 0 ;
 vector<ll> best ;
-void recurorder(const puzdef &pd, int togo, int sp, int st) {
+void recurorder(const puzdef &pd, int togo, int sp, int st, int fm) {
    if (togo == 0) {
       vector<int> cc = pd.cyccnts(posns[sp]) ;
 /*
@@ -88,14 +88,23 @@ void recurorder(const puzdef &pd, int togo, int sp, int st) {
    }
    ull mask = canonmask[st] ;
    const vector<int> &ns = canonnext[st] ;
-   for (int m=0; m<(int)pd.moves.size(); m++) {
+   int tfm ;
+   if (fm == -1)
+      tfm = 0 ;
+   else if (togo == 1)
+      tfm = movehist[fm] + 1 ;
+   else
+      tfm = movehist[fm] ;
+   for (int m=tfm; m<(int)pd.moves.size(); m++) {
+      int nfm = fm + 1 ;
+      fm = -1 ;
       const moove &mv = pd.moves[m] ;
       if ((mask >> mv.cs) & 1)
          continue ;
       movehist[sp] = m ;
       pd.mul(posns[sp], mv.pos, posns[sp+1]) ;
       if (pd.legalstate(posns[sp+1]))
-         recurorder(pd, togo-1, sp+1, ns[mv.cs]) ;
+         recurorder(pd, togo-1, sp+1, ns[mv.cs], nfm) ;
    }
 }
 void ordertree(const puzdef &pd) {
@@ -106,6 +115,6 @@ void ordertree(const puzdef &pd) {
          posns.push_back(allocsetval(pd, pd.id)) ;
          movehist.push_back(-1) ;
       }
-      recurorder(pd, d, 0, 0) ;
+      recurorder(pd, d, 0, 0, -1) ;
    }
 }

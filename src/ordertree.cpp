@@ -3,11 +3,14 @@
 #include "canon.h"
 #include "ordertree.h"
 #include "findalgo.h"
+#include "solve.h"
 static map<ll, ll> cnts ;
 ll tot = 0 ;
 vector<ll> best ;
+ll otcnt = 0 ;
 void recurorder(const puzdef &pd, int togo, int sp, int st, int fm) {
    if (togo == 0) {
+      otcnt++ ;
       vector<int> cc = pd.cyccnts(posns[sp]) ;
 /*
  for (int i=1; i<(int)cc.size(); i++)
@@ -18,7 +21,7 @@ void recurorder(const puzdef &pd, int togo, int sp, int st, int fm) {
       ll ps = 0 ;
       for (int i=1; i<(int)cc.size(); i++)
          ps += i * cc[i] ;
-      if (best.size() == 0) {
+      if ((int)best.size() <= ps) {
          best.resize(ps+1, -1) ;
       }
       vector<pair<int, int>> primes ;
@@ -108,7 +111,8 @@ void recurorder(const puzdef &pd, int togo, int sp, int st, int fm) {
    }
 }
 void ordertree(const puzdef &pd) {
-   for (int d=1; ; d++) {
+   for (int d=max(optmindepth, 1); d<=maxdepth; d++) {
+      otcnt = 0 ;
       posns.clear() ;
       movehist.clear() ;
       while ((int)posns.size() <= d + 1) {
@@ -116,5 +120,6 @@ void ordertree(const puzdef &pd) {
          movehist.push_back(-1) ;
       }
       recurorder(pd, d, 0, 0, -1) ;
+      cout << "Depth " << d << " examined " << otcnt << " sequences." << endl ;
    }
 }

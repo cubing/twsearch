@@ -1,8 +1,8 @@
 all: twsearch.wasm
 
-CXX = wasic++
-CXXFLAGS = -O3 -fno-exceptions -Wextra -Wall -pedantic -std=c++14 -g -march=native -Wsign-compare
-FLAGS = -DHAVE_FFSLL -DWASM -DWASMTEST -DASLIBRARY -Isrc -Isrc/cityhash/src
+CXX = ./emsdk/upstream/emscripten/em++
+CXXFLAGS = -O3 -fno-exceptions -Wextra -Wall -pedantic -std=c++14 -g -Wsign-compare
+FLAGS = -DHAVE_FFSLL -DWASM -DWASMTEST -DASLIBRARY -s TOTAL_MEMORY=1024MB -Isrc -Isrc/cityhash/src
 LDFLAGS = 
 
 CSOURCE = src/antipode.cpp src/calcsymm.cpp src/canon.cpp src/cmdlineops.cpp \
@@ -23,5 +23,22 @@ HSOURCE = src/antipode.h src/calcsymm.h src/canon.h src/cmdlineops.h \
 
 CITYSRC = src/cityhash/src/city.cc
 
-twsearch.wasm: $(CSOURCE) $(HSOURCE)
-	$(CXX) $(CXXFLAGS) $(FLAGS) -o twsearch.wasm $(CSOURCE) $(CITYSRC) $(LDFLAGS)
+src/js/generated-wasm-cjs/twsearch.wasm: $(CSOURCE) $(HSOURCE)
+	$(CXX) $(CXXFLAGS) $(FLAGS) $(CSOURCE) -o twsearch.js $(CITYSRC) $(LDFLAGS)
+	mv twsearch.js ./src/js/generated-wasm-cjs/
+	mv twsearch.wasm ./src/js/generated-wasm-cjs/
+
+src/js/generated-wasm-cjs/twsearch.esm-compatible.js: src/js/generated-wasm-cjs/twsearch.wasm
+	node ./script/wrap-twsearch.js
+
+.PHONY: install-emscripten
+install-emscripten:
+	script/install-emscripten
+
+.PHONY: dev
+dev: src/js/generated-wasm-cjs/twsearch.esm-compatible.js src/js/generated-wasm-cjs/twsearch.wasm.wrapped.js
+	npm run dev
+
+.PHONY: clean-wasm
+clean-wasm:
+	rm src/js/generated-wasm-cjs/twsearch.*

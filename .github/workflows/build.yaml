@@ -3,23 +3,19 @@ name: make build
 on: [push, pull_request]
 
 jobs:
-  build:
+  cpp:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
       - run: make
-      - run: ./twsearch -g samples/2x2x2.tws
+      - run: ./build/bin/twsearch -g samples/main/2x2x2.tws
 
-  build-wasm:
+  wasm:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
-      - run: make clean
-      # https://medium.com/wasmer/wasienv-wasi-development-workflow-for-humans-1811d9a50345
-      - run: pip install wasienv --upgrade
-      - run: wasienv install-sdk unstable
+      - run: make build/wasm/twsearch.wasm
       - run: curl https://get.wasmer.io -sSfL | sh
-      - run: make -f Makefile-wasm
-      - run: source /home/runner/.wasmer/wasmer.sh && wasmer twsearch.wasm
+      - run: source /home/runner/.wasmer/wasmer.sh && wasmer build/wasm/twsearch.wasm

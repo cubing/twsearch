@@ -16,7 +16,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - run: make clean
-      - run: curl https://get.wasmer.io -sSfL | sh
       - run: make build/wasm/twsearch.wasm
+      - run: curl https://get.wasmer.io -sSfL | sh
       - run: source /home/runner/.wasmer/wasmer.sh && wasmer build/wasm/twsearch.wasm

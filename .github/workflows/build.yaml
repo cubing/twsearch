@@ -22,4 +22,4 @@ jobs:
       - run: wasienv install-sdk unstable
       - run: curl https://get.wasmer.io -sSfL | sh
       - run: make -f Makefile-wasm
-      - run: source /home/runner/.wasmer/wasmer.sh && wasmer twsearch.wasm
+      - run: source /home/runner/.wasmer/wasmer.sh && wasmer build/wasm/twsearch.wasm

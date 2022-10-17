@@ -3,7 +3,7 @@ name: make build
 on: [push, pull_request]
 
 jobs:
-  build:
+  cpp:
     runs-on: ubuntu-latest
 
     steps:
@@ -11,7 +11,7 @@ jobs:
       - run: make
       - run: ./build/bin/twsearch -g samples/main/2x2x2.tws
 
-  build-wasm:
+  wasm:
     runs-on: ubuntu-latest
 
     steps:

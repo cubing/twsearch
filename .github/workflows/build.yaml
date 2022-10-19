@@ -19,4 +19,4 @@ jobs:
       - run: make build/wasm-test/twsearch.wasm
       - run: make build/wasm-wrapped/twsearch.wasm
       - run: curl https://get.wasmer.io -sSfL | sh
-      - run: source /home/runner/.wasmer/wasmer.sh && wasmer build/wasm-test/twsearch.wasm
+      - run: source ~/.wasmer/wasmer.sh && wasmer build/wasm-test/twsearch.wasm

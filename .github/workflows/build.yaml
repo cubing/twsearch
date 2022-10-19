@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - run: make build/wasm-raw/twsearch.wasm
+      - run: make build/wasm-test/twsearch.wasm
       - run: make build/wasm-wrapped/twsearch.wasm
       - run: curl https://get.wasmer.io -sSfL | sh
-      - run: source /home/runner/.wasmer/wasmer.sh && wasmer build/wasm-raw/twsearch.wasm
+      - run: source /home/runner/.wasmer/wasmer.sh && wasmer build/wasm-test/twsearch.wasm

@@ -1,4 +1,5 @@
 // TODO: Worker
+import { Alg } from "cubing/alg";
 
 type CWrap = (fn: string, returnType: string, argType: string[]) => any;
 
@@ -24,27 +25,31 @@ function cwrap(
 	fn: string,
 	returnType: string,
 	argTypes: string[],
+	processReturnValue: (v: any) => any = (v) => v
 ): (...args: any[]) => Promise<any> {
+	const wrapped = (async () => (await emscriptenModule()).cwrap(fn, returnType, argTypes) )()
 	return async (...args: any[]) => {
-		return (await emscriptenModule()).cwrap(fn, returnType, argTypes)(...args)
+		return processReturnValue((await wrapped)(...args))
 	};
 }
 
 export const setArgs: (s: string) => Promise<void> = cwrap("w_args", "void", [
 	"string",
 ]);
-export const setKPuzzleDefString: (s: string) => void = cwrap(
+export const setKPuzzleDefString: (s: string) => Promise<void> = cwrap(
 	"w_setksolve",
 	"void",
 	["string"],
 );
-export const solveScramble: (s: string) => void = cwrap(
+export const solveScramble: (s: string) => Promise<Alg> = cwrap(
 	"w_solvescramble",
 	"string",
 	["string"],
+	Alg.fromString
 );
-export const solveState: (s: string) => void = cwrap(
+export const solveState: (s: string) => Promise<Alg> = cwrap(
 	"w_solveposition",
 	"string",
 	["string"],
+	Alg.fromString
 );

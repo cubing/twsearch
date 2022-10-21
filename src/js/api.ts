@@ -8,48 +8,49 @@ interface EmscriptenModule {
 }
 
 async function importOnce(): Promise<EmscriptenModule> {
-	const fn = (await import(
-		"../../build/wasm-single-file/twsearch.mjs",
-	)).default;
+	const fn = (await import("../../build/wasm-single-file/twsearch.mjs"))
+		.default;
 	return await fn();
 }
 
-let cachedEmscriptenModule: null | Promise<
-	 EmscriptenModule
-> = null;
+let cachedEmscriptenModule: null | Promise<EmscriptenModule> = null;
 async function emscriptenModule(): Promise<EmscriptenModule> {
-	return cachedEmscriptenModule ??= importOnce();
+	return (cachedEmscriptenModule ??= importOnce());
 }
 
 function cwrap(
 	fn: string,
 	returnType: string,
 	argTypes: string[],
-	processReturnValue: (v: any) => any = (v) => v
+	processReturnValue: (v: any) => any = (v) => v,
 ): (...args: any[]) => Promise<any> {
-	const wrapped = (async () => (await emscriptenModule()).cwrap(fn, returnType, argTypes) )()
+	const wrapped = (async () =>
+		(await emscriptenModule()).cwrap(fn, returnType, argTypes))();
 	return async (...args: any[]) => {
-		return processReturnValue((await wrapped)(...args))
+		return processReturnValue((await wrapped)(...args));
 	};
 }
 
-export const setArgs: (s: string) => Promise<void> = cwrap("w_args", "void", [
-	"string",
-]);
+const stringArg = ["string"];
+export const setArgs: (s: string) => Promise<void> = cwrap(
+	"w_args",
+	"void",
+	stringArg,
+);
 export const setKPuzzleDefString: (s: string) => Promise<void> = cwrap(
 	"w_setksolve",
 	"void",
-	["string"],
+	stringArg,
 );
 export const solveScramble: (s: string) => Promise<Alg> = cwrap(
 	"w_solvescramble",
 	"string",
-	["string"],
-	Alg.fromString
+	stringArg,
+	Alg.fromString,
 );
 export const solveState: (s: string) => Promise<Alg> = cwrap(
 	"w_solveposition",
 	"string",
-	["string"],
-	Alg.fromString
+	stringArg,
+	Alg.fromString,
 );

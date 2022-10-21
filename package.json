@@ -6,8 +6,7 @@
   },
   "devDependencies": {
     "@types/node": "^18.11.0",
-    "barely-a-dev-server": "^0.3.4",
-    "esbuild-plugin-wasm": "^1.0.0"
+    "esbuild": "^0.15.11"
   },
   "dependencies": {
     "cubing": "^0.31.0"

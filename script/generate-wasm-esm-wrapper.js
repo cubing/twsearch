@@ -6,6 +6,9 @@ const spaghettiString = await readFile(spaghettiInPath, "utf-8");
 const spaghettiStringESMCompatible = spaghettiString
   .replace("module['exports']", "fakeBogusSillyVariable")
   .replace("wasmBinaryFile =", `import { wasmSourceDataURL } from "./twsearch.wasm.serialized.js"; wasmBinaryFile = wasmSourceDataURL; //`)
-  .concat("\nexport const emscriptenModule = Module;\n")
+  .replace("var Module = typeof Module", `
+let resolveInitialized;
+export const emscriptenModule = new Promise((resolve) => {resolveInitialized = () => resolve(Module)})
+const Module = {onRuntimeInitialized: () => resolveInitialized()}; // typeof Module`)
 await writeFile(spaghettiOutPath, spaghettiStringESMCompatible, "utf-8");
 

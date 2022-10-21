@@ -1,3 +1,8 @@
+// import {default  as a} from "../../build/wasm-wrapped/twsearch.mjs"
+
+
+// (async () => { console.log(await a()) })()
+
 // import { setArgs, setKPuzzleDefString, solveScramble } from "./api";
 import "./api.js";
 import { setArgs, setKPuzzleDefString, solveScramble, solveState } from "./api.js";

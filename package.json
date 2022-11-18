@@ -2,7 +2,7 @@
   "name": "twsearch",
   "type": "module",
   "scripts": {
-    "dev": "node ./script/dev.js"
+    "dev": "make dev"
   },
   "devDependencies": {
     "@types/node": "^18.11.0",

@@ -8,21 +8,30 @@ function sanitize(s: string): string {
   return s.replaceAll(/[^A-Za-z0-9]/g, "_");
 }
 
-export function serializeKTransformationDataToTws(name: string, t: KTransformationData, forScramble: boolean = false): string {
-	const outputLines: string[] = [];
-	outputLines.push(`${forScramble ? "ScrambleState" : "MoveTransformation"} ${sanitize(name)}`);
-	// outputLines.push(sanitize());
-	for (const [orbitName, orbitData] of Object.entries(t)) {
-		outputLines.push(sanitize(orbitName));
-		outputLines.push(orbitData.permutation.join(" "));
-		outputLines.push(orbitData.orientation.join(" "));
-	}
-	outputLines.push(END);
-	outputLines.push(BLANK_LINE);
-	return outputLines.join("\n");
+export function serializeKTransformationDataToTws(
+  name: string,
+  t: KTransformationData,
+  forScramble: boolean = false,
+): string {
+  const outputLines: string[] = [];
+  outputLines.push(
+    `${forScramble ? "ScrambleState" : "MoveTransformation"} ${sanitize(name)}`,
+  );
+  // outputLines.push(sanitize());
+  for (const [orbitName, orbitData] of Object.entries(t)) {
+    outputLines.push(sanitize(orbitName));
+    outputLines.push(orbitData.permutation.join(" "));
+    outputLines.push(orbitData.orientation.join(" "));
+  }
+  outputLines.push(END);
+  outputLines.push(BLANK_LINE);
+  return outputLines.join("\n");
 }
 
-export function serializeDefToTws(kpuzzle: KPuzzle, options?: {moveSubset?: string[], startState?: string}): string {
+export function serializeDefToTws(
+  kpuzzle: KPuzzle,
+  options?: { moveSubset?: string[]; startState?: string },
+): string {
   let outputLines: string[] = [];
   const def = kpuzzle.definition;
 
@@ -62,18 +71,24 @@ export function serializeDefToTws(kpuzzle: KPuzzle, options?: {moveSubset?: stri
   for (const [moveName, moveDef] of Object.entries(def.moves)) {
     // console.log(moveName, include(moveName))
     if (include(moveName)) {
-      outputLines.push(serializeKTransformationDataToTws(moveName, moveDef))
+      outputLines.push(serializeKTransformationDataToTws(moveName, moveDef));
     }
   }
   // console.log(def.experimentalDerivedMoves)
-  for (const [moveName, moveAlgDef] of Object.entries(def.experimentalDerivedMoves ?? {})) {
+  for (const [moveName, moveAlgDef] of Object.entries(
+    def.experimentalDerivedMoves ?? {},
+  )) {
     // console.log(moveName, include(moveName))
     if (include(moveName)) {
-      const transformation = kpuzzle.algToTransformation(moveAlgDef)
-      outputLines.push(serializeKTransformationDataToTws(moveName, transformation.transformationData))
+      const transformation = kpuzzle.algToTransformation(moveAlgDef);
+      outputLines.push(
+        serializeKTransformationDataToTws(
+          moveName,
+          transformation.transformationData,
+        ),
+      );
     }
   }
-
 
   return outputLines.join("\n");
 }

@@ -4,12 +4,12 @@
   "scripts": {
     "dev": "make dev"
   },
+  "dependencies": {
+    "cubing": "^0.31.0"
+  },
   "devDependencies": {
     "@types/node": "^18.11.0",
     "esbuild": "^0.15.11",
     "rome": "^10.0.1"
-  },
-  "dependencies": {
-    "cubing": "^0.31.0"
   }
 }

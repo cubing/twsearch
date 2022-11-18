@@ -21,3 +21,4 @@ jobs:
       - run: make build/wasm-single-file/twsearch.mjs
       - run: curl https://get.wasmer.io -sSfL | sh
       - run: source ~/.wasmer/wasmer.sh && wasmer build/wasm-test/twsearch-test.wasm
+      - run: make test-build-js

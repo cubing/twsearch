@@ -31,6 +31,15 @@ function cwrap(
   };
 }
 
+export class NoSolutionError extends Error {}
+
+function parseResult(s: string): Alg {
+  if (s === "--no solution--") {
+    throw new NoSolutionError("");
+  }
+  return Alg.fromString(s);
+}
+
 const stringArg = ["string"];
 export const setArg: (s: string) => Promise<void> = cwrap(
   "w_arg",
@@ -46,11 +55,11 @@ export const solveScramble: (s: string) => Promise<Alg> = cwrap(
   "w_solvescramble",
   "string",
   stringArg,
-  Alg.fromString,
+  parseResult,
 );
 export const solveState: (s: string) => Promise<Alg> = cwrap(
   "w_solveposition",
   "string",
   stringArg,
-  Alg.fromString,
+  parseResult,
 );

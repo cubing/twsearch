@@ -1,4 +1,4 @@
-export { setArgs, setKPuzzleDefString, solveScramble, solveState } from "./api";
+export { setArg, setKPuzzleDefString, solveScramble, solveState } from "./api";
 export {
   serializeDefToTws,
   serializeKTransformationDataToTws,

@@ -32,8 +32,8 @@ function cwrap(
 }
 
 const stringArg = ["string"];
-export const setArgs: (s: string) => Promise<void> = cwrap(
-  "w_args",
+export const setArg: (s: string) => Promise<void> = cwrap(
+  "w_arg",
   "void",
   stringArg,
 );

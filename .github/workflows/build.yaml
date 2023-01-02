@@ -11,6 +11,17 @@ jobs:
       - run: make
       - run: ./build/bin/twsearch -g samples/main/2x2x2.tws
 
+  cpp-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: make
+      - uses: actions/upload-artifact@v3
+        with:
+          name: windows-build
+          path: build/
+
   wasm:
     runs-on: ubuntu-latest
 

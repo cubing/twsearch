@@ -2,7 +2,12 @@
 #include <string>
 #include <cstring>
 #include <cstdlib>   // for drand48 and friends
+#ifdef _WIN64
+#include <intrin.h>
+inline int ffsll(unsigned long long v){unsigned long r;_BitScanForward64(&r, v);return(int)r;}
+#else
 #include <strings.h> // for ffsll
+#endif
 using namespace std ;
 /*
  *   A bunch of silly utility routines to make our life easier, and a few

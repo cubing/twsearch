@@ -20,7 +20,7 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: windows-build
-          path: build/
+          path: build/bin/
 
   wasm:
     runs-on: ubuntu-latest

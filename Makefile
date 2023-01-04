@@ -21,7 +21,7 @@ TWSEARCH_VERSION=$(shell git describe --tags)
 CXXFLAGS = -O3 -Wextra -Wall -pedantic -std=c++14 -g -Wsign-compare
 FLAGS = -DTWSEARCH_VERSION=${TWSEARCH_VERSION} -DUSE_PTHREADS -DHAVE_FFSLL
 #   Windows always defines COMSPEC
-ifdef COMSPEC
+ifdef ComSpec
 LDFLAGS = -static -lpthread
 else
 LDFLAGS = -lpthread

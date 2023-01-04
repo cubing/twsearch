@@ -20,7 +20,12 @@ TWSEARCH_VERSION=$(shell git describe --tags)
 # MAKEFLAGS += -j
 CXXFLAGS = -O3 -Wextra -Wall -pedantic -std=c++14 -g -Wsign-compare
 FLAGS = -DTWSEARCH_VERSION=${TWSEARCH_VERSION} -DUSE_PTHREADS -DHAVE_FFSLL
+#   Windows always defines COMSPEC
+ifdef COMSPEC
+LDFLAGS = -static -lpthread
+else
 LDFLAGS = -lpthread
+endif
 
 CSOURCE = src/cpp/antipode.cpp src/cpp/calcsymm.cpp src/cpp/canon.cpp src/cpp/cmdlineops.cpp \
    src/cpp/filtermoves.cpp src/cpp/findalgo.cpp src/cpp/generatingset.cpp src/cpp/god.cpp \

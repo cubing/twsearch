@@ -1,4 +1,4 @@
-import type { KPuzzle, KTransformationData } from "cubing/kpuzzle";
+import type { KPuzzle, KStateData, KTransformationData } from "cubing/kpuzzle";
 
 const BLANK_LINE = "";
 const END = "End";
@@ -8,19 +8,29 @@ function sanitize(s: string): string {
   return s.replaceAll(/[^A-Za-z0-9]/g, "_");
 }
 
-export function serializeKTransformationDataToTws(
+export function serializeMoveTransformation(
   name: string,
   t: KTransformationData,
-  forScramble: boolean = false,
 ): string {
   const outputLines: string[] = [];
-  outputLines.push(
-    `${forScramble ? "ScrambleState" : "MoveTransformation"} ${sanitize(name)}`,
-  );
-  // outputLines.push(sanitize());
+  outputLines.push(`MoveTransformation ${sanitize(name)}`);
   for (const [orbitName, orbitData] of Object.entries(t)) {
     outputLines.push(sanitize(orbitName));
     outputLines.push(orbitData.permutation.join(" "));
+    outputLines.push(orbitData.orientation.join(" "));
+  }
+  outputLines.push(END);
+  outputLines.push(BLANK_LINE);
+  return outputLines.join("\n");
+}
+
+export function serializeScrambleState(name: string, t: KStateData): string {
+  const outputLines: string[] = [];
+  outputLines.push(`ScrambleState ${sanitize(name)}`);
+  // outputLines.push(sanitize());
+  for (const [orbitName, orbitData] of Object.entries(t)) {
+    outputLines.push(sanitize(orbitName));
+    outputLines.push(orbitData.pieces.join(" "));
     outputLines.push(orbitData.orientation.join(" "));
   }
   outputLines.push(END);
@@ -71,7 +81,7 @@ export function serializeDefToTws(
   for (const [moveName, moveDef] of Object.entries(def.moves)) {
     // console.log(moveName, include(moveName))
     if (include(moveName)) {
-      outputLines.push(serializeKTransformationDataToTws(moveName, moveDef));
+      outputLines.push(serializeMoveTransformation(moveName, moveDef));
     }
   }
   // console.log(def.experimentalDerivedMoves)
@@ -82,7 +92,7 @@ export function serializeDefToTws(
     if (include(moveName)) {
       const transformation = kpuzzle.algToTransformation(moveAlgDef);
       outputLines.push(
-        serializeKTransformationDataToTws(
+        serializeMoveTransformation(
           moveName,
           transformation.transformationData,
         ),

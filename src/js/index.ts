@@ -7,6 +7,6 @@ export {
 } from "./api";
 export {
   serializeDefToTws,
-  serializeMoveTransformation as serializeKTransformationDataToTws,
-  serializeScrambleState as serializeKStateDataToTws,
+  serializeMoveTransformation,
+  serializeScrambleState,
 } from "./serialize";

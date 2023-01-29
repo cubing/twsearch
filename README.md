@@ -1,6 +1,30 @@
-Twisty Puzzle searcher.  Much like ksolve but, due to licensing issues on
-that program, we have coded it completely from scratch.  We start from a
+# `twsearch`
+
+Twisty Puzzle searcher. Much like [KSolve](https://github.com/cubing/ksolve) but, due to licensing issues on that program, we have coded it completely from scratch  We start from a
 base of compatibility but do not guarantee it.
+
+## Running `twsearch`
+
+If you have a C++ toolchain on your computer, you can run:
+
+```shell
+# Check out and build the binary
+git clone https://github.com/cubing/twsearch && cd twsearch
+make build
+
+# Run a search
+./build/bin/twsearch samples/main/3x3x3.tws samples/main/tperm.scr
+```
+
+If you're on macOS, you can also use [Homebrew](https://brew.sh/) to install the binary:
+
+```shell
+env HOMEBREW_NO_INSTALL_FROM_API=1 brew install --HEAD cubing/cubing/twsearch
+```
+
+Otherwise, you may find it easiest to work with the JSON-based web interface at <https://experiments.cubing.net/cubing.js/twsearch/text-ui.html>
+
+### Usage
 
 Important options (you should specify these):
 

@@ -11,8 +11,40 @@ mod ffi {
     }
 }
 
+extern crate rouille;
+use std::io::Read;
+
+use rouille::router;
+use rouille::Request;
+use rouille::Response;
+
+fn set_arg(request: &Request) -> Response {
+    let mut data = request.data();
+    let body = match &mut data {
+        Some(data) => {
+            let mut s: String = "".to_owned();
+            data.read_to_string(&mut s).expect("uh-oh"); // TODO!
+            s
+        }
+        None => "{}".to_owned(),
+    };
+    println!("set-arg: {}", body);
+    Response::text("twsearch-server")
+}
+
 fn main() {
-    demo();
+    // TODO: support parallel requests on the C++ side.
+    rouille::start_server("0.0.0.0:2023", /* move */ |request: &Request| {
+        router!(request,
+            (GET) (/) => {
+                Response::text("twsearch-server (https://github.com/cubing/twsearch)")
+            },
+            (POST) (/v0/set-arg) => {
+                set_arg(request)
+            },
+            _ => rouille::Response::empty_404()
+        )
+    });
 }
 
 fn demo() {

@@ -12,6 +12,10 @@ mod ffi {
 }
 
 fn main() {
+    demo();
+}
+
+fn demo() {
     ffi::w_arg("--startprunedepth 5");
     ffi::w_setksolve("# /usr/local/bin/node /Users/rokicki/twizzle/puzzlegeometry/pg.js --optimize --ksolve 3x3x3
 # PuzzleGeometry 0.1 Copyright 2018 Tomas Rokicki.

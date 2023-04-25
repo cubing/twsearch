@@ -1,0 +1,13 @@
+[package]
+name = "twsearch"
+version = "0.0.0"
+
+[dependencies]
+cxx = "1.0"
+
+[build-dependencies]
+cxx-build = "1.0"
+
+[[bin]]
+name = "twsearch-server"
+path = "./src/rs/main.rs"

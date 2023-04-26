@@ -12,134 +12,91 @@ mod ffi {
 }
 
 extern crate rouille;
-use std::io::Read;
 
+extern crate cubing;
+use cubing::alg::Alg;
+use cubing::kpuzzle::KPuzzleDefinition;
+
+use cubing::kpuzzle::KStateData;
+
+use ffi::w_setksolve;
+use ffi::w_solveposition;
+use ffi::w_solvescramble;
 use rouille::router;
+use rouille::try_or_400;
 use rouille::Request;
 use rouille::Response;
+extern crate serde;
+use serde::Serialize;
+use serialize::serialize_kpuzzle_definition;
+use serialize::serialize_kstate_data;
+
+mod serialize;
+
+use crate::ffi::w_arg;
+
+fn cors(response: Response) -> Response {
+    response.with_additional_header("Acess-Control-Allow-Origin", "*")
+}
 
 fn set_arg(request: &Request) -> Response {
-    let mut data = request.data();
-    let body = match &mut data {
-        Some(data) => {
-            let mut s: String = "".to_owned();
-            data.read_to_string(&mut s).expect("uh-oh"); // TODO!
-            s
-        }
-        None => "{}".to_owned(),
+    let arg = try_or_400!(rouille::input::plain_text_body(request));
+    println!("set_arg:--------\n{}\n--------", arg);
+    w_arg(&arg); // TODO: catch exceptions???
+    cors(Response::empty_204())
+}
+
+fn set_ksolve(request: &Request) -> Response {
+    let def: KPuzzleDefinition = try_or_400!(rouille::input::json_input(request));
+    w_setksolve(serialize_kpuzzle_definition(&def)); // TODO: catch exceptions???
+    cors(Response::empty_204())
+}
+
+#[derive(Serialize)]
+struct ResponseAlg {
+    alg: String, // TODO: support automatic alg serialization somehome
+}
+
+fn solvescramble(request: &Request) -> Response {
+    let arg = try_or_400!(rouille::input::plain_text_body(request));
+    let alg = match arg.parse::<Alg>() {
+        Ok(alg) => alg,
+        Err(_) => return Response::empty_400(), // TODO: more deets
     };
-    println!("set-arg: {}", body);
-    Response::text("twsearch-server")
+    let solution = w_solvescramble(&alg.to_string()); // TODO: catch exceptions???
+    cors(Response::json(&ResponseAlg { alg: solution }))
+}
+
+fn solveposition(request: &Request) -> Response {
+    let kstate_data: KStateData = try_or_400!(rouille::input::json_input(request));
+    let solution = w_solveposition(serialize_kstate_data(&kstate_data)); // TODO: catch exceptions???
+    cors(Response::json(&ResponseAlg { alg: solution }))
 }
 
 fn main() {
     // TODO: support parallel requests on the C++ side.
     rouille::start_server("0.0.0.0:2023", /* move */ |request: &Request| {
+        println!("Request: {} {}", request.method(), request.url()); // TODO: debug flag
         router!(request,
             (GET) (/) => {
                 Response::text("twsearch-server (https://github.com/cubing/twsearch)")
             },
-            (POST) (/v0/set-arg) => {
+            (POST) (/v0/config/arg) => {
                 set_arg(request)
             },
-            _ => rouille::Response::empty_404()
+            (POST) (/v0/config/definition) => {
+                set_ksolve(request)
+            },
+            (POST) (/v0/solve/scramble) => {
+                solvescramble(request)
+            },
+            (POST) (/v0/solve/state) => { // TODO: `…/pattern`?
+                solveposition(request)
+            },
+            _ => {
+                println!("Invalid request: {} {}", request.method(), request.url());
+                rouille::Response::empty_404()
+            }
         )
     });
-}
-
-fn demo() {
-    ffi::w_arg("--startprunedepth 5");
-    ffi::w_setksolve("# /usr/local/bin/node /Users/rokicki/twizzle/puzzlegeometry/pg.js --optimize --ksolve 3x3x3
-# PuzzleGeometry 0.1 Copyright 2018 Tomas Rokicki.
-# c f 0.333333333333333 optimize true
-
-# Rotations: 24
-# Base planes: 6
-# Face vertices: 4
-# Boundary is Q[1,1,0,0]
-# Distances: face 1 edge 1.414213562373095 vertex 1.732050807568877
-# Faces is now 9
-# Short edge is 0.6666666666666659
-# Total stickers is now 54
-# Move plane sets: 2,2,2
-# Cubies: 26
-# Cubie orbit sizes 6,12,8
-# PuzzleGeometry 0.1 Copyright 2018 Tomas Rokicki.
-# c f 0.333333333333333 optimize true
-Name PuzzleGeometryPuzzle
-
-Set EDGE 12 2
-Set CORNER 8 3
-
-Solved
-EDGE
-1 2 3 4 5 6 7 8 9 10 11 12
-0 0 0 0 0 0 0 0 0 0 0 0
-CORNER
-1 2 3 4 5 6 7 8
-0 0 0 0 0 0 0 0
-End
-
-Move F
-EDGE
-10 1 3 4 2 6 7 8 9 5 11 12
-1 1 0 0 1 0 0 0 0 1 0 0
-CORNER
-7 1 3 2 5 6 4 8
-2 1 0 2 0 0 1 0
-End
-
-Move B
-EDGE
-1 2 6 4 5 7 11 8 9 10 3 12
-0 0 1 0 0 1 1 0 0 0 1 0
-CORNER
-1 2 5 4 8 3 7 6
-0 0 1 0 2 2 0 1
-End
-
-Move D
-EDGE
-1 9 3 2 5 4 7 8 6 10 11 12
-0 0 0 0 0 0 0 0 0 0 0 0
-CORNER
-1 4 3 8 2 6 7 5
-0 0 0 0 0 0 0 0
-End
-
-Move U
-EDGE
-1 2 3 4 5 6 7 11 9 8 12 10
-0 0 0 0 0 0 0 0 0 0 0 0
-CORNER
-3 2 6 4 5 7 1 8
-0 0 0 0 0 0 0 0
-End
-
-Move L
-EDGE
-1 2 3 4 12 6 9 8 5 10 11 7
-0 0 0 0 0 0 0 0 0 0 0 0
-CORNER
-1 2 3 7 5 8 6 4
-0 0 0 1 0 1 2 2
-End
-
-Move R
-EDGE
-4 2 8 3 5 6 7 1 9 10 11 12
-0 0 0 0 0 0 0 0 0 0 0 0
-CORNER
-2 5 1 4 3 6 7 8
-1 2 2 0 1 0 0 0
-End
-
-");
-    let result = ffi::w_solveposition(
-        "ScrambleAlg TPERM
-   R U R' U' R' F R2 U' R' U' R U R' F'
-End
-",
-    );
-    println!("Result: {}", result)
 }

@@ -3,8 +3,10 @@ name = "twsearch"
 version = "0.0.0"
 
 [dependencies]
+cubing = "0.2.2"
 cxx = "1.0"
 rouille = "3.6.2"
+serde = { version = "1.0.160", features = ["derive", "rc"] }
 
 [build-dependencies]
 cxx-build = "1.0"

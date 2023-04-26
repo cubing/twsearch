@@ -14,6 +14,9 @@ mod ffi {
 extern crate rouille;
 
 extern crate cubing;
+use std::thread::sleep;
+use std::time::Duration;
+
 use cubing::alg::Alg;
 use cubing::kpuzzle::KPuzzleDefinition;
 
@@ -36,20 +39,23 @@ mod serialize;
 use crate::ffi::w_arg;
 
 fn cors(response: Response) -> Response {
-    response.with_additional_header("Acess-Control-Allow-Origin", "*")
+    response
+        .with_additional_header("Access-Control-Allow-Origin", "*")
+        .with_additional_header("Access-Control-Allow-Headers", "Content-Type")
 }
 
 fn set_arg(request: &Request) -> Response {
     let arg = try_or_400!(rouille::input::plain_text_body(request));
-    println!("set_arg:--------\n{}\n--------", arg);
+    println!("set_arg: {}", arg);
     w_arg(&arg); // TODO: catch exceptions???
-    cors(Response::empty_204())
+    Response::empty_204()
 }
 
 fn set_ksolve(request: &Request) -> Response {
     let def: KPuzzleDefinition = try_or_400!(rouille::input::json_input(request));
     w_setksolve(serialize_kpuzzle_definition(&def)); // TODO: catch exceptions???
-    cors(Response::empty_204())
+    sleep(Duration::from_secs(1));
+    Response::empty_204()
 }
 
 #[derive(Serialize)]
@@ -64,20 +70,25 @@ fn solvescramble(request: &Request) -> Response {
         Err(_) => return Response::empty_400(), // TODO: more deets
     };
     let solution = w_solvescramble(&alg.to_string()); // TODO: catch exceptions???
-    cors(Response::json(&ResponseAlg { alg: solution }))
+    Response::json(&ResponseAlg { alg: solution })
 }
 
 fn solveposition(request: &Request) -> Response {
     let kstate_data: KStateData = try_or_400!(rouille::input::json_input(request));
     let solution = w_solveposition(serialize_kstate_data(&kstate_data)); // TODO: catch exceptions???
-    cors(Response::json(&ResponseAlg { alg: solution }))
+    Response::json(&ResponseAlg { alg: solution })
 }
 
 fn main() {
     // TODO: support parallel requests on the C++ side.
     rouille::start_server("0.0.0.0:2023", /* move */ |request: &Request| {
         println!("Request: {} {}", request.method(), request.url()); // TODO: debug flag
-        router!(request,
+                                                                     // TODO: more fine-grained CORS?
+        if request.method() == "OPTIONS" {
+            // pre-flight!
+            return cors(Response::empty_204());
+        }
+        cors(router!(request,
             (GET) (/) => {
                 Response::text("twsearch-server (https://github.com/cubing/twsearch)")
             },
@@ -97,6 +108,6 @@ fn main() {
                 println!("Invalid request: {} {}", request.method(), request.url());
                 rouille::Response::empty_404()
             }
-        )
+        ))
     });
 }

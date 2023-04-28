@@ -1,5 +1,8 @@
 extern crate cxx;
 
+extern crate lazy_static;
+extern crate regex;
+
 #[cxx::bridge]
 mod ffi {
     unsafe extern "C++" {
@@ -32,7 +35,7 @@ use rouille::Response;
 extern crate serde;
 use serde::Serialize;
 use serialize::serialize_kpuzzle_definition;
-use serialize::serialize_kstate_data;
+use serialize::serialize_scramble_state_data;
 
 mod serialize;
 
@@ -53,7 +56,13 @@ fn set_arg(request: &Request) -> Response {
 
 fn set_ksolve(request: &Request) -> Response {
     let def: KPuzzleDefinition = try_or_400!(rouille::input::json_input(request));
-    w_setksolve(serialize_kpuzzle_definition(&def)); // TODO: catch exceptions???
+    let s = match serialize_kpuzzle_definition(def, None) {
+        Ok(s) => s,
+        Err(_) => {
+            return Response::text("Invalid definition").with_status_code(400);
+        }
+    };
+    w_setksolve(&s); // TODO: catch exceptions???
     sleep(Duration::from_secs(1));
     Response::empty_204()
 }
@@ -75,7 +84,10 @@ fn solvescramble(request: &Request) -> Response {
 
 fn solveposition(request: &Request) -> Response {
     let kstate_data: KStateData = try_or_400!(rouille::input::json_input(request));
-    let solution = w_solveposition(serialize_kstate_data(&kstate_data)); // TODO: catch exceptions???
+    let solution = w_solveposition(&serialize_scramble_state_data(
+        "AnonymousScramble",
+        &kstate_data,
+    )); // TODO: catch exceptions???
     Response::json(&ResponseAlg { alg: solution })
 }
 

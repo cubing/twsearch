@@ -81,6 +81,13 @@ fn serialize_state_data(t: &KStateData) -> String {
     builder.build()
 }
 
+fn include(options: &KPuzzleSerializationOptions, move_name: &String) -> bool {
+    match &options.move_subset {
+        Some(move_subset) => move_subset.contains(move_name),
+        None => true,
+    }
+}
+
 pub fn serialize_scramble_state_data(name: &str, t: &KStateData) -> String {
     let mut builder = LiteStringBuilder::new();
     builder.push(&format!("ScrambleState {}", name));
@@ -89,15 +96,15 @@ pub fn serialize_scramble_state_data(name: &str, t: &KStateData) -> String {
 }
 
 pub struct KPuzzleSerializationOptions {
-    move_subset: Option<Vec<String>>,
-    custom_start_state: Option<KStateData>,
+    pub move_subset: Option<Vec<String>>,
+    pub custom_start_state: Option<KStateData>,
 }
 
 pub fn serialize_kpuzzle_definition(
     def: KPuzzleDefinition, // TODO: take reference (requires a change in `cubing.rs`?)
-    options: Option<KPuzzleSerializationOptions>,
+    options: Option<&KPuzzleSerializationOptions>,
 ) -> Result<String, String> {
-    let options = options.unwrap_or(KPuzzleSerializationOptions {
+    let options = options.unwrap_or(&KPuzzleSerializationOptions {
         move_subset: None,
         custom_start_state: None,
     });
@@ -125,17 +132,15 @@ pub fn serialize_kpuzzle_definition(
     builder.push(BLANK_LINE);
 
     for (move_name, move_def) in &def.moves {
-        builder.push(&serialize_move_transformation(move_name, move_def))
+        if include(options, move_name) {
+            builder.push(&serialize_move_transformation(move_name, move_def))
+        }
     }
 
     if let Some(experimental_derived_moves) = &def.experimental_derived_moves.clone() {
         let kpuzzle = KPuzzle::new(def);
         for (move_name, move_alg_def) in experimental_derived_moves {
-            let include = match &options.move_subset {
-                Some(move_subset) => move_subset.contains(move_name),
-                None => true,
-            };
-            if include {
+            if include(options, move_name) {
                 let alg = match parse_alg!(move_alg_def) {
                     Ok(alg) => alg,
                     Err(e) => return Err(e),
@@ -151,5 +156,8 @@ pub fn serialize_kpuzzle_definition(
             }
         }
     };
+    // let s = builder.build();
+    // println!("{}", s);
+    // Ok(s)
     Ok(builder.build())
 }

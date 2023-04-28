@@ -9,7 +9,7 @@ mod ffi {
         include!("twsearch/src/cpp/wasmapi.h");
         fn w_arg(s: &str);
         fn w_setksolve(s: &str);
-        fn w_solvescramble(s: &str) -> String;
+        // fn w_solvescramble(s: &str) -> String;
         fn w_solveposition(s: &str) -> String;
     }
 }
@@ -20,22 +20,24 @@ extern crate cubing;
 use std::thread::sleep;
 use std::time::Duration;
 
-use cubing::alg::Alg;
+// use cubing::alg::Alg;
 use cubing::kpuzzle::KPuzzleDefinition;
 
 use cubing::kpuzzle::KStateData;
 
 use ffi::w_setksolve;
 use ffi::w_solveposition;
-use ffi::w_solvescramble;
+// use ffi::w_solvescramble;
 use rouille::router;
 use rouille::try_or_400;
 use rouille::Request;
 use rouille::Response;
 extern crate serde;
+use serde::Deserialize;
 use serde::Serialize;
 use serialize::serialize_kpuzzle_definition;
 use serialize::serialize_scramble_state_data;
+use serialize::KPuzzleSerializationOptions;
 
 mod serialize;
 
@@ -54,9 +56,8 @@ fn set_arg(request: &Request) -> Response {
     Response::empty_204()
 }
 
-fn set_ksolve(request: &Request) -> Response {
-    let def: KPuzzleDefinition = try_or_400!(rouille::input::json_input(request));
-    let s = match serialize_kpuzzle_definition(def, None) {
+fn set_definition(def: KPuzzleDefinition, options: &KPuzzleSerializationOptions) -> Response {
+    let s = match serialize_kpuzzle_definition(def, Some(options)) {
         Ok(s) => s,
         Err(_) => {
             return Response::text("Invalid definition").with_status_code(400);
@@ -72,21 +73,45 @@ struct ResponseAlg {
     alg: String, // TODO: support automatic alg serialization somehome
 }
 
-fn solvescramble(request: &Request) -> Response {
-    let arg = try_or_400!(rouille::input::plain_text_body(request));
-    let alg = match arg.parse::<Alg>() {
-        Ok(alg) => alg,
-        Err(_) => return Response::empty_400(), // TODO: more deets
-    };
-    let solution = w_solvescramble(&alg.to_string()); // TODO: catch exceptions???
-    Response::json(&ResponseAlg { alg: solution })
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct ScrambleSolve {
+    definition: KPuzzleDefinition,
+    scramble_alg: String,
+}
+
+// fn solvescramble(request: &Request) -> Response {
+//     let scramble_solve: ScrambleSolve = try_or_400!(rouille::input::json_input(request));
+//     set_definition(scramble_solve.definition);
+//     let alg = match scramble_solve.scramble_alg.parse::<Alg>() {
+//         Ok(alg) => alg,
+//         Err(_) => return Response::empty_400(), // TODO: more deets
+//     };
+//     let solution = w_solvescramble(&alg.to_string()); // TODO: catch exceptions???
+//     Response::json(&ResponseAlg { alg: solution })
+// }
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct StateSolve {
+    definition: KPuzzleDefinition,
+    state: KStateData,
+    move_subset: Option<Vec<String>>,
+    start_state: Option<KStateData>,
 }
 
 fn solveposition(request: &Request) -> Response {
-    let kstate_data: KStateData = try_or_400!(rouille::input::json_input(request));
+    let state_solve: StateSolve = try_or_400!(rouille::input::json_input(request));
+    set_definition(
+        state_solve.definition,
+        &KPuzzleSerializationOptions {
+            move_subset: state_solve.move_subset,
+            custom_start_state: state_solve.start_state,
+        },
+    );
     let solution = w_solveposition(&serialize_scramble_state_data(
         "AnonymousScramble",
-        &kstate_data,
+        &state_solve.state,
     )); // TODO: catch exceptions???
     Response::json(&ResponseAlg { alg: solution })
 }
@@ -107,12 +132,9 @@ fn main() {
             (POST) (/v0/config/arg) => {
                 set_arg(request)
             },
-            (POST) (/v0/config/definition) => {
-                set_ksolve(request)
-            },
-            (POST) (/v0/solve/scramble) => {
-                solvescramble(request)
-            },
+            // (POST) (/v0/solve/scramble) => {
+            //     solvescramble(request)
+            // },
             (POST) (/v0/solve/state) => { // TODO: `…/pattern`?
                 solveposition(request)
             },

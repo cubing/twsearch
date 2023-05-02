@@ -104,6 +104,9 @@ fn solveposition(request: &Request) -> Response {
 }
 
 fn main() {
+    let logical_cpus = num_cpus::get();
+    println!("Setting search to use {} threads.", logical_cpus);
+    ffi::rust_arg(&format!("-t {}", logical_cpus));
     let solve_mutex = Mutex::new(());
     println!(
         "Starting `twsearch-server`.

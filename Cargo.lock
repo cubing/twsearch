@@ -834,6 +834,7 @@ dependencies = [
  "cxx",
  "cxx-build",
  "lazy_static",
+ "num_cpus",
  "regex",
  "rouille",
  "serde",

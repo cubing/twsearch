@@ -2,6 +2,26 @@ extern crate cxx;
 
 extern crate lazy_static;
 extern crate regex;
+use std::sync::Mutex;
+
+extern crate cubing;
+use cubing::kpuzzle::KPuzzleDefinition;
+use cubing::kpuzzle::KStateData;
+
+extern crate rouille;
+use rouille::router;
+use rouille::try_or_400;
+use rouille::Request;
+use rouille::Response;
+
+extern crate serde;
+use serde::Deserialize;
+use serde::Serialize;
+use serialize::serialize_kpuzzle_definition;
+use serialize::serialize_scramble_state_data;
+use serialize::KPuzzleSerializationOptions;
+
+mod serialize;
 
 #[cxx::bridge]
 mod ffi {
@@ -14,31 +34,6 @@ mod ffi {
         fn rust_reset();
     }
 }
-
-extern crate rouille;
-
-extern crate cubing;
-
-use std::sync::Mutex;
-
-// use cubing::alg::Alg;
-use cubing::kpuzzle::KPuzzleDefinition;
-
-use cubing::kpuzzle::KStateData;
-
-// use ffi::w_solvescramble;
-use rouille::router;
-use rouille::try_or_400;
-use rouille::Request;
-use rouille::Response;
-extern crate serde;
-use serde::Deserialize;
-use serde::Serialize;
-use serialize::serialize_kpuzzle_definition;
-use serialize::serialize_scramble_state_data;
-use serialize::KPuzzleSerializationOptions;
-
-mod serialize;
 
 fn cors(response: Response) -> Response {
     response
@@ -80,17 +75,6 @@ struct ScrambleSolve {
     scramble_alg: String,
 }
 
-// fn solvescramble(request: &Request) -> Response {
-//     let scramble_solve: ScrambleSolve = try_or_400!(rouille::input::json_input(request));
-//     set_definition(scramble_solve.definition);
-//     let alg = match scramble_solve.scramble_alg.parse::<Alg>() {
-//         Ok(alg) => alg,
-//         Err(_) => return Response::empty_400(), // TODO: more deets
-//     };
-//     let solution = w_solvescramble(&alg.to_string()); // TODO: catch exceptions???
-//     Response::json(&ResponseAlg { alg: solution })
-// }
-
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct StateSolve {
@@ -121,7 +105,6 @@ fn solveposition(request: &Request) -> Response {
 
 fn main() {
     let solve_mutex = Mutex::new(());
-    // TODO: support parallel requests on the C++ side.
     rouille::start_server("0.0.0.0:2023", move |request: &Request| {
         println!("Request: {} {}", request.method(), request.url()); // TODO: debug flag
                                                                      // TODO: more fine-grained CORS?
@@ -136,15 +119,13 @@ fn main() {
             (POST) (/v0/config/arg) => {
                 set_arg(request)
             },
-            // (POST) (/v0/solve/scramble) => {
-            //     solvescramble(request)
-            // },
             (POST) (/v0/solve/state) => { // TODO: `…/pattern`?
                 if let Ok(guard) = solve_mutex.try_lock() {
                     let response = solveposition(request);
                     drop(guard);
                     response
                 } else {
+                    // TODO: support aborting the search on the C++ side.
                     Response::text("Only one non-abortable search at a time is currently supported.").with_status_code(409)
                 }
             },

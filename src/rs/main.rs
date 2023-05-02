@@ -19,6 +19,8 @@ extern crate rouille;
 
 extern crate cubing;
 
+use std::sync::Mutex;
+
 // use cubing::alg::Alg;
 use cubing::kpuzzle::KPuzzleDefinition;
 
@@ -118,8 +120,9 @@ fn solveposition(request: &Request) -> Response {
 }
 
 fn main() {
+    let solve_mutex = Mutex::new(());
     // TODO: support parallel requests on the C++ side.
-    rouille::start_server("0.0.0.0:2023", /* move */ |request: &Request| {
+    rouille::start_server("0.0.0.0:2023", move |request: &Request| {
         println!("Request: {} {}", request.method(), request.url()); // TODO: debug flag
                                                                      // TODO: more fine-grained CORS?
         if request.method() == "OPTIONS" {
@@ -137,7 +140,13 @@ fn main() {
             //     solvescramble(request)
             // },
             (POST) (/v0/solve/state) => { // TODO: `…/pattern`?
-                solveposition(request)
+                if let Ok(guard) = solve_mutex.try_lock() {
+                    let response = solveposition(request);
+                    drop(guard);
+                    response
+                } else {
+                    Response::text("Only one non-abortable search at a time is currently supported.").with_status_code(409)
+                }
             },
             _ => {
                 println!("Invalid request: {} {}", request.method(), request.url());

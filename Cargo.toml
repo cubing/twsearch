@@ -1,0 +1,18 @@
+[package]
+name = "twsearch"
+version = "0.0.0"
+
+[dependencies]
+cubing = "0.2.2"
+cxx = "1.0"
+lazy_static = "1.4.0"
+regex = "1.8.1"
+rouille = "3.6.2"
+serde = { version = "1.0.160", features = ["derive", "rc"] }
+
+[build-dependencies]
+cxx-build = "1.0"
+
+[[bin]]
+name = "twsearch-server"
+path = "./src/rs/main.rs"

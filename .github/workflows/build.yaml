@@ -33,3 +33,11 @@ jobs:
       - run: curl https://get.wasmer.io -sSfL | sh
       - run: source ~/.wasmer/wasmer.sh && make test-wasm
       - run: make test-build-js
+
+  rust:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: make build-rust
+      - run: make lint-rust

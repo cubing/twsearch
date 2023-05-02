@@ -105,6 +105,14 @@ fn solveposition(request: &Request) -> Response {
 
 fn main() {
     let solve_mutex = Mutex::new(());
+    println!(
+        "Starting `twsearch-server`.
+Use with:
+
+- http://localhost:3333/experiments.cubing.net/cubing.js/twsearch/text-ui.html
+- https://experiments.cubing.net/cubing.js/twsearch/text-ui.html
+"
+    );
     rouille::start_server("0.0.0.0:2023", move |request: &Request| {
         println!("Request: {} {}", request.method(), request.url()); // TODO: debug flag
                                                                      // TODO: more fine-grained CORS?

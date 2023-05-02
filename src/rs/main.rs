@@ -6,11 +6,12 @@ extern crate regex;
 #[cxx::bridge]
 mod ffi {
     unsafe extern "C++" {
-        include!("twsearch/src/cpp/wasmapi.h");
-        fn w_arg(s: &str);
-        fn w_setksolve(s: &str);
-        // fn w_solvescramble(s: &str) -> String;
-        fn w_solveposition(s: &str) -> String;
+        include!("twsearch/src/cpp/rustapi.h");
+        fn rust_arg(s: &str);
+        fn rust_setksolve(s: &str);
+        // fn rust_solvescramble(s: &str) -> String;
+        fn rust_solveposition(s: &str) -> String;
+        fn rust_reset();
     }
 }
 
@@ -25,8 +26,6 @@ use cubing::kpuzzle::KPuzzleDefinition;
 
 use cubing::kpuzzle::KStateData;
 
-use ffi::w_setksolve;
-use ffi::w_solveposition;
 // use ffi::w_solvescramble;
 use rouille::router;
 use rouille::try_or_400;
@@ -41,8 +40,6 @@ use serialize::KPuzzleSerializationOptions;
 
 mod serialize;
 
-use crate::ffi::w_arg;
-
 fn cors(response: Response) -> Response {
     response
         .with_additional_header("Access-Control-Allow-Origin", "*")
@@ -52,7 +49,7 @@ fn cors(response: Response) -> Response {
 fn set_arg(request: &Request) -> Response {
     let arg = try_or_400!(rouille::input::plain_text_body(request));
     println!("set_arg: {}", arg);
-    w_arg(&arg); // TODO: catch exceptions???
+    ffi::rust_arg(&arg); // TODO: catch exceptions???
     Response::empty_204()
 }
 
@@ -66,7 +63,8 @@ fn set_definition(
             return Err(Response::text(format!("Invalid definition: {}", e)).with_status_code(400));
         }
     };
-    w_setksolve(&s); // TODO: catch exceptions???
+    ffi::rust_reset();
+    ffi::rust_setksolve(&s); // TODO: catch exceptions???
     sleep(Duration::from_secs(1));
     Err(Response::empty_204())
 }
@@ -115,7 +113,7 @@ fn solveposition(request: &Request) -> Response {
         Ok(_) => {}
         Err(response) => return response,
     };
-    let solution = w_solveposition(&serialize_scramble_state_data(
+    let solution = ffi::rust_solveposition(&serialize_scramble_state_data(
         "AnonymousScramble",
         &state_solve.state,
     )); // TODO: catch exceptions???

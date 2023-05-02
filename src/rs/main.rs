@@ -18,8 +18,6 @@ mod ffi {
 extern crate rouille;
 
 extern crate cubing;
-use std::thread::sleep;
-use std::time::Duration;
 
 // use cubing::alg::Alg;
 use cubing::kpuzzle::KPuzzleDefinition;
@@ -64,9 +62,8 @@ fn set_definition(
         }
     };
     ffi::rust_reset();
-    ffi::rust_setksolve(&s); // TODO: catch exceptions???
-    sleep(Duration::from_secs(1));
-    Err(Response::empty_204())
+    ffi::rust_setksolve(&s);
+    Ok(())
 }
 
 #[derive(Serialize)]

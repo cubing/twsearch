@@ -56,16 +56,19 @@ fn set_arg(request: &Request) -> Response {
     Response::empty_204()
 }
 
-fn set_definition(def: KPuzzleDefinition, options: &KPuzzleSerializationOptions) -> Response {
+fn set_definition(
+    def: KPuzzleDefinition,
+    options: &KPuzzleSerializationOptions,
+) -> Result<(), Response> {
     let s = match serialize_kpuzzle_definition(def, Some(options)) {
         Ok(s) => s,
-        Err(_) => {
-            return Response::text("Invalid definition").with_status_code(400);
+        Err(e) => {
+            return Err(Response::text(format!("Invalid definition: {}", e)).with_status_code(400));
         }
     };
     w_setksolve(&s); // TODO: catch exceptions???
     sleep(Duration::from_secs(1));
-    Response::empty_204()
+    Err(Response::empty_204())
 }
 
 #[derive(Serialize)]
@@ -102,13 +105,16 @@ struct StateSolve {
 
 fn solveposition(request: &Request) -> Response {
     let state_solve: StateSolve = try_or_400!(rouille::input::json_input(request));
-    set_definition(
+    match set_definition(
         state_solve.definition,
         &KPuzzleSerializationOptions {
             move_subset: state_solve.move_subset,
             custom_start_state: state_solve.start_state,
         },
-    );
+    ) {
+        Ok(_) => {}
+        Err(response) => return response,
+    };
     let solution = w_solveposition(&serialize_scramble_state_data(
         "AnonymousScramble",
         &state_solve.state,

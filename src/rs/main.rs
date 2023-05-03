@@ -62,6 +62,7 @@ fn set_definition(
     let logical_cpus = num_cpus::get();
     println!("Setting search to use {} threads.", logical_cpus);
     ffi::rust_arg(&format!("-t {}", logical_cpus));
+    ffi::rust_arg("--checkbeforesolve");
     ffi::rust_setksolve(&s);
     Ok(())
 }

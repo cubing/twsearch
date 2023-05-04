@@ -4,6 +4,7 @@
 #include "workchunks.h"
 #include "rotations.h"
 #include "canon.h"
+#include <iostream>
 /*
  *   This code supports pruning tables for arbitrary puzzles.  Memory
  *   consumption is a power of two.  Each table entry is two bits.
@@ -18,6 +19,28 @@
  *   The hash table permits collisions (stores the minimum).
  */
 const int CACHELINESIZE = 64 ;
+// BLOCKSIZE bits has one secondary entry and as many primary ones as fit.
+// All of these values are log2 values.  SECONDARYBITS should be greater than
+// PRIMARYBITS.
+// Given a hash value h that's been adjusted to fit in the range, we
+// want to make sure the low bit is 0 if PRIMARYBITS is 1.  Also, of
+// the low (BLOCKSIZEBITS-PRIMARYBITS), we want to make sure the value
+// is at least PRIMARYBITS.
+// different way to ensure we set the low bits:  pick off the low 16,
+// subtract a shifted fraction of them, then add the new base.
+#define BLOCKSIZEBITS (6)
+#define PRIMARYBITS (1)
+#define SECONDARYBITS (2)
+//
+#define PRIMARYMASK ((1<<(1<<PRIMARYBITS))-1)
+#define SECONDARYMASK ((1<<(1<<SECONDARYBITS))-1)
+#define HSHIFT (6 - PRIMARYBITS)
+#define HMUL (1+PRIMARYBITS)
+#define LOWHMASK ((1<<HSHIFT)-1)
+#define LOWHMIN (1<<(SECONDARYBITS-PRIMARYBITS)) ;
+#define LOWCHECK ((1<<(BLOCKSIZEBITS-PRIMARYBITS)) - (1<<(SECONDARYBITS-PRIMARYBITS)))
+#define LOWCLEARMASK ((1 << (BLOCKSIZEBITS-PRIMARYBITS)) - 1)
+//
 const int COMPSIGNATURE = 23 ; // start and end of data files
 const int UNCOMPSIGNATURE = 24 ; // start and end of data files
 #define UNKNOWNPUZZLE "unknownpuzzle"
@@ -85,20 +108,45 @@ struct prunetable {
    void checkextend(const puzdef &pd, int ignorelookups=0) ;
    int lookuph(ull h) const {
       h = indexhash(h) ;
-      int v = 3 & (mem[h >> 5] >> ((h & 31) * 2)) ;
-      if (v == 3)
-         return (mem[(h >> 5) & ~7] & 15) - 1 ;
-      else
+      int v = PRIMARYMASK & (mem[h >> HSHIFT] >> ((h & LOWHMASK) * HMUL)) ;
+      if (v == PRIMARYMASK) {
+         h &= ~LOWCLEARMASK ;
+         return (mem[h >> HSHIFT] & SECONDARYMASK) - 1 ;
+      } else
+#if PRIMARYBITS == 1
          return 2 - v + baseval ;
+#else
+         return 2 + baseval ;
+#endif
    }
    void prefetch(ull h) const {
-      __builtin_prefetch(mem+((indexhash(h)) >> 5)) ;
+      __builtin_prefetch(mem+((indexhash(h)) >> HSHIFT)) ;
    }
    ull indexhash(ull lowb) const {
       ull h = lowb ;
       h -= h >> subshift ;
-      h >>= memshift ;
-      h ^= 0xff & ((((h & 0xfe) - 2) >> 8) & (lowb | 2)) ;
+      const ull BS = BLOCKSIZEBITS - SECONDARYBITS ;
+      const ull BP = BLOCKSIZEBITS - PRIMARYBITS ;
+      h = (h - ((h & ((1LL << (memshift + BP)) - 1)) >> BS) -
+                  (h & 1) + (1LL << (memshift + SECONDARYBITS - PRIMARYBITS))) >> memshift ;
+      if ((h & LOWCHECK) == 0) {
+          std::cout << "Fail with h " << std::hex << h << std::dec << std::endl << std::flush ;
+          h = lowb ;
+          std::cout << "Started with " << std::hex << lowb << std::dec << std::endl << std::flush ;
+          h -= h >> subshift ;
+          std::cout << "Next was " << std::hex << h << std::dec << std::endl << std::flush ;
+          std::cout << "Sub1 " << std::hex << 
+((h & ((1LL << (memshift + BP)) - 1)) >> BS)
+<< std::dec << std::endl << std::flush ;
+          std::cout << "Sub2 " << std::hex << 
+(h&1)
+<< std::dec << std::endl << std::flush ;
+          std::cout << "Add " << std::hex << 
+(1LL << (memshift + SECONDARYBITS - PRIMARYBITS))
+<< std::dec << std::endl << std::flush ;
+          exit(10) ;
+      }
+// std::cout << "ih " << std::hex << h << std::dec << std::endl ;
       return h ;
    }
    ull indexhash(int n, const setval sv) const {
@@ -112,11 +160,16 @@ struct prunetable {
       } else {
          h = indexhash(totsize, sv) ;
       }
-      int v = 3 & (mem[h >> 5] >> ((h & 31) * 2)) ;
-      if (v == 3)
-         return (mem[(h >> 5) & ~7] & 15) - 1 ;
-      else
+      int v = PRIMARYMASK & (mem[h >> HSHIFT] >> ((h & LOWHMASK) * HMUL)) ;
+      if (v == PRIMARYMASK) {
+         h &= ~LOWCLEARMASK ;
+         return (mem[h >> HSHIFT] & SECONDARYMASK) - 1 ;
+      } else
+#if PRIMARYBITS == 1
          return 2 - v + baseval ;
+#else
+         return 2 + baseval ;
+#endif
    }
    void addlookups(ull lookups) {
       lookupcnt += lookups ;

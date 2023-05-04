@@ -3,6 +3,7 @@
 #include <set>
 #include "prunetable.h"
 #include "city.h"
+using namespace std ;
 #define USECOMPRESSION
 #ifdef USECOMPRESSION
 #define SIGNATURE COMPSIGNATURE
@@ -91,10 +92,11 @@ ull fillworker::fillflush(prunetable &pt, int shard) {
       pt.fillcnt += fb.nchunks ;
       for (int i=0; i<fb.nchunks; i++) {
          ull h = fb.chunks[i] ;
-         if (((pt.mem[h>>5] >> (2*(h&31))) & 3) == 0) {
-            pt.mem[h>>5] += (3LL - pt.wval) << (2*(h&31)) ;
-            if ((pt.mem[(h>>5)&-8] & 15) == 0)
-               pt.mem[(h>>5)&-8] += 1 + pt.wbval ;
+         if (((pt.mem[h>>HSHIFT] >> (HMUL*(h&LOWHMASK))) & PRIMARYMASK) == 0) {
+            pt.mem[h>>HSHIFT] += ((ull)(PRIMARYMASK) - pt.wval) << (HMUL*(h&LOWHMASK)) ;
+            h &= ~LOWCLEARMASK ;
+            if ((pt.mem[(h>>HSHIFT)] & SECONDARYMASK) == 0)
+               pt.mem[(h>>HSHIFT)] += 1 + pt.wbval ;
             r++ ;
          }
       }
@@ -261,7 +263,7 @@ prunetable::prunetable(const puzdef &pd, ull maxmem) {
       subshift = sh+1 ;
       bytesize |= bytesize >> 1 ;
    }
-   size = bytesize * 4 ;
+   size = bytesize * (8 >> PRIMARYBITS) ;
    shardshift = 0 ;
    while ((size >> shardshift) > MEMSHARDS)
       shardshift++ ;
@@ -333,6 +335,8 @@ void prunetable::checkextend(const puzdef &pd, int ignorelookup) {
        (pd.logstates <= 50 && prediction > pd.llstates))
       return ;
    if (wval == 2) {
+ cerr << "Finish fixing up this code." << endl ;
+ exit(10) ;
       ull longcnt = (size + 31) >> 5 ;
       if (quiet == 0)
          cout << "Demoting memory values " << flush ;
@@ -389,10 +393,16 @@ void prunetable::addsumdat(const puzdef &pd, string &filename) const {
 }
 string prunetable::makefilename(const puzdef &pd) const {
 #ifdef USECOMPRESSION
-   string filename = "tws7-" + inputbasename + "-" ;
+   string filename = "xws7-" ;
 #else
-   string filename = "tws6-" + inputbasename + "-" ;
+   string filename = "xws6-" ;
 #endif
+   filename += (char)('a'+BLOCKSIZEBITS) ;
+   filename += (char)('a'+PRIMARYBITS) ;
+   filename += (char)('a'+SECONDARYBITS) ;
+   filename += "-" ;
+   filename += inputbasename ;
+   filename += "-" ;
    if (quarter)
       filename += "q-" ;
    ull bytes = size >> 2 ;

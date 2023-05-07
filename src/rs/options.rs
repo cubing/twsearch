@@ -15,6 +15,9 @@ pub struct TwsearchArgs {
     #[clap(long)]
     pub check_before_solve: bool,
 
+    #[clap(long, alias = "randomstart")]
+    pub random_start: bool,
+
     /// Defaults to the number of logical CPU cores available.
     #[clap(visible_short_alias = 't', long)]
     pub num_threads: Option<usize>,
@@ -50,6 +53,12 @@ pub fn get_options() -> TwsearchArgs {
     args
 }
 
+fn set_boolean_arg(arg_flag: &str, arg: bool) {
+    if arg {
+        ffi::rust_arg(arg_flag);
+    }
+}
+
 fn set_optional_arg<T: Display>(arg_flag: &str, arg: Option<T>) {
     if let Some(v) = arg {
         ffi::rust_arg(&format!("{} {}", arg_flag, v));
@@ -66,9 +75,8 @@ pub fn reset_args(args: &TwsearchArgs) {
     println!("Setting search to use {} threads.", num_threads);
     ffi::rust_arg(&format!("-t {}", num_threads));
 
-    if args.check_before_solve {
-        ffi::rust_arg("--checkbeforesolve");
-    }
+    set_boolean_arg("--randomstart", args.check_before_solve);
+    set_boolean_arg("--checkbeforesolve", args.random_start);
 
     set_optional_arg("--startprunedepth", args.start_prune_depth);
     set_optional_arg("-m", args.memory_mb);

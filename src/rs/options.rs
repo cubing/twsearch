@@ -1,8 +1,11 @@
 use clap::{CommandFactory, Parser};
 use clap_complete::generator::generate;
 use clap_complete::{Generator, Shell};
+use std::fmt::Display;
 use std::io::stdout;
 use std::process::exit;
+
+use crate::ffi;
 
 /// Twsearch
 #[derive(Parser, Debug)]
@@ -18,6 +21,9 @@ pub struct TwsearchArgs {
 
     #[clap(long, alias = "startprunedepth", id = "DEPTH")]
     pub start_prune_depth: Option<usize>,
+
+    #[clap(long, visible_short_alias = 'm', id = "MEGABYTES")]
+    pub memory_mb: Option<usize>,
 
     /// Print completions for the given shell (instead of running any commands).
     /// These can be loaded/stored permanently (e.g. when using Homebrew), but they can also be sourced directly, e.g.:
@@ -42,4 +48,28 @@ pub fn get_options() -> TwsearchArgs {
     }
 
     args
+}
+
+fn set_optional_arg<T: Display>(arg_flag: &str, arg: Option<T>) {
+    if let Some(v) = arg {
+        ffi::rust_arg(&format!("{} {}", arg_flag, v));
+    }
+}
+
+pub fn reset_args(args: &TwsearchArgs) {
+    ffi::rust_reset();
+
+    let num_threads = match args.num_threads {
+        Some(num_threads) => num_threads,
+        None => num_cpus::get(),
+    };
+    println!("Setting search to use {} threads.", num_threads);
+    ffi::rust_arg(&format!("-t {}", num_threads));
+
+    if args.check_before_solve {
+        ffi::rust_arg("--checkbeforesolve");
+    }
+
+    set_optional_arg("--startprunedepth", args.start_prune_depth);
+    set_optional_arg("-m", args.memory_mb);
 }

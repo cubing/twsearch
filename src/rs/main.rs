@@ -4,6 +4,7 @@ use cubing::alg::Move;
 use cubing::kpuzzle::KPuzzleDefinition;
 use cubing::kpuzzle::KStateData;
 
+use options::reset_args;
 use rouille::router;
 use rouille::try_or_400;
 use rouille::Request;
@@ -38,33 +39,6 @@ fn cors(response: Response) -> Response {
         .with_additional_header("Access-Control-Allow-Origin", "*")
         .with_additional_header("Access-Control-Allow-Headers", "Content-Type")
 }
-
-fn set_arg(request: &Request) -> Response {
-    let arg = try_or_400!(rouille::input::plain_text_body(request));
-    println!("set_arg: {}", arg);
-    ffi::rust_arg(&arg); // TODO: catch exceptions???
-    Response::empty_204()
-}
-
-fn reset_args(args: &TwsearchArgs) {
-    ffi::rust_reset();
-
-    let num_threads = match args.num_threads {
-        Some(num_threads) => num_threads,
-        None => num_cpus::get(),
-    };
-    println!("Setting search to use {} threads.", num_threads);
-    ffi::rust_arg(&format!("-t {}", num_threads));
-
-    if args.check_before_solve {
-        ffi::rust_arg("--checkbeforesolve");
-    }
-
-    if let Some(start_prune_depth) = args.start_prune_depth {
-        ffi::rust_arg(&format!("--startprunedepth {}", start_prune_depth));
-    }
-}
-
 fn set_definition(
     def: KPuzzleDefinition,
     options: &KPuzzleSerializationOptions,
@@ -142,9 +116,6 @@ Use with:
         cors(router!(request,
             (GET) (/) => {
                 Response::text("twsearch-server (https://github.com/cubing/twsearch)")
-            },
-            (POST) (/v0/config/arg) => {
-                set_arg(request)
             },
             (POST) (/v0/solve/state) => { // TODO: `…/pattern`?
                 if let Ok(guard) = solve_mutex.try_lock() {

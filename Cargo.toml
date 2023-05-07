@@ -18,5 +18,5 @@ serde = { version = "1.0.160", features = ["derive", "rc"] }
 cxx-build = "1.0"
 
 [[bin]]
-name = "twsearch-server"
+name = "twsearch-rs"
 path = "./src/rs/main.rs"

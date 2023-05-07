@@ -25,6 +25,12 @@ pub struct TwsearchArgs {
     #[clap(long, visible_alias = "startprunedepth", id = "DEPTH")]
     pub start_prune_depth: Option<usize>,
 
+    #[clap(long, visible_alias = "mindepth")]
+    pub min_depth: Option<usize>,
+
+    #[clap(long, visible_alias = "maxdepth")]
+    pub max_depth: Option<usize>,
+
     #[clap(long, visible_short_alias = 'm', id = "MEGABYTES")]
     pub memory_mb: Option<usize>,
 
@@ -78,6 +84,9 @@ pub fn reset_args(args: &TwsearchArgs) {
     set_boolean_arg("--randomstart", args.check_before_solve);
     set_boolean_arg("--checkbeforesolve", args.random_start);
 
+    set_optional_arg("--mindepth", args.min_depth);
+    set_optional_arg("--maxdepth", args.max_depth);
     set_optional_arg("--startprunedepth", args.start_prune_depth);
+
     set_optional_arg("-m", args.memory_mb);
 }

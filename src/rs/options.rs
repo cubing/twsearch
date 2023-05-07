@@ -12,17 +12,17 @@ use crate::ffi;
 #[command(author, version, about, long_about = None)]
 #[clap(name = "folderify")]
 pub struct TwsearchArgs {
-    #[clap(long)]
+    #[clap(long, visible_alias = "checkbeforesolve")]
     pub check_before_solve: bool,
 
-    #[clap(long, alias = "randomstart")]
+    #[clap(long, visible_alias = "randomstart")]
     pub random_start: bool,
 
     /// Defaults to the number of logical CPU cores available.
     #[clap(visible_short_alias = 't', long)]
     pub num_threads: Option<usize>,
 
-    #[clap(long, alias = "startprunedepth", id = "DEPTH")]
+    #[clap(long, visible_alias = "startprunedepth", id = "DEPTH")]
     pub start_prune_depth: Option<usize>,
 
     #[clap(long, visible_short_alias = 'm', id = "MEGABYTES")]

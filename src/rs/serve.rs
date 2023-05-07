@@ -11,7 +11,7 @@ use serde::Serialize;
 
 use std::sync::Mutex;
 
-use crate::options::reset_args;
+use crate::options::reset_args_from;
 use crate::options::CommonSearchArgs;
 use crate::rust_api;
 use crate::serialize::serialize_kpuzzle_definition;
@@ -55,7 +55,7 @@ struct StateSolve {
 
 fn solveposition(request: &Request, search_args: &CommonSearchArgs) -> Response {
     let state_solve: StateSolve = try_or_400!(rouille::input::json_input(request));
-    reset_args(search_args);
+    reset_args_from(vec![search_args]);
     match set_definition(
         state_solve.definition,
         &KPuzzleSerializationOptions {

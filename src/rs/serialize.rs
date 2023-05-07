@@ -1,7 +1,7 @@
 extern crate cubing;
 use cubing::{
+    alg::Move,
     kpuzzle::{KPuzzle, KPuzzleDefinition, KStateData, KTransformationData},
-    parse_alg,
 };
 
 use lazy_static::lazy_static;
@@ -55,12 +55,15 @@ fn serialize_usize_vec(vec: &[usize]) -> String {
         .join(" ")
 }
 
-fn serialize_move_transformation(name: &str, t: &KTransformationData) -> String {
+fn serialize_move_transformation(r#move: &Move, t: &KTransformationData) -> String {
     let mut builder = LiteStringBuilder::new();
-    builder.push(&format!("MoveTransformation {}", sanitize(name)));
+    builder.push(&format!(
+        "MoveTransformation {}",
+        sanitize(&r#move.to_string())
+    ));
     // outputLines.push(`MoveTransformation ${sanitize(name)}`);
     for (orbit_name, orbit_data) in t {
-        builder.push(&sanitize(orbit_name));
+        builder.push(&sanitize(&orbit_name.to_string()));
         builder.push_vec(&orbit_data.permutation);
         builder.push_vec(&orbit_data.orientation);
     }
@@ -72,7 +75,7 @@ fn serialize_move_transformation(name: &str, t: &KTransformationData) -> String 
 fn serialize_state_data(t: &KStateData) -> String {
     let mut builder = LiteStringBuilder::new();
     for (orbit_name, orbit_data) in t {
-        builder.push(&sanitize(orbit_name));
+        builder.push(&sanitize(&orbit_name.to_string()));
         builder.push_vec(&orbit_data.pieces);
         builder.push_vec(&orbit_data.orientation);
     }
@@ -81,7 +84,7 @@ fn serialize_state_data(t: &KStateData) -> String {
     builder.build()
 }
 
-fn include(options: &KPuzzleSerializationOptions, move_name: &String) -> bool {
+fn include(options: &KPuzzleSerializationOptions, move_name: &Move) -> bool {
     match &options.move_subset {
         Some(move_subset) => move_subset.contains(move_name),
         None => true,
@@ -96,7 +99,7 @@ pub fn serialize_scramble_state_data(name: &str, t: &KStateData) -> String {
 }
 
 pub struct KPuzzleSerializationOptions {
-    pub move_subset: Option<Vec<String>>,
+    pub move_subset: Option<Vec<Move>>,
     pub custom_start_state: Option<KStateData>,
 }
 
@@ -116,7 +119,7 @@ pub fn serialize_kpuzzle_definition(
     for (orbit_name, orbit_info) in &def.orbits {
         builder.push(&format!(
             "Set {} {} {}",
-            &sanitize(orbit_name),
+            &sanitize(&orbit_name.to_string()),
             orbit_info.num_pieces,
             orbit_info.num_orientations
         ));
@@ -138,14 +141,10 @@ pub fn serialize_kpuzzle_definition(
     }
 
     if let Some(experimental_derived_moves) = &def.experimental_derived_moves.clone() {
-        let kpuzzle = KPuzzle::new(def);
-        for (move_name, move_alg_def) in experimental_derived_moves {
+        let kpuzzle = KPuzzle::try_new(def)?;
+        for (move_name, alg) in experimental_derived_moves {
             if include(options, move_name) {
-                let alg = match parse_alg!(move_alg_def) {
-                    Ok(alg) => alg,
-                    Err(e) => return Err(e),
-                };
-                let transformation = match kpuzzle.transformation_from_alg(&alg) {
+                let transformation = match kpuzzle.transformation_from_alg(alg) {
                     Ok(transformation) => transformation,
                     Err(e) => return Err(e),
                 };

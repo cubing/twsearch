@@ -1,5 +1,6 @@
 use std::sync::Mutex;
 
+use cubing::alg::Move;
 use cubing::kpuzzle::KPuzzleDefinition;
 use cubing::kpuzzle::KStateData;
 
@@ -95,7 +96,7 @@ struct ScrambleSolve {
 struct StateSolve {
     definition: KPuzzleDefinition,
     state: KStateData,
-    move_subset: Option<Vec<String>>,
+    move_subset: Option<Vec<Move>>,
     start_state: Option<KStateData>,
 }
 

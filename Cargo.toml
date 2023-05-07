@@ -1,8 +1,11 @@
 [package]
 name = "twsearch"
 version = "0.0.0"
+edition = "2021"
 
 [dependencies]
+clap = { version = "4.2.7", features = ["derive"] }
+clap_complete = "4.2.1"
 cubing = "0.2.2"
 cxx = "1.0"
 lazy_static = "1.4.0"

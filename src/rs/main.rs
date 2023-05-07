@@ -1,30 +1,27 @@
-extern crate cxx;
-
-extern crate lazy_static;
-extern crate regex;
 use std::sync::Mutex;
 
-extern crate cubing;
 use cubing::kpuzzle::KPuzzleDefinition;
 use cubing::kpuzzle::KStateData;
 
-extern crate rouille;
 use rouille::router;
 use rouille::try_or_400;
 use rouille::Request;
 use rouille::Response;
 
-extern crate serde;
 use serde::Deserialize;
 use serde::Serialize;
 use serialize::serialize_kpuzzle_definition;
 use serialize::serialize_scramble_state_data;
 use serialize::KPuzzleSerializationOptions;
 
+use crate::options::get_options;
+use crate::options::TwsearchArgs;
+
+mod options;
 mod serialize;
 
 #[cxx::bridge]
-mod ffi {
+pub mod ffi {
     unsafe extern "C++" {
         include!("twsearch/src/cpp/rustapi.h");
         fn rust_arg(s: &str);
@@ -48,6 +45,25 @@ fn set_arg(request: &Request) -> Response {
     Response::empty_204()
 }
 
+fn reset_args(args: &TwsearchArgs) {
+    ffi::rust_reset();
+
+    let num_threads = match args.num_threads {
+        Some(num_threads) => num_threads,
+        None => num_cpus::get(),
+    };
+    println!("Setting search to use {} threads.", num_threads);
+    ffi::rust_arg(&format!("-t {}", num_threads));
+
+    if args.check_before_solve {
+        ffi::rust_arg("--checkbeforesolve");
+    }
+
+    if let Some(start_prune_depth) = args.start_prune_depth {
+        ffi::rust_arg(&format!("--startprunedepth {}", start_prune_depth));
+    }
+}
+
 fn set_definition(
     def: KPuzzleDefinition,
     options: &KPuzzleSerializationOptions,
@@ -58,11 +74,6 @@ fn set_definition(
             return Err(Response::text(format!("Invalid definition: {}", e)).with_status_code(400));
         }
     };
-    ffi::rust_reset();
-    let logical_cpus = num_cpus::get();
-    println!("Setting search to use {} threads.", logical_cpus);
-    ffi::rust_arg(&format!("-t {}", logical_cpus));
-    ffi::rust_arg("--checkbeforesolve");
     ffi::rust_setksolve(&s);
     Ok(())
 }
@@ -88,8 +99,9 @@ struct StateSolve {
     start_state: Option<KStateData>,
 }
 
-fn solveposition(request: &Request) -> Response {
+fn solveposition(request: &Request, args: &TwsearchArgs) -> Response {
     let state_solve: StateSolve = try_or_400!(rouille::input::json_input(request));
+    reset_args(args);
     match set_definition(
         state_solve.definition,
         &KPuzzleSerializationOptions {
@@ -108,6 +120,8 @@ fn solveposition(request: &Request) -> Response {
 }
 
 fn main() {
+    let args = get_options();
+
     let solve_mutex = Mutex::new(());
     println!(
         "Starting `twsearch-server`.
@@ -133,7 +147,7 @@ Use with:
             },
             (POST) (/v0/solve/state) => { // TODO: `…/pattern`?
                 if let Ok(guard) = solve_mutex.try_lock() {
-                    let response = solveposition(request);
+                    let response = solveposition(request, &args);
                     drop(guard);
                     response
                 } else {

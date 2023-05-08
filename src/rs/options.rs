@@ -44,20 +44,33 @@ pub trait SetCppArgs {
 
 #[derive(Args, Debug)]
 pub struct CommonSearchArgs {
+    /// Check that a position is legal before attempting to solve it. This may take extra time or memory for large puzzles.
     #[clap(long/*, visible_alias = "checkbeforesolve" */)]
     pub check_before_solve: bool,
 
+    /// Randomize the search order. This can produce different solutions the
+    /// same run of each input, which is desirable for some use cases.
     #[clap(long/*, visible_alias = "randomstart"`*/)]
     pub random_start: bool,
 
+    /// Depth to start the pruning table. This can avoid multiple pruning table
+    /// expansions that can already be anticipated by starting with a sufficient
+    /// depth.
     #[clap(long/*, visible_alias = "startprunedepth" */, id = "DEPTH")]
     pub start_prune_depth: Option<usize>,
 
+    /// Start solution search at this depth.
     #[clap(long/* , visible_alias = "mindepth" */)]
     pub min_depth: Option<usize>,
 
+    /// Stop solution search at this depth.
     #[clap(long/* , visible_alias = "maxdepth" */)]
     pub max_depth: Option<usize>,
+
+    // TODO: Implement this for the server, or remove it as an arg for the `serve` command.
+    /// Don't write to disk
+    #[clap(long/* , visible_alias = "nowrite" */)]
+    pub no_write: bool,
 
     #[command(flatten)]
     pub performance_args: PerformanceArgs,
@@ -67,10 +80,10 @@ impl SetCppArgs for CommonSearchArgs {
     fn set_cpp_args(&self) {
         set_boolean_arg("--randomstart", self.check_before_solve);
         set_boolean_arg("--checkbeforesolve", self.random_start);
-
         set_optional_arg("--mindepth", self.min_depth);
         set_optional_arg("--maxdepth", self.max_depth);
         set_optional_arg("--startprunedepth", self.start_prune_depth);
+        set_boolean_arg("--nowrite", self.no_write);
         self.performance_args.set_cpp_args();
     }
 }
@@ -81,6 +94,7 @@ pub struct PerformanceArgs {
     #[clap(long/* , visible_short_alias = 't' */)]
     pub num_threads: Option<usize>,
 
+    /// Memory to use in MiB. See `README.md` for advice on how to tune memory usage.
     #[clap(long/* , visible_short_alias = 'm' */, id = "MEGABYTES")]
     pub memory_mb: Option<usize>,
 }

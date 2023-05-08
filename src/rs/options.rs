@@ -181,6 +181,14 @@ pub struct GodsAlgorithmArgs {
     #[clap(long/* , visible_short_alias = 'a' */, default_value_t = 20)]
     pub num_antipodes: u32, // TODO: Change this to `Option<u32>` while still displaying a semantic default value?
 
+    /// Force the use of arrays rather than bitmaps.
+    #[clap(long/* , visible_short_alias = 'F' */)]
+    pub force_arrays: bool,
+
+    /// Use 128-bit hash to encode states rather than actual packed state representation.
+    #[clap(long/* , visible_short_alias = 'H' */)]
+    pub hash_states: bool,
+
     #[command(flatten)]
     pub performance_args: PerformanceArgs,
 }
@@ -188,6 +196,8 @@ pub struct GodsAlgorithmArgs {
 impl SetCppArgs for GodsAlgorithmArgs {
     fn set_cpp_args(&self) {
         set_boolean_arg("-g", true);
+        set_boolean_arg("-F", self.force_arrays);
+        set_boolean_arg("-H", self.hash_states);
         set_arg("-a", self.num_antipodes);
         self.performance_args.set_cpp_args();
     }

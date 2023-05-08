@@ -39,17 +39,17 @@ fn main() {
         options::Command::Completions(_completions_args) => {
             panic!("Completions should have been printed during options parsing, followed by program exit.")
         }
-        options::Command::Search {
-            search_args,
-            input_args,
-        } => {
-            reset_args_from(vec![&search_args]);
+        options::Command::Search(search_command_args) => {
+            reset_args_from(vec![&search_command_args]);
             main_search(
-                &input_args.def_file_wrapper_args.def_file,
-                &input_args.scramble_file,
+                &search_command_args
+                    .input_args
+                    .def_file_wrapper_args
+                    .def_file,
+                &search_command_args.input_args.scramble_file,
             )
         }
-        options::Command::Serve { search_args } => serve(search_args),
+        options::Command::Serve(serve_command_args) => serve(serve_command_args),
         options::Command::SchreierSims {} => todo!(),
         options::Command::GodsAlgorithm(gods_algorithm_args) => {
             reset_args_from(vec![&gods_algorithm_args]);

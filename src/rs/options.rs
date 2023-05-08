@@ -20,18 +20,10 @@ pub struct TwsearchArgs {
 #[derive(Subcommand, Debug)]
 pub enum Command {
     /// Run a single search.
-    Search {
-        #[command(flatten)]
-        search_args: CommonSearchArgs,
-        #[command(flatten)]
-        input_args: InputDefAndOptionalScrambleFileArgs,
-    },
+    Search(SearchCommandArgs),
     /// Run a search server.
     /// Use with: https://experiments.cubing.net/cubing.js/twsearch/text-ui.html
-    Serve {
-        #[command(flatten)]
-        search_args: CommonSearchArgs,
-    },
+    Serve(ServeCommandArgs),
     SchreierSims {},
     GodsAlgorithm(GodsAlgorithmArgs),
 
@@ -68,11 +60,6 @@ pub struct CommonSearchArgs {
     #[clap(long/* , visible_alias = "maxdepth" */)]
     pub max_depth: Option<usize>,
 
-    // TODO: Implement this for the server, or remove it as an arg for the `serve` command.
-    /// Don't write to disk
-    #[clap(long/* , visible_alias = "nowrite" */)]
-    pub no_write: bool,
-
     #[command(flatten)]
     pub performance_args: PerformanceArgs,
 }
@@ -84,8 +71,51 @@ impl SetCppArgs for CommonSearchArgs {
         set_optional_arg("--mindepth", self.min_depth);
         set_optional_arg("--maxdepth", self.max_depth);
         set_optional_arg("--startprunedepth", self.start_prune_depth);
-        set_boolean_arg("--nowrite", self.no_write);
         self.performance_args.set_cpp_args();
+    }
+}
+
+#[derive(Args, Debug)]
+pub struct SearchCommandArgs {
+    #[command(flatten)]
+    pub search_args: CommonSearchArgs,
+    #[command(flatten)]
+    pub search_persistence_args: SearchPersistenceArgs,
+    #[command(flatten)]
+    pub input_args: InputDefAndOptionalScrambleFileArgs,
+}
+
+impl SetCppArgs for SearchCommandArgs {
+    fn set_cpp_args(&self) {
+        self.search_args.set_cpp_args();
+        self.search_persistence_args.set_cpp_args();
+    }
+}
+
+#[derive(Args, Debug)]
+pub struct ServeCommandArgs {
+    #[command(flatten)]
+    pub search_args: CommonSearchArgs,
+    // TODO: implement a safe way to write prune tables.
+}
+
+impl SetCppArgs for ServeCommandArgs {
+    fn set_cpp_args(&self) {
+        self.search_args.set_cpp_args();
+        set_boolean_arg("--no-write", true)
+    }
+}
+
+#[derive(Args, Debug)]
+pub struct SearchPersistenceArgs {
+    /// Don't don't write pruning tables to disk (regenerate each time).
+    #[clap(long/* , visible_alias = "nowrite" */)]
+    pub no_write: bool,
+}
+
+impl SetCppArgs for SearchPersistenceArgs {
+    fn set_cpp_args(&self) {
+        set_boolean_arg("--nowrite", self.no_write);
     }
 }
 
@@ -174,17 +204,17 @@ pub fn get_options() -> TwsearchArgs {
     args
 }
 
-pub fn set_arg<T: Display>(arg_flag: &str, arg: T) {
+fn set_arg<T: Display>(arg_flag: &str, arg: T) {
     rust_api::rust_arg(&format!("{} {}", arg_flag, arg));
 }
 
-pub fn set_boolean_arg(arg_flag: &str, arg: bool) {
+fn set_boolean_arg(arg_flag: &str, arg: bool) {
     if arg {
         rust_api::rust_arg(arg_flag);
     }
 }
 
-pub fn set_optional_arg<T: Display>(arg_flag: &str, arg: Option<T>) {
+fn set_optional_arg<T: Display>(arg_flag: &str, arg: Option<T>) {
     if let Some(v) = arg {
         rust_api::rust_arg(&format!("{} {}", arg_flag, v));
     }

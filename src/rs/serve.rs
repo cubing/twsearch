@@ -13,6 +13,7 @@ use std::sync::Mutex;
 
 use crate::options::reset_args_from;
 use crate::options::CommonSearchArgs;
+use crate::options::ServeCommandArgs;
 use crate::rust_api;
 use crate::serialize::serialize_kpuzzle_definition;
 use crate::serialize::serialize_scramble_state_data;
@@ -79,7 +80,7 @@ fn cors(response: Response) -> Response {
         .with_additional_header("Access-Control-Allow-Headers", "Content-Type")
 }
 
-pub fn serve(search_args: CommonSearchArgs) {
+pub fn serve(serve_command_args: ServeCommandArgs) {
     let solve_mutex = Mutex::new(());
     println!(
         "Starting `twsearch-rs serve`.
@@ -102,7 +103,7 @@ Use with:
             },
             (POST) (/v0/solve/state) => { // TODO: `…/pattern`?
                 if let Ok(guard) = solve_mutex.try_lock() {
-                    let response = solveposition(request, &search_args);
+                    let response = solveposition(request, &serve_command_args.search_args);
                     drop(guard);
                     response
                 } else {

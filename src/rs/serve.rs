@@ -83,11 +83,11 @@ fn cors(response: Response) -> Response {
 pub fn serve(serve_command_args: ServeCommandArgs) {
     let solve_mutex = Mutex::new(());
     println!(
-        "Starting `twsearch-rs serve`.
-Use with:
+        "Starting `twsearch-rs serve` on port 2023.
+Use with one of the following:
 
-- http://localhost:3333/experiments.cubing.net/cubing.js/twsearch/text-ui.html
 - https://experiments.cubing.net/cubing.js/twsearch/text-ui.html
+- http://localhost:3333/experiments.cubing.net/cubing.js/twsearch/text-ui.html
 "
     );
     rouille::start_server("0.0.0.0:2023", move |request: &Request| {

@@ -50,10 +50,6 @@ pub struct CommonSearchArgs {
     #[clap(long/*, visible_alias = "randomstart"`*/)]
     pub random_start: bool,
 
-    /// Defaults to the number of logical CPU cores available.
-    #[clap(long/* , visible_short_alias = 't' */)]
-    pub num_threads: Option<usize>,
-
     #[clap(long/*, visible_alias = "startprunedepth" */, id = "DEPTH")]
     pub start_prune_depth: Option<usize>,
 
@@ -63,25 +59,40 @@ pub struct CommonSearchArgs {
     #[clap(long/* , visible_alias = "maxdepth" */)]
     pub max_depth: Option<usize>,
 
-    #[clap(long/* , visible_short_alias = 'm' */, id = "MEGABYTES")]
-    pub memory_mb: Option<usize>,
+    #[command(flatten)]
+    pub performance_args: PerformanceArgs,
 }
 
 impl SetCppArgs for CommonSearchArgs {
     fn set_cpp_args(&self) {
-        let num_threads = match self.num_threads {
-            Some(num_threads) => num_threads,
-            None => num_cpus::get(),
-        };
-        println!("Setting search to use {} threads.", num_threads);
-        rust_api::rust_arg(&format!("-t {}", num_threads));
-
         set_boolean_arg("--randomstart", self.check_before_solve);
         set_boolean_arg("--checkbeforesolve", self.random_start);
 
         set_optional_arg("--mindepth", self.min_depth);
         set_optional_arg("--maxdepth", self.max_depth);
         set_optional_arg("--startprunedepth", self.start_prune_depth);
+        self.performance_args.set_cpp_args();
+    }
+}
+
+#[derive(Args, Debug)]
+pub struct PerformanceArgs {
+    /// Defaults to the number of logical CPU cores available.
+    #[clap(long/* , visible_short_alias = 't' */)]
+    pub num_threads: Option<usize>,
+
+    #[clap(long/* , visible_short_alias = 'm' */, id = "MEGABYTES")]
+    pub memory_mb: Option<usize>,
+}
+
+impl SetCppArgs for PerformanceArgs {
+    fn set_cpp_args(&self) {
+        let num_threads = match self.num_threads {
+            Some(num_threads) => num_threads,
+            None => num_cpus::get(),
+        };
+        println!("Setting twsearch to use {} threads.", num_threads);
+        rust_api::rust_arg(&format!("-t {}", num_threads));
 
         set_optional_arg("-m", self.memory_mb);
     }
@@ -102,14 +113,19 @@ pub struct CompletionsArgs {
 pub struct GodsAlgorithmArgs {
     #[command(flatten)]
     pub input_args: InputDefFileOnlyArgs,
+
     #[clap(long/* , visible_short_alias = 'a' */, default_value_t = 20)]
     pub num_antipodes: u32, // TODO: Change this to `Option<u32>` while still displaying a semantic default value?
+
+    #[command(flatten)]
+    pub performance_args: PerformanceArgs,
 }
 
 impl SetCppArgs for GodsAlgorithmArgs {
     fn set_cpp_args(&self) {
         set_boolean_arg("-g", true);
         set_arg("-a", self.num_antipodes);
+        self.performance_args.set_cpp_args();
     }
 }
 

@@ -2,7 +2,7 @@ mod options;
 mod serialize;
 mod serve;
 
-use std::{path::Path, process::exit};
+use std::path::{Path, PathBuf};
 
 use options::reset_args_from;
 use serve::serve;
@@ -23,7 +23,7 @@ pub mod rust_api {
     }
 }
 
-fn main_search(def_file: &Path, scramble_file: Option<&Path>) {
+fn main_search(def_file: &Path, scramble_file: &Option<PathBuf>) {
     let def_file = def_file.to_str().expect("Invalid def file path");
     let scramble_file = match scramble_file {
         Some(scramble_file) => scramble_file.to_str().expect("Invalid scramble file path"),
@@ -39,15 +39,21 @@ fn main() {
         options::Command::Completions(_completions_args) => {
             panic!("Completions should have been printed during options parsing, followed by program exit.")
         }
-        options::Command::Search { search_args } => {
-            println!("{:?}", search_args);
-            exit(1)
+        options::Command::Search {
+            search_args,
+            input_args,
+        } => {
+            reset_args_from(vec![&search_args]);
+            main_search(
+                &input_args.def_file_wrapper_args.def_file,
+                &input_args.scramble_file,
+            )
         }
         options::Command::Serve { search_args } => serve(search_args),
         options::Command::SchreierSims {} => todo!(),
         options::Command::GodsAlgorithm(gods_algorithm_args) => {
             reset_args_from(vec![&gods_algorithm_args]);
-            main_search(&gods_algorithm_args.input_args.def_file, None)
+            main_search(&gods_algorithm_args.input_args.def_file, &None)
         }
     }
 }

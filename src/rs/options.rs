@@ -23,6 +23,8 @@ pub enum Command {
     Search {
         #[command(flatten)]
         search_args: CommonSearchArgs,
+        #[command(flatten)]
+        input_args: InputDefAndOptionalScrambleFileArgs,
     },
     /// Run a search server.
     /// Use with: https://experiments.cubing.net/cubing.js/twsearch/text-ui.html
@@ -99,7 +101,7 @@ pub struct CompletionsArgs {
 #[derive(Args, Debug)]
 pub struct GodsAlgorithmArgs {
     #[command(flatten)]
-    pub input_args: InputFileDefOnlyArgs,
+    pub input_args: InputDefFileOnlyArgs,
     #[clap(long/* , visible_short_alias = 'a' */, default_value_t = 20)]
     pub num_antipodes: u32, // TODO: Change this to `Option<u32>` while still displaying a semantic default value?
 }
@@ -112,18 +114,18 @@ impl SetCppArgs for GodsAlgorithmArgs {
 }
 
 #[derive(Args, Debug)]
-pub struct InputFileDefOnlyArgs {
+pub struct InputDefFileOnlyArgs {
     #[clap()]
     pub def_file: PathBuf,
 }
 
-// #[derive(Args, Debug)]
-// pub struct InputFileDefAndOptionalScrambleArgs {
-//     #[clap()]
-//     pub def_file: PathBuf,
-//     #[clap()]
-//     pub scramble_file: Option<PathBuf>,
-// }
+#[derive(Args, Debug)]
+pub struct InputDefAndOptionalScrambleFileArgs {
+    #[command(flatten)]
+    pub def_file_wrapper_args: InputDefFileOnlyArgs,
+    #[clap()]
+    pub scramble_file: Option<PathBuf>,
+}
 
 fn completions_for_shell(cmd: &mut clap::Command, generator: impl Generator) {
     generate(generator, cmd, "twsearch", &mut stdout());

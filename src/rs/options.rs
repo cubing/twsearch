@@ -25,9 +25,16 @@ pub enum Command {
     /// Use with: https://experiments.cubing.net/cubing.js/twsearch/text-ui.html
     Serve(ServeCommandArgs),
 
+    // TOOD: Detect identical pieces and warn/error (and give advice on how to run the "same" search with fully-distinguishable pieces).
+    /// Run the Schreier-Sims algorithm to calculate the number of reachable states.
+    ///
+    /// Warning: Does NOT account for identical pieces.
     SchreierSims(SchreierSimsArgs),
+    /// Enumerate the entire state graph and print antipodes.
     GodsAlgorithm(GodsAlgorithmArgs),
+    /// Run a timing test for given definition.
     TimingTest(TimingTestArgs),
+    // Enumerate canonical algs (move sequences) at iterative depths.
     CanonicalAlgs(CanonicalAlgsArgs),
 
     /// Print completions for the given shell.

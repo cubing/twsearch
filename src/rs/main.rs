@@ -52,6 +52,7 @@ fn main() {
         options::Command::Serve(serve_command_args) => serve(serve_command_args),
         // TODO: consolidate def-only arg implementations.
         options::Command::SchreierSims(schreier_sims_command_args) => {
+            println!("Warning: `schreier-sims` does not support searching with identical pieces. If there are any identical pieces, they will be treated as distinguishable.");
             reset_args_from(vec![&schreier_sims_command_args]);
             main_search(&schreier_sims_command_args.input_args.def_file, &None)
         }

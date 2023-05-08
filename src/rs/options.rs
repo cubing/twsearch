@@ -205,7 +205,7 @@ pub struct InputDefAndOptionalScrambleFileArgs {
 }
 
 fn completions_for_shell(cmd: &mut clap::Command, generator: impl Generator) {
-    generate(generator, cmd, "twsearch", &mut stdout());
+    generate(generator, cmd, "twsearch-rs", &mut stdout());
 }
 
 pub fn get_options() -> TwsearchArgs {

@@ -50,6 +50,7 @@ fn main() {
             )
         }
         options::Command::Serve(serve_command_args) => serve(serve_command_args),
+        // TODO: consolidate def-only arg implementations.
         options::Command::SchreierSims(schreier_sims_command_args) => {
             reset_args_from(vec![&schreier_sims_command_args]);
             main_search(&schreier_sims_command_args.input_args.def_file, &None)
@@ -59,6 +60,10 @@ fn main() {
             main_search(&gods_algorithm_args.input_args.def_file, &None)
         }
         options::Command::TimingTest(args) => {
+            reset_args_from(vec![&args]);
+            main_search(&args.input_args.def_file, &None)
+        }
+        options::Command::CanonicalAlgs(args) => {
             reset_args_from(vec![&args]);
             main_search(&args.input_args.def_file, &None)
         }

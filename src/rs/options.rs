@@ -24,9 +24,11 @@ pub enum Command {
     /// Run a search server.
     /// Use with: https://experiments.cubing.net/cubing.js/twsearch/text-ui.html
     Serve(ServeCommandArgs),
+
     SchreierSims(SchreierSimsArgs),
     GodsAlgorithm(GodsAlgorithmArgs),
     TimingTest(TimingTestArgs),
+    CanonicalAlgs(CanonicalAlgsArgs),
 
     /// Print completions for the given shell.
     Completions(CompletionsArgs),
@@ -203,6 +205,22 @@ pub struct TimingTestArgs {
 impl SetCppArgs for TimingTestArgs {
     fn set_cpp_args(&self) {
         set_boolean_arg("-T", true);
+        self.performance_args.set_cpp_args();
+    }
+}
+
+#[derive(Args, Debug)]
+pub struct CanonicalAlgsArgs {
+    #[command(flatten)]
+    pub input_args: InputDefFileOnlyArgs,
+
+    #[command(flatten)]
+    pub performance_args: PerformanceArgs,
+}
+
+impl SetCppArgs for CanonicalAlgsArgs {
+    fn set_cpp_args(&self) {
+        set_boolean_arg("-C", true);
         self.performance_args.set_cpp_args();
     }
 }

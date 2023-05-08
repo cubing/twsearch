@@ -86,12 +86,15 @@ pub struct SearchCommandArgs {
     pub search_persistence_args: SearchPersistenceArgs,
     #[command(flatten)]
     pub input_args: InputDefAndOptionalScrambleFileArgs,
+    #[command(flatten)]
+    pub metric_args: MetricArgs,
 }
 
 impl SetCppArgs for SearchCommandArgs {
     fn set_cpp_args(&self) {
         self.search_args.set_cpp_args();
         self.search_persistence_args.set_cpp_args();
+        self.metric_args.set_cpp_args();
     }
 }
 
@@ -100,12 +103,15 @@ pub struct ServeCommandArgs {
     #[command(flatten)]
     pub search_args: CommonSearchArgs,
     // TODO: implement a safe way to write prune tables.
+    #[command(flatten)]
+    pub metric_args: MetricArgs,
 }
 
 impl SetCppArgs for ServeCommandArgs {
     fn set_cpp_args(&self) {
+        set_boolean_arg("--nowrite", true);
         self.search_args.set_cpp_args();
-        set_boolean_arg("--nowrite", true)
+        self.metric_args.set_cpp_args();
     }
 }
 
@@ -190,6 +196,9 @@ pub struct GodsAlgorithmArgs {
     pub hash_states: bool,
 
     #[command(flatten)]
+    pub metric_args: MetricArgs,
+
+    #[command(flatten)]
     pub performance_args: PerformanceArgs,
 }
 
@@ -200,6 +209,7 @@ impl SetCppArgs for GodsAlgorithmArgs {
         set_boolean_arg("-H", self.hash_states);
         set_arg("-a", self.num_antipodes);
         self.performance_args.set_cpp_args();
+        self.metric_args.set_cpp_args();
     }
 }
 
@@ -209,6 +219,9 @@ pub struct TimingTestArgs {
     pub input_args: InputDefFileOnlyArgs,
 
     #[command(flatten)]
+    pub metric_args: MetricArgs,
+
+    #[command(flatten)]
     pub performance_args: PerformanceArgs,
 }
 
@@ -216,6 +229,7 @@ impl SetCppArgs for TimingTestArgs {
     fn set_cpp_args(&self) {
         set_boolean_arg("-T", true);
         self.performance_args.set_cpp_args();
+        self.metric_args.set_cpp_args();
     }
 }
 
@@ -225,6 +239,9 @@ pub struct CanonicalAlgsArgs {
     pub input_args: InputDefFileOnlyArgs,
 
     #[command(flatten)]
+    pub metric_args: MetricArgs,
+
+    #[command(flatten)]
     pub performance_args: PerformanceArgs,
 }
 
@@ -232,6 +249,19 @@ impl SetCppArgs for CanonicalAlgsArgs {
     fn set_cpp_args(&self) {
         set_boolean_arg("-C", true);
         self.performance_args.set_cpp_args();
+        self.metric_args.set_cpp_args();
+    }
+}
+
+#[derive(Args, Debug)]
+pub struct MetricArgs {
+    #[clap(long/* , visible_short_alias = 'q' */)]
+    pub quantum_metric: bool,
+}
+
+impl SetCppArgs for MetricArgs {
+    fn set_cpp_args(&self) {
+        set_boolean_arg("-q", self.quantum_metric);
     }
 }
 

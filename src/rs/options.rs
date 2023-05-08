@@ -99,7 +99,7 @@ pub struct CompletionsArgs {
 #[derive(Args, Debug)]
 pub struct GodsAlgorithmArgs {
     #[command(flatten)]
-    pub input_args: InputArgs,
+    pub input_args: InputFileDefOnlyArgs,
     #[clap(long/* , visible_short_alias = 'a' */, default_value_t = 20)]
     pub num_antipodes: u32, // TODO: Change this to `Option<u32>` while still displaying a semantic default value?
 }
@@ -112,12 +112,18 @@ impl SetCppArgs for GodsAlgorithmArgs {
 }
 
 #[derive(Args, Debug)]
-pub struct InputArgs {
+pub struct InputFileDefOnlyArgs {
     #[clap()]
     pub def_file: PathBuf,
-    #[clap()]
-    pub scramble_file: Option<PathBuf>,
 }
+
+// #[derive(Args, Debug)]
+// pub struct InputFileDefAndOptionalScrambleArgs {
+//     #[clap()]
+//     pub def_file: PathBuf,
+//     #[clap()]
+//     pub scramble_file: Option<PathBuf>,
+// }
 
 fn completions_for_shell(cmd: &mut clap::Command, generator: impl Generator) {
     generate(generator, cmd, "twsearch", &mut stdout());

@@ -58,5 +58,9 @@ fn main() {
             reset_args_from(vec![&gods_algorithm_args]);
             main_search(&gods_algorithm_args.input_args.def_file, &None)
         }
+        options::Command::TimingTest(args) => {
+            reset_args_from(vec![&args]);
+            main_search(&args.input_args.def_file, &None)
+        }
     }
 }

@@ -26,6 +26,7 @@ pub enum Command {
     Serve(ServeCommandArgs),
     SchreierSims(SchreierSimsArgs),
     GodsAlgorithm(GodsAlgorithmArgs),
+    TimingTest(TimingTestArgs),
 
     /// Print completions for the given shell.
     Completions(CompletionsArgs),
@@ -186,6 +187,22 @@ impl SetCppArgs for GodsAlgorithmArgs {
     fn set_cpp_args(&self) {
         set_boolean_arg("-g", true);
         set_arg("-a", self.num_antipodes);
+        self.performance_args.set_cpp_args();
+    }
+}
+
+#[derive(Args, Debug)]
+pub struct TimingTestArgs {
+    #[command(flatten)]
+    pub input_args: InputDefFileOnlyArgs,
+
+    #[command(flatten)]
+    pub performance_args: PerformanceArgs,
+}
+
+impl SetCppArgs for TimingTestArgs {
+    fn set_cpp_args(&self) {
+        set_boolean_arg("-T", true);
         self.performance_args.set_cpp_args();
     }
 }

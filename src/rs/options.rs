@@ -24,7 +24,7 @@ pub enum Command {
     /// Run a search server.
     /// Use with: https://experiments.cubing.net/cubing.js/twsearch/text-ui.html
     Serve(ServeCommandArgs),
-    SchreierSims {},
+    SchreierSims(SchreierSimsArgs),
     GodsAlgorithm(GodsAlgorithmArgs),
 
     /// Print completions for the given shell.
@@ -152,6 +152,22 @@ pub struct CompletionsArgs {
     ///  source <(twsearch completions zsh) # zsh
     #[clap(id = "SHELL")]
     shell: Shell,
+}
+
+#[derive(Args, Debug)]
+pub struct SchreierSimsArgs {
+    #[command(flatten)]
+    pub input_args: InputDefFileOnlyArgs,
+
+    #[command(flatten)]
+    pub performance_args: PerformanceArgs,
+}
+
+impl SetCppArgs for SchreierSimsArgs {
+    fn set_cpp_args(&self) {
+        set_boolean_arg("--schreiersims", true);
+        self.performance_args.set_cpp_args();
+    }
 }
 
 #[derive(Args, Debug)]

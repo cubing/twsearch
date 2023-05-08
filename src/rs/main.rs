@@ -50,7 +50,10 @@ fn main() {
             )
         }
         options::Command::Serve(serve_command_args) => serve(serve_command_args),
-        options::Command::SchreierSims {} => todo!(),
+        options::Command::SchreierSims(schreier_sims_command_args) => {
+            reset_args_from(vec![&schreier_sims_command_args]);
+            main_search(&schreier_sims_command_args.input_args.def_file, &None)
+        }
         options::Command::GodsAlgorithm(gods_algorithm_args) => {
             reset_args_from(vec![&gods_algorithm_args]);
             main_search(&gods_algorithm_args.input_args.def_file, &None)

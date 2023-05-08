@@ -8,7 +8,7 @@ use std::process::exit;
 
 use crate::rust_api;
 
-/// Twsearch
+/// twsearch-rs — a native Rust wrapper for `twsearch` functionality.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 #[clap(name = "twsearch-rs")]

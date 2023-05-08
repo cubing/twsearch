@@ -32,10 +32,11 @@ pub enum Command {
         #[command(flatten)]
         search_args: CommonSearchArgs,
     },
-    /// Print completions for the given shell.
-    Completions(CompletionsArgs),
     SchreierSims {},
     GodsAlgorithm(GodsAlgorithmArgs),
+
+    /// Print completions for the given shell.
+    Completions(CompletionsArgs),
 }
 
 pub trait SetCppArgs {

@@ -103,7 +103,7 @@ pub struct ServeCommandArgs {
 impl SetCppArgs for ServeCommandArgs {
     fn set_cpp_args(&self) {
         self.search_args.set_cpp_args();
-        set_boolean_arg("--no-write", true)
+        set_boolean_arg("--nowrite", true)
     }
 }
 

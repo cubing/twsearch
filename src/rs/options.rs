@@ -19,7 +19,7 @@ pub struct TwsearchArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum Command {
-    /// Run a single search (not fully implemented).
+    /// Run a single search.
     Search {
         #[command(flatten)]
         search_args: CommonSearchArgs,

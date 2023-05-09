@@ -98,9 +98,11 @@ pub struct SearchCommandArgs {
     #[command(flatten)]
     pub search_persistence_args: SearchPersistenceArgs,
     #[command(flatten)]
-    pub input_args: InputDefAndOptionalScrambleFileArgs,
-    #[command(flatten)]
     pub metric_args: MetricArgs,
+
+    // We place this last show it shows at the end of `--help` (and therefore just above the next shell prompt).
+    #[command(flatten)]
+    pub input_args: InputDefAndOptionalScrambleFileArgs,
 }
 
 impl SetCppArgs for SearchCommandArgs {
@@ -164,11 +166,11 @@ impl SetCppArgs for SearchPersistenceArgs {
 #[derive(Args, Debug)]
 pub struct PerformanceArgs {
     /// Defaults to the number of logical CPU cores available.
-    #[clap(long/* , visible_short_alias = 't' */)]
+    #[clap(long, help_heading = "Performance"/* , visible_short_alias = 't' */)]
     pub num_threads: Option<usize>,
 
     /// Memory to use in MiB. See `README.md` for advice on how to tune memory usage.
-    #[clap(long/* , visible_short_alias = 'm' */, id = "MEGABYTES")]
+    #[clap(long, help_heading = "Performance"/* , visible_short_alias = 'm' */, id = "MEGABYTES")]
     pub memory_mb: Option<usize>,
 }
 
@@ -312,14 +314,14 @@ pub struct InputDefFileOnlyArgs {
 pub struct InputDefAndOptionalScrambleFileArgs {
     #[command(flatten)]
     pub def_file_wrapper_args: InputDefFileOnlyArgs,
-    // Solve all the scrambles from the given file.
-    #[clap(group = "scramble_input")]
+    /// Solve all the scrambles from the given file.
+    #[clap(help_heading = "Scramble input", group = "scramble_input")]
     pub scramble_file: Option<PathBuf>,
     /// Solve a single scramble specified directly as an argument.
-    #[clap(long/*, visible_alias = "scramblealg" */, group = "scramble_input")]
+    #[clap(long/*, visible_alias = "scramblealg" */, help_heading = "Scramble input", group = "scramble_input")]
     pub scramble_alg: Option<String>, // TODO: Make `Alg` implement `Send` (e.g. by using `Arc`, possibly through an optional feature or a separate thread-safe `Alg` struct)
     /// Solve a list of scrambles passed to standard in (separated by newlines).
-    #[clap(long, group = "scramble_input"/* , visible_short_alias = 's' */)]
+    #[clap(long, help_heading = "Scramble input", group = "scramble_input"/* , visible_short_alias = 's' */)]
     pub stdin_scrambles: bool,
 }
 

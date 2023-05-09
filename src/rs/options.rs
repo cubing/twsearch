@@ -78,15 +78,22 @@ impl SetCppArgs for CommonSearchArgs {
     fn set_cpp_args(&self) {
         set_boolean_arg("--randomstart", self.check_before_solve);
         set_boolean_arg("--checkbeforesolve", self.random_start);
-        set_optional_arg("--mindepth", self.min_depth);
-        set_optional_arg("--maxdepth", self.max_depth);
-        set_optional_arg("--startprunedepth", self.start_prune_depth);
+        set_optional_arg("--mindepth", &self.min_depth);
+        set_optional_arg("--maxdepth", &self.max_depth);
+        set_optional_arg("--startprunedepth", &self.start_prune_depth);
         self.performance_args.set_cpp_args();
     }
 }
 
 #[derive(Args, Debug)]
 pub struct SearchCommandArgs {
+    // TODO: find a way to generalize this into a "search refinement" arg struct.
+    /// A comma-separated list of moves to use. All multiples of these
+    /// moves are considered. For example, `--moves U,F,R2` only permits
+    /// half-turns on R, and all possible turns on U and F.
+    #[clap(long)]
+    pub moves: Option<String>,
+
     #[command(flatten)]
     pub search_args: CommonSearchArgs,
     #[command(flatten)]
@@ -102,6 +109,7 @@ impl SetCppArgs for SearchCommandArgs {
         self.search_args.set_cpp_args();
         self.search_persistence_args.set_cpp_args();
         self.metric_args.set_cpp_args();
+        set_optional_arg("--moves", &self.moves);
     }
 }
 
@@ -155,7 +163,7 @@ impl SetCppArgs for PerformanceArgs {
         println!("Setting twsearch to use {} threads.", num_threads);
         rust_api::rust_arg(&format!("-t {}", num_threads));
 
-        set_optional_arg("-m", self.memory_mb);
+        set_optional_arg("-m", &self.memory_mb);
     }
 }
 
@@ -214,7 +222,7 @@ impl SetCppArgs for GodsAlgorithmArgs {
         set_boolean_arg("-g", true);
         set_boolean_arg("-F", self.force_arrays);
         set_boolean_arg("-H", self.hash_states);
-        set_arg("-a", self.num_antipodes);
+        set_arg("-a", &self.num_antipodes);
         self.performance_args.set_cpp_args();
         self.metric_args.set_cpp_args();
     }
@@ -302,7 +310,7 @@ pub fn get_options() -> TwsearchArgs {
     args
 }
 
-fn set_arg<T: Display>(arg_flag: &str, arg: T) {
+fn set_arg<T: Display>(arg_flag: &str, arg: &T) {
     rust_api::rust_arg(&format!("{} {}", arg_flag, arg));
 }
 
@@ -312,7 +320,7 @@ fn set_boolean_arg(arg_flag: &str, arg: bool) {
     }
 }
 
-fn set_optional_arg<T: Display>(arg_flag: &str, arg: Option<T>) {
+fn set_optional_arg<T: Display>(arg_flag: &str, arg: &Option<T>) {
     if let Some(v) = arg {
         rust_api::rust_arg(&format!("{} {}", arg_flag, v));
     }

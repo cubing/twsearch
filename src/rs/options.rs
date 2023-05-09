@@ -1,6 +1,7 @@
 use clap::{Args, CommandFactory, Parser, Subcommand};
 use clap_complete::generator::generate;
 use clap_complete::{Generator, Shell};
+use cubing::alg::Alg;
 use std::fmt::Display;
 use std::io::stdout;
 use std::path::PathBuf;
@@ -109,6 +110,7 @@ impl SetCppArgs for SearchCommandArgs {
         self.moves_args.set_cpp_args();
         self.search_args.set_cpp_args();
         self.search_persistence_args.set_cpp_args();
+        self.input_args.set_cpp_args();
         self.metric_args.set_cpp_args();
     }
 }
@@ -310,8 +312,26 @@ pub struct InputDefFileOnlyArgs {
 pub struct InputDefAndOptionalScrambleFileArgs {
     #[command(flatten)]
     pub def_file_wrapper_args: InputDefFileOnlyArgs,
-    #[clap()]
+    #[clap(group = "scramble_input")]
     pub scramble_file: Option<PathBuf>,
+    #[clap(long/*, visible_alias = "scramblealg" */, group = "scramble_input")]
+    pub scramble_alg: Option<String>, // TODO: Make `Alg` implement `Send` (e.g. by using `Arc`, possibly through an optional feature or a separate thread-safe `Alg` struct)
+}
+
+impl SetCppArgs for InputDefAndOptionalScrambleFileArgs {
+    fn set_cpp_args(&self) {
+        match &self.scramble_alg {
+            Some(scramble_alg) => {
+                let parsed_alg = match scramble_alg.parse::<Alg>() {
+                    Ok(alg) => alg,
+                    Err(_) => panic!("Invalid scramble alg."),
+                };
+                // TODO: Use `cubing::kpuzzle` to handle nested input syntax
+                set_arg("--scramblealg", &parsed_alg.to_string())
+            }
+            None => todo!(),
+        }
+    }
 }
 
 fn completions_for_shell(cmd: &mut clap::Command, generator: impl Generator) {

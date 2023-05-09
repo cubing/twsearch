@@ -312,10 +312,13 @@ pub struct InputDefFileOnlyArgs {
 pub struct InputDefAndOptionalScrambleFileArgs {
     #[command(flatten)]
     pub def_file_wrapper_args: InputDefFileOnlyArgs,
+    // Solve all the scrambles from the given file.
     #[clap(group = "scramble_input")]
     pub scramble_file: Option<PathBuf>,
+    /// Solve a single scramble specified directly as an argument.
     #[clap(long/*, visible_alias = "scramblealg" */, group = "scramble_input")]
     pub scramble_alg: Option<String>, // TODO: Make `Alg` implement `Send` (e.g. by using `Arc`, possibly through an optional feature or a separate thread-safe `Alg` struct)
+    /// Solve a list of scrambles passed to standard in (separated by newlines).
     #[clap(long, group = "scramble_input"/* , visible_short_alias = 's' */)]
     pub stdin_scrambles: bool,
 }

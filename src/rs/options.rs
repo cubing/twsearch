@@ -172,9 +172,9 @@ pub struct CompletionsArgs {
     /// Print completions for the given shell.
     /// These can be loaded/stored permanently (e.g. when using Homebrew), but they can also be sourced directly, e.g.:
     ///
-    ///  twsearch completions fish | source # fish
-    ///  source <(twsearch completions zsh) # zsh
-    #[clap(id = "SHELL")]
+    ///  twsearch-rs completions fish | source # fish
+    ///  source <(twsearch-rs completions zsh) # zsh
+    #[clap(verbatim_doc_comment, id = "SHELL")]
     shell: Shell,
 }
 

@@ -87,13 +87,11 @@ impl SetCppArgs for CommonSearchArgs {
 
 #[derive(Args, Debug)]
 pub struct SearchCommandArgs {
-    // TODO: find a way to generalize this into a "search refinement" arg struct.
-    /// A comma-separated list of moves to use. All multiples of these
-    /// moves are considered. For example, `--moves U,F,R2` only permits
-    /// half-turns on R, and all possible turns on U and F.
-    #[clap(long)]
-    pub moves: Option<String>,
+    #[clap(long/* , visible_short_alias = 't' */)]
+    pub min_num_solutions: Option<u32>,
 
+    #[command(flatten)]
+    pub moves_args: MovesArgs,
     #[command(flatten)]
     pub search_args: CommonSearchArgs,
     #[command(flatten)]
@@ -106,9 +104,27 @@ pub struct SearchCommandArgs {
 
 impl SetCppArgs for SearchCommandArgs {
     fn set_cpp_args(&self) {
+        set_optional_arg("-c", &self.min_num_solutions);
+
+        self.moves_args.set_cpp_args();
         self.search_args.set_cpp_args();
         self.search_persistence_args.set_cpp_args();
         self.metric_args.set_cpp_args();
+    }
+}
+
+// TODO: generalize this to a "definition modification" args struct?
+#[derive(Args, Debug)]
+pub struct MovesArgs {
+    /// A comma-separated list of moves to use. All multiples of these
+    /// moves are considered. For example, `--moves U,F,R2` only permits
+    /// half-turns on R, and all possible turns on U and F.
+    #[clap(long)]
+    pub moves: Option<String>,
+}
+
+impl SetCppArgs for MovesArgs {
+    fn set_cpp_args(&self) {
         set_optional_arg("--moves", &self.moves);
     }
 }
@@ -199,6 +215,9 @@ pub struct GodsAlgorithmArgs {
     #[command(flatten)]
     pub input_args: InputDefFileOnlyArgs,
 
+    #[command(flatten)]
+    pub moves_args: MovesArgs,
+
     #[clap(long/* , visible_short_alias = 'a' */, default_value_t = 20)]
     pub num_antipodes: u32, // TODO: Change this to `Option<u32>` while still displaying a semantic default value?
 
@@ -219,6 +238,7 @@ pub struct GodsAlgorithmArgs {
 
 impl SetCppArgs for GodsAlgorithmArgs {
     fn set_cpp_args(&self) {
+        self.moves_args.set_cpp_args();
         set_boolean_arg("-g", true);
         set_boolean_arg("-F", self.force_arrays);
         set_boolean_arg("-H", self.hash_states);

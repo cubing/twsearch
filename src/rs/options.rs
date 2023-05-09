@@ -316,6 +316,8 @@ pub struct InputDefAndOptionalScrambleFileArgs {
     pub scramble_file: Option<PathBuf>,
     #[clap(long/*, visible_alias = "scramblealg" */, group = "scramble_input")]
     pub scramble_alg: Option<String>, // TODO: Make `Alg` implement `Send` (e.g. by using `Arc`, possibly through an optional feature or a separate thread-safe `Alg` struct)
+    #[clap(long, group = "scramble_input"/* , visible_short_alias = 's' */)]
+    pub stdin_scrambles: bool,
 }
 
 impl SetCppArgs for InputDefAndOptionalScrambleFileArgs {
@@ -329,8 +331,9 @@ impl SetCppArgs for InputDefAndOptionalScrambleFileArgs {
                 // TODO: Use `cubing::kpuzzle` to handle nested input syntax
                 set_arg("--scramblealg", &parsed_alg.to_string())
             }
-            None => todo!(),
-        }
+            None => (),
+        };
+        set_boolean_arg("-s", self.stdin_scrambles)
     }
 }
 

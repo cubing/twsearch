@@ -1,0 +1,105 @@
+.menu {
+	width:			100%;
+}
+
+.links {
+	text-align:		right;
+	font-weight:		bold;
+}
+
+.logo img {
+	width:			50px;
+	height:			50px;
+}
+
+.footer {
+	font-style:		italic;
+	width:			100%;
+}
+
+.hosted {
+	text-align:		right;
+}
+
+body {
+	margin:			auto 8px 20px 8px;
+}
+
+img {
+	display:		block;
+	margin-left:		auto;
+	margin-right:		auto;
+	max-width:		100%;
+}
+
+code {
+	background-color:	#eeeeee;
+	padding:		2px;
+}
+
+pre code {
+	padding:                0px;
+}
+
+pre {
+	background-color:	#eeeeee;
+	border:			2px solid;
+	padding:		6px;
+}
+
+#blob {
+	background:		#ffffff;
+	border:			none;
+}
+
+a {
+	color:			#0f2899;
+	text-decoration:	none;
+}
+
+.links a {
+	font-weight:		bold;
+	color:			black;
+}
+
+.hosted a,
+.contact a {
+	font-weight:		bold;
+}
+
+a:hover {
+	text-decoration:	underline;
+}
+
+html {
+	margin:			1em auto;
+	max-width:		42em;
+}
+
+h1 {
+	text-align:		center;
+}
+
+td h1 {
+	text-align:		left;
+	font-size:		1.5em;
+}
+
+table {
+	width:			100%;
+}
+
+.url td {
+	font-family:		monospace;
+}
+
+.dltable th, .dltable td {
+	border:			1px solid black;
+	padding:		3px;
+}
+
+.subtitle {
+	text-align:		center;
+	font-weight:		bold;
+	font-size:		1.1em;
+}

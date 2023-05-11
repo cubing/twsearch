@@ -1,0 +1,60 @@
+# Website
+
+Nissy is available at https://nissy.tronto.net
+
+# Requirements
+
+A full installation of nissy requires about 3Gb of space,
+of which 2.3Gb are occupied by the huge pruning table for fast optimal solving,
+and running it requires the same amount of RAM.
+One can choose to never use this function and not to install the relative
+pruning table. There is an alternative (slower)
+optimal solving function that uses about 500Mb of RAM.
+
+# Installation
+
+## On Windows
+
+Try downloading and executing in a terminal the file nissy.exe, then
+follow the instructions in the Tables section below for
+installing the pruning tables.
+If nissy.exe does not work, you can try following the UNIX instructions
+in WSL (Windows Subsystem for Linux) or in a similar environment.
+
+Sorry for the inconvenience, I don't have a Windows machine to test this on.
+
+## On a UNIX system:
+
+Edit the Makefile to match your local configuration (usually not necessary, but you
+may want to change the PREFIX variable) and run make, followed by make install.
+Follow the instructions below to install the pruning tables.
+
+## Tables
+Nissy needs to generate certain large tables to work. These tables are by default
+generated the first time they are needed (e.g the first time you ask to solve a
+certain step) and then saved to a file. Whenever these tables are needed again,
+nissy simply loads the corresponding file from the hard disk.
+
+The very large table for optimal solving can take some time to generate
+(about 1.5 hours on my fairly old but decent laptop, using 8 CPU threads).
+In order to generate it you need at least 5Gb of RAM.
+All other tables are much faster.
+
+You can ask nissy to generate all the tables it will ever need with the gen
+command. It is recommended to use more than one thread, if your CPU has them.
+For example, you can run:
+
+nissy gen -t 8
+
+to generate all tables using 8 threads.
+
+Alternatively, you can simply download all the tables and copy them into the
+correct folder (see manual page, ENVIRONMENT section). On UNIX operating
+systems this folder is either .nissy/tables in the user's home directory or
+$XDG_DATA_HOME/nissy/tables if the XDG variable is configured. On Windows
+it is the same directory as the nissy.exe executable file.
+
+You can downloads all the tables from the following link:
+	https://nissy.tronto.net/nissy-tables-2.0.zip
+The version 2.0 at the end of the file name is only indicative.
+Later versions will use the same tables, unless otherwise specified.

@@ -1,0 +1,271 @@
+.Dd November 2021
+.Dt NISSY 1
+.Os
+.Sh NAME
+.Nm nissy
+.Nd a Rubik's cube solver and FMC assistant
+.
+.Sh SYNOPSIS
+.Nm
+.Op Fl b
+.Nm
+.Ar command
+.Op options...
+.
+.Sh DESCRIPTION
+.Nm
+is a Rubik's Cube solver. 
+It uses techniques from Herbert Kociemba's Cube Explorer and
+Tomas Rokicki's nxopt. With 4 cores at 2.5GHz and using about 3Gb
+of RAM, Nissy can find the optimal solution for a random Rubik's cube position
+in about a minute on average.
+Nissy can also solve different substeps of the Thistlethwaite's algorithm and more.
+.Pp
+When run without any argument an interactive shell is launched, otherwise
+the provided
+.Ar command
+is executed and nissy terminates. If the option
+.Fl b
+is given, every argument after it is ignored and the shell is launched without
+any prompt or welcome message. This can be used to run nissy in batch mode,
+for example writing a list of commands in a
+.Ar file
+(one per line) and running
+.Ar nissy -b < file
+.Pp
+The commands that can be run in the interactive shell are the same that can
+be run non-interactively and are provided below.
+.
+.Sh COMMANDS
+The available
+.Ar commands
+are the following:
+.
+.Bl -tag -width Ds
+.
+.It Nm cleanup Ar scramble
+Rewrites the given scramble using only the 18 base (HTM) moves and at most two
+rotations at the end. If
+Ar scramble
+uses NISS, all moves done on normal scramble are written first, followed by
+all moves done on inverse.
+.
+.It Nm commands
+List all available commands.
+.
+.It Nm freemem
+Release some large tables from memory. You can use this command in case
+you want to keep nissy open without using too much RAM.
+.
+.It Nm gen Op Fl t Ar N
+Generate all tables used by nissy. Run this to complete your installation.
+If
+.Ar N
+is specified,
+.Ar N
+CPU threads will be used (defaults to 64, use less only if you don't want
+nissy to use all of your CPU resources).
+.
+.It Nm help Op Ar command
+Display help. If no
+.Ar command
+is given, a generic help message is printed, otherwise a specific help
+relative to
+.Ar command
+is returned.
+.
+.It Nm invert Ar scramble
+Invert the given scramble.
+.
+.It Nm print Ar scramble
+Display a text-only description of the cube obtained after applying
+.Ar scramble .
+.
+.It Nm quit
+Quit nissy.
+.
+.It Nm scramble Oo Fl n Ar N Oc Oo Ar type Oc
+Print a randomly-generated (random position) scramble
+.
+If
+.Ar N
+is given, it produces
+.Ar N
+scrambles.
+.Ar type
+can be specified to be one of the following:
+.Bl -tag -width Ds
+.It Ar corners
+Scramble with solved edges (only cornes are scrambled).
+.It Ar dr
+Scramble with solved DR on U/D.
+.It Ar edges
+Scramble with solved corners (only edges are scrambled).
+.It Ar eo
+Scramble with solved EO on F/B axis.
+.It Ar fmc
+Scramble the full cube and the resulting scramble starts and ends with
+the moves R\(aq U\(aq F.
+.It Ar htr
+Scramble with HTR solved.
+.El
+.
+.It Nm solve Ar step Oo Ar options Oc Ar scramble
+Solve the given
+.Ar step
+on the given
+.Ar scramble.
+By default it finds only one (shortest) solution, without using niss, and it
+displays the number of moves at the end of the line.
+.
+The options for the
+.Ar solve
+command are the following:
+.
+.Bl -tag -width Ds
+.
+.It Fl a
+Print all solutions: some solutions are filtered out by default for some
+steps, for examples EOs that finish with F\(aq, with this options they are not.
+.
+.It Fl c
+Display only the number of solutions found, not the solutions themselves.
+.
+.It Fl m Ar min
+Only look for solution that are at least
+.Ar min
+moves long.
+.
+.It Fl M Ar MAX
+Only look for solution that are at most
+.Ar MAX
+moves long.
+.
+.It Fl n Ar N
+Try to find
+.Ar N
+solutions. By default and unless the
+.Fl M
+or
+.Fl o
+options are used, at most one solution is returned. 
+If at least one of
+.Fl M
+and
+.Fl o
+is used, all the solutions found within the given bounds are returned.
+The option
+.Fl s
+overwrites these default behaviors and at most
+.Ar N
+solutions are returned, still satisfiyng the other constraints.
+.
+.It Fl N
+Allow use of NISS.
+.
+.It Fl o
+Only find solutions that require the minimum number of moves.
+.
+.It Fl O Ar N
+Only find solutions that require at most
+.Ar N
+moves more than the optimal solution. If
+.Ar N
+is 0, this is equivalent to
+.Fl o
+.
+.It Fl p
+Plain style: do not print the number of moves.
+.
+.It Fl t Ar N
+Use
+.Ar N
+CPU threads. By default nissy uses only 1 thread. Using more than one
+thread will improve performance, but the optimal number depends on your
+machine and operating system. Generally, using one less than the number
+of threads of your CPU works quite well.
+.
+.It Fl v
+Verbose mode: print some information during the search and print each solution
+as it is found instead of only printing them all together at the end.
+.
+.
+.El
+.
+.It Nm steps
+List all available
+.Ar steps
+for the
+.Ar solve
+command.
+.
+.It Nm twophase Ar scramble
+Find a solution using a two-phase method. This does not guarantee
+to return an optimal solution (and in fact most often it does not),
+but it is very fast.
+.
+.It Nm unniss Ar scramble
+Rewrite the scramble without using NISS.
+.
+.It Nm version
+Display version information.
+.
+.El
+.
+.Sh SCRAMBLES
+All the commands above that accept a scramble also accept a
+.Fl Nm i
+option with no arguments.
+If this option is given, multiple scrambles are read from standard
+input (one per line) until and EOF is found, at which point stdin is cleared.
+.
+.Sh ENVIRONMENT
+Data is stored in the folder pointed to by
+.Nm $NISSYDATA.
+If that variable is unset the folder
+.Nm $XDG_DATA_HOME/nissy
+or
+.Nm $HOME/.nissy
+is used instead. If none of this environment variables is defined
+(e.g. in a non-UNIX system), the current folder is used.
+.
+.Sh EXAMPLES
+.Pp
+The command:
+.Dl nissy solve -v -O 1 \(dqR\(aqU\(aqFD2L2FR2U2R2BD2LB2D\(aqB2L\(aqR\(aqBD2BU2LU2R\(aqU\(aqF\(dq
+Returns:
+.Dl Searching depth 0
+.Dl Searching depth 1
+.Dl (some more lines)
+.Dl Searching depth 16
+.Dl D2 F\(aq U2 D2 F\(aq L2 D R2 D F B2 R\(aq L2 F\(aq U\(aq D
+.Dl Searching depth 17
+.Dl D2 F\(aq U2 D2 F\(aq L2 D R2 D F B2 R\(aq L2 F\(aq U\(aq D (16)
+Notice that the solution is printed twice: the first time it is printed as soon
+as it is found as requested by the -v option.
+.Pp
+The command:
+.Dl nissy solve eofb -m 4 -M 5 -N -n 6 \(dqR\(aqU\(aqFD2L2 FR2 U2R2BD2 L B2 D\(aq B2 L\(aq R\(aq\(dq
+Returns:
+.Dl U B U\(aq B (4)
+.Dl U (B R\(aq B) (4)
+.Dl (U B R\(aq B) (4)
+.Dl U2 F R2 F (4)
+.Dl U2 B U2 B (4)
+.Dl (U2 B R\(aq B) (4)
+.Pp
+On a UNIX shell, the composite command
+.Dl nissy scramble -n 2 | nissy solve -i > file.txt
+Generates two random scrambles, solves them and saves the result to file.txt.
+The file will look something like this:
+.Dl >>> Line: D U2 F D B\(aq F L2 D\(aq F2 R2 L B2 L\(aq U2 B2 R F2 L\(aq D2
+.Dl U2 R2 F2 L B2 D\(aq R2 D\(aq F U L2 B\(aq U\(aq R2 D2 R2 U (17)
+.Dl >>> Line: D B R U\(aq B\(aq L2 U L U D2 R L B2 U2 L2 U2 R U2 B2 L F2
+.Dl D\(aq F R\(aq D B L2 B R2 L U L U2 B D\(aq U R U F2 (18)
+.
+.Sh AUTHORS
+.An Sebastiano Tronto Aq Mt sebastiano@tronto.net
+.
+.Sh SOURCE CODE
+Source code is available at
+.Lk https://nissy.tronto.net

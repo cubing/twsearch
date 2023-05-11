@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<title> Nissy </title>
+	<meta name="viewport" content="width=device-width" />
+	<link rel="stylesheet" type="text/css" href="/style-3.css">
+	<link rel="icon" href="/favicon.png">
+	<meta charset="utf-8">
+</head>
+
+<body>
+
+<h1>Nissy</h1>
+
+<p class=subtitle>A Rubik's cube solver and FMC assistant</p>
+
+<p>
+Nissy is a command-line Rubik's cube solver. It can find optimal solutions
+for random positions using techniques from Herbert Kociemba's
+<a href="http://kociemba.org/cube.htm">Cube Explorer</a> and
+Tomas Rokicki's
+<a href="https://github.com/rokici/cube20src/blob/master/nxopt.md">nxopt</a>.
+With 4 cores at 2.5GHz and using about 3Gb of RAM, Nissy can find an optimal
+solution in about a minute on average.
+</p>
+
+<p>
+Nissy aims at being a complete tool
+for FMC (Fewest Moves Challenge) practice. It can solve different steps
+of Thistlethwaite's algorithm (also know as DR/HTR) and cans use NISS
+(Normal-Inverse Scramble Switch).
+</p>
+
+<p>
+You should use Nissy if:
+</p>
+<ul>
+<li>
+You want to analyze your DR solutions or check for multiple optimal
+(or sub-optimal) solutions for EO/DR/HTR or similar steps.
+</li>
+<li>
+You just want a Rubik's cube solver and you like command line interfaces.
+</li>
+<li>
+You want an alternative to Cube Explorer.
+</li>
+</ul>
+
+<p>
+To get started, head to the <a href="/download/">download</a> page.
+</p>
+
+<p>
+You can also look at its source code by cloning the git repository:
+</p>
+
+<pre>
+<code>git clone https://git.tronto.net/nissy-classic</code>
+</pre>
+
+<p>
+For a summary of changes and a list of older versions see the bottom of
+this page. Some versions (for example 1.0) are not available directly,
+but can be obtained from the git repository.
+</p>
+
+<h2 id="Installation">Installation</h2>
+
+<p>
+You can get the latest version of nissy at the following links:
+</p>
+
+<table class="dltable">
+<tr>
+	<td></td>
+	<td><strong>Source code</strong></td>
+	<td><strong>Windows executable</strong></td>
+</tr>
+<tr>
+	<td><strong>Latest version</strong></td>
+	<td><a href="/nissy-2.0.4.tar.gz">nissy-2.0.4.tar.gz (67Kb)</a></td>
+	<td><a href="/nissy-2.0.4.exe">nissy-2.0.4.exe (714Kb)</a></td>
+</tr>
+</table>
+
+<h3>System requirements</h3>
+
+<p>
+A full installation of nissy requires about 3.1Gb of space,
+of which 2.3Gb are occupied by the huge pruning table for fast optimal solving,
+and running it requires the same amount of RAM.
+One can choose to never use this function and not to install the relative
+pruning table. There is an alternative (slower)
+optimal solving function that uses about 500Mb of RAM.
+
+When generating the pruning tables automatically (see the section Tables below),
+at least 5.3Gb or RAM are required.
+</p>
+
+<h3>Windows</h3>
+
+<p>
+Try downloading and executing in a terminal the file <code>nissy.exe</code>,
+then follow the instructions in the <strong>Tables</strong> section below for
+installing the pruning tables.
+If <code>nissy.exe</code> does not work, you can try following the UNIX instructions
+in WSL (Windows Subsystem for Linux) or in a similar environment.
+</p>
+
+<h3>UNIX (Linux, MacOS, *BSD...)</h3>
+<p>
+Download the source archive (.tar.gz). Extract it
+with your favorite archive program, for example with
+</p>
+<pre><code>tar -xvzf nissy-VERSION.tar.gz</code></pre>
+<p>
+Open a terminal in the directory just extracted.
+If you wish, edit the <code>Makefile</code> to match your local configuration
+(this is usually not necessary, but you may want to change the
+<code>PREFIX</code> variable to change the installation path) and run
+<pre><code>make</code></pre>
+<p>
+followed by
+</p>
+<pre><code>make install</code></pre>
+<p>
+Then follow the instructions below to install the pruning tables.
+</p>
+
+<h3>Tables</h3>
+
+<p>
+Once you have installed nissy, run
+</p>
+
+<pre><code>nissy gen</code></pre>
+
+<p>
+to generate all the tables that Nissy will ever need.
+Running this command requires around 5.3Gb of RAM, and it can take some time
+(about 90 minutes on my 9 year old but laptop, with 4 CPU threads).
+</p>
+
+<p>
+Some unnecessary technical detail: by default this command is going to use
+at most 64 threads. If you want you can choose to use more threads (if your CPU
+is very powerful) or fewer threads (if you for example want to run this command
+in the background while you do other stuff) with the <code>-t</code> option, for
+example <code>nissy gen -t 1</code>.
+</p>
+
+<p>
+Alternatively, you can
+<a href="/nissy-tables-2.0.4.zip">download all the tables (1.7Gb)</a> and
+copy them into the correct folder (see manual page, <code>ENVIRONMENT</code>
+section). On UNIX operating systems this folder is either
+<code>.nissy/tables</code> in the user's home directory or
+<code>$XDG_DATA_HOME/nissy/tables</code> if the XDG variable is configured.
+On Windows it is the same directory as the <code>nissy.exe</code> executable
+file.
+</p>
+
+<h2 id="Upgrade">Upgrading</h2>
+<p>
+<strong> Important note for upgrading to 2.0.4:</strong>
+A bug in 2.0.3 and earlier versions caused HTR-related tables to be
+generated incorrectly on ARM platforms (Mac M1, Android...).
+If you are upgrading to 2.0.4 on such a device, you need to re-generate
+these tables. You can do this by removing all the files wiht <code>htr</code>
+in their name and let nissy re-generate them (after upgrading), or by
+downloading the <a href="/nissy-tables-2.0.4.zip">new tables</a> and
+replacing the old ones.
+</p>
+<p>
+If you already have nissy installed and you want to upgrade to a more
+recent version, you can simply repeat the installation process:
+</p>
+<ul>
+<li>
+On Windows: simply replace nissy.exe with the new file with the same name.
+</li>
+<li>
+On UNIX systems: download the new version of the source code, extract it in
+a new folder and run <code>make</code> and <code>make install</code> again.
+</li>
+</ul>
+<p>
+Between each version new table files might have been added, or old ones
+may be not used anymore. Nissy will deal with this automatically.
+</p>
+
+<h2>Version history</h2>
+
+<h3>Nissy v2</h3>
+
+<table class=dltable>
+<tr>
+	<td><strong>Version</strong></td>
+	<td><strong>Date</strong></td>
+	<td><strong>Comment</strong></td>
+</tr>
+<tr>
+	<td><a href="/nissy-2.0.4.tar.gz">2.0.4</a></td>
+	<td>2023-05-03</td>
+	<td>Fixed bug on ARM; added corners-dr step</td>
+</tr>
+<tr>
+	<td><a href="/nissy-2.0.3.tar.gz">2.0.3</a></td>
+	<td>2022-09-10</td>
+	<td>Fixed bug in scramble dr</td>
+</tr>
+<tr>
+	<td><a href="/nissy-2.0.2.tar.gz">2.0.2</a></td>
+	<td>2022-06-01</td>
+	<td>Improved table generation speed</td>
+</tr>
+<tr>
+	<td><a href="/nissy-2.0.1.tar.gz">2.0.1</a></td>
+	<td>2022-02-22</td>
+	<td>Bugfix release</td>
+</tr>
+<tr>
+	<td>2.0</td>
+	<td>2021-12-29</td>
+	<td>Rewritten from scratch; much faster optimal solver</td>
+</tr>
+</table>
+
+<h3>Nissy v1</h3>
+
+<p>
+Nissy v1 was released in 2020. It was slow, full of bugs and the code
+was quite terrible. But in practice it got its job done most of the time.
+</p>
+
+<hr class="line">
+
+<nav class="bottom">
+	<table class="footer">
+	<tr>
+	<td class="contact">
+		<a href="https://sebastiano.tronto.net">sebastiano.tronto.net</a>
+	</td>
+	<td class="hosted">
+		<a href="mailto:sebastiano@tronto.net">
+			sebastiano@tronto.net
+		</a>
+	</td>
+	</tr>
+	</table>
+</nav>
+
+</body>
+</html>

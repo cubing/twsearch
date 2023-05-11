@@ -324,7 +324,7 @@ symdata
 	Coordinate *              sym_coord;
 	int                       ntrans;
 	Trans *                   trans;
-	uint64_t *                class;
+	uint64_t *                class_;
 	uint64_t *                unsym;
 	Trans *                   transtorep;
 	uint64_t *                selfsim;

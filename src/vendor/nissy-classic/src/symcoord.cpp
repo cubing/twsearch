@@ -136,7 +136,7 @@ coord_nxopt31 = {
 static uint64_t
 index_cp_sym16(Cube cube)
 {
-	return sd_cp_16.class[coord_cp.index(cube)];
+	return sd_cp_16.class__[coord_cp.index(cube)];
 }
 
 static uint64_t
@@ -165,7 +165,7 @@ index_drudfin_noE_sym16(Cube cube)
 static uint64_t
 index_eofbepos_sym16(Cube cube)
 {
-	return sd_eofbepos_16.class[coord_eofbepos.index(cube)];
+	return sd_eofbepos_16.class_[coord_eofbepos.index(cube)];
 }
 
 static uint64_t
@@ -335,7 +335,7 @@ void
 free_sd(SymData *sd)
 {
 	if (sd->generated) {
-		free(sd->class);
+		free(sd->class_);
 		free(sd->unsym);
 		free(sd->transtorep);
 	}
@@ -353,7 +353,7 @@ gensym(SymData *sd)
 	if (sd->generated)
 		return;
 
-	sd->class      = malloc(sd->coord->max * sizeof(uint64_t));
+	sd->class_      = malloc(sd->coord->max * sizeof(uint64_t));
 	sd->unsym      = malloc(sd->coord->max * sizeof(uint64_t));
 	sd->transtorep = malloc(sd->coord->max * sizeof(Trans));
 	sd->selfsim    = malloc(sd->coord->max * sizeof(uint64_t));
@@ -366,17 +366,17 @@ gensym(SymData *sd)
 	fprintf(stderr, "Cannot load %s, generating it\n", sd->filename);
 
 	for (i = 0; i < sd->coord->max; i++)
-		sd->class[i] = sd->coord->max + 1;
+		sd->class_[i] = sd->coord->max + 1;
 
 	for (i = 0; i < sd->coord->max; i++) {
-		if (sd->class[i] == sd->coord->max + 1) {
+		if (sd->class_[i] == sd->coord->max + 1) {
 			sd->unsym[nreps] = i;
 			sd->transtorep[i] = uf;
 			sd->selfsim[nreps] = (uint64_t)0;
 			for (j = 0; j < sd->ntrans; j++) {
 				t = sd->trans[j];
 				in = sd->transform(t, i);
-				sd->class[in] = nreps;
+				sd->class_[in] = nreps;
 				if (in == i)
 					sd->selfsim[nreps] |=
 					    ((uint64_t)1 << t);
@@ -392,7 +392,7 @@ gensym(SymData *sd)
 	sd->selfsim        = realloc(sd->selfsim, nreps * sizeof(uint64_t));
 	sd->generated      = true;
 
-	fprintf(stderr, "Found %" PRIu64 " classes\n", nreps);
+	fprintf(stderr, "Found %" PRIu64 " class_es\n", nreps);
 
 	if (!write_symdata_file(sd))
 		fprintf(stderr, "Error writing SymData file\n");
@@ -420,7 +420,7 @@ read_symdata_file(SymData *sd)
 	r = r && fread(&sd->sym_coord->max, sizeof(uint64_t), 1,   f) == 1;
 	r = r && fread(sd->unsym,           sizeof(uint64_t), *sn, f) == *sn;
 	r = r && fread(sd->selfsim,         sizeof(uint64_t), *sn, f) == *sn;
-	r = r && fread(sd->class,           sizeof(uint64_t), n,   f) == n;
+	r = r && fread(sd->class_,           sizeof(uint64_t), n,   f) == n;
 	r = r && fread(sd->transtorep,      sizeof(Trans),    n,   f) == n;
 
 	fclose(f);
@@ -508,7 +508,7 @@ write_symdata_file(SymData *sd)
 	r = r && fwrite(&sd->sym_coord->max, sizeof(uint64_t), 1,   f) == 1;
 	r = r && fwrite(sd->unsym,           sizeof(uint64_t), *sn, f) == *sn;
 	r = r && fwrite(sd->selfsim,         sizeof(uint64_t), *sn, f) == *sn;
-	r = r && fwrite(sd->class,           sizeof(uint64_t), n,   f) == n;
+	r = r && fwrite(sd->class_,           sizeof(uint64_t), n,   f) == n;
 	r = r && fwrite(sd->transtorep,      sizeof(Trans),    n,   f) == n;
 
 	fclose(f);
@@ -589,7 +589,7 @@ init_symc_moves(void)
 		ii = sd_cp_16.unsym[i];
 		for (j = 0; j < NMOVES; j++) {
 			coo = sd_cp_16.coord->move(j, ii);
-			move_cp_16[j][i] = sd_cp_16.class[coo];
+			move_cp_16[j][i] = sd_cp_16.class_[coo];
 			ttrep_move_cp_16[j][i] = sd_cp_16.transtorep[coo];
 		}
 	}
@@ -598,7 +598,7 @@ init_symc_moves(void)
 		ii = sd_eofbepos_16.unsym[i];
 		for (j = 0; j < NMOVES; j++) {
 			coo = sd_eofbepos_16.coord->move(j, ii);
-			move_eofbepos_16[j][i] = sd_eofbepos_16.class[coo];
+			move_eofbepos_16[j][i] = sd_eofbepos_16.class_[coo];
 			ttrep_move_eofbepos_16[j][i] =
 			    sd_eofbepos_16.transtorep[coo];
 		}

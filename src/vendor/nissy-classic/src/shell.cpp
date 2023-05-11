@@ -105,12 +105,12 @@ launch(bool batchmode)
 	int i, shell_argc;
 	char line[MAXLINELEN], **shell_argv;
 
-	shell_argv = malloc(MAXNTOKENS * sizeof(char *));
+	shell_argv = static_cast<char **>(malloc(MAXNTOKENS * sizeof(char *)));
 	for (i = 0; i < MAXNTOKENS; i++)
-		shell_argv[i] = malloc((MAXTOKENLEN+1) * sizeof(char));
+		shell_argv[i] = static_cast<char *>(malloc((MAXTOKENLEN+1) * sizeof(char)));
 
 	if (!batchmode) {
-		fprintf(stderr, "Welcome to Nissy "VERSION".\n"
+		fprintf(stderr, "Welcome to Nissy NISSY-CLASSIC-VENDORED-IN-TWSEARCH.\n"
 				"Type \"commands\" for a list of commands.\n");
 	}
 

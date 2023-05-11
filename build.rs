@@ -29,6 +29,21 @@ fn main() {
         .file("src/cpp/ordertree.cpp")
         .file("src/cpp/unrotate.cpp")
         .file("src/cpp/shorten.cpp")
+        .file("src/vendor/nissy-classic/src/alg.cpp")
+        .file("src/vendor/nissy-classic/src/commands.cpp")
+        .file("src/vendor/nissy-classic/src/coord.cpp")
+        .file("src/vendor/nissy-classic/src/cube.cpp")
+        .file("src/vendor/nissy-classic/src/env.cpp")
+        .file("src/vendor/nissy-classic/src/moves.cpp")
+        .file("src/vendor/nissy-classic/src/pf.cpp")
+        .file("src/vendor/nissy-classic/src/pruning.cpp")
+        .file("src/vendor/nissy-classic/src/shell.cpp")
+        .file("src/vendor/nissy-classic/src/solve.cpp")
+        .file("src/vendor/nissy-classic/src/steps.cpp")
+        .file("src/vendor/nissy-classic/src/symcoord.cpp")
+        .file("src/vendor/nissy-classic/src/trans.cpp")
+        .file("src/vendor/nissy-classic/src/utils.cpp")
+        .file("src/vendor/nissy-classic/src/nissy_rust_api.cpp")
         .flag_if_supported("-std=c++14")
         .flag("-DASLIBRARY")
         .flag("-DTWSEARCH_VERSION=v0.4.2-7-g4a9107fa")
@@ -66,4 +81,20 @@ fn main() {
     println!("cargo:rerun-if-changed=src/cpp/ordertree.cpp");
     println!("cargo:rerun-if-changed=src/cpp/unrotate.cpp");
     println!("cargo:rerun-if-changed=src/cpp/shorten.cpp");
+
+    println!("cargo:rerun-if-changed=src/vendor/nissy-classic/src/alg.cpp");
+    println!("cargo:rerun-if-changed=src/vendor/nissy-classic/src/commands.cpp");
+    println!("cargo:rerun-if-changed=src/vendor/nissy-classic/src/coord.cpp");
+    println!("cargo:rerun-if-changed=src/vendor/nissy-classic/src/cube.cpp");
+    println!("cargo:rerun-if-changed=src/vendor/nissy-classic/src/env.cpp");
+    println!("cargo:rerun-if-changed=src/vendor/nissy-classic/src/moves.cpp");
+    println!("cargo:rerun-if-changed=src/vendor/nissy-classic/src/pf.cpp");
+    println!("cargo:rerun-if-changed=src/vendor/nissy-classic/src/pruning.cpp");
+    println!("cargo:rerun-if-changed=src/vendor/nissy-classic/src/shell.cpp");
+    println!("cargo:rerun-if-changed=src/vendor/nissy-classic/src/solve.cpp");
+    println!("cargo:rerun-if-changed=src/vendor/nissy-classic/src/steps.cpp");
+    println!("cargo:rerun-if-changed=src/vendor/nissy-classic/src/symcoord.cpp");
+    println!("cargo:rerun-if-changed=src/vendor/nissy-classic/src/trans.cpp");
+    println!("cargo:rerun-if-changed=src/vendor/nissy-classic/src/utils.cpp");
+    println!("cargo:rerun-if-changed=src/vendor/nissy-classic/src/nissy_rust_api.cpp");
 }

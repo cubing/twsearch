@@ -38,6 +38,8 @@ pub enum Command {
     // Enumerate canonical algs (move sequences) at iterative depths.
     CanonicalAlgs(CanonicalAlgsArgs),
 
+    NissyTwophase(NissyTwophaseArgs),
+
     /// Print completions for the given shell.
     Completions(CompletionsArgs),
 }
@@ -291,6 +293,13 @@ impl SetCppArgs for CanonicalAlgsArgs {
         self.metric_args.set_cpp_args();
     }
 }
+
+#[derive(Args, Debug)]
+pub struct NissyTwophaseArgs {
+    #[command(long)]
+    pub scramble: Alg,
+}
+
 
 #[derive(Args, Debug)]
 pub struct MetricArgs {

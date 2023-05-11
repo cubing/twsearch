@@ -584,13 +584,19 @@ print_exec(CommandArgs *args)
 static void
 twophase_exec(CommandArgs *args)
 {
+	twophase_exec_scramble(args->scramble);
+}
+
+static void
+twophase_exec_scramble(Alg *scramble)
+{
 	Cube c;
 	Alg *sol;
 
 	init_all_movesets();
 	init_symcoord();
 
-	c = apply_alg(args->scramble, (Cube){0});
+	c = apply_alg(scramble, (Cube){0});
 	sol = solve_2phase(c, 1);
 
 	print_alg(sol, false);
@@ -651,7 +657,7 @@ unniss_exec(CommandArgs *args)
 static void
 version_exec(CommandArgs *args)
 {
-	printf(VERSION"\n");
+	printf("NISSY-CLASSIC-VENDORED-IN-TWSEARCH\n");
 }
 
 /* Local functions implementation ********************************************/

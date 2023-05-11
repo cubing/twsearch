@@ -20,6 +20,9 @@ pub mod rust_api {
         fn rust_solveposition(s: &str) -> String;
         fn rust_reset();
         fn rust_main_search(def_file: &str, scramble_file: &str);
+
+        include!("twsearch/src/vendor/nissy-classic/src/nissy_rust_api.h");
+        fn rust_nissy_solve_alg_twophase(scramble_alg: &str) -> String;
     }
 }
 
@@ -68,5 +71,8 @@ fn main() {
             reset_args_from(vec![&args]);
             main_search(&args.input_args.def_file, &None)
         }
+        options::Command::NissyTwophase(args) => {
+            rust_api::rust_nissy_solve_alg_twophase(&args.scramble.to_string())
+        },
     }
 }

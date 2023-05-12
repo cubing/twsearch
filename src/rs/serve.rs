@@ -12,7 +12,9 @@ use serde::Serialize;
 use std::sync::Mutex;
 
 use crate::options::reset_args_from;
-use crate::options::CommonSearchArgs;
+
+use crate::options::ServeArgsForIndividualSearch;
+use crate::options::ServeClientArgs;
 use crate::options::ServeCommandArgs;
 use crate::rust_api;
 use crate::serialize::serialize_kpuzzle_definition;
@@ -52,11 +54,16 @@ struct StateSolve {
     state: KStateData,
     move_subset: Option<Vec<Move>>,
     start_state: Option<KStateData>,
+    search_args: Option<ServeClientArgs>,
 }
 
-fn solveposition(request: &Request, search_args: &CommonSearchArgs) -> Response {
+fn solveposition(request: &Request, serve_command_args: &ServeCommandArgs) -> Response {
     let state_solve: StateSolve = try_or_400!(rouille::input::json_input(request));
-    reset_args_from(vec![search_args]);
+    let args_for_individual_search = ServeArgsForIndividualSearch {
+        commandline_args: serve_command_args,
+        client_args: &state_solve.search_args,
+    };
+    reset_args_from(vec![&args_for_individual_search]);
     match set_definition(
         state_solve.definition,
         &KPuzzleSerializationOptions {
@@ -103,7 +110,7 @@ Use with one of the following:
             },
             (POST) (/v0/solve/state) => { // TODO: `…/pattern`?
                 if let Ok(guard) = solve_mutex.try_lock() {
-                    let response = solveposition(request, &serve_command_args.search_args);
+                    let response = solveposition(request, &serve_command_args);
                     drop(guard);
                     response
                 } else {

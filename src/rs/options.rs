@@ -2,6 +2,7 @@ use clap::{Args, CommandFactory, Parser, Subcommand};
 use clap_complete::generator::generate;
 use clap_complete::{Generator, Shell};
 use cubing::alg::Alg;
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::io::stdout;
 use std::path::PathBuf;
@@ -130,23 +131,6 @@ pub struct MovesArgs {
 impl SetCppArgs for MovesArgs {
     fn set_cpp_args(&self) {
         set_optional_arg("--moves", &self.moves);
-    }
-}
-
-#[derive(Args, Debug)]
-pub struct ServeCommandArgs {
-    #[command(flatten)]
-    pub search_args: CommonSearchArgs,
-    // TODO: implement a safe way to write prune tables.
-    #[command(flatten)]
-    pub metric_args: MetricArgs,
-}
-
-impl SetCppArgs for ServeCommandArgs {
-    fn set_cpp_args(&self) {
-        set_boolean_arg("--nowrite", true);
-        self.search_args.set_cpp_args();
-        self.metric_args.set_cpp_args();
     }
 }
 
@@ -378,5 +362,62 @@ pub fn reset_args_from(arg_structs: Vec<&dyn SetCppArgs>) {
     rust_api::rust_reset();
     for arg_struct in arg_structs {
         arg_struct.set_cpp_args();
+    }
+}
+
+////////
+
+pub struct ServeArgsForIndividualSearch<'a> {
+    pub commandline_args: &'a ServeCommandArgs,
+    pub client_args: &'a Option<ServeClientArgs>,
+}
+
+impl SetCppArgs for ServeArgsForIndividualSearch<'_> {
+    fn set_cpp_args(&self) {
+        self.commandline_args.set_cpp_args();
+        if let Some(client_args) = self.client_args {
+            client_args.set_cpp_args();
+        }
+        // Unconditional args
+        set_boolean_arg("--nowrite", true);
+    }
+}
+
+#[derive(Args, Debug)]
+pub struct ServeCommandArgs {
+    #[command(flatten)]
+    pub performance_args: PerformanceArgs,
+}
+
+impl SetCppArgs for ServeCommandArgs {
+    fn set_cpp_args(&self) {
+        self.performance_args.set_cpp_args();
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ServeClientArgs {
+    // TODO: moves, min num solutions
+    // TODO: allow the client to set performance args (with bounds checks) and prune table (if enabled by server).
+    pub check_before_solve: Option<bool>,
+    pub random_start: Option<bool>,
+    pub min_depth: Option<u32>,
+    pub max_depth: Option<u32>,
+    pub start_prune_depth: Option<u32>,
+    pub quantum_metric: Option<bool>, // TODO: enum
+}
+
+impl SetCppArgs for ServeClientArgs {
+    fn set_cpp_args(&self) {
+        set_boolean_arg(
+            "--checkbeforesolve",
+            self.check_before_solve.unwrap_or(true),
+        );
+        set_boolean_arg("--randomstart", self.random_start.unwrap_or(true));
+        set_optional_arg("--mindepth", &self.min_depth);
+        set_optional_arg("--maxdepth", &self.max_depth);
+        set_optional_arg("--startprunedepth", &self.start_prune_depth);
+        set_optional_arg("-q", &self.quantum_metric);
     }
 }

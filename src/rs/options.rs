@@ -130,7 +130,20 @@ pub struct MovesArgs {
 
 impl SetCppArgs for MovesArgs {
     fn set_cpp_args(&self) {
-        set_optional_arg("--moves", &self.moves);
+        if let Some(moves) = &self.moves {
+            let moves: Vec<Move> = moves
+                .split(',')
+                .by_ref()
+                .map(|move_str| match move_str.parse::<Move>() {
+                    Ok(r#move) => r#move,
+                    Err(err) => {
+                        eprintln!("Invalid move ({}): {}", err, move_str);
+                        panic!("Exiting due to invalid move.")
+                    }
+                })
+                .collect();
+            set_moves_arg(&moves);
+        }
     }
 }
 
@@ -384,6 +397,20 @@ fn set_optional_arg<T: Display>(arg_flag: &str, arg: &Option<T>) {
     }
 }
 
+fn set_moves_arg(moves: &[Move]) {
+    // TODO: Squishing together moves into a comma-separated string
+    // isn't semantically fantastic. But the moves already passed
+    // validation, so this is not as risky as if we were passing strings directly from the client.
+    set_arg(
+        "--moves",
+        &moves
+            .iter()
+            .map(|m| m.to_string())
+            .collect::<Vec<String>>()
+            .join(","),
+    );
+}
+
 pub fn reset_args_from(arg_structs: Vec<&dyn SetCppArgs>) {
     rust_api::rust_api_reset();
     for arg_struct in arg_structs {
@@ -447,17 +474,7 @@ impl SetCppArgs for ServeClientArgs {
         set_optional_arg("--startprunedepth", &self.start_prune_depth);
         set_optional_arg("-q", &self.quantum_metric);
         if let Some(move_subset) = &self.move_subset {
-            // TODO: Squishing together moves into a comma-separated string
-            // isn't semantically fantastic. But the moves already passed
-            // validation, so this is not as risky as if we were passing strings directly from the client.
-            set_arg(
-                "--moves",
-                &move_subset
-                    .iter()
-                    .map(|m| m.to_string())
-                    .collect::<Vec<String>>()
-                    .join(","),
-            );
+            set_moves_arg(move_subset);
         }
     }
 }

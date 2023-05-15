@@ -1,4 +1,4 @@
-#ifndef RUST_H
+#ifndef FFI_RUST_API_H
 #include "rust/cxx.h"
 
 void rust_api_reset();
@@ -10,5 +10,5 @@ rust::String rust_api_solve_position(rust::Str s) ;
 // Use the empty string to indicate an empty value for `scramble_file`.
 void rust_api_main_search(rust::Str def_file, rust::Str scramble_file);
 
-#define RUST_H
+#define FFI_RUST_API_H
 #endif

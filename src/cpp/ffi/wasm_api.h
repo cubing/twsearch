@@ -1,4 +1,4 @@
-#ifndef WASMAPI_H
+#ifndef FFI_WASM_API_H
 
 extern "C" {
   void wasm_api_reset();
@@ -8,5 +8,5 @@ extern "C" {
   const char *wasm_api_solve_position(const char *s) ;
 }
 
-#define WASMAPI_H
+#define FFI_WASM_API_H
 #endif

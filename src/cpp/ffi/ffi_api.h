@@ -1,4 +1,4 @@
-#ifndef FFI_API_H
+#ifndef FFI_FFI_API_H
 #include <string>
 
 void ffi_api_set_arg(std::string s) ;
@@ -15,5 +15,5 @@ extern "C" {
   const char *ffi_api_cstr_solve_position(const char *s) ;
 }
 
-#define FFI_API_H
+#define FFI_FFI_API_H
 #endif

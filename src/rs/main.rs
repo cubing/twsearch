@@ -13,13 +13,13 @@ use crate::options::get_options;
 #[cxx::bridge]
 pub mod rust_api {
     unsafe extern "C++" {
-        include!("twsearch/src/cpp/rustapi.h");
-        fn rust_arg(s: &str);
-        fn rust_setksolve(s: &str);
-        // fn rust_solvescramble(s: &str) -> String;
-        fn rust_solveposition(s: &str) -> String;
-        fn rust_reset();
-        fn rust_main_search(def_file: &str, scramble_file: &str);
+        include!("twsearch/src/cpp/ffi/rust_api.h");
+        fn rust_api_set_arg(s: &str);
+        fn rust_api_set_kpuzzle_definition(s: &str);
+        // fn rust_api_solve_scramble(s: &str) -> String;
+        fn rust_api_solve_position(s: &str) -> String;
+        fn rust_api_reset();
+        fn rust_api_main_search(def_file: &str, scramble_file: &str);
     }
 }
 
@@ -29,7 +29,7 @@ fn main_search(def_file: &Path, scramble_file: &Option<PathBuf>) {
         Some(scramble_file) => scramble_file.to_str().expect("Invalid scramble file path"),
         None => "",
     };
-    rust_api::rust_main_search(def_file, scramble_file)
+    rust_api::rust_api_main_search(def_file, scramble_file)
 }
 
 fn main() {

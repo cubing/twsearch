@@ -1,7 +1,8 @@
 use clap::{Args, CommandFactory, Parser, Subcommand, ValueEnum};
 use clap_complete::generator::generate;
 use clap_complete::{Generator, Shell};
-use cubing::alg::Alg;
+use cubing::alg::{Alg, Move};
+use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::io::stdout;
 use std::path::PathBuf;
@@ -134,23 +135,6 @@ impl SetCppArgs for MovesArgs {
 }
 
 #[derive(Args, Debug)]
-pub struct ServeCommandArgs {
-    #[command(flatten)]
-    pub search_args: CommonSearchArgs,
-    // TODO: implement a safe way to write prune tables.
-    #[command(flatten)]
-    pub metric_args: MetricArgs,
-}
-
-impl SetCppArgs for ServeCommandArgs {
-    fn set_cpp_args(&self) {
-        set_arg("--writeprunetables", &"never");
-        self.search_args.set_cpp_args();
-        self.metric_args.set_cpp_args();
-    }
-}
-
-#[derive(Args, Debug)]
 pub struct SearchPersistenceArgs {
     #[clap(long/* , visible_alias = "writeprunetables" */)]
     pub write_prune_tables: Option<WritePruneTables>,
@@ -196,8 +180,8 @@ pub struct PerformanceArgs {
     pub num_threads: Option<usize>,
 
     /// Memory to use in MiB. See `README.md` for advice on how to tune memory usage.
-    #[clap(long, help_heading = "Performance"/* , visible_short_alias = 'm' */, id = "MEGABYTES")]
-    pub memory_mb: Option<usize>,
+    #[clap(long = "memory-MiB", help_heading = "Performance"/* , visible_short_alias = 'm' */, id = "MEBIBYTES")]
+    pub memory_mebibytes: Option<usize>,
 }
 
 impl SetCppArgs for PerformanceArgs {
@@ -207,9 +191,9 @@ impl SetCppArgs for PerformanceArgs {
             None => num_cpus::get(),
         };
         println!("Setting twsearch to use {} threads.", num_threads);
-        rust_api::rust_arg(&format!("-t {}", num_threads));
+        rust_api::rust_api_set_arg(&format!("-t {}", num_threads));
 
-        set_optional_arg("-m", &self.memory_mb);
+        set_optional_arg("-m", &self.memory_mebibytes);
     }
 }
 
@@ -385,24 +369,95 @@ pub fn get_options() -> TwsearchArgs {
 }
 
 fn set_arg<T: Display>(arg_flag: &str, arg: &T) {
-    rust_api::rust_arg(&format!("{} {}", arg_flag, arg));
+    rust_api::rust_api_set_arg(&format!("{} {}", arg_flag, arg));
 }
 
 fn set_boolean_arg(arg_flag: &str, arg: bool) {
     if arg {
-        rust_api::rust_arg(arg_flag);
+        rust_api::rust_api_set_arg(arg_flag);
     }
 }
 
 fn set_optional_arg<T: Display>(arg_flag: &str, arg: &Option<T>) {
     if let Some(v) = arg {
-        rust_api::rust_arg(&format!("{} {}", arg_flag, v));
+        rust_api::rust_api_set_arg(&format!("{} {}", arg_flag, v));
     }
 }
 
 pub fn reset_args_from(arg_structs: Vec<&dyn SetCppArgs>) {
-    rust_api::rust_reset();
+    rust_api::rust_api_reset();
     for arg_struct in arg_structs {
         arg_struct.set_cpp_args();
+    }
+}
+
+////////
+
+pub struct ServeArgsForIndividualSearch<'a> {
+    pub commandline_args: &'a ServeCommandArgs,
+    pub client_args: &'a Option<ServeClientArgs>,
+}
+
+impl SetCppArgs for ServeArgsForIndividualSearch<'_> {
+    fn set_cpp_args(&self) {
+        self.commandline_args.set_cpp_args();
+        if let Some(client_args) = self.client_args {
+            client_args.set_cpp_args();
+        }
+        // Unconditional args
+        set_arg("--writeprunetables", &"never");
+    }
+}
+
+#[derive(Args, Debug)]
+pub struct ServeCommandArgs {
+    #[command(flatten)]
+    pub performance_args: PerformanceArgs,
+}
+
+impl SetCppArgs for ServeCommandArgs {
+    fn set_cpp_args(&self) {
+        self.performance_args.set_cpp_args();
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ServeClientArgs {
+    // TODO: moves, min num solutions
+    // TODO: allow the client to set performance args (with bounds checks) and prune table (if enabled by server).
+    pub check_before_solve: Option<bool>,
+    pub random_start: Option<bool>,
+    pub min_depth: Option<u32>,
+    pub max_depth: Option<u32>,
+    pub start_prune_depth: Option<u32>,
+    pub quantum_metric: Option<bool>, // TODO: enum
+    pub move_subset: Option<Vec<Move>>,
+}
+
+impl SetCppArgs for ServeClientArgs {
+    fn set_cpp_args(&self) {
+        set_boolean_arg(
+            "--checkbeforesolve",
+            self.check_before_solve.unwrap_or(true),
+        );
+        set_boolean_arg("--randomstart", self.random_start.unwrap_or(true));
+        set_optional_arg("--mindepth", &self.min_depth);
+        set_optional_arg("--maxdepth", &self.max_depth);
+        set_optional_arg("--startprunedepth", &self.start_prune_depth);
+        set_optional_arg("-q", &self.quantum_metric);
+        if let Some(move_subset) = &self.move_subset {
+            // TODO: Squishing together moves into a comma-separated string
+            // isn't semantically fantastic. But the moves already passed
+            // validation, so this is not as risky as if we were passing strings directly from the client.
+            set_arg(
+                "--moves",
+                &move_subset
+                    .iter()
+                    .map(|m| m.to_string())
+                    .collect::<Vec<String>>()
+                    .join(","),
+            );
+        }
     }
 }

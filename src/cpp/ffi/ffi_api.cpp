@@ -3,14 +3,16 @@
  *   our puzdef and pruning table, so our API is just strings everywhere.
  */
 #include <sstream>
-#include "puzdef.h"
-#include "prunetable.h"
-#include "solve.h"
-#include "twsearch.h"
-#include "parsemoves.h"
-#include "cmdlineops.h"
 #include "string.h"
-#include "wasmapi.h"
+
+#include "../puzdef.h"
+#include "../prunetable.h"
+#include "../solve.h"
+#include "../twsearch.h"
+#include "../parsemoves.h"
+#include "../cmdlineops.h"
+#include "ffi_api.h"
+
 static puzdef emptypd ;
 struct wasmdata {
    puzdef pd ;
@@ -24,12 +26,14 @@ struct wasmdata {
       pt = 0 ;
    }
 } wasmdata ;
+
 static int wasm_inited = 0 ;
-extern "C" void w_arg(const char *s_) {
+extern "C" void ffi_api_cstr_set_arg(const char *s_) {
    string s(s_);
-   w_str_arg(s);
+   ffi_api_set_arg(s);
 }
-void w_str_arg(string s) {
+
+void ffi_api_set_arg(string s) {
    if (wasm_inited == 0) {
       reseteverything() ;
       wasm_inited = 1 ;
@@ -58,6 +62,7 @@ void w_str_arg(string s) {
    if (argc != 1)
       error("! error processing argument") ;
 }
+
 void checkprunetable() {
    if (!wasmdata.havepd)
       error(
@@ -67,11 +72,13 @@ void checkprunetable() {
       wasmdata.havept = 1 ;
    }
 }
-extern "C" void w_setksolve(const char *s_) {
+
+extern "C" void ffi_api_cstr_set_kpuzzle_definition(const char *s_) {
    string s(s_);
-   w_str_setksolve(s);
+   ffi_api_set_kpuzzle_definition(s);
 }
-void w_str_setksolve(string s) {
+
+void ffi_api_set_kpuzzle_definition(string s) {
    if (wasm_inited == 0) {
       reseteverything() ;
       wasm_inited = 1 ;
@@ -79,11 +86,13 @@ void w_str_setksolve(string s) {
    wasmdata.pd = makepuzdef(s) ;
    wasmdata.havepd = 1 ;
 }
-string w_str_solvescramble(string s_) {
-   string output(w_solvescramble(s_.c_str()));
+
+string ffi_api_solve_scramble(string s_) {
+   string output(ffi_api_cstr_solve_scramble(s_.c_str()));
    return output;
 }
-extern "C" const char *w_solvescramble(const char *s) {
+
+extern "C" const char *ffi_api_cstr_solve_scramble(const char *s) {
    lastsolution = "--no solution--" ;
    checkprunetable() ;
    puzdef &pd = wasmdata.pd ;
@@ -95,21 +104,25 @@ extern "C" const char *w_solvescramble(const char *s) {
    solveit(pd, *wasmdata.pt, noname, p1) ;
    return lastsolution.c_str() ;
 }
-string w_str_solveposition(string s_) {
-   string output(w_solveposition(s_.c_str()));
+
+string ffi_api_solve_position(string s_) {
+   string output(ffi_api_cstr_solve_position(s_.c_str()));
    return output;
 }
-extern "C" const char *w_solveposition(const char *s) {
+
+extern "C" const char *ffi_api_cstr_solve_position(const char *s) {
    lastsolution = "--no solution--" ;
    checkprunetable() ;
    stringstream is(s) ;
    processscrambles(&is, wasmdata.pd, *wasmdata.pt, 0) ;
    return lastsolution.c_str() ;
 }
-extern "C" void w_reset() {
+
+extern "C" void ffi_api_reset() {
    reseteverything() ;
    wasmdata.clear() ;
 }
+
 #ifdef WASMTEST
 const char *twsfile = 
 "Name 2x2x2\n"
@@ -145,12 +158,14 @@ const char *scrfile =
 "0 3 5 4 1 7 6 2\n"
 "0 0 0 0 0 0 0 0\n"
 "End\n" ;
+
 int main() {
-   w_arg("--nowrite") ; // unnecessary if compiled with -DWASM
-   w_setksolve(twsfile) ;
-   cout << w_solvescramble("U F R U F R U F R U F R") << endl ;
-   cout << w_solveposition(scrfile) << endl ;
-   // cout << w_solvescramble("U F R U F R U F R U F R") << endl ;
-   // cout << w_solveposition(scrfile) << endl ;
+   ffi_api_set_arg("--nowrite") ; // unnecessary if compiled with -DWASM
+   ffi_api_set_kpuzzle_definition(twsfile) ;
+   cout << ffi_api_solve_scramble("U F R U F R U F R U F R") << endl ;
+   cout << ffi_api_solve_position(scrfile) << endl ;
+   // cout << ffi_api_solve_scramble("U F R U F R U F R U F R") << endl ;
+   // cout << ffi_api_solve_position(scrfile) << endl ;
 }
+
 #endif

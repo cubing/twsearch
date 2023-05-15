@@ -42,23 +42,23 @@ function parseResult(s: string): Alg {
 
 const stringArg = ["string"];
 export const setArg: (s: string) => Promise<void> = cwrap(
-  "w_arg",
+  "wasm_api_set_arg",
   "void",
   stringArg,
 );
 export const setKPuzzleDefString: (s: string) => Promise<void> = cwrap(
-  "w_setksolve",
+  "wasm_api_set_kpuzzle_definition",
   "void",
   stringArg,
 );
 export const solveScramble: (s: string) => Promise<Alg> = cwrap(
-  "w_solvescramble",
+  "wasm_api_solve_scramble",
   "string",
   stringArg,
   parseResult,
 );
 export const solveState: (s: string) => Promise<Alg> = cwrap(
-  "w_solveposition",
+  "wasm_api_solve_position",
   "string",
   stringArg,
   parseResult,

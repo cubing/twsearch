@@ -15,7 +15,7 @@ extern "C" void wasm_api_reset() {
 }
 
 extern "C" void wasm_api_set_arg(const char *s) {
-   ffi_api_set_arg(s);
+   ffi_api_cstr_set_arg(s);
 }
 
 extern "C" void wasm_api_set_kpuzzle_definition(const char *s) {

@@ -28,7 +28,7 @@ struct wasmdata {
 } wasmdata ;
 
 static int wasm_inited = 0 ;
-extern "C" void ffi_api_cstr_arg(const char *s_) {
+extern "C" void ffi_api_cstr_set_arg(const char *s_) {
    string s(s_);
    ffi_api_set_arg(s);
 }

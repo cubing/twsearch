@@ -1,7 +1,7 @@
 use clap::{Args, CommandFactory, Parser, Subcommand};
 use clap_complete::generator::generate;
 use clap_complete::{Generator, Shell};
-use cubing::alg::Alg;
+use cubing::alg::{Alg, Move};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::io::stdout;
@@ -406,6 +406,7 @@ pub struct ServeClientArgs {
     pub max_depth: Option<u32>,
     pub start_prune_depth: Option<u32>,
     pub quantum_metric: Option<bool>, // TODO: enum
+    pub move_subset: Option<Vec<Move>>,
 }
 
 impl SetCppArgs for ServeClientArgs {
@@ -419,5 +420,18 @@ impl SetCppArgs for ServeClientArgs {
         set_optional_arg("--maxdepth", &self.max_depth);
         set_optional_arg("--startprunedepth", &self.start_prune_depth);
         set_optional_arg("-q", &self.quantum_metric);
+        if let Some(move_subset) = &self.move_subset {
+            // TODO: Squishing together moves into a comma-separated string
+            // isn't semantically fantastic. But the moves already passed
+            // validation, so this is not as risky as if we were passing strings directly from the client.
+            set_arg(
+                "--moves",
+                &move_subset
+                    .iter()
+                    .map(|m| m.to_string())
+                    .collect::<Vec<String>>()
+                    .join(","),
+            );
+        }
     }
 }

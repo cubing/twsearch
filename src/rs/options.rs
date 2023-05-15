@@ -81,7 +81,7 @@ impl SetCppArgs for CommonSearchArgs {
         set_boolean_arg("--randomstart", self.check_before_solve);
         set_boolean_arg("--checkbeforesolve", self.random_start);
         set_optional_arg("--mindepth", &self.min_depth);
-        set_optional_arg("--maxdepth", &self.max_depth);
+        set_optional_arg("-m", &self.max_depth);
         set_optional_arg("--startprunedepth", &self.start_prune_depth);
         self.performance_args.set_cpp_args();
     }
@@ -193,7 +193,7 @@ impl SetCppArgs for PerformanceArgs {
         println!("Setting twsearch to use {} threads.", num_threads);
         rust_api::rust_api_set_arg(&format!("-t {}", num_threads));
 
-        set_optional_arg("-m", &self.memory_mebibytes);
+        set_optional_arg("-M", &self.memory_mebibytes);
     }
 }
 

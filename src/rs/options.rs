@@ -154,6 +154,9 @@ impl SetCppArgs for ServeCommandArgs {
 pub struct SearchPersistenceArgs {
     #[clap(long/* , visible_alias = "writeprunetables" */)]
     pub write_prune_tables: Option<WritePruneTables>,
+
+    #[clap(long/* , visible_alias = "cachedir" */)]
+    pub cache_dir: Option<PathBuf>,
 }
 
 #[derive(Debug, Clone, ValueEnum)]
@@ -177,6 +180,12 @@ impl Display for WritePruneTables {
 impl SetCppArgs for SearchPersistenceArgs {
     fn set_cpp_args(&self) {
         set_optional_arg("--writeprunetables", &self.write_prune_tables);
+        if let Some(cache_dir) = &self.cache_dir {
+            set_arg(
+                "--cachedir",
+                &cache_dir.to_str().expect("Invalid cache dir path."),
+            );
+        }
     }
 }
 

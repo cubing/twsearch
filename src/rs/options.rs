@@ -165,7 +165,7 @@ impl SetCppArgs for PerformanceArgs {
             None => num_cpus::get(),
         };
         println!("Setting twsearch to use {} threads.", num_threads);
-        rust_api::rust_arg(&format!("-t {}", num_threads));
+        rust_api::rust_api_set_arg(&format!("-t {}", num_threads));
 
         set_optional_arg("-m", &self.memory_mebibytes);
     }
@@ -343,23 +343,23 @@ pub fn get_options() -> TwsearchArgs {
 }
 
 fn set_arg<T: Display>(arg_flag: &str, arg: &T) {
-    rust_api::rust_arg(&format!("{} {}", arg_flag, arg));
+    rust_api::rust_api_set_arg(&format!("{} {}", arg_flag, arg));
 }
 
 fn set_boolean_arg(arg_flag: &str, arg: bool) {
     if arg {
-        rust_api::rust_arg(arg_flag);
+        rust_api::rust_api_set_arg(arg_flag);
     }
 }
 
 fn set_optional_arg<T: Display>(arg_flag: &str, arg: &Option<T>) {
     if let Some(v) = arg {
-        rust_api::rust_arg(&format!("{} {}", arg_flag, v));
+        rust_api::rust_api_set_arg(&format!("{} {}", arg_flag, v));
     }
 }
 
 pub fn reset_args_from(arg_structs: Vec<&dyn SetCppArgs>) {
-    rust_api::rust_reset();
+    rust_api::rust_api_reset();
     for arg_struct in arg_structs {
         arg_struct.set_cpp_args();
     }

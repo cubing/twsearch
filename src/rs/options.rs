@@ -154,8 +154,8 @@ pub struct PerformanceArgs {
     pub num_threads: Option<usize>,
 
     /// Memory to use in MiB. See `README.md` for advice on how to tune memory usage.
-    #[clap(long, help_heading = "Performance"/* , visible_short_alias = 'm' */, id = "MEGABYTES")]
-    pub memory_mb: Option<usize>,
+    #[clap(long = "memory-MiB", help_heading = "Performance"/* , visible_short_alias = 'm' */, id = "MEBIBYTES")]
+    pub memory_mebibytes: Option<usize>,
 }
 
 impl SetCppArgs for PerformanceArgs {
@@ -167,7 +167,7 @@ impl SetCppArgs for PerformanceArgs {
         println!("Setting twsearch to use {} threads.", num_threads);
         rust_api::rust_arg(&format!("-t {}", num_threads));
 
-        set_optional_arg("-m", &self.memory_mb);
+        set_optional_arg("-m", &self.memory_mebibytes);
     }
 }
 

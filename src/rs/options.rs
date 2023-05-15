@@ -1,4 +1,4 @@
-use clap::{Args, CommandFactory, Parser, Subcommand};
+use clap::{Args, CommandFactory, Parser, Subcommand, ValueEnum};
 use clap_complete::generator::generate;
 use clap_complete::{Generator, Shell};
 use cubing::alg::Alg;
@@ -144,7 +144,7 @@ pub struct ServeCommandArgs {
 
 impl SetCppArgs for ServeCommandArgs {
     fn set_cpp_args(&self) {
-        set_boolean_arg("--nowrite", true);
+        set_arg("--writeprunetables", &"never");
         self.search_args.set_cpp_args();
         self.metric_args.set_cpp_args();
     }
@@ -152,14 +152,31 @@ impl SetCppArgs for ServeCommandArgs {
 
 #[derive(Args, Debug)]
 pub struct SearchPersistenceArgs {
-    /// Don't don't write pruning tables to disk (regenerate each time).
-    #[clap(long/* , visible_alias = "nowrite" */)]
-    pub no_write: bool,
+    #[clap(long/* , visible_alias = "writeprunetables" */)]
+    pub write_prune_tables: Option<WritePruneTables>,
+}
+
+#[derive(Debug, Clone, ValueEnum)]
+pub enum WritePruneTables {
+    Auto,
+    Never,
+    Always,
+}
+
+impl Display for WritePruneTables {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            WritePruneTables::Auto => "auto",
+            WritePruneTables::Never => "never",
+            WritePruneTables::Always => "always",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 impl SetCppArgs for SearchPersistenceArgs {
     fn set_cpp_args(&self) {
-        set_boolean_arg("--nowrite", self.no_write);
+        set_optional_arg("--writeprunetables", &self.write_prune_tables);
     }
 }
 

@@ -49,9 +49,9 @@ pub trait SetCppArgs {
 
 #[derive(Args, Debug)]
 pub struct CommonSearchArgs {
-    /// Check that a position is legal before attempting to solve it. This may take extra time or memory for large puzzles.
+    /// Check that a position is valid before attempting to solve it. This may take extra time or memory for large puzzles.
     #[clap(long/*, visible_alias = "checkbeforesolve" */)]
-    pub check_before_solve: bool,
+    pub check_before_solve: Option<EnableAutoAlwaysNeverValueEnum>,
 
     /// Randomize the search order. This can produce different solutions the
     /// same run of each input, which is desirable for some use cases.
@@ -78,7 +78,10 @@ pub struct CommonSearchArgs {
 
 impl SetCppArgs for CommonSearchArgs {
     fn set_cpp_args(&self) {
-        set_boolean_arg("--checkbeforesolve", self.check_before_solve);
+        set_boolean_arg(
+            "--checkbeforesolve",
+            is_enabled_with_default_true(&self.check_before_solve),
+        );
         set_boolean_arg("--randomstart", self.random_start);
         set_optional_arg("--mindepth", &self.min_depth);
         set_optional_arg("-m", &self.max_depth);
@@ -157,25 +160,41 @@ impl SetCppArgs for MovesArgs {
 #[derive(Args, Debug)]
 pub struct SearchPersistenceArgs {
     #[clap(long/* , visible_alias = "writeprunetables" */)]
-    pub write_prune_tables: Option<WritePruneTables>,
+    pub write_prune_tables: Option<EnableAutoAlwaysNeverValueEnum>,
 
     #[clap(long/* , visible_alias = "cachedir" */)]
     pub cache_dir: Option<PathBuf>,
 }
 
-#[derive(Debug, Clone, ValueEnum)]
-pub enum WritePruneTables {
+#[derive(Debug, Clone, ValueEnum, Serialize, Deserialize)]
+pub enum EnableAutoAlwaysNeverValueEnum {
     Auto,
     Never,
     Always,
 }
 
-impl Display for WritePruneTables {
+impl EnableAutoAlwaysNeverValueEnum {
+    pub fn enabled(&self, auto_case: fn() -> bool) -> bool {
+        match self {
+            EnableAutoAlwaysNeverValueEnum::Auto => auto_case(),
+            EnableAutoAlwaysNeverValueEnum::Never => false,
+            EnableAutoAlwaysNeverValueEnum::Always => true,
+        }
+    }
+}
+
+fn is_enabled_with_default_true(v: &Option<EnableAutoAlwaysNeverValueEnum>) -> bool {
+    v.as_ref()
+        .unwrap_or(&EnableAutoAlwaysNeverValueEnum::Auto)
+        .enabled(|| true)
+}
+
+impl Display for EnableAutoAlwaysNeverValueEnum {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
-            WritePruneTables::Auto => "auto",
-            WritePruneTables::Never => "never",
-            WritePruneTables::Always => "always",
+            EnableAutoAlwaysNeverValueEnum::Auto => "auto",
+            EnableAutoAlwaysNeverValueEnum::Never => "never",
+            EnableAutoAlwaysNeverValueEnum::Always => "always",
         };
         write!(f, "{}", s)
     }
@@ -461,7 +480,7 @@ impl SetCppArgs for ServeCommandArgs {
 pub struct ServeClientArgs {
     // TODO: moves, min num solutions
     // TODO: allow the client to set performance args (with bounds checks) and prune table (if enabled by server).
-    pub check_before_solve: Option<bool>,
+    pub check_before_solve: Option<EnableAutoAlwaysNeverValueEnum>,
     pub random_start: Option<bool>,
     pub min_depth: Option<u32>,
     pub max_depth: Option<u32>,
@@ -474,7 +493,7 @@ impl SetCppArgs for ServeClientArgs {
     fn set_cpp_args(&self) {
         set_boolean_arg(
             "--checkbeforesolve",
-            self.check_before_solve.unwrap_or(true),
+            is_enabled_with_default_true(&self.check_before_solve),
         );
         set_boolean_arg("--randomstart", self.random_start.unwrap_or(true));
         set_optional_arg("--mindepth", &self.min_depth);

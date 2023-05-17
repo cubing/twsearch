@@ -18,6 +18,8 @@ pub mod rust_api {
         // fn rust_api_solve_scramble(s: &str) -> String;
         fn rust_api_solve_position(s: &str) -> String;
         fn rust_api_reset();
+        // TODO: We can't use `optional` because https://github.com/dtolnay/cxx/issues/87 is unresolved.
+        // Use the empty string to indicate an empty value for `scramble_file`.
         fn rust_api_main_search(def_file: &str, scramble_file: &str);
     }
 }

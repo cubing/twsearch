@@ -6,6 +6,7 @@ use cubing::{
 
 use lazy_static::lazy_static;
 use regex::Regex;
+use serde::{Deserialize, Serialize};
 
 const BLANK_LINE: &str = "";
 const END: &str = "End";
@@ -159,4 +160,29 @@ pub fn serialize_kpuzzle_definition(
     // println!("{}", s);
     // Ok(s)
     Ok(builder.build())
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ScrambleListEntry {
+    pub state: KStateData,
+}
+
+pub type ScrambleList = Vec<ScrambleListEntry>;
+
+pub fn serialize_scramble_list(scramble_list: &ScrambleList) -> String {
+    let mut scramble_idx = 0;
+    let scramble_strings: Vec<String> = scramble_list
+        .iter()
+        .map(|entry| {
+            serialize_scramble_state_data(
+                &format!("Scramble{}", {
+                    scramble_idx += 1;
+                    scramble_idx
+                }),
+                &entry.state,
+            )
+        })
+        .collect();
+
+    scramble_strings.join("\n\n")
 }

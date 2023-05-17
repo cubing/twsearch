@@ -128,10 +128,10 @@ pub struct MovesArgs {
     pub moves: Option<String>,
 }
 
-impl SetCppArgs for MovesArgs {
-    fn set_cpp_args(&self) {
-        if let Some(moves) = &self.moves {
-            let moves: Vec<Move> = moves
+impl MovesArgs {
+    pub fn moves_parsed(&self) -> Option<Vec<Move>> {
+        self.moves.as_ref().map(|moves| {
+            moves
                 .split(',')
                 .by_ref()
                 .map(|move_str| match move_str.parse::<Move>() {
@@ -141,8 +141,15 @@ impl SetCppArgs for MovesArgs {
                         panic!("Exiting due to invalid move.")
                     }
                 })
-                .collect();
-            set_moves_arg(&moves);
+                .collect()
+        })
+    }
+}
+
+impl SetCppArgs for MovesArgs {
+    fn set_cpp_args(&self) {
+        if let Some(moves_parsed) = &self.moves_parsed() {
+            set_moves_arg(moves_parsed);
         }
     }
 }
@@ -221,6 +228,7 @@ pub struct CompletionsArgs {
     shell: Shell,
 }
 
+// TODO: support moves arg?
 #[derive(Args, Debug)]
 pub struct SchreierSimsArgs {
     #[command(flatten)]

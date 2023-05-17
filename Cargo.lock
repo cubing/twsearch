@@ -970,6 +970,8 @@ dependencies = [
  "regex",
  "rouille",
  "serde",
+ "serde_json",
+ "tempfile",
 ]
 
 [[package]]

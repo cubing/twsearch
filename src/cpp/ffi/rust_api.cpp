@@ -36,11 +36,10 @@ void rust_api_main_search(rust::Str def_file_, rust::Str scramble_file_) {
   const char* def_file = def_file_str.c_str();
 
   std::string scramble_file_str;
-  const char** scramble_file = NULL;
+  const char* scramble_file = NULL;
   if (scramble_file_.length() > 0) {
     scramble_file_str = std::string(scramble_file_);
-    const char* scramble_file_ptr = scramble_file_str.c_str();
-    scramble_file = &scramble_file_ptr;
+    scramble_file = scramble_file_str.c_str();
   }
 
   main_search(def_file, scramble_file);

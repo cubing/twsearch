@@ -31,6 +31,9 @@ fn rewrite_input_file<T: for<'a> Deserialize<'a>>(
     temp_file
         .write_all(output_str.as_bytes())
         .or(Err("Could not write a rewritten input file."))?;
+    temp_file
+        .flush()
+        .or(Err("Could not flush rewritten file."))?;
 
     let s = match temp_file.path().to_str() {
         Some(s) => s,

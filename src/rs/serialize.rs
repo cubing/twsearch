@@ -1,7 +1,9 @@
 extern crate cubing;
 use cubing::{
     alg::Move,
-    kpuzzle::{KPuzzle, KPuzzleDefinition, KStateData, KTransformationData},
+    kpuzzle::{
+        InvalidDefinitionError, KPuzzle, KPuzzleDefinition, KStateData, KTransformationData,
+    },
 };
 
 use lazy_static::lazy_static;
@@ -107,7 +109,7 @@ pub struct KPuzzleSerializationOptions {
 pub fn serialize_kpuzzle_definition(
     def: KPuzzleDefinition, // TODO: take reference (requires a change in `cubing.rs`?)
     options: Option<&KPuzzleSerializationOptions>,
-) -> Result<String, String> {
+) -> Result<String, InvalidDefinitionError> {
     let options = options.unwrap_or(&KPuzzleSerializationOptions {
         move_subset: None,
         custom_start_state: None,
@@ -147,7 +149,14 @@ pub fn serialize_kpuzzle_definition(
             if include(options, move_name) {
                 let transformation = match kpuzzle.transformation_from_alg(alg) {
                     Ok(transformation) => transformation,
-                    Err(e) => return Err(e),
+                    Err(_) => {
+                        return Err(InvalidDefinitionError {
+                            description: format!(
+                                "Derived move definition uses an invalid alg for: {}",
+                                move_name
+                            ),
+                        })
+                    }
                 };
                 builder.push(&serialize_move_transformation(
                     move_name,

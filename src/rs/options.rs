@@ -159,10 +159,10 @@ impl SetCppArgs for MovesArgs {
 
 #[derive(Args, Debug)]
 pub struct SearchPersistenceArgs {
-    #[clap(long/* , visible_alias = "writeprunetables" */)]
+    #[clap(long, help_heading = "Persistence"/* , visible_alias = "writeprunetables" */)]
     pub write_prune_tables: Option<EnableAutoAlwaysNeverValueEnum>,
 
-    #[clap(long/* , visible_alias = "cachedir" */)]
+    #[clap(long, help_heading = "Persistence"/* , visible_alias = "cachedir" */)]
     pub cache_dir: Option<PathBuf>,
 }
 

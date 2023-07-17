@@ -358,6 +358,9 @@ impl SetCppArgs for MetricArgs {
 pub struct InputDefFileOnlyArgs {
     #[clap()]
     pub def_file: PathBuf,
+    // TODO: remove this
+    #[clap(long)]
+    pub debug_print_serialized_json: bool,
 }
 
 #[derive(Args, Debug)]

@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.2.7", features = ["derive"] }
 clap_complete = "4.2.1"
-cubing = { path = "../cubing.rs" }
+cubing = "0.5.2"
 cxx = "1.0"
 lazy_static = "1.4.0"
 num_cpus = "1.15.0"

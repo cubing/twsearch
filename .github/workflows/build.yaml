@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v2
       - run: make
       - run: ./build/bin/twsearch -g samples/main/2x2x2.tws
-      - run: make test-cpp
+      - run: make test-cpp-cli
 
   cpp-windows:
     runs-on: windows-latest
@@ -42,3 +42,4 @@ jobs:
       - uses: actions/checkout@v2
       - run: make build-rust
       - run: make lint-rust
+      - run: make test-rust-cli

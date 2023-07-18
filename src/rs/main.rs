@@ -38,6 +38,10 @@ fn main() {
                 .def_file_wrapper_args
                 .def_file,
             &search_command_args.input_args.scramble_file,
+            search_command_args
+                .input_args
+                .def_file_wrapper_args
+                .debug_print_serialized_json,
         ),
         options::Command::Serve(serve_command_args) => serve(serve_command_args),
         // TODO: consolidate def-only arg implementations.
@@ -48,16 +52,28 @@ fn main() {
                 &schreier_sims_command_args,
                 &schreier_sims_command_args.input_args.def_file,
                 &None,
+                schreier_sims_command_args
+                    .input_args
+                    .debug_print_serialized_json,
             )
         }
         options::Command::GodsAlgorithm(gods_algorithm_args) => main_search(
             &gods_algorithm_args,
             &gods_algorithm_args.input_args.def_file,
             &None,
+            gods_algorithm_args.input_args.debug_print_serialized_json,
         ),
-        options::Command::TimingTest(args) => main_search(&args, &args.input_args.def_file, &None),
-        options::Command::CanonicalAlgs(args) => {
-            main_search(&args, &args.input_args.def_file, &None)
-        }
+        options::Command::TimingTest(args) => main_search(
+            &args,
+            &args.input_args.def_file,
+            &None,
+            args.input_args.debug_print_serialized_json,
+        ),
+        options::Command::CanonicalAlgs(args) => main_search(
+            &args,
+            &args.input_args.def_file,
+            &None,
+            args.input_args.debug_print_serialized_json,
+        ),
     }
 }

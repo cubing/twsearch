@@ -21,12 +21,18 @@ use crate::{
 fn rewrite_input_file<T: for<'a> Deserialize<'a>>(
     input_file: &Path,
     rewrite_fn: fn(T) -> Result<String, String>,
+    debug_print_serialized_json: bool,
 ) -> Result<(String, Option<NamedTempFile>), String> {
     format!("Rewriting: {:?}", input_file);
     let input_str = read_to_string(input_file).or(Err("Could not read input file."))?;
     let input_parsed: T =
         serde_json::from_str(&input_str).or(Err("Input file is not valid JSON."))?;
     let output_str = rewrite_fn(input_parsed)?;
+
+    if debug_print_serialized_json {
+        println!("\n\n--------\n{}\n--------\n\n", output_str);
+    }
+
     let mut temp_file = NamedTempFile::new().or(Err("Could not create a temp file."))?;
     temp_file
         .write_all(output_str.as_bytes())
@@ -45,8 +51,9 @@ fn rewrite_input_file<T: for<'a> Deserialize<'a>>(
 fn must_rewrite_input_file<T: for<'a> Deserialize<'a>>(
     input_file: &Path,
     rewrite_fn: fn(T) -> Result<String, String>,
+    debug_print_serialized_json: bool,
 ) -> (String, Option<NamedTempFile>) {
-    match rewrite_input_file(input_file, rewrite_fn) {
+    match rewrite_input_file(input_file, rewrite_fn, debug_print_serialized_json) {
         Ok(v) => v,
         Err(e) => {
             panic!("{}", e)
@@ -58,6 +65,7 @@ pub fn main_search(
     args_for_reset: &dyn SetCppArgs,
     def_file: &Path,
     scramble_file: &Option<PathBuf>,
+    debug_print_serialized_json: bool,
 ) {
     reset_args_from(vec![args_for_reset]);
 
@@ -67,17 +75,21 @@ pub fn main_search(
             None::<NamedTempFile>,
         ),
         _ => {
-            must_rewrite_input_file(def_file, |def: KPuzzleDefinition| {
-                let def = serialize_kpuzzle_definition(
-                    def,
-                    Some(&KPuzzleSerializationOptions {
-                        move_subset: None,
-                        // move_subset: move_subset.clone(), // TODO
-                        custom_start_state: None,
-                    }),
-                );
-                def.map_err(|e| e.to_string())
-            })
+            must_rewrite_input_file(
+                def_file,
+                |def: KPuzzleDefinition| {
+                    let def = serialize_kpuzzle_definition(
+                        def,
+                        Some(&KPuzzleSerializationOptions {
+                            move_subset: None,
+                            // move_subset: move_subset.clone(), // TODO
+                            custom_start_state: None,
+                        }),
+                    );
+                    def.map_err(|e| e.to_string())
+                },
+                debug_print_serialized_json,
+            )
         }
     };
 
@@ -91,13 +103,19 @@ pub fn main_search(
                 None::<NamedTempFile>,
             ),
             _ => {
-                match rewrite_input_file(scramble_file, |scramble_list: ScrambleList| {
-                    serialize_scramble_list(&scramble_list)
-                }) {
+                match rewrite_input_file(
+                    scramble_file,
+                    |scramble_list: ScrambleList| serialize_scramble_list(&scramble_list),
+                    debug_print_serialized_json,
+                ) {
                     Ok(v) => v,
-                    Err(_) => must_rewrite_input_file(scramble_file, |kstate_data: KStateData| {
-                        serialize_scramble_state_data("Anonymous_Scramble", &kstate_data)
-                    }),
+                    Err(_) => must_rewrite_input_file(
+                        scramble_file,
+                        |kstate_data: KStateData| {
+                            serialize_scramble_state_data("Anonymous_Scramble", &kstate_data)
+                        },
+                        debug_print_serialized_json,
+                    ),
                 }
             }
         },

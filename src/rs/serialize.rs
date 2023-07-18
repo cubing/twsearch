@@ -1,4 +1,5 @@
 extern crate cubing;
+
 use cubing::{
     alg::Move,
     kpuzzle::{
@@ -46,6 +47,10 @@ impl LiteStringBuilder {
         self.push(&serialize_usize_vec(vec))
     }
 
+    pub fn push_str_vec(&mut self, vec: &[String]) {
+        self.push(&vec.join(" "))
+    }
+
     pub fn build(self) -> String {
         self.s
     }
@@ -75,16 +80,32 @@ fn serialize_move_transformation(r#move: &Move, t: &KTransformationData) -> Stri
     builder.build()
 }
 
-fn serialize_state_data(t: &KStateData) -> String {
+fn serialize_state_data(t: &KStateData) -> Result<String, String> {
     let mut builder = LiteStringBuilder::new();
     for (orbit_name, orbit_data) in t {
         builder.push(&sanitize(&orbit_name.to_string()));
         builder.push_vec(&orbit_data.pieces);
-        builder.push_vec(&orbit_data.orientation);
+
+        let len = orbit_data.orientation.len();
+        let mut str_vec = Vec::with_capacity(len);
+        for i in 0..len {
+            match orbit_data.orientation_mod.as_ref().map(|vec| vec[i]) {
+                None => str_vec.push(orbit_data.orientation[i].to_string()),
+                Some(0) => str_vec.push(orbit_data.orientation[i].to_string()),
+                Some(1) => str_vec.push("?".to_owned()), // TODO: assert that `orbit_data.orientation[i] == 0`?
+                Some(_) => {
+                    return Err(
+                        "Orientation mod entries other than 0 or 1 are not currently supported"
+                            .to_owned(),
+                    );
+                }
+            }
+        }
+        builder.push_str_vec(&str_vec);
     }
     builder.push(END);
     builder.push(BLANK_LINE);
-    builder.build()
+    Ok(builder.build())
 }
 
 fn include(options: &KPuzzleSerializationOptions, move_name: &Move) -> bool {
@@ -94,11 +115,11 @@ fn include(options: &KPuzzleSerializationOptions, move_name: &Move) -> bool {
     }
 }
 
-pub fn serialize_scramble_state_data(name: &str, t: &KStateData) -> String {
+pub fn serialize_scramble_state_data(name: &str, t: &KStateData) -> Result<String, String> {
     let mut builder = LiteStringBuilder::new();
     builder.push(&format!("ScrambleState {}", name));
-    builder.push(&serialize_state_data(t));
-    builder.build()
+    builder.push(&serialize_state_data(t)?);
+    Ok(builder.build())
 }
 
 pub struct KPuzzleSerializationOptions {
@@ -131,9 +152,9 @@ pub fn serialize_kpuzzle_definition(
 
     builder.push("StartState");
     if let Some(start_state) = &options.custom_start_state {
-        builder.push(&serialize_state_data(start_state));
+        builder.push(&serialize_state_data(start_state)?);
     } else {
-        builder.push(&serialize_state_data(&def.start_state_data));
+        builder.push(&serialize_state_data(&def.start_state_data)?);
     }
     builder.push(BLANK_LINE);
 
@@ -178,9 +199,9 @@ pub struct ScrambleListEntry {
 
 pub type ScrambleList = Vec<ScrambleListEntry>;
 
-pub fn serialize_scramble_list(scramble_list: &ScrambleList) -> String {
+pub fn serialize_scramble_list(scramble_list: &ScrambleList) -> Result<String, String> {
     let mut scramble_idx = 0;
-    let scramble_strings: Vec<String> = scramble_list
+    let scramble_strings: Result<Vec<String>, String> = scramble_list
         .iter()
         .map(|entry| {
             serialize_scramble_state_data(
@@ -193,5 +214,5 @@ pub fn serialize_scramble_list(scramble_list: &ScrambleList) -> String {
         })
         .collect();
 
-    scramble_strings.join("\n\n")
+    Ok(scramble_strings?.join("\n\n"))
 }

@@ -20,13 +20,13 @@ use crate::{
 // Allow the C++ to take the inputs directly.
 fn rewrite_input_file<T: for<'a> Deserialize<'a>>(
     input_file: &Path,
-    rewrite_fn: fn(T) -> String,
+    rewrite_fn: fn(T) -> Result<String, String>,
 ) -> Result<(String, Option<NamedTempFile>), String> {
     format!("Rewriting: {:?}", input_file);
     let input_str = read_to_string(input_file).or(Err("Could not read input file."))?;
     let input_parsed: T =
         serde_json::from_str(&input_str).or(Err("Input file is not valid JSON."))?;
-    let output_str = rewrite_fn(input_parsed);
+    let output_str = rewrite_fn(input_parsed)?;
     let mut temp_file = NamedTempFile::new().or(Err("Could not create a temp file."))?;
     temp_file
         .write_all(output_str.as_bytes())
@@ -44,7 +44,7 @@ fn rewrite_input_file<T: for<'a> Deserialize<'a>>(
 
 fn must_rewrite_input_file<T: for<'a> Deserialize<'a>>(
     input_file: &Path,
-    rewrite_fn: fn(T) -> String,
+    rewrite_fn: fn(T) -> Result<String, String>,
 ) -> (String, Option<NamedTempFile>) {
     match rewrite_input_file(input_file, rewrite_fn) {
         Ok(v) => v,
@@ -68,15 +68,15 @@ pub fn main_search(
         ),
         _ => {
             must_rewrite_input_file(def_file, |def: KPuzzleDefinition| {
-                serialize_kpuzzle_definition(
+                let def = serialize_kpuzzle_definition(
                     def,
                     Some(&KPuzzleSerializationOptions {
                         move_subset: None,
                         // move_subset: move_subset.clone(), // TODO
                         custom_start_state: None,
                     }),
-                )
-                .expect("Could not serialize the definition")
+                );
+                def.map_err(|e| e.to_string())
             })
         }
     };

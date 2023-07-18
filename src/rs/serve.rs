@@ -31,6 +31,7 @@ fn set_definition(
             return Err(Response::text(format!("Invalid definition: {}", e)).with_status_code(400));
         }
     };
+    println!("{}", s);
     rust_api::rust_api_set_kpuzzle_definition(&s);
     Ok(())
 }
@@ -74,10 +75,14 @@ fn solve_position(request: &Request, serve_command_args: &ServeCommandArgs) -> R
         Ok(_) => {}
         Err(response) => return response,
     };
-    let solution = rust_api::rust_api_solve_position(&serialize_scramble_state_data(
-        "AnonymousScramble",
-        &state_solve.state,
-    )); // TODO: catch exceptions???
+    let result = match serialize_scramble_state_data("AnonymousScramble", &state_solve.state) {
+        Ok(result) => result,
+        Err(e) => {
+            return Response::text(e).with_status_code(400);
+        }
+    };
+    println!("{}", result);
+    let solution = rust_api::rust_api_solve_position(&result); // TODO: catch exceptions???
     Response::json(&ResponseAlg { alg: solution })
 }
 

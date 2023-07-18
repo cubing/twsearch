@@ -3,6 +3,8 @@ mod search;
 mod serialize;
 mod serve;
 
+use std::process::exit;
+
 use search::main_search;
 use serve::serve;
 
@@ -27,9 +29,9 @@ pub mod rust_api {
 fn main() {
     let args = get_options();
 
-    match args.command {
+    let result = match args.command {
         options::Command::Completions(_completions_args) => {
-            panic!("Completions should have been printed during options parsing, followed by program exit.")
+            panic!("Completions should have been printed during options parsing, followed by program exit.");
         }
         options::Command::Search(search_command_args) => main_search(
             &search_command_args,
@@ -42,6 +44,7 @@ fn main() {
                 .input_args
                 .def_file_wrapper_args
                 .debug_print_serialized_json,
+            &search_command_args.input_args.experimental_target_pattern,
         ),
         options::Command::Serve(serve_command_args) => serve(serve_command_args),
         // TODO: consolidate def-only arg implementations.
@@ -55,6 +58,7 @@ fn main() {
                 schreier_sims_command_args
                     .input_args
                     .debug_print_serialized_json,
+                &None, // TODO: allow custom target pattern?
             )
         }
         options::Command::GodsAlgorithm(gods_algorithm_args) => main_search(
@@ -62,18 +66,25 @@ fn main() {
             &gods_algorithm_args.input_args.def_file,
             &None,
             gods_algorithm_args.input_args.debug_print_serialized_json,
+            &None, // TODO: allow custom target pattern?
         ),
         options::Command::TimingTest(args) => main_search(
             &args,
             &args.input_args.def_file,
             &None,
             args.input_args.debug_print_serialized_json,
+            &None, // TODO: allow custom target pattern?
         ),
         options::Command::CanonicalAlgs(args) => main_search(
             &args,
             &args.input_args.def_file,
             &None,
             args.input_args.debug_print_serialized_json,
+            &None, // TODO: allow custom target pattern?
         ),
+    };
+    if let Err(err) = result {
+        eprintln!("{}", err);
+        exit(1);
     }
 }

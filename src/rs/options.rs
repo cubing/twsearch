@@ -376,6 +376,9 @@ pub struct InputDefAndOptionalScrambleFileArgs {
     /// Solve a list of scrambles passed to standard in (separated by newlines).
     #[clap(long, help_heading = "Scramble input", group = "scramble_input"/* , visible_short_alias = 's' */)]
     pub stdin_scrambles: bool,
+    /// Use the target pattern from the specified file instead of the default start state from the defintion.
+    #[clap(long, help_heading = "Scramble input")]
+    pub experimental_target_pattern: Option<PathBuf>,
 }
 
 impl SetCppArgs for InputDefAndOptionalScrambleFileArgs {

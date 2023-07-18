@@ -92,7 +92,7 @@ fn cors(response: Response) -> Response {
         .with_additional_header("Access-Control-Allow-Headers", "Content-Type")
 }
 
-pub fn serve(serve_command_args: ServeCommandArgs) {
+pub fn serve(serve_command_args: ServeCommandArgs) -> Result<(), String> {
     let solve_mutex = Mutex::new(());
     println!(
         "Starting `twsearch-rs serve` on port 2023.

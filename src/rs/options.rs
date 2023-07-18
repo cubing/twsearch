@@ -78,10 +78,10 @@ pub struct CommonSearchArgs {
 
 impl SetCppArgs for CommonSearchArgs {
     fn set_cpp_args(&self) {
-        // set_boolean_arg(
-        //     "--checkbeforesolve",
-        //     is_enabled_with_default_true(&self.check_before_solve),
-        // );
+        set_boolean_arg(
+            "--checkbeforesolve",
+            is_enabled_with_default_true(&self.check_before_solve),
+        );
         set_boolean_arg("--randomstart", self.random_start);
         set_optional_arg("--mindepth", &self.min_depth);
         set_optional_arg("-m", &self.max_depth);

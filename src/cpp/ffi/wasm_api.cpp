@@ -29,3 +29,8 @@ extern "C" const char *wasm_api_solve_scramble(const char *s) {
 extern "C" const char *wasm_api_solve_position(const char *s) {
    return ffi_api_cstr_solve_position(s);
 }
+
+// Workaround for https://github.com/wasmerio/wasmer/issues/2589
+extern "C" void emscripten_notify_memory_growth([[maybe_unused]] std::size_t _) {
+   // Do nothing.
+}

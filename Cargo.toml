@@ -22,3 +22,6 @@ cxx-build = "1.0"
 [[bin]]
 name = "twsearch-rs"
 path = "./src/rs/main.rs"
+
+[dev-dependencies]
+wait-timeout = "0.2.0"

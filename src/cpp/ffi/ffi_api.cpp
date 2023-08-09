@@ -97,7 +97,7 @@ extern "C" const char *ffi_api_cstr_solve_scramble(const char *s) {
    checkprunetable() ;
    puzdef &pd = wasmdata.pd ;
    stacksetval p1(pd) ;
-   vector<setval> movelist = parsemovelist_generously(pd, s) ;
+   vector<allocsetval> movelist = parsemovelist_generously(pd, s) ;
    for (auto &m : movelist)
       domove(pd, p1, m) ;
    string noname("NoScrambleName") ;

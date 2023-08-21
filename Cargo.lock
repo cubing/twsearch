@@ -271,9 +271,9 @@ dependencies = [
 
 [[package]]
 name = "cubing"
-version = "0.5.2"
+version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "80c460fa26ec8bc9c5ef38cceb6b39d7925e4fbf96951297c8b0ed153ee2ce83"
+checksum = "a65aacad3e8eda9e4592e5fe738608bef874f8d113ba9b03ab278012bd6633df"
 dependencies = [
  "derive_more",
  "nom",

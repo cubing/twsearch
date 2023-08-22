@@ -1000,6 +1000,7 @@ dependencies = [
  "cubing",
  "cxx",
  "cxx-build",
+ "derive_more",
  "lazy_static",
  "num_cpus",
  "regex",

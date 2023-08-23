@@ -5,13 +5,12 @@ use cubing::{
     kpuzzle::{InvalidAlgError, InvalidDefinitionError, KPuzzle, KPuzzleOrbitName},
 };
 
-use super::{PackedKState, PackedKTransformation};
+use super::{packed_part::PackedPart, PackedKState, PackedKTransformation};
 
 #[derive(Debug, Clone)]
 pub struct PackedKPuzzleOrbitInfo {
     pub name: KPuzzleOrbitName,
-    pub pieces_or_pemutations_offset: usize,
-    pub orientations_offset: usize,
+    pub bytes_offset: usize,
     pub num_pieces: usize,
     pub num_orientations: u8,
     pub unknown_orientation_value: u8,
@@ -55,11 +54,9 @@ impl TryFrom<KPuzzle> for PackedKPuzzle {
             orbit_iteration_info.push({
                 PackedKPuzzleOrbitInfo {
                     name: orbit_name.clone(),
+                    bytes_offset,
                     num_pieces: orbit_definition.num_pieces,
                     num_orientations: usize_to_u8(orbit_definition.num_orientations),
-                    pieces_or_pemutations_offset: bytes_offset,
-                    orientations_offset: bytes_offset
-                        + std::convert::Into::<usize>::into(orbit_definition.num_pieces),
                     unknown_orientation_value,
                 }
             });
@@ -100,12 +97,14 @@ impl PackedKPuzzle {
                 .get(&orbit_info.name)
                 .expect("Missing orbit!");
             for i in 0..orbit_info.num_pieces {
-                new_state.set_piece_or_permutation(
+                new_state.set_part(
+                    PackedPart::Piece,
                     orbit_info,
                     i,
                     usize_to_u8(kstate_orbit_data.pieces[i]),
                 );
-                new_state.set_orientation(
+                new_state.set_part(
+                    PackedPart::Orientation,
                     orbit_info,
                     i,
                     match &kstate_orbit_data.orientation_mod {
@@ -142,12 +141,14 @@ impl PackedKPuzzle {
                     description: format!("Missing orbit: {}", orbit_info.name),
                 })?;
             for i in 0..orbit_info.num_pieces {
-                new_transformation.set_piece_or_permutation(
+                new_transformation.set_part(
+                    PackedPart::Permutation,
                     orbit_info,
                     i,
                     usize_to_u8(unpacked_orbit_data.permutation[i]),
                 );
-                new_transformation.set_orientation(
+                new_transformation.set_part(
+                    PackedPart::Orientation,
                     orbit_info,
                     i,
                     usize_to_u8(unpacked_orbit_data.orientation[i]),

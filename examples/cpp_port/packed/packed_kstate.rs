@@ -1,6 +1,9 @@
 use std::alloc::{alloc, dealloc};
 
-use super::{packed_kpuzzle::PackedKPuzzleOrbitInfo, PackedKPuzzle, PackedKTransformation};
+use super::{
+    packed_kpuzzle::PackedKPuzzleOrbitInfo, packed_part::PackedPart, PackedKPuzzle,
+    PackedKTransformation,
+};
 
 pub struct PackedKState {
     pub packed_kpuzzle: PackedKPuzzle,
@@ -22,36 +25,38 @@ impl PackedKState {
         }
     }
 
-    pub fn get_piece_or_permutation(&self, orbit_info: &PackedKPuzzleOrbitInfo, i: usize) -> u8 {
-        unsafe {
-            self.bytes
-                .add(orbit_info.pieces_or_pemutations_offset + i)
-                .read()
-        }
-    }
-
-    pub fn get_orientation(&self, orbit_info: &PackedKPuzzleOrbitInfo, i: usize) -> u8 {
-        unsafe { self.bytes.add(orbit_info.orientations_offset + i).read() }
-    }
-
-    pub fn set_piece_or_permutation(
+    pub fn set_part(
         &self,
+        packed_part: PackedPart,
         orbit_info: &PackedKPuzzleOrbitInfo,
         i: usize,
         value: u8,
     ) {
         unsafe {
             self.bytes
-                .add(orbit_info.pieces_or_pemutations_offset + i)
+                .add(
+                    orbit_info.bytes_offset
+                        + orbit_info.num_pieces * packed_part.offset_multiplier()
+                        + i,
+                )
                 .write(value)
         }
     }
 
-    pub fn set_orientation(&self, orbit_info: &PackedKPuzzleOrbitInfo, i: usize, value: u8) {
+    pub fn get_part(
+        &self,
+        packed_part: PackedPart,
+        orbit_info: &PackedKPuzzleOrbitInfo,
+        i: usize,
+    ) -> u8 {
         unsafe {
             self.bytes
-                .add(orbit_info.orientations_offset + i)
-                .write(value)
+                .add(
+                    orbit_info.bytes_offset
+                        + orbit_info.num_pieces * packed_part.offset_multiplier()
+                        + i,
+                )
+                .read()
         }
     }
 
@@ -78,15 +83,23 @@ impl PackedKState {
         for orbit_info in &packed_kpuzzle.data.orbit_iteration_info {
             // TODO: optimization when either value is the identity.
             for i in 0..orbit_info.num_pieces {
-                let transformation_idx = transformation.get_piece_or_permutation(orbit_info, i);
+                let transformation_idx =
+                    transformation.get_part(PackedPart::Permutation, orbit_info, i);
 
-                let new_piece_permutation = self.get_piece_or_permutation(
+                let new_piece_permutation = self.get_part(
+                    PackedPart::Permutation,
                     orbit_info,
                     std::convert::Into::<usize>::into(transformation_idx),
                 );
-                into_state.set_piece_or_permutation(orbit_info, i, new_piece_permutation);
+                into_state.set_part(
+                    PackedPart::Permutation,
+                    orbit_info,
+                    i,
+                    new_piece_permutation,
+                );
 
-                let previous_piece_orientation = self.get_orientation(
+                let previous_piece_orientation = self.get_part(
+                    PackedPart::Orientation,
                     orbit_info,
                     std::convert::Into::<usize>::into(transformation_idx),
                 );
@@ -98,10 +111,16 @@ impl PackedKState {
                     if previous_piece_orientation == orbit_info.unknown_orientation_value {
                         previous_piece_orientation
                     } else {
-                        (previous_piece_orientation + transformation.get_orientation(orbit_info, i))
+                        (previous_piece_orientation
+                            + transformation.get_part(PackedPart::Orientation, orbit_info, i))
                             % orbit_info.num_orientations
                     };
-                into_state.set_orientation(orbit_info, i, new_piece_orientation);
+                into_state.set_part(
+                    PackedPart::Orientation,
+                    orbit_info,
+                    i,
+                    new_piece_orientation,
+                );
             }
         }
     }

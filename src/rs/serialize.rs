@@ -70,6 +70,7 @@ fn serialize_move_transformation(r#move: &Move, t: &KTransformationData) -> Stri
         sanitize(&r#move.to_string())
     ));
     // outputLines.push(`MoveTransformation ${sanitize(name)}`);
+    // TODO: use `orbit_ordering` if available?
     for (orbit_name, orbit_data) in t {
         builder.push(&sanitize(&orbit_name.to_string()));
         builder.push_vec(&orbit_data.permutation);
@@ -82,6 +83,7 @@ fn serialize_move_transformation(r#move: &Move, t: &KTransformationData) -> Stri
 
 fn serialize_state_data(t: &KStateData) -> Result<String, String> {
     let mut builder = LiteStringBuilder::new();
+    // TODO: use `orbit_ordering` if available?
     for (orbit_name, orbit_data) in t {
         builder.push(&sanitize(&orbit_name.to_string()));
         builder.push_vec(&orbit_data.pieces);
@@ -140,13 +142,31 @@ pub fn serialize_kpuzzle_definition(
     builder.push(&format!("Name {}", sanitize(&def.name)));
     builder.push(BLANK_LINE);
 
-    for (orbit_name, orbit_info) in &def.orbits {
-        builder.push(&format!(
-            "Set {} {} {}",
-            &sanitize(&orbit_name.to_string()),
-            orbit_info.num_pieces,
-            orbit_info.num_orientations
-        ));
+    match &def.orbit_ordering {
+        Some(orbit_ordering) => {
+            for orbit_name in orbit_ordering {
+                let orbit_info = def.orbits.get(orbit_name);
+                let orbit_info = orbit_info.ok_or_else(|| InvalidDefinitionError {
+                    description: format!("Missing orbit from iteration order: {}", orbit_name),
+                })?;
+                builder.push(&format!(
+                    "Set {} {} {}",
+                    &sanitize(&orbit_name.to_string()),
+                    orbit_info.num_pieces,
+                    orbit_info.num_orientations
+                ));
+            }
+        }
+        None => {
+            for (orbit_name, orbit_info) in &def.orbits {
+                builder.push(&format!(
+                    "Set {} {} {}",
+                    &sanitize(&orbit_name.to_string()),
+                    orbit_info.num_pieces,
+                    orbit_info.num_orientations
+                ));
+            }
+        }
     }
     builder.push(BLANK_LINE);
 

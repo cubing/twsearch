@@ -43,3 +43,4 @@ jobs:
       - run: make build-rust
       - run: make lint-rust
       - run: make test-rust-cli
+      - run: make test-cpp_port

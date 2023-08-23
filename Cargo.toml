@@ -3,6 +3,9 @@ name = "twsearch"
 version = "0.0.0"
 edition = "2021"
 
+[features]
+no_orientation_mod = []
+
 [dependencies]
 cityhash = "0.1.1"
 clap = { version = "4.2.7", features = ["derive"] }

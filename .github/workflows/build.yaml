@@ -43,6 +43,6 @@ jobs:
       - run: make build-rust
       - run: make lint-rust
       - run: make test-rust-cli
-      - run: make test-cpp_port
+      - run: make test-cpp_port-default
       - run: make test-cpp_port-orientation_packer
       - run: make test-cpp_port-no_orientation_mod

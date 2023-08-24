@@ -1,0 +1,29 @@
+[package]
+name = "twsearch-cpp-wrapper"
+version = "0.0.0"
+edition = "2021"
+
+[dependencies]
+cityhash = "0.1.1"
+clap = { version = "4.2.7", features = ["derive"] }
+clap_complete = "4.2.1"
+cubing = "0.5.4"
+cxx = "1.0"
+derive_more = "0.99.17"
+lazy_static = "1.4.0"
+num_cpus = "1.15.0"
+regex = "1.8.1"
+rouille = "3.6.2"
+serde = { version = "1.0.160", features = ["derive", "rc"] }
+serde_json = "1.0.96"
+tempfile = "3.5.0"
+
+[dev-dependencies]
+wait-timeout = "0.2.0"
+
+[build-dependencies]
+cxx-build = "1.0"
+
+[[bin]]
+name = "twsearch-rs"
+path = "./rs/main.rs"

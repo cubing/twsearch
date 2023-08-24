@@ -1,0 +1,28 @@
+[package]
+name = "twsearch"
+version = "0.0.0"
+edition = "2021"
+
+[features]
+default = []
+orientation_packer = []
+no_orientation_mod = []
+
+[dependencies]
+cityhash = "0.1.1"
+clap = { version = "4.2.7", features = ["derive"] }
+clap_complete = "4.2.1"
+cubing = "0.5.4"
+derive_more = "0.99.17"
+lazy_static = "1.4.0"
+regex = "1.8.1"
+serde = { version = "1.0.160", features = ["derive", "rc"] }
+serde_json = "1.0.96"
+tempfile = "3.5.0"
+
+[dev-dependencies]
+wait-timeout = "0.2.0"
+
+[lib]
+name = "twsearch"
+path = "./mod.rs"

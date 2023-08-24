@@ -14,7 +14,7 @@ use crate::options::get_options;
 #[cxx::bridge]
 pub mod rust_api {
     unsafe extern "C++" {
-        include!("twsearch/src/cpp/ffi/rust_api.h");
+        include!("twsearch-cpp-wrapper/ffi/rust_api.h");
         fn rust_api_set_arg(s: &str);
         fn rust_api_set_kpuzzle_definition(s: &str);
         // fn rust_api_solve_scramble(s: &str) -> String;

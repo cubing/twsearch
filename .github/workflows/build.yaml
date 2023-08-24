@@ -32,6 +32,7 @@ jobs:
       - run: make emsdk
       - run: make build/wasm-test/twsearch-test.wasm
       - run: make build/wasm-single-file/twsearch.mjs
+      - run: make test-wasm
       - run: make test-build-js
 
   rust:

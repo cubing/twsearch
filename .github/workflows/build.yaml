@@ -42,7 +42,10 @@ jobs:
       - uses: actions/checkout@v2
       - run: make build-rust
       - run: make lint-rust
-      - run: make test-rust-cli
-      - run: make test-cpp_port-default
-      - run: make test-cpp_port-orientation_packer
-      - run: make test-cpp_port-no_orientation_mod
+      - run: make test-twsearch-cpp-wrapper-cli
+      - run: make test-rs-default
+      - run: make test-rs-orientation_packer
+      - run: make test-rs-no_orientation_mod
+      - run: make benchmark-rs-default
+      - run: make benchmark-rs-orientation_packer
+      - run: make benchmark-rs-no_orientation_mod

@@ -1,26 +1,33 @@
 use clap::{Args, CommandFactory, Parser, Subcommand, ValueEnum};
 use clap_complete::generator::generate;
 use clap_complete::{Generator, Shell};
-use cubing::alg::{Alg, Move};
+use cubing::alg::Move;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::io::stdout;
 use std::path::PathBuf;
 use std::process::exit;
 
-use crate::rust_api;
-
 /// twsearch-cpp-wrapper — a native Rust wrapper for `twsearch` functionality.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
 #[clap(name = "twsearch-cpp-wrapper")]
+pub struct TwsearchCppWrapperArgs {
+    #[command(subcommand)]
+    pub command: CliCommand,
+}
+
+/// twsearch — solve every puzzle.
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+#[clap(name = "twsearch")]
 pub struct TwsearchArgs {
     #[command(subcommand)]
-    pub command: Command,
+    pub command: CliCommand,
 }
 
 #[derive(Subcommand, Debug)]
-pub enum Command {
+pub enum CliCommand {
     /// Run a single search.
     Search(SearchCommandArgs),
     /// Run a search server.
@@ -41,10 +48,6 @@ pub enum Command {
 
     /// Print completions for the given shell.
     Completions(CompletionsArgs),
-}
-
-pub trait SetCppArgs {
-    fn set_cpp_args(&self);
 }
 
 #[derive(Args, Debug)]
@@ -76,20 +79,6 @@ pub struct CommonSearchArgs {
     pub performance_args: PerformanceArgs,
 }
 
-impl SetCppArgs for CommonSearchArgs {
-    fn set_cpp_args(&self) {
-        set_boolean_arg(
-            "--checkbeforesolve",
-            is_enabled_with_default_true(&self.check_before_solve),
-        );
-        set_boolean_arg("--randomstart", self.random_start);
-        set_optional_arg("--mindepth", &self.min_depth);
-        set_optional_arg("-m", &self.max_depth);
-        set_optional_arg("--startprunedepth", &self.start_prune_depth);
-        self.performance_args.set_cpp_args();
-    }
-}
-
 #[derive(Args, Debug)]
 pub struct SearchCommandArgs {
     #[clap(long/* , visible_short_alias = 't' */)]
@@ -107,18 +96,6 @@ pub struct SearchCommandArgs {
     // We place this last show it shows at the end of `--help` (and therefore just above the next shell prompt).
     #[command(flatten)]
     pub input_args: InputDefAndOptionalScrambleFileArgs,
-}
-
-impl SetCppArgs for SearchCommandArgs {
-    fn set_cpp_args(&self) {
-        set_optional_arg("-c", &self.min_num_solutions);
-
-        self.moves_args.set_cpp_args();
-        self.search_args.set_cpp_args();
-        self.search_persistence_args.set_cpp_args();
-        self.input_args.set_cpp_args();
-        self.metric_args.set_cpp_args();
-    }
 }
 
 // TODO: generalize this to a "definition modification" args struct?
@@ -149,14 +126,6 @@ impl MovesArgs {
     }
 }
 
-impl SetCppArgs for MovesArgs {
-    fn set_cpp_args(&self) {
-        if let Some(moves_parsed) = &self.moves_parsed() {
-            set_moves_arg(moves_parsed);
-        }
-    }
-}
-
 #[derive(Args, Debug)]
 pub struct SearchPersistenceArgs {
     #[clap(long, help_heading = "Persistence"/* , visible_alias = "writeprunetables" */)]
@@ -183,12 +152,6 @@ impl EnableAutoAlwaysNeverValueEnum {
     }
 }
 
-fn is_enabled_with_default_true(v: &Option<EnableAutoAlwaysNeverValueEnum>) -> bool {
-    v.as_ref()
-        .unwrap_or(&EnableAutoAlwaysNeverValueEnum::Auto)
-        .enabled(|| true)
-}
-
 impl Display for EnableAutoAlwaysNeverValueEnum {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let s = match self {
@@ -197,18 +160,6 @@ impl Display for EnableAutoAlwaysNeverValueEnum {
             EnableAutoAlwaysNeverValueEnum::Always => "always",
         };
         write!(f, "{}", s)
-    }
-}
-
-impl SetCppArgs for SearchPersistenceArgs {
-    fn set_cpp_args(&self) {
-        set_optional_arg("--writeprunetables", &self.write_prune_tables);
-        if let Some(cache_dir) = &self.cache_dir {
-            set_arg(
-                "--cachedir",
-                &cache_dir.to_str().expect("Invalid cache dir path."),
-            );
-        }
     }
 }
 
@@ -221,19 +172,6 @@ pub struct PerformanceArgs {
     /// Memory to use in MiB. See `README.md` for advice on how to tune memory usage.
     #[clap(long = "memory-MiB", help_heading = "Performance"/* , visible_short_alias = 'm' */, id = "MEBIBYTES")]
     pub memory_mebibytes: Option<usize>,
-}
-
-impl SetCppArgs for PerformanceArgs {
-    fn set_cpp_args(&self) {
-        let num_threads = match self.num_threads {
-            Some(num_threads) => num_threads,
-            None => num_cpus::get(),
-        };
-        println!("Setting twsearch to use {} threads.", num_threads);
-        rust_api::rust_api_set_arg(&format!("-t {}", num_threads));
-
-        set_optional_arg("-M", &self.memory_mebibytes);
-    }
 }
 
 #[derive(Args, Debug)]
@@ -255,13 +193,6 @@ pub struct SchreierSimsArgs {
 
     #[command(flatten)]
     pub performance_args: PerformanceArgs,
-}
-
-impl SetCppArgs for SchreierSimsArgs {
-    fn set_cpp_args(&self) {
-        set_boolean_arg("--schreiersims", true);
-        self.performance_args.set_cpp_args();
-    }
 }
 
 #[derive(Args, Debug)]
@@ -290,18 +221,6 @@ pub struct GodsAlgorithmArgs {
     pub performance_args: PerformanceArgs,
 }
 
-impl SetCppArgs for GodsAlgorithmArgs {
-    fn set_cpp_args(&self) {
-        self.moves_args.set_cpp_args();
-        set_boolean_arg("-g", true);
-        set_boolean_arg("-F", self.force_arrays);
-        set_boolean_arg("-H", self.hash_states);
-        set_arg("-a", &self.num_antipodes);
-        self.performance_args.set_cpp_args();
-        self.metric_args.set_cpp_args();
-    }
-}
-
 #[derive(Args, Debug)]
 pub struct TimingTestArgs {
     #[command(flatten)]
@@ -312,14 +231,6 @@ pub struct TimingTestArgs {
 
     #[command(flatten)]
     pub performance_args: PerformanceArgs,
-}
-
-impl SetCppArgs for TimingTestArgs {
-    fn set_cpp_args(&self) {
-        set_boolean_arg("-T", true);
-        self.performance_args.set_cpp_args();
-        self.metric_args.set_cpp_args();
-    }
 }
 
 #[derive(Args, Debug)]
@@ -334,24 +245,10 @@ pub struct CanonicalAlgsArgs {
     pub performance_args: PerformanceArgs,
 }
 
-impl SetCppArgs for CanonicalAlgsArgs {
-    fn set_cpp_args(&self) {
-        set_boolean_arg("-C", true);
-        self.performance_args.set_cpp_args();
-        self.metric_args.set_cpp_args();
-    }
-}
-
 #[derive(Args, Debug)]
 pub struct MetricArgs {
     #[clap(long/* , visible_short_alias = 'q' */)]
     pub quantum_metric: bool,
-}
-
-impl SetCppArgs for MetricArgs {
-    fn set_cpp_args(&self) {
-        set_boolean_arg("-q", self.quantum_metric);
-    }
 }
 
 #[derive(Args, Debug)]
@@ -381,23 +278,6 @@ pub struct InputDefAndOptionalScrambleFileArgs {
     pub experimental_target_pattern: Option<PathBuf>,
 }
 
-impl SetCppArgs for InputDefAndOptionalScrambleFileArgs {
-    fn set_cpp_args(&self) {
-        match &self.scramble_alg {
-            Some(scramble_alg) => {
-                let parsed_alg = match scramble_alg.parse::<Alg>() {
-                    Ok(alg) => alg,
-                    Err(_) => panic!("Invalid scramble alg."),
-                };
-                // TODO: Use `cubing::kpuzzle` to handle nested input syntax
-                set_arg("--scramblealg", &parsed_alg.to_string())
-            }
-            None => (),
-        };
-        set_boolean_arg("-s", self.stdin_scrambles)
-    }
-}
-
 fn completions_for_shell(cmd: &mut clap::Command, generator: impl Generator) {
     generate(generator, cmd, "twsearch-cpp-wrapper", &mut stdout());
 }
@@ -406,7 +286,7 @@ pub fn get_options() -> TwsearchArgs {
     let mut command = TwsearchArgs::command();
 
     let args = TwsearchArgs::parse();
-    if let Command::Completions(completions_args) = args.command {
+    if let CliCommand::Completions(completions_args) = args.command {
         completions_for_shell(&mut command, completions_args.shell);
         exit(0);
     };
@@ -414,41 +294,16 @@ pub fn get_options() -> TwsearchArgs {
     args
 }
 
-fn set_arg<T: Display>(arg_flag: &str, arg: &T) {
-    rust_api::rust_api_set_arg(&format!("{} {}", arg_flag, arg));
-}
+pub fn get_options_cpp_wrapper() -> TwsearchCppWrapperArgs {
+    let mut command = TwsearchCppWrapperArgs::command();
 
-fn set_boolean_arg(arg_flag: &str, arg: bool) {
-    if arg {
-        rust_api::rust_api_set_arg(arg_flag);
-    }
-}
+    let args = TwsearchCppWrapperArgs::parse();
+    if let CliCommand::Completions(completions_args) = args.command {
+        completions_for_shell(&mut command, completions_args.shell);
+        exit(0);
+    };
 
-fn set_optional_arg<T: Display>(arg_flag: &str, arg: &Option<T>) {
-    if let Some(v) = arg {
-        rust_api::rust_api_set_arg(&format!("{} {}", arg_flag, v));
-    }
-}
-
-fn set_moves_arg(moves: &[Move]) {
-    // TODO: Squishing together moves into a comma-separated string
-    // isn't semantically fantastic. But the moves already passed
-    // validation, so this is not as risky as if we were passing strings directly from the client.
-    set_arg(
-        "--moves",
-        &moves
-            .iter()
-            .map(|m| m.to_string())
-            .collect::<Vec<String>>()
-            .join(","),
-    );
-}
-
-pub fn reset_args_from(arg_structs: Vec<&dyn SetCppArgs>) {
-    rust_api::rust_api_reset();
-    for arg_struct in arg_structs {
-        arg_struct.set_cpp_args();
-    }
+    args
 }
 
 ////////
@@ -458,28 +313,10 @@ pub struct ServeArgsForIndividualSearch<'a> {
     pub client_args: &'a Option<ServeClientArgs>,
 }
 
-impl SetCppArgs for ServeArgsForIndividualSearch<'_> {
-    fn set_cpp_args(&self) {
-        self.commandline_args.set_cpp_args();
-        // set_arg("-c", &"1000");
-        if let Some(client_args) = self.client_args {
-            client_args.set_cpp_args();
-        }
-        // Unconditional args
-        set_arg("--writeprunetables", &"never");
-    }
-}
-
 #[derive(Args, Debug)]
 pub struct ServeCommandArgs {
     #[command(flatten)]
     pub performance_args: PerformanceArgs,
-}
-
-impl SetCppArgs for ServeCommandArgs {
-    fn set_cpp_args(&self) {
-        self.performance_args.set_cpp_args();
-    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -494,21 +331,4 @@ pub struct ServeClientArgs {
     pub start_prune_depth: Option<u32>,
     pub quantum_metric: Option<bool>, // TODO: enum
     pub move_subset: Option<Vec<Move>>,
-}
-
-impl SetCppArgs for ServeClientArgs {
-    fn set_cpp_args(&self) {
-        set_boolean_arg(
-            "--checkbeforesolve",
-            is_enabled_with_default_true(&self.check_before_solve),
-        );
-        set_boolean_arg("--randomstart", self.random_start.unwrap_or(true));
-        set_optional_arg("--mindepth", &self.min_depth);
-        set_optional_arg("--maxdepth", &self.max_depth);
-        set_optional_arg("--startprunedepth", &self.start_prune_depth);
-        set_optional_arg("-q", &self.quantum_metric);
-        if let Some(move_subset) = &self.move_subset {
-            set_moves_arg(move_subset);
-        }
-    }
 }

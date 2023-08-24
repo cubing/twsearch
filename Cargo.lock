@@ -1267,8 +1267,11 @@ name = "twsearch"
 version = "0.0.0"
 dependencies = [
  "cityhash",
+ "clap 4.3.24",
+ "clap_complete",
  "cubing",
  "derive_more",
+ "serde",
  "wait-timeout",
 ]
 
@@ -1288,6 +1291,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+ "twsearch",
  "wait-timeout",
 ]
 

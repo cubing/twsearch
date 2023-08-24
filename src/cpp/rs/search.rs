@@ -9,12 +9,12 @@ use serde::Deserialize;
 use tempfile::NamedTempFile;
 
 use crate::{
-    options::{reset_args_from, SetCppArgs},
     rust_api,
     serialize::{
         serialize_kpuzzle_definition, serialize_scramble_list, serialize_scramble_state_data,
         KPuzzleSerializationOptions, ScrambleList,
     },
+    wrapper_options::{reset_args_from, SetCppArgs},
 };
 
 fn read_to_json<T: for<'a> Deserialize<'a>>(input_file: &Path) -> Result<T, String> {

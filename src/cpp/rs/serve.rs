@@ -11,15 +11,15 @@ use serde::Serialize;
 
 use std::sync::Mutex;
 
-use crate::options::reset_args_from;
+use crate::wrapper_options::reset_args_from;
 
-use crate::options::ServeArgsForIndividualSearch;
-use crate::options::ServeClientArgs;
-use crate::options::ServeCommandArgs;
 use crate::rust_api;
 use crate::serialize::serialize_kpuzzle_definition;
 use crate::serialize::serialize_scramble_state_data;
 use crate::serialize::KPuzzleSerializationOptions;
+use twsearch::_internal::cli::ServeArgsForIndividualSearch;
+use twsearch::_internal::cli::ServeClientArgs;
+use twsearch::_internal::cli::ServeCommandArgs;
 
 fn set_definition(
     def: KPuzzleDefinition,
@@ -92,15 +92,16 @@ fn cors(response: Response) -> Response {
         .with_additional_header("Access-Control-Allow-Headers", "Content-Type")
 }
 
-pub fn serve(serve_command_args: ServeCommandArgs) -> Result<(), String> {
+pub fn serve(serve_command_args: ServeCommandArgs, from_cpp_wrapper: bool) -> Result<(), String> {
     let solve_mutex = Mutex::new(());
     println!(
-        "Starting `twsearch-cpp-wrapper serve` on port 2023.
+        "Starting `twsearch{} serve` on port 2023.
 Use with one of the following:
 
 - https://experiments.cubing.net/cubing.js/twsearch/text-ui.html
 - http://localhost:3333/experiments.cubing.net/cubing.js/twsearch/text-ui.html
-"
+",
+        if from_cpp_wrapper { "-cpp-wrapper" } else { "" }
     );
     rouille::start_server("0.0.0.0:2023", move |request: &Request| {
         println!("Request: {} {}", request.method(), request.url()); // TODO: debug flag

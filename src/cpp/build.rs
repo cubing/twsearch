@@ -35,7 +35,7 @@ fn main() {
         // .flag("-lpthread") # Unneeded?
         .flag("-DUSE_PTHREADS")
         .flag("-DHAVE_FFSLL")
-        .compile("twsearch-rs");
+        .compile("twsearch-cpp-wrapper");
 
     println!("cargo:rerun-if-changed=antipode.cpp");
     println!("cargo:rerun-if-changed=calcsymm.cpp");

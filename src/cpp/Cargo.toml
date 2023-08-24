@@ -23,5 +23,5 @@ wait-timeout = "0.2.0"
 cxx-build = "1.0"
 
 [[bin]]
-name = "twsearch-rs"
+name = "twsearch-cpp-wrapper"
 path = "./rs/main.rs"

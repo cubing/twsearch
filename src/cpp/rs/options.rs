@@ -10,10 +10,10 @@ use std::process::exit;
 
 use crate::rust_api;
 
-/// twsearch-rs — a native Rust wrapper for `twsearch` functionality.
+/// twsearch-cpp-wrapper — a native Rust wrapper for `twsearch` functionality.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
-#[clap(name = "twsearch-rs")]
+#[clap(name = "twsearch-cpp-wrapper")]
 pub struct TwsearchArgs {
     #[command(subcommand)]
     pub command: Command,
@@ -241,8 +241,8 @@ pub struct CompletionsArgs {
     /// Print completions for the given shell.
     /// These can be loaded/stored permanently (e.g. when using Homebrew), but they can also be sourced directly, e.g.:
     ///
-    ///  twsearch-rs completions fish | source # fish
-    ///  source <(twsearch-rs completions zsh) # zsh
+    ///  twsearch-cpp-wrapper completions fish | source # fish
+    ///  source <(twsearch-cpp-wrapper completions zsh) # zsh
     #[clap(verbatim_doc_comment, id = "SHELL")]
     shell: Shell,
 }
@@ -399,7 +399,7 @@ impl SetCppArgs for InputDefAndOptionalScrambleFileArgs {
 }
 
 fn completions_for_shell(cmd: &mut clap::Command, generator: impl Generator) {
-    generate(generator, cmd, "twsearch-rs", &mut stdout());
+    generate(generator, cmd, "twsearch-cpp-wrapper", &mut stdout());
 }
 
 pub fn get_options() -> TwsearchArgs {

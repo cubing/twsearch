@@ -95,7 +95,7 @@ fn cors(response: Response) -> Response {
 pub fn serve(serve_command_args: ServeCommandArgs) -> Result<(), String> {
     let solve_mutex = Mutex::new(());
     println!(
-        "Starting `twsearch-rs serve` on port 2023.
+        "Starting `twsearch-cpp-wrapper serve` on port 2023.
 Use with one of the following:
 
 - https://experiments.cubing.net/cubing.js/twsearch/text-ui.html
@@ -111,7 +111,7 @@ Use with one of the following:
         }
         cors(router!(request,
             (GET) (/) => {
-                Response::text("twsearch-rs (https://github.com/cubing/twsearch)")
+                Response::text("twsearch-cpp-wrapper (https://github.com/cubing/twsearch)")
             },
             (POST) (/v0/solve/state) => { // TODO: `…/pattern`?
                 if let Ok(guard) = solve_mutex.try_lock() {

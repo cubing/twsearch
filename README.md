@@ -254,8 +254,8 @@ cargo run --package twsearch-cpp-wrapper -- gods-algorithm --quantum-metric --mo
 
 To get completions in your shell, install using one of:
 
-- `brew install --HEAD cubing/cubing/twsearch-rs`
-- `cargo install --path .; twsearch-rs completions <your shell>`
+- `brew install --HEAD cubing/cubing/twsearch-cpp-wrapper`
+- `cargo install --path .; twsearch-cpp-wrapper completions <your shell>`
 
 ## License
 

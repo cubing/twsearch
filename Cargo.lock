@@ -1267,15 +1267,8 @@ name = "twsearch"
 version = "0.0.0"
 dependencies = [
  "cityhash",
- "clap 4.3.24",
- "clap_complete",
  "cubing",
  "derive_more",
- "lazy_static",
- "regex",
- "serde",
- "serde_json",
- "tempfile",
  "wait-timeout",
 ]
 
@@ -1283,13 +1276,11 @@ dependencies = [
 name = "twsearch-cpp-wrapper"
 version = "0.0.0"
 dependencies = [
- "cityhash",
  "clap 4.3.24",
  "clap_complete",
  "cubing",
  "cxx",
  "cxx-build",
- "derive_more",
  "lazy_static",
  "num_cpus",
  "regex",

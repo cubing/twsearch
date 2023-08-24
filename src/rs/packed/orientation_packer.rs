@@ -130,3 +130,99 @@ impl OrientationPacker {
             + usize_to_u8(orientation_with_mod.orientation)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use cubing::kpuzzle::{
+        KPuzzle, KPuzzleDefinition, KPuzzleOrbitDefinition, KPuzzleOrbitName, KState, KStateData,
+        KStateOrbitData, KTransformationData, KTransformationOrbitData,
+    };
+    use std::collections::HashMap;
+    use std::sync::Arc;
+
+    use crate::PackedKPuzzle;
+
+    #[test]
+    fn test_orientation_mod() {
+        let def = KPuzzleDefinition {
+            name: "custom".to_owned(),
+            orbit_ordering: Some(vec![KPuzzleOrbitName("PIECES".to_owned())]),
+            orbits: HashMap::from([(
+                KPuzzleOrbitName("PIECES".to_owned()),
+                KPuzzleOrbitDefinition {
+                    num_pieces: 2,
+                    num_orientations: 12,
+                },
+            )]),
+            start_state_data: KStateData::from([(
+                KPuzzleOrbitName("PIECES".to_owned()),
+                KStateOrbitData {
+                    pieces: vec![0, 1],
+                    orientation: vec![0, 0],
+                    orientation_mod: Some(vec![3, 4]),
+                },
+            )])
+            .into(),
+            moves: HashMap::from([
+                (
+                    "SPIN".try_into().unwrap(),
+                    Arc::new(KTransformationData::from([(
+                        KPuzzleOrbitName("PIECES".to_owned()),
+                        KTransformationOrbitData {
+                            permutation: vec![0, 1], // TODO: is this actually L'?
+                            orientation: vec![2, 5],
+                        },
+                    )])),
+                ),
+                (
+                    "SWAP".try_into().unwrap(),
+                    Arc::new(KTransformationData::from([(
+                        KPuzzleOrbitName("PIECES".to_owned()),
+                        KTransformationOrbitData {
+                            permutation: vec![1, 0], // TODO: is this actually R'?
+                            orientation: vec![0, 0],
+                        },
+                    )])),
+                ),
+            ]),
+            experimental_derived_moves: None,
+        };
+        let kpuzzle = KPuzzle::try_new(def).unwrap();
+        let packed_kpuzzle = PackedKPuzzle::try_from(kpuzzle.clone()).unwrap();
+
+        let spin = packed_kpuzzle
+            .transformation_from_move(&"SPIN".try_into().unwrap())
+            .unwrap();
+        let swap = packed_kpuzzle
+            .transformation_from_move(&"SWAP".try_into().unwrap())
+            .unwrap();
+
+        let state = packed_kpuzzle.start_state();
+        // println!("{:?}", state.unpack().state_data);
+
+        let state = state.apply_transformation(&spin);
+        // println!("{:?}", state.unpack().state_data);
+
+        let state = state.apply_transformation(&swap);
+        // println!("{:?}", state.unpack().state_data);
+
+        let state = state.apply_transformation(&spin);
+        // println!("{:?}", state.unpack().state_data);
+
+        let expected = KState {
+            kpuzzle,
+            state_data: KStateData::from([(
+                KPuzzleOrbitName("PIECES".to_owned()),
+                KStateOrbitData {
+                    pieces: vec![1, 0],
+                    orientation: vec![3, 1],
+                    orientation_mod: Some(vec![4, 3]),
+                },
+            )])
+            .into(),
+        };
+        // println!("{:?}", expected.state_data);
+        assert_eq!(state.unpack(), expected);
+        println!("Custom puzzle test passes!\n--------");
+    }
+}

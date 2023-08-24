@@ -12,10 +12,7 @@ use std::collections::HashMap;
 #[cfg(not(feature = "no_orientation_mod"))]
 use std::sync::Arc;
 
-use crate::cpp_port::PackedKPuzzle;
-
-#[path = "./cpp_port/mod.rs"]
-mod cpp_port;
+use twsearch::PackedKPuzzle;
 
 const PRINT_FINAL_STATE: bool = false;
 

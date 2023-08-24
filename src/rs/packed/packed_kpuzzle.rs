@@ -22,7 +22,7 @@ use super::byte_conversions::u8_to_usize;
 use super::orientation_packer::OrientationPacker;
 #[cfg(feature = "orientation_packer")]
 #[cfg(not(feature = "no_orientation_mod"))]
-use crate::cpp_port::packed::orientation_packer::OrientationWithMod;
+use crate::packed::orientation_packer::OrientationWithMod;
 
 // https://github.com/cubing/twsearch/issues/25#issue-1862613355
 #[cfg(not(feature = "orientation_packer"))]
@@ -148,7 +148,7 @@ impl PackedKPuzzle {
                             #[cfg(not(feature = "orientation_packer"))]
                             #[cfg(not(feature = "no_orientation_mod"))]
                             {
-                                if std::convert::Into::<usize>::into(orbit_info.num_orientations) % orientation_mod[i] != 0 {
+                                if orientation_mod[i] != 0 && std::convert::Into::<usize>::into(orbit_info.num_orientations) % orientation_mod[i] != 0 {
                                     eprintln!(
                                         "`orientation_mod` of {} seen for piece at index {} in orbit {} in the start state for puzzle {}. This must be a factor of `num_orientations` for the orbit ({}). See: https://js.cubing.net/cubing/api/interfaces/kpuzzle.KStateOrbitData.html#orientationMod",
                                         orientation_mod[i],
@@ -165,7 +165,7 @@ impl PackedKPuzzle {
                             #[cfg(feature = "orientation_packer")]
                             #[cfg(not(feature = "no_orientation_mod"))]
                             {
-                                if u8_to_usize(orbit_info.num_orientations) % orientation_mod[i] != 0 {
+                                if orientation_mod[i] != 0 && u8_to_usize(orbit_info.num_orientations) % orientation_mod[i] != 0 {
                                     eprintln!(
                                         "`orientation_mod` of {} seen for piece at index {} in orbit {} in the start state for puzzle {}. This must be a factor of `num_orientations` for the orbit ({}). See: https://js.cubing.net/cubing/api/interfaces/kpuzzle.KStateOrbitData.html#orientationMod",
                                         orientation_mod[i],

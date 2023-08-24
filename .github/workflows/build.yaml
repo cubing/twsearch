@@ -40,6 +40,7 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v2
       - run: make build-rust
       - run: make lint-rust
       - run: make test-twsearch-cpp-wrapper-cli

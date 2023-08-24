@@ -1,4 +1,4 @@
-#[path = "./common/lib.rs"]
+#[path = "./lib/common.rs"]
 mod common;
 
 use std::time::Duration;

@@ -10,14 +10,18 @@ no_orientation_mod = []
 
 [dependencies]
 cityhash = "0.1.1"
-clap = "4.3.24"
+clap = { version = "4.3.24", features = ["derive"] }
 clap_complete = "4.3.2"
 cubing = "0.5.4"
 derive_more = "0.99.17"
-serde = "1.0.186"
+serde = { version = "1.0.186", features = ["derive", "rc"] }
 
 [dev-dependencies]
 wait-timeout = "0.2.0"
 
 [lib]
 path = "./mod.rs"
+
+[[bin]]
+name = "twsearch"
+path = "./cli/main.rs"

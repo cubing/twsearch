@@ -42,6 +42,8 @@ impl CliCommand {
             CliCommand::Cpp() => &[],
             CliCommand::Rust() => &[
                 "run",
+                "--package",
+                "twsearch-cpp-wrapper",
                 "--quiet", // Suppress deprecation warnings for transitive dependencies (`buf_redux`, `multipart`): https://github.com/tomaka/rouille/issues/271
                 "--",
                 "search",

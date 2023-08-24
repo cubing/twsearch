@@ -4,3 +4,6 @@ members = [
   "src/cpp",
   "src/rs",
 ]
+default-members = [
+  "src/rs"
+]

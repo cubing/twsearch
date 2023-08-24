@@ -28,11 +28,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
+      - uses: wasmerio/setup-wasmer@v2
       - run: make emsdk
       - run: make build/wasm-test/twsearch-test.wasm
       - run: make build/wasm-single-file/twsearch.mjs
-      - run: curl https://get.wasmer.io -sSfL | sh
-      - run: source ~/.wasmer/wasmer.sh && make test-wasm
       - run: make test-build-js
 
   rust:

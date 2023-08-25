@@ -8,10 +8,7 @@ pub struct PackedKTransformation {
     pub packed_kpuzzle: PackedKPuzzle,
     pub bytes: *mut u8,
 }
-use cubing::kpuzzle::KPuzzle;
-
-#[cfg(not(feature = "no_orientation_mod"))]
-use cubing::kpuzzle::{KTransformation, KTransformationOrbitData};
+use cubing::kpuzzle::{KPuzzle, KTransformation, KTransformationOrbitData};
 
 impl Drop for PackedKTransformation {
     fn drop(&mut self) {
@@ -114,7 +111,6 @@ impl PackedKTransformation {
         cityhash::city_hash_64(self.byte_slice())
     }
 
-    #[cfg(not(feature = "no_orientation_mod"))]
     pub fn unpack(&self) -> KTransformation {
         use std::sync::Arc;
 

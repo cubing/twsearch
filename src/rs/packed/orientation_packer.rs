@@ -1,5 +1,3 @@
-#![cfg(feature = "orientation_packer")]
-
 use super::byte_conversions::{u8_to_usize, usize_to_u8, PackedOrientationWithMod};
 
 const NUM_BYTE_VALUES: usize = 0x100;

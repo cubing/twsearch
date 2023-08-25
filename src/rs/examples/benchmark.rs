@@ -2,14 +2,11 @@ use std::time::Instant;
 
 use cubing::{parse_alg, parse_move, puzzles::cube3x3x3_kpuzzle};
 
-#[cfg(not(feature = "no_orientation_mod"))]
 use cubing::kpuzzle::{
     KPuzzle, KPuzzleDefinition, KPuzzleOrbitDefinition, KPuzzleOrbitName, KState, KStateData,
     KStateOrbitData, KTransformationData, KTransformationOrbitData,
 };
-#[cfg(not(feature = "no_orientation_mod"))]
 use std::collections::HashMap;
-#[cfg(not(feature = "no_orientation_mod"))]
 use std::sync::Arc;
 
 use twsearch::PackedKPuzzle;
@@ -20,7 +17,6 @@ const PRINT_FINAL_STATE: bool = false;
 fn main() {
     let num_moves = 10_000_000;
     println!("Testing custom puzzle…\n--------");
-    #[cfg(not(feature = "no_orientation_mod"))]
     test_custom_puzzle();
     println!("Running timing tests…\n--------");
     test_packed(num_moves);
@@ -196,7 +192,6 @@ fn test_unpacked(num_moves: usize) {
     );
 }
 
-#[cfg(not(feature = "no_orientation_mod"))]
 fn test_custom_puzzle() {
     let def = KPuzzleDefinition {
         name: "custom".to_owned(),

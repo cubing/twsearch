@@ -44,9 +44,5 @@ jobs:
       - run: make build-rust
       - run: make lint-rust
       - run: make test-twsearch-cpp-wrapper-cli
-      - run: make test-rs-default
-      - run: make test-rs-no-default-features
-      - run: make test-rs-no_orientation_mod
-      - run: make benchmark-rs-default
-      - run: make benchmark-rs-no-default-features
-      - run: make benchmark-rs-no_orientation_mod
+      - run: make test-rs
+      - run: make benchmark-rs

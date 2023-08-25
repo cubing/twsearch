@@ -3,11 +3,13 @@ use std::{alloc::Layout, sync::Arc, fmt::Debug};
 use cubing::{
     alg::Move,
     kpuzzle::{
-        InvalidAlgError, InvalidDefinitionError, KPuzzle, KPuzzleOrbitName, KTransformation,
+        InvalidAlgError, InvalidDefinitionError, KPuzzle, KPuzzleOrbitName, KTransformation, KState,
     },
 };
 
-use super::{byte_conversions::{usize_to_u8, u8_to_usize}, PackedKState, PackedKTransformation, orientation_packer::{OrientationPacker, OrientationWithMod}};
+use crate::Packed;
+
+use super::{byte_conversions::{usize_to_u8, u8_to_usize}, orientation_packer::{OrientationPacker, OrientationWithMod}};
 
 // TODO: allow certain values over 107?
 const MAX_NUM_ORIENTATIONS_INCLUSIVE: usize = 107;
@@ -94,16 +96,16 @@ pub enum ConversionError {
 }
 
 impl PackedKPuzzle {
-    pub fn start_state(&self) -> PackedKState {
+    pub fn start_state(&self) -> Packed<KState> {
         let kstate_start_state_data = self.data.kpuzzle.start_state().state_data;
 
-        let new_state = PackedKState::new(self.clone());
+        let new_state = Packed::<KState>::new(self.clone());
         for orbit_info in &self.data.orbit_iteration_info {
             let kstate_orbit_data = kstate_start_state_data
                 .get(&orbit_info.name)
                 .expect("Missing orbit!");
             for i in 0..orbit_info.num_pieces {
-                new_state.set_piece_or_permutation(
+                new_state.set_packed_piece_or_permutation(
                     orbit_info,
                     i,
                     usize_to_u8(kstate_orbit_data.pieces[i]),
@@ -140,7 +142,7 @@ impl PackedKPuzzle {
         new_state
     }
 
-    pub fn identity_transformation(&self) -> Result<PackedKTransformation, ConversionError> {
+    pub fn identity_transformation(&self) -> Result<Packed<KTransformation>, ConversionError> {
         let unpacked_ktransformation = self.data.kpuzzle.identity_transformation();
         self.pack_transformation(&unpacked_ktransformation)
     }
@@ -149,7 +151,7 @@ impl PackedKPuzzle {
     pub fn transformation_from_move(
         &self,
         key_move: &Move,
-    ) -> Result<PackedKTransformation, ConversionError> {
+    ) -> Result<Packed<KTransformation>, ConversionError> {
         let unpacked_ktransformation = self.data.kpuzzle.transformation_from_move(key_move)?;
         self.pack_transformation(&unpacked_ktransformation)
     }
@@ -157,8 +159,8 @@ impl PackedKPuzzle {
     fn pack_transformation(
         &self,
         unpacked_ktransformation: &KTransformation,
-    ) -> Result<PackedKTransformation, ConversionError> {
-        let new_transformation = PackedKTransformation::new(self.clone());
+    ) -> Result<Packed<KTransformation>, ConversionError> {
+        let new_transformation = Packed::<KTransformation>::new(self.clone());
         for orbit_info in &self.data.orbit_iteration_info {
             let unpacked_orbit_data = unpacked_ktransformation
                 .transformation_data
@@ -168,12 +170,12 @@ impl PackedKPuzzle {
                     description: format!("Missing orbit: {}", orbit_info.name),
                 })?;
             for i in 0..orbit_info.num_pieces {
-                new_transformation.set_piece_or_permutation(
+                new_transformation.set_packed_piece_or_permutation(
                     orbit_info,
                     i,
                     usize_to_u8(unpacked_orbit_data.permutation[i]),
                 );
-                new_transformation.set_orientation(
+                new_transformation.set_packed_orientation(
                     orbit_info,
                     i,
                     usize_to_u8(unpacked_orbit_data.orientation[i]),

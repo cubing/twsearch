@@ -13,7 +13,7 @@ fn read_to_json<T: for<'a> Deserialize<'a>>(input_file: &Path) -> Result<T, Stri
 }
 
 fn do_transformations_commute(t1: &PackedKTransformation, t2: &PackedKTransformation) -> bool {
-    t1.unpack().apply_transformation(&t2.unpack()) == t2.unpack().apply_transformation(&t1.unpack())
+    t1.apply_transformation(t2) == t2.apply_transformation(t1)
 }
 
 pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), String> {
@@ -22,8 +22,8 @@ pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), String> {
     let kpuzzle = KPuzzle::try_new(def).unwrap();
     let packed_kpuzzle = PackedKPuzzle::try_from(kpuzzle).unwrap();
 
-    println!("{:?}", packed_kpuzzle.start_state().byte_slice());
-    println!("{:?}", packed_kpuzzle.start_state().unpack().state_data);
+    println!("{:?}", packed_kpuzzle.start_state());
+    // println!("{:?}", packed_kpuzzle.start_state().unpack().state_data);
 
     let t1 = packed_kpuzzle
         .transformation_from_move(&"R".try_into().unwrap())

@@ -1,4 +1,7 @@
-use std::alloc::{alloc, dealloc};
+use std::{
+    alloc::{alloc, dealloc},
+    fmt::Debug,
+};
 
 use super::{
     byte_conversions::{u8_to_usize, PackedOrientationWithMod},
@@ -6,6 +9,7 @@ use super::{
     PackedKPuzzle, PackedKTransformation,
 };
 
+use cubing::kpuzzle::KPuzzle;
 #[cfg(not(feature = "no_orientation_mod"))]
 use cubing::kpuzzle::{KState, KStateData};
 #[cfg(not(feature = "no_orientation_mod"))]
@@ -98,9 +102,9 @@ impl PackedKState {
             for i in 0..orbit_info.num_pieces {
                 let transformation_idx = transformation.get_piece_or_permutation(orbit_info, i);
 
-                let new_piece_permutation =
+                let new_piece_value =
                     self.get_piece_or_permutation(orbit_info, u8_to_usize(transformation_idx));
-                into_state.set_piece_or_permutation(orbit_info, i, new_piece_permutation);
+                into_state.set_piece_or_permutation(orbit_info, i, new_piece_value);
 
                 let previous_packed_orientation =
                     self.get_packed_orientation(orbit_info, u8_to_usize(transformation_idx));
@@ -203,5 +207,29 @@ impl PackedKState {
             kpuzzle: self.packed_kpuzzle.data.kpuzzle.clone(),
             state_data: Arc::new(state_data),
         }
+    }
+}
+
+struct KPuzzleDebug {
+    kpuzzle: KPuzzle,
+}
+
+impl Debug for KPuzzleDebug {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{{ … name: \"{}\" … }}", &self.kpuzzle.definition().name)
+    }
+}
+
+impl Debug for PackedKState {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PackedKState")
+            .field(
+                "packed_kpuzzle",
+                &KPuzzleDebug {
+                    kpuzzle: self.packed_kpuzzle.data.kpuzzle.clone(),
+                },
+            )
+            .field("bytes", &self.byte_slice())
+            .finish()
     }
 }

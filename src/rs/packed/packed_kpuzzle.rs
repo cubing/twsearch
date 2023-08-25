@@ -2,7 +2,9 @@ use std::{alloc::Layout, sync::Arc};
 
 use cubing::{
     alg::Move,
-    kpuzzle::{InvalidAlgError, InvalidDefinitionError, KPuzzle, KPuzzleOrbitName},
+    kpuzzle::{
+        InvalidAlgError, InvalidDefinitionError, KPuzzle, KPuzzleOrbitName, KTransformation,
+    },
 };
 
 use super::{byte_conversions::usize_to_u8, PackedKState, PackedKTransformation};
@@ -207,13 +209,24 @@ impl PackedKPuzzle {
         new_state
     }
 
+    pub fn identity_transformation(&self) -> Result<PackedKTransformation, ConversionError> {
+        let unpacked_ktransformation = self.data.kpuzzle.identity_transformation();
+        self.pack_transformation(&unpacked_ktransformation)
+    }
+
     // TODO: implement this as a `TryFrom`?
     pub fn transformation_from_move(
-        &self, // TODO: Any issues with not using `&self`?
+        &self,
         key_move: &Move,
     ) -> Result<PackedKTransformation, ConversionError> {
         let unpacked_ktransformation = self.data.kpuzzle.transformation_from_move(key_move)?;
+        self.pack_transformation(&unpacked_ktransformation)
+    }
 
+    fn pack_transformation(
+        &self,
+        unpacked_ktransformation: &KTransformation,
+    ) -> Result<PackedKTransformation, ConversionError> {
         let new_transformation = PackedKTransformation::new(self.clone());
         for orbit_info in &self.data.orbit_iteration_info {
             let unpacked_orbit_data = unpacked_ktransformation

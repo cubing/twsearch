@@ -142,6 +142,7 @@ mod tests {
 
     use crate::PackedKPuzzle;
 
+    // TODO: Return a `Result`.
     #[test]
     fn test_orientation_mod() {
         let def = KPuzzleDefinition {

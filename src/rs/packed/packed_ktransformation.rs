@@ -1,33 +1,25 @@
-use std::{
-    alloc::{alloc, dealloc},
-    fmt::Debug,
-};
+use std::fmt::Debug;
 
-use super::{byte_conversions::u8_to_usize, packed_kpuzzle::PackedKPuzzleOrbitInfo, PackedKPuzzle};
+use super::{
+    byte_conversions::u8_to_usize, packed_kpuzzle::PackedKPuzzleOrbitInfo,
+    packed_orbit_data::PackedOrbitData, PackedKPuzzle,
+};
 pub struct PackedKTransformation {
-    pub packed_kpuzzle: PackedKPuzzle,
-    pub bytes: *mut u8,
+    pub packed_orbit_data: PackedOrbitData,
 }
 use cubing::kpuzzle::{KPuzzle, KTransformation, KTransformationOrbitData};
 
-impl Drop for PackedKTransformation {
-    fn drop(&mut self) {
-        unsafe { dealloc(self.bytes, self.packed_kpuzzle.data.layout) }
-    }
-}
-
 impl PackedKTransformation {
     pub fn new(packed_kpuzzle: PackedKPuzzle) -> Self {
-        let bytes = unsafe { alloc(packed_kpuzzle.data.layout) };
         Self {
-            packed_kpuzzle,
-            bytes,
+            packed_orbit_data: PackedOrbitData::new(packed_kpuzzle),
         }
     }
     // TODO: dedup with PackedKTransformation, or at least implement as a trait?
     pub fn get_piece_or_permutation(&self, orbit_info: &PackedKPuzzleOrbitInfo, i: usize) -> u8 {
         unsafe {
-            self.bytes
+            self.packed_orbit_data
+                .bytes
                 .add(orbit_info.pieces_or_pemutations_offset + i)
                 .read()
         }
@@ -35,7 +27,12 @@ impl PackedKTransformation {
 
     // TODO: dedup with PackedKTransformation, or at least implement as a trait?
     pub fn get_orientation(&self, orbit_info: &PackedKPuzzleOrbitInfo, i: usize) -> u8 {
-        unsafe { self.bytes.add(orbit_info.orientations_offset + i).read() }
+        unsafe {
+            self.packed_orbit_data
+                .bytes
+                .add(orbit_info.orientations_offset + i)
+                .read()
+        }
     }
 
     // TODO: dedup with PackedKTransformation, or at least implement as a trait?
@@ -46,7 +43,8 @@ impl PackedKTransformation {
         value: u8,
     ) {
         unsafe {
-            self.bytes
+            self.packed_orbit_data
+                .bytes
                 .add(orbit_info.pieces_or_pemutations_offset + i)
                 .write(value)
         }
@@ -55,7 +53,8 @@ impl PackedKTransformation {
     // TODO: dedup with PackedKTransformation, or at least implement as a trait?
     pub fn set_orientation(&self, orbit_info: &PackedKPuzzleOrbitInfo, i: usize, value: u8) {
         unsafe {
-            self.bytes
+            self.packed_orbit_data
+                .bytes
                 .add(orbit_info.orientations_offset + i)
                 .write(value)
         }
@@ -67,7 +66,8 @@ impl PackedKTransformation {
         &self,
         transformation: &PackedKTransformation,
     ) -> PackedKTransformation {
-        let mut new_state = PackedKTransformation::new(self.packed_kpuzzle.clone());
+        let mut new_state =
+            PackedKTransformation::new(self.packed_orbit_data.packed_kpuzzle.clone());
         self.apply_transformation_into(transformation, &mut new_state);
         new_state
     }
@@ -80,7 +80,12 @@ impl PackedKTransformation {
         transformation: &PackedKTransformation,
         into_state: &mut PackedKTransformation,
     ) {
-        for orbit_info in &self.packed_kpuzzle.data.orbit_iteration_info {
+        for orbit_info in &self
+            .packed_orbit_data
+            .packed_kpuzzle
+            .data
+            .orbit_iteration_info
+        {
             // TODO: optimization when either value is the identity.
             for i in 0..orbit_info.num_pieces {
                 let transformation_idx = transformation.get_piece_or_permutation(orbit_info, i);
@@ -104,7 +109,12 @@ impl PackedKTransformation {
     pub fn byte_slice(&self) -> &[u8] {
         // yiss ☺️
         // https://stackoverflow.com/a/27150865
-        unsafe { std::slice::from_raw_parts(self.bytes, self.packed_kpuzzle.data.num_bytes) }
+        unsafe {
+            std::slice::from_raw_parts(
+                self.packed_orbit_data.bytes,
+                self.packed_orbit_data.packed_kpuzzle.data.num_bytes,
+            )
+        }
     }
 
     pub fn hash(&self) -> u64 {
@@ -117,7 +127,12 @@ impl PackedKTransformation {
         use cubing::kpuzzle::KTransformationData;
 
         let mut state_data = KTransformationData::new();
-        for orbit_info in &self.packed_kpuzzle.data.orbit_iteration_info {
+        for orbit_info in &self
+            .packed_orbit_data
+            .packed_kpuzzle
+            .data
+            .orbit_iteration_info
+        {
             let mut permutation = Vec::<usize>::new();
             let mut orientation = Vec::<usize>::new();
             for i in 0..orbit_info.num_pieces {
@@ -131,7 +146,7 @@ impl PackedKTransformation {
             state_data.insert(orbit_info.name.clone(), orbit_data);
         }
         KTransformation {
-            kpuzzle: self.packed_kpuzzle.data.kpuzzle.clone(),
+            kpuzzle: self.packed_orbit_data.packed_kpuzzle.data.kpuzzle.clone(),
             transformation_data: Arc::new(state_data),
         }
     }
@@ -153,7 +168,7 @@ impl Debug for PackedKTransformation {
             .field(
                 "packed_kpuzzle",
                 &KPuzzleDebug {
-                    kpuzzle: self.packed_kpuzzle.data.kpuzzle.clone(),
+                    kpuzzle: self.packed_orbit_data.packed_kpuzzle.data.kpuzzle.clone(),
                 },
             )
             .field("bytes", &self.byte_slice())

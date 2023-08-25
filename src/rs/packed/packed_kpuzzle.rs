@@ -1,4 +1,4 @@
-use std::{alloc::Layout, sync::Arc};
+use std::{alloc::Layout, sync::Arc, fmt::Debug};
 
 use cubing::{
     alg::Move,
@@ -31,7 +31,7 @@ pub struct PackedKPuzzleData {
     pub layout: Layout,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct PackedKPuzzle {
     pub data: Arc<PackedKPuzzleData>, // TODO
                                       // pub data: PackedKPuzzleData,
@@ -182,5 +182,11 @@ impl PackedKPuzzle {
         }
 
         Ok(new_transformation)
+    }
+}
+
+impl Debug for PackedKPuzzle {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{{ … name: \"{}\" … }}", &self.data.kpuzzle.definition().name)
     }
 }

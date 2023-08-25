@@ -15,6 +15,7 @@ clap_complete = "4.3.2"
 cubing = "0.5.4"
 derive_more = "0.99.17"
 serde = { version = "1.0.186", features = ["derive", "rc"] }
+serde_json = "1.0.105"
 
 [dev-dependencies]
 wait-timeout = "0.2.0"

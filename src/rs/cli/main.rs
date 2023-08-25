@@ -1,5 +1,8 @@
+mod commands;
+
 use std::process::exit;
 
+use commands::canonical_algs::canonical_algs;
 use twsearch::_internal::cli::{get_options_cpp_wrapper, CliCommand};
 
 fn main() {
@@ -18,7 +21,7 @@ fn main() {
         CliCommand::SchreierSims(_schreier_sims_command_args) => todo!(),
         CliCommand::GodsAlgorithm(_gods_algorithm_args) => todo!(),
         CliCommand::TimingTest(_args) => todo!(),
-        CliCommand::CanonicalAlgs(_args) => todo!(),
+        CliCommand::CanonicalAlgs(args) => canonical_algs(&args),
     };
     if let Err(err) = result {
         eprintln!("{}", err);

@@ -286,7 +286,7 @@
       }
     }
   },
-  "experimentalDerivedMoves": {
+  "derivedMoves": {
     "Uw": "u",
     "Lw": "l",
     "Fw": "f",

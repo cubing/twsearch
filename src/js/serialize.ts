@@ -1,4 +1,8 @@
-import type { KPuzzle, KStateData, KTransformationData } from "cubing/kpuzzle";
+import type {
+  KPuzzle,
+  KPatternData,
+  KTransformationData,
+} from "cubing/kpuzzle";
 
 const BLANK_LINE = "";
 const END = "End";
@@ -17,14 +21,14 @@ export function serializeMoveTransformation(
   for (const [orbitName, orbitData] of Object.entries(t)) {
     outputLines.push(sanitize(orbitName));
     outputLines.push(orbitData.permutation.join(" "));
-    outputLines.push(orbitData.orientation.join(" "));
+    outputLines.push(orbitData.orientationDelta.join(" "));
   }
   outputLines.push(END);
   outputLines.push(BLANK_LINE);
   return outputLines.join("\n");
 }
 
-export function serializeScrambleState(name: string, t: KStateData): string {
+export function serializeScrambleState(name: string, t: KPatternData): string {
   const outputLines: string[] = [];
   outputLines.push(`ScrambleState ${sanitize(name)}`);
   // outputLines.push(sanitize());
@@ -61,7 +65,7 @@ export function serializeDefToTws(
   if (options?.startState) {
     outputLines.push(options?.startState);
   } else {
-    for (const [orbitName, orbitDef] of Object.entries(def.startStateData)) {
+    for (const [orbitName, orbitDef] of Object.entries(def.defaultPattern)) {
       outputLines.push(sanitize(orbitName));
       outputLines.push(orbitDef.pieces.join(" "));
       outputLines.push(orbitDef.orientation.join(" "));
@@ -84,10 +88,8 @@ export function serializeDefToTws(
       outputLines.push(serializeMoveTransformation(moveName, moveDef));
     }
   }
-  // console.log(def.experimentalDerivedMoves)
-  for (const [moveName, moveAlgDef] of Object.entries(
-    def.experimentalDerivedMoves ?? {},
-  )) {
+  // console.log(def.derivedMoves)
+  for (const [moveName, moveAlgDef] of Object.entries(def.derivedMoves ?? {})) {
     // console.log(moveName, include(moveName))
     if (include(moveName)) {
       const transformation = kpuzzle.algToTransformation(moveAlgDef);

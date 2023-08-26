@@ -154,7 +154,7 @@ pub fn serialize_scramble_kpattern_data(
 
 pub struct KPuzzleSerializationOptions {
     pub move_subset: Option<Vec<Move>>,
-    pub custom_default_pattern: Option<KPatternData>,
+    pub custom_start_pattern: Option<KPatternData>,
 }
 
 pub fn serialize_kpuzzle_definition(
@@ -166,7 +166,7 @@ pub fn serialize_kpuzzle_definition(
 
     let options = options.unwrap_or(&KPuzzleSerializationOptions {
         move_subset: None,
-        custom_default_pattern: None,
+        custom_start_pattern: None,
     });
     let mut builder = LiteStringBuilder::new();
 
@@ -184,8 +184,8 @@ pub fn serialize_kpuzzle_definition(
     builder.push(BLANK_LINE);
 
     builder.push("StartState");
-    if let Some(default_pattern) = &options.custom_default_pattern {
-        builder.push(&serialize_kpattern_data(Some(&kpuzzle), default_pattern)?);
+    if let Some(start_pattern) = &options.custom_start_pattern {
+        builder.push(&serialize_kpattern_data(Some(&kpuzzle), start_pattern)?);
     } else {
         builder.push(&serialize_kpattern_data(
             Some(&kpuzzle),

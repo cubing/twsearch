@@ -127,7 +127,7 @@ pub fn main_search(
                         Some(&KPuzzleSerializationOptions {
                             move_subset: None,
                             // move_subset: move_subset.clone(), // TODO
-                            custom_default_pattern,
+                            custom_start_pattern: custom_default_pattern,
                         }),
                     );
                     def.map_err(|e| e.to_string())

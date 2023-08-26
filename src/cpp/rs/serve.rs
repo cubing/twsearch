@@ -54,11 +54,11 @@ struct KPatternSolve {
     definition: KPuzzleDefinition,
     pattern: KPatternData,
     move_subset: Option<Vec<Move>>,
-    default_pattern: Option<KPatternData>,
+    start_pattern: Option<KPatternData>,
     search_args: Option<ServeClientArgs>,
 }
 
-fn solve_position(request: &Request, serve_command_args: &ServeCommandArgs) -> Response {
+fn solve_pattern(request: &Request, serve_command_args: &ServeCommandArgs) -> Response {
     let kpattern_solve: KPatternSolve = try_or_400!(rouille::input::json_input(request));
     let args_for_individual_search = ServeArgsForIndividualSearch {
         commandline_args: serve_command_args,
@@ -69,7 +69,7 @@ fn solve_position(request: &Request, serve_command_args: &ServeCommandArgs) -> R
         kpattern_solve.definition,
         &KPuzzleSerializationOptions {
             move_subset: kpattern_solve.move_subset,
-            custom_default_pattern: kpattern_solve.default_pattern,
+            custom_start_pattern: kpattern_solve.start_pattern,
         },
     ) {
         Ok(_) => {}
@@ -120,7 +120,7 @@ Use with one of the following:
             },
             (POST) (/v0/solve/pattern) => { // TODO: `…/pattern`?
                 if let Ok(guard) = solve_mutex.try_lock() {
-                    let response = solve_position(request, &serve_command_args);
+                    let response = solve_pattern(request, &serve_command_args);
                     drop(guard);
                     response
                 } else {

@@ -129,7 +129,7 @@ impl SetCppArgs for GodsAlgorithmArgs {
         self.moves_args.set_cpp_args();
         set_boolean_arg("-g", true);
         set_boolean_arg("-F", self.force_arrays);
-        set_boolean_arg("-H", self.hash_states);
+        set_boolean_arg("-H", self.hash_patterns);
         set_arg("-a", &self.num_antipodes);
         self.performance_args.set_cpp_args();
         self.metric_args.set_cpp_args();

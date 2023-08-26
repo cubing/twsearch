@@ -87,21 +87,21 @@ pub enum ConversionError {
 }
 
 impl PackedKPuzzle {
-    pub fn start_state(&self) -> PackedKPattern {
+    pub fn default_pattern(&self) -> PackedKPattern {
         let default_pattern = self.data.kpuzzle.default_pattern().kpattern_data;
 
-        let new_state = PackedKPattern::new(self.clone());
+        let new_packed_kpattern = PackedKPattern::new(self.clone());
         for orbit_info in &self.data.orbit_iteration_info {
             let orbit_data = default_pattern
                 .get(&orbit_info.name)
                 .expect("Missing orbit!");
             for i in 0..orbit_info.num_pieces {
-                new_state.set_piece_or_permutation(
+                new_packed_kpattern.set_piece_or_permutation(
                     orbit_info,
                     i,
                     usize_to_u8(orbit_data.pieces[i]),
                 );
-                new_state.set_packed_orientation(
+                new_packed_kpattern.set_packed_orientation(
                     orbit_info,
                     i,
                     match &orbit_data.orientation_mod {
@@ -130,7 +130,7 @@ impl PackedKPuzzle {
             }
         }
 
-        new_state
+        new_packed_kpattern
     }
 
     pub fn identity_transformation(&self) -> Result<PackedKTransformation, ConversionError> {

@@ -35,7 +35,7 @@ pub enum CliCommand {
     Serve(ServeCommandArgs),
 
     // TOOD: Detect identical pieces and warn/error (and give advice on how to run the "same" search with fully-distinguishable pieces).
-    /// Run the Schreier-Sims algorithm to calculate the number of reachable states.
+    /// Run the Schreier-Sims algorithm to calculate the number of reachable patterns.
     ///
     /// Warning: Does NOT account for identical pieces.
     SchreierSims(SchreierSimsArgs),
@@ -210,9 +210,9 @@ pub struct GodsAlgorithmArgs {
     #[clap(long/* , visible_short_alias = 'F' */)]
     pub force_arrays: bool,
 
-    /// Use 128-bit hash to encode states rather than actual packed pattern representation.
+    /// Use 128-bit hash to encode patterns rather than actual packed pattern representation.
     #[clap(long/* , visible_short_alias = 'H' */)]
-    pub hash_states: bool,
+    pub hash_patterns: bool,
 
     #[command(flatten)]
     pub metric_args: MetricArgs,

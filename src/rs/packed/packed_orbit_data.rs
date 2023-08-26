@@ -24,7 +24,7 @@ trait KPatternOrKTransformation {
     fn apply_transformation_into(
         &self,
         transformation: &PackedKTransformation,
-        into_state: &mut Self,
+        into_other: &mut Self,
     );
 
     fn byte_slice(&self) -> &[u8];

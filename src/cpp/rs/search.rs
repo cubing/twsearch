@@ -11,7 +11,7 @@ use tempfile::NamedTempFile;
 use crate::{
     rust_api,
     serialize::{
-        serialize_kpuzzle_definition, serialize_scramble_list, serialize_scramble_state_data,
+        serialize_kpuzzle_definition, serialize_scramble_kpattern_data, serialize_scramble_list,
         KPuzzleSerializationOptions, ScrambleList,
     },
     wrapper_options::{reset_args_from, SetCppArgs},
@@ -121,13 +121,13 @@ pub fn main_search(
             must_rewrite_input_file_with_optional_second_file(
                 def_file,
                 target_pattern_file,
-                |def: KPuzzleDefinition, custom_start_state: Option<KPatternData>| {
+                |def: KPuzzleDefinition, custom_default_pattern: Option<KPatternData>| {
                     let def = serialize_kpuzzle_definition(
                         def,
                         Some(&KPuzzleSerializationOptions {
                             move_subset: None,
                             // move_subset: move_subset.clone(), // TODO
-                            custom_start_state,
+                            custom_default_pattern,
                         }),
                     );
                     def.map_err(|e| e.to_string())
@@ -156,7 +156,7 @@ pub fn main_search(
                     Err(_) => must_rewrite_input_file(
                         scramble_file,
                         |kpattern_data: KPatternData| {
-                            serialize_scramble_state_data("Anonymous_Scramble", &kpattern_data)
+                            serialize_scramble_kpattern_data("Anonymous_Scramble", &kpattern_data)
                         },
                         debug_print_serialized_json,
                     ),

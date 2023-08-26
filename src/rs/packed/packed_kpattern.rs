@@ -74,9 +74,10 @@ impl PackedKPattern {
     // Adapted from https://github.com/cubing/cubing.rs/blob/b737c6a36528e9984b45b29f9449a9a330c272fb/src/kpuzzle/pattern.rs#L31-L82
     // TODO: dedup the implementation (but avoid runtime overhead for the shared abstraction).
     pub fn apply_transformation(&self, transformation: &PackedKTransformation) -> PackedKPattern {
-        let mut new_state = PackedKPattern::new(self.packed_orbit_data.packed_kpuzzle.clone());
-        self.apply_transformation_into(transformation, &mut new_state);
-        new_state
+        let mut new_packed_kpattern =
+            PackedKPattern::new(self.packed_orbit_data.packed_kpuzzle.clone());
+        self.apply_transformation_into(transformation, &mut new_packed_kpattern);
+        new_packed_kpattern
     }
 
     // Adapted from https://github.com/cubing/cubing.rs/blob/b737c6a36528e9984b45b29f9449a9a330c272fb/src/kpuzzle/pattern.rs#L31-L82
@@ -85,7 +86,7 @@ impl PackedKPattern {
     pub fn apply_transformation_into(
         &self,
         transformation: &PackedKTransformation,
-        into_state: &mut PackedKPattern,
+        into_packed_kpattern: &mut PackedKPattern,
     ) {
         for orbit_info in &self
             .packed_orbit_data
@@ -99,7 +100,7 @@ impl PackedKPattern {
 
                 let new_piece_value =
                     self.get_piece_or_permutation(orbit_info, u8_to_usize(transformation_idx));
-                into_state.set_piece_or_permutation(orbit_info, i, new_piece_value);
+                into_packed_kpattern.set_piece_or_permutation(orbit_info, i, new_piece_value);
 
                 let previous_packed_orientation =
                     self.get_packed_orientation(orbit_info, u8_to_usize(transformation_idx));
@@ -110,7 +111,7 @@ impl PackedKPattern {
                         u8_to_usize(transformation.get_orientation(orbit_info, i)),
                     )
                 };
-                into_state.set_packed_orientation(orbit_info, i, new_packed_orientation);
+                into_packed_kpattern.set_packed_orientation(orbit_info, i, new_packed_orientation);
             }
         }
     }

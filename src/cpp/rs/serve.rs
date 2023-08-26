@@ -15,7 +15,7 @@ use crate::wrapper_options::reset_args_from;
 
 use crate::rust_api;
 use crate::serialize::serialize_kpuzzle_definition;
-use crate::serialize::serialize_scramble_state_data;
+use crate::serialize::serialize_scramble_kpattern_data;
 use crate::serialize::KPuzzleSerializationOptions;
 use twsearch::_internal::cli::ServeArgsForIndividualSearch;
 use twsearch::_internal::cli::ServeClientArgs;
@@ -50,37 +50,38 @@ struct ScrambleSolve {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct StateSolve {
+struct KPatternSolve {
     definition: KPuzzleDefinition,
     pattern: KPatternData,
     move_subset: Option<Vec<Move>>,
-    start_state: Option<KPatternData>,
+    default_pattern: Option<KPatternData>,
     search_args: Option<ServeClientArgs>,
 }
 
 fn solve_position(request: &Request, serve_command_args: &ServeCommandArgs) -> Response {
-    let state_solve: StateSolve = try_or_400!(rouille::input::json_input(request));
+    let kpattern_solve: KPatternSolve = try_or_400!(rouille::input::json_input(request));
     let args_for_individual_search = ServeArgsForIndividualSearch {
         commandline_args: serve_command_args,
-        client_args: &state_solve.search_args,
+        client_args: &kpattern_solve.search_args,
     };
     reset_args_from(vec![&args_for_individual_search]);
     match set_definition(
-        state_solve.definition,
+        kpattern_solve.definition,
         &KPuzzleSerializationOptions {
-            move_subset: state_solve.move_subset,
-            custom_start_state: state_solve.start_state,
+            move_subset: kpattern_solve.move_subset,
+            custom_default_pattern: kpattern_solve.default_pattern,
         },
     ) {
         Ok(_) => {}
         Err(response) => return response,
     };
-    let result = match serialize_scramble_state_data("AnonymousScramble", &state_solve.pattern) {
-        Ok(result) => result,
-        Err(e) => {
-            return Response::text(e).with_status_code(400);
-        }
-    };
+    let result =
+        match serialize_scramble_kpattern_data("AnonymousScramble", &kpattern_solve.pattern) {
+            Ok(result) => result,
+            Err(e) => {
+                return Response::text(e).with_status_code(400);
+            }
+        };
     println!("{}", result);
     let solution = rust_api::rust_api_solve_position(&result); // TODO: catch exceptions???
     Response::json(&ResponseAlg { alg: solution })

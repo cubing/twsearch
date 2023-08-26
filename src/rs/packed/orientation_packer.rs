@@ -193,7 +193,7 @@ mod tests {
             .transformation_from_move(&"SWAP".try_into().unwrap())
             .unwrap();
 
-        let pattern = packed_kpuzzle.start_state();
+        let pattern = packed_kpuzzle.default_pattern();
         // println!("{:?}", pattern.unpack().kpattern_data);
 
         let pattern = pattern.apply_transformation(&spin);

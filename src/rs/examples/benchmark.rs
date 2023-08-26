@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 use twsearch::PackedKPuzzle;
 
-const PRINT_FINAL_STATE: bool = false;
+const PRINT_FINAL_PATTERN: bool = false;
 
 // Run using: cargo run --release --example benchmark
 fn main() {
@@ -53,14 +53,14 @@ fn test_packed(num_moves: usize) {
         m("D'"),
     ];
 
-    let mut current = packed_kpuzzle.start_state();
-    let mut other = packed_kpuzzle.start_state();
+    let mut current = packed_kpuzzle.default_pattern();
+    let mut other = packed_kpuzzle.default_pattern();
     let start = Instant::now();
     for i in (0..num_moves).step_by(2) {
         current.apply_transformation_into(&move_transformations[i % 18], &mut other);
         other.apply_transformation_into(&move_transformations[(i + 1) % 18], &mut current);
     }
-    if PRINT_FINAL_STATE {
+    if PRINT_FINAL_PATTERN {
         println!("{:?}", current.byte_slice());
         println!("Hash: 0x{:x}", current.hash());
     }
@@ -74,12 +74,12 @@ fn test_packed(num_moves: usize) {
             / std::convert::TryInto::<f64>::try_into(1_000_000).unwrap())
     );
 
-    let mut pattern = packed_kpuzzle.start_state();
+    let mut pattern = packed_kpuzzle.default_pattern();
     let start = Instant::now();
     for i in 0..num_moves {
         pattern = pattern.apply_transformation(&move_transformations[i % 18]);
     }
-    if PRINT_FINAL_STATE {
+    if PRINT_FINAL_PATTERN {
         println!("{:?}", pattern.byte_slice());
         println!("Hash: 0x{:x}", pattern.hash());
     }
@@ -93,8 +93,8 @@ fn test_packed(num_moves: usize) {
             / std::convert::TryInto::<f64>::try_into(1_000_000).unwrap())
     );
 
-    let mut current = packed_kpuzzle.start_state();
-    let mut other = packed_kpuzzle.start_state();
+    let mut current = packed_kpuzzle.default_pattern();
+    let mut other = packed_kpuzzle.default_pattern();
     let start = Instant::now();
     for i in (0..num_moves).step_by(2) {
         current.apply_transformation_into(&move_transformations[i % 18], &mut other);
@@ -102,7 +102,7 @@ fn test_packed(num_moves: usize) {
         other.apply_transformation_into(&move_transformations[(i + 1) % 18], &mut current);
         _ = other.hash();
     }
-    if PRINT_FINAL_STATE {
+    if PRINT_FINAL_PATTERN {
         println!("{:?}", current.byte_slice());
         println!("Hash: 0x{:x}", current.hash());
     }
@@ -116,13 +116,13 @@ fn test_packed(num_moves: usize) {
             / std::convert::TryInto::<f64>::try_into(1_000_000).unwrap())
     );
 
-    let mut pattern = packed_kpuzzle.start_state();
+    let mut pattern = packed_kpuzzle.default_pattern();
     let start = Instant::now();
     for i in 0..num_moves {
         pattern = pattern.apply_transformation(&move_transformations[i % 18]);
         // _ = pattern.hash()
     }
-    if PRINT_FINAL_STATE {
+    if PRINT_FINAL_PATTERN {
         println!("{:?}", pattern.byte_slice());
         println!("Hash: 0x{:x}", pattern.hash());
     }
@@ -175,7 +175,7 @@ fn test_unpacked(num_moves: usize) {
     // assert_eq!(
     //     pattern,
     //     kpuzzle
-    //         .start_state()
+    //         .default_pattern()
     //         .apply_alg(&parse_alg!("U2 F2 L2 U2 D2 F2 R2 F2 R'").unwrap())
     //         .unwrap()
     // );
@@ -245,7 +245,7 @@ fn test_custom_puzzle() {
         .transformation_from_move(&"SWAP".try_into().unwrap())
         .unwrap();
 
-    let pattern = packed_kpuzzle.start_state();
+    let pattern = packed_kpuzzle.default_pattern();
     // println!("{:?}", pattern.unpack().kpattern_data);
 
     let pattern = pattern.apply_transformation(&spin);

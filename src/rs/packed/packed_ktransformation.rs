@@ -66,10 +66,10 @@ impl PackedKTransformation {
         &self,
         transformation: &PackedKTransformation,
     ) -> PackedKTransformation {
-        let mut new_state =
+        let mut new_packed_ktransformation =
             PackedKTransformation::new(self.packed_orbit_data.packed_kpuzzle.clone());
-        self.apply_transformation_into(transformation, &mut new_state);
-        new_state
+        self.apply_transformation_into(transformation, &mut new_packed_ktransformation);
+        new_packed_ktransformation
     }
 
     // Adapted from https://github.com/cubing/cubing.rs/blob/b737c6a36528e9984b45b29f9449a9a330c272fb/src/kpuzzle/transformation.rs#L32-L61
@@ -78,7 +78,7 @@ impl PackedKTransformation {
     pub fn apply_transformation_into(
         &self,
         transformation: &PackedKTransformation,
-        into_state: &mut PackedKTransformation,
+        into_packed_ktransformation: &mut PackedKTransformation,
     ) {
         for orbit_info in &self
             .packed_orbit_data
@@ -92,7 +92,11 @@ impl PackedKTransformation {
 
                 let new_piece_permutation =
                     self.get_piece_or_permutation(orbit_info, u8_to_usize(transformation_idx));
-                into_state.set_piece_or_permutation(orbit_info, i, new_piece_permutation);
+                into_packed_ktransformation.set_piece_or_permutation(
+                    orbit_info,
+                    i,
+                    new_piece_permutation,
+                );
 
                 let previous_packed_orientation =
                     self.get_orientation(orbit_info, u8_to_usize(transformation_idx));
@@ -101,7 +105,7 @@ impl PackedKTransformation {
                 let new_orientation = (previous_packed_orientation
                     + transformation.get_orientation(orbit_info, i))
                     % orbit_info.num_orientations;
-                into_state.set_orientation(orbit_info, i, new_orientation);
+                into_packed_ktransformation.set_orientation(orbit_info, i, new_orientation);
             }
         }
     }

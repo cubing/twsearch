@@ -81,7 +81,7 @@ fn serialize_move_transformation(r#move: &Move, t: &KTransformationData) -> Stri
     builder.build()
 }
 
-fn serialize_state_data(t: &KPatternData) -> Result<String, String> {
+fn serialize_kpattern_data(t: &KPatternData) -> Result<String, String> {
     let mut builder = LiteStringBuilder::new();
     // TODO: use `orbit_ordering` if available?
     for (orbit_name, orbit_data) in t {
@@ -117,16 +117,16 @@ fn include(options: &KPuzzleSerializationOptions, move_name: &Move) -> bool {
     }
 }
 
-pub fn serialize_scramble_state_data(name: &str, t: &KPatternData) -> Result<String, String> {
+pub fn serialize_scramble_kpattern_data(name: &str, t: &KPatternData) -> Result<String, String> {
     let mut builder = LiteStringBuilder::new();
     builder.push(&format!("ScrambleState {}", name));
-    builder.push(&serialize_state_data(t)?);
+    builder.push(&serialize_kpattern_data(t)?);
     Ok(builder.build())
 }
 
 pub struct KPuzzleSerializationOptions {
     pub move_subset: Option<Vec<Move>>,
-    pub custom_start_state: Option<KPatternData>,
+    pub custom_default_pattern: Option<KPatternData>,
 }
 
 pub fn serialize_kpuzzle_definition(
@@ -135,7 +135,7 @@ pub fn serialize_kpuzzle_definition(
 ) -> Result<String, InvalidDefinitionError> {
     let options = options.unwrap_or(&KPuzzleSerializationOptions {
         move_subset: None,
-        custom_start_state: None,
+        custom_default_pattern: None,
     });
     let mut builder = LiteStringBuilder::new();
 
@@ -153,10 +153,10 @@ pub fn serialize_kpuzzle_definition(
     builder.push(BLANK_LINE);
 
     builder.push("StartState");
-    if let Some(start_state) = &options.custom_start_state {
-        builder.push(&serialize_state_data(start_state)?);
+    if let Some(default_pattern) = &options.custom_default_pattern {
+        builder.push(&serialize_kpattern_data(default_pattern)?);
     } else {
-        builder.push(&serialize_state_data(&def.default_pattern)?);
+        builder.push(&serialize_kpattern_data(&def.default_pattern)?);
     }
     builder.push(BLANK_LINE);
 
@@ -206,7 +206,7 @@ pub fn serialize_scramble_list(scramble_list: &ScrambleList) -> Result<String, S
     let scramble_strings: Result<Vec<String>, String> = scramble_list
         .iter()
         .map(|entry| {
-            serialize_scramble_state_data(
+            serialize_scramble_kpattern_data(
                 &format!("Scramble{}", {
                     scramble_idx += 1;
                     scramble_idx

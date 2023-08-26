@@ -19,7 +19,7 @@ impl Drop for PackedOrbitData {
     }
 }
 
-trait KStateOrKTransformation {
+trait KPatternOrKTransformation {
     fn apply_transformation(&self, transformation: &Self) -> Self;
     fn apply_transformation_into(
         &self,
@@ -31,7 +31,7 @@ trait KStateOrKTransformation {
 
     fn hash(&self);
 
-    // pub fn unpack(&self) -> KState | KTransformation; // TODO
+    // pub fn unpack(&self) -> KPattern | KTransformation; // TODO
 }
 
 impl PackedOrbitData {
@@ -102,7 +102,7 @@ impl PackedOrbitData {
 
 impl Debug for PackedOrbitData {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("PackedKState")
+        f.debug_struct("PackedKPattern")
             .field("packed_kpuzzle", &self.packed_kpuzzle)
             .field("bytes", &self.byte_slice())
             .finish()

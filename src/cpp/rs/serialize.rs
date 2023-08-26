@@ -3,7 +3,7 @@ extern crate cubing;
 use cubing::{
     alg::Move,
     kpuzzle::{
-        InvalidDefinitionError, KPuzzle, KPuzzleDefinition, KStateData, KTransformationData,
+        InvalidDefinitionError, KPatternData, KPuzzle, KPuzzleDefinition, KTransformationData,
     },
 };
 
@@ -74,14 +74,14 @@ fn serialize_move_transformation(r#move: &Move, t: &KTransformationData) -> Stri
     for (orbit_name, orbit_data) in t {
         builder.push(&sanitize(&orbit_name.to_string()));
         builder.push_vec(&orbit_data.permutation);
-        builder.push_vec(&orbit_data.orientation);
+        builder.push_vec(&orbit_data.orientation_delta);
     }
     builder.push(END);
     builder.push(BLANK_LINE);
     builder.build()
 }
 
-fn serialize_state_data(t: &KStateData) -> Result<String, String> {
+fn serialize_state_data(t: &KPatternData) -> Result<String, String> {
     let mut builder = LiteStringBuilder::new();
     // TODO: use `orbit_ordering` if available?
     for (orbit_name, orbit_data) in t {
@@ -117,7 +117,7 @@ fn include(options: &KPuzzleSerializationOptions, move_name: &Move) -> bool {
     }
 }
 
-pub fn serialize_scramble_state_data(name: &str, t: &KStateData) -> Result<String, String> {
+pub fn serialize_scramble_state_data(name: &str, t: &KPatternData) -> Result<String, String> {
     let mut builder = LiteStringBuilder::new();
     builder.push(&format!("ScrambleState {}", name));
     builder.push(&serialize_state_data(t)?);
@@ -126,7 +126,7 @@ pub fn serialize_scramble_state_data(name: &str, t: &KStateData) -> Result<Strin
 
 pub struct KPuzzleSerializationOptions {
     pub move_subset: Option<Vec<Move>>,
-    pub custom_start_state: Option<KStateData>,
+    pub custom_start_state: Option<KPatternData>,
 }
 
 pub fn serialize_kpuzzle_definition(
@@ -142,31 +142,13 @@ pub fn serialize_kpuzzle_definition(
     builder.push(&format!("Name {}", sanitize(&def.name)));
     builder.push(BLANK_LINE);
 
-    match &def.orbit_ordering {
-        Some(orbit_ordering) => {
-            for orbit_name in orbit_ordering {
-                let orbit_info = def.orbits.get(orbit_name);
-                let orbit_info = orbit_info.ok_or_else(|| InvalidDefinitionError {
-                    description: format!("Missing orbit from iteration order: {}", orbit_name),
-                })?;
-                builder.push(&format!(
-                    "Set {} {} {}",
-                    &sanitize(&orbit_name.to_string()),
-                    orbit_info.num_pieces,
-                    orbit_info.num_orientations
-                ));
-            }
-        }
-        None => {
-            for (orbit_name, orbit_info) in &def.orbits {
-                builder.push(&format!(
-                    "Set {} {} {}",
-                    &sanitize(&orbit_name.to_string()),
-                    orbit_info.num_pieces,
-                    orbit_info.num_orientations
-                ));
-            }
-        }
+    for orbit_definition in &def.orbits {
+        builder.push(&format!(
+            "Set {} {} {}",
+            &sanitize(&orbit_definition.orbit_name.to_string()),
+            orbit_definition.num_pieces,
+            orbit_definition.num_orientations
+        ));
     }
     builder.push(BLANK_LINE);
 
@@ -174,7 +156,7 @@ pub fn serialize_kpuzzle_definition(
     if let Some(start_state) = &options.custom_start_state {
         builder.push(&serialize_state_data(start_state)?);
     } else {
-        builder.push(&serialize_state_data(&def.start_state_data)?);
+        builder.push(&serialize_state_data(&def.default_pattern)?);
     }
     builder.push(BLANK_LINE);
 
@@ -201,7 +183,7 @@ pub fn serialize_kpuzzle_definition(
                 };
                 builder.push(&serialize_move_transformation(
                     move_name,
-                    &transformation.transformation_data,
+                    &transformation.ktransformation_data,
                 ))
             }
         }
@@ -214,7 +196,7 @@ pub fn serialize_kpuzzle_definition(
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ScrambleListEntry {
-    pub state: KStateData,
+    pub pattern: KPatternData,
 }
 
 pub type ScrambleList = Vec<ScrambleListEntry>;
@@ -229,7 +211,7 @@ pub fn serialize_scramble_list(scramble_list: &ScrambleList) -> Result<String, S
                     scramble_idx += 1;
                     scramble_idx
                 }),
-                &entry.state,
+                &entry.pattern,
             )
         })
         .collect();

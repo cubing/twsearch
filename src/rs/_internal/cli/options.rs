@@ -39,7 +39,7 @@ pub enum CliCommand {
     ///
     /// Warning: Does NOT account for identical pieces.
     SchreierSims(SchreierSimsArgs),
-    /// Enumerate the entire state graph and print antipodes.
+    /// Enumerate the entire pattern graph and print antipodes.
     GodsAlgorithm(GodsAlgorithmArgs),
     /// Run a timing test for given definition.
     TimingTest(TimingTestArgs),
@@ -210,7 +210,7 @@ pub struct GodsAlgorithmArgs {
     #[clap(long/* , visible_short_alias = 'F' */)]
     pub force_arrays: bool,
 
-    /// Use 128-bit hash to encode states rather than actual packed state representation.
+    /// Use 128-bit hash to encode states rather than actual packed pattern representation.
     #[clap(long/* , visible_short_alias = 'H' */)]
     pub hash_states: bool,
 
@@ -273,7 +273,7 @@ pub struct InputDefAndOptionalScrambleFileArgs {
     /// Solve a list of scrambles passed to standard in (separated by newlines).
     #[clap(long, help_heading = "Scramble input", group = "scramble_input"/* , visible_short_alias = 's' */)]
     pub stdin_scrambles: bool,
-    /// Use the target pattern from the specified file instead of the default start state from the defintion.
+    /// Use the target pattern from the specified file instead of the default start pattern from the defintion.
     #[clap(long, help_heading = "Scramble input")]
     pub experimental_target_pattern: Option<PathBuf>,
 }

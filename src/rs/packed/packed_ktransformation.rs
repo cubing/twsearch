@@ -126,7 +126,7 @@ impl PackedKTransformation {
 
         use cubing::kpuzzle::KTransformationData;
 
-        let mut state_data = KTransformationData::new();
+        let mut kpattern_data = KTransformationData::new();
         for orbit_info in &self
             .packed_orbit_data
             .packed_kpuzzle
@@ -134,20 +134,20 @@ impl PackedKTransformation {
             .orbit_iteration_info
         {
             let mut permutation = Vec::<usize>::new();
-            let mut orientation = Vec::<usize>::new();
+            let mut orientation_delta = Vec::<usize>::new();
             for i in 0..orbit_info.num_pieces {
                 permutation.push(u8_to_usize(self.get_piece_or_permutation(orbit_info, i)));
-                orientation.push(u8_to_usize(self.get_orientation(orbit_info, i)));
+                orientation_delta.push(u8_to_usize(self.get_orientation(orbit_info, i)));
             }
             let orbit_data = KTransformationOrbitData {
                 permutation,
-                orientation,
+                orientation_delta,
             };
-            state_data.insert(orbit_info.name.clone(), orbit_data);
+            kpattern_data.insert(orbit_info.name.clone(), orbit_data);
         }
         KTransformation {
             kpuzzle: self.packed_orbit_data.packed_kpuzzle.data.kpuzzle.clone(),
-            transformation_data: Arc::new(state_data),
+            ktransformation_data: Arc::new(kpattern_data),
         }
     }
 }

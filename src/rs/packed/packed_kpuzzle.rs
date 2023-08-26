@@ -7,7 +7,9 @@ use cubing::{
     },
 };
 
-use super::{byte_conversions::{usize_to_u8, u8_to_usize}, PackedKState, PackedKTransformation, orientation_packer::{OrientationPacker, OrientationWithMod}};
+use crate::PackedKPattern;
+
+use super::{byte_conversions::{usize_to_u8, u8_to_usize},  PackedKTransformation, orientation_packer::{OrientationPacker, OrientationWithMod}};
 
 // TODO: allow certain values over 107?
 const MAX_NUM_ORIENTATIONS_INCLUSIVE: usize = 107;
@@ -42,27 +44,18 @@ impl TryFrom<KPuzzle> for PackedKPuzzle {
 
     fn try_from(kpuzzle: KPuzzle) -> Result<Self, Self::Error> {
         let def = kpuzzle.definition();
-        let orbit_ordering = &def.orbit_ordering;
-        let orbit_ordering = orbit_ordering.as_ref().ok_or_else(|| InvalidDefinitionError{ description: "Constructing a `PackedKPuzzle` from a `KPuzzle` requires the `orbitOrdering` field.".to_owned()})?;
 
         let mut bytes_offset = 0;
         let mut orbit_iteration_info: Vec<PackedKPuzzleOrbitInfo> = vec![];
 
-        for orbit_name in orbit_ordering {
-            let orbit_definition = kpuzzle.definition().orbits.get(orbit_name);
-            let orbit_definition = orbit_definition.ok_or_else(|| InvalidDefinitionError {
-                description: format!(
-                    "Missing orbit definition for orbit in ordering: {}",
-                    orbit_name
-                ),
-            })?;
+        for orbit_definition in &def.orbits {
             let num_orientations = orbit_definition.num_orientations;
             if num_orientations > MAX_NUM_ORIENTATIONS_INCLUSIVE {
-                return Err(InvalidDefinitionError { description: format!("`num_orientations` for orbit {} is too large ({}). Maximum is {} for the current build." , orbit_name, num_orientations, MAX_NUM_ORIENTATIONS_INCLUSIVE)});
+                return Err(InvalidDefinitionError { description: format!("`num_orientations` for orbit {} is too large ({}). Maximum is {} for the current build." , orbit_definition.orbit_name, num_orientations, MAX_NUM_ORIENTATIONS_INCLUSIVE)});
             }
             orbit_iteration_info.push({
                 PackedKPuzzleOrbitInfo {
-                    name: orbit_name.clone(),
+                    name: orbit_definition.orbit_name.clone(),
                     num_pieces: orbit_definition.num_pieces,
                     num_orientations: usize_to_u8(num_orientations),
                     pieces_or_pemutations_offset: bytes_offset,
@@ -94,40 +87,40 @@ pub enum ConversionError {
 }
 
 impl PackedKPuzzle {
-    pub fn start_state(&self) -> PackedKState {
-        let kstate_start_state_data = self.data.kpuzzle.start_state().state_data;
+    pub fn start_state(&self) -> PackedKPattern {
+        let default_pattern = self.data.kpuzzle.default_pattern().kpattern_data;
 
-        let new_state = PackedKState::new(self.clone());
+        let new_state = PackedKPattern::new(self.clone());
         for orbit_info in &self.data.orbit_iteration_info {
-            let kstate_orbit_data = kstate_start_state_data
+            let orbit_data = default_pattern
                 .get(&orbit_info.name)
                 .expect("Missing orbit!");
             for i in 0..orbit_info.num_pieces {
                 new_state.set_piece_or_permutation(
                     orbit_info,
                     i,
-                    usize_to_u8(kstate_orbit_data.pieces[i]),
+                    usize_to_u8(orbit_data.pieces[i]),
                 );
                 new_state.set_packed_orientation(
                     orbit_info,
                     i,
-                    match &kstate_orbit_data.orientation_mod {
-                        None => usize_to_u8(kstate_orbit_data.orientation[i]),
+                    match &orbit_data.orientation_mod {
+                        None => usize_to_u8(orbit_data.orientation[i]),
                         Some(orientation_mod) => {
                             
                                 if orientation_mod[i] != 0 && u8_to_usize(orbit_info.num_orientations) % orientation_mod[i] != 0 {
                                     eprintln!(
-                                        "`orientation_mod` of {} seen for piece at index {} in orbit {} in the start state for puzzle {}. This must be a factor of `num_orientations` for the orbit ({}). See: https://js.cubing.net/cubing/api/interfaces/kpuzzle.KStateOrbitData.html#orientationMod",
+                                        "`orientation_mod` of {} seen for piece at index {} in orbit {} in the start pattern for puzzle {}. This must be a factor of `num_orientations` for the orbit ({}). See: https://js.cubing.net/cubing/api/interfaces/kpuzzle.KPatternOrbitData.html#orientationMod",
                                         orientation_mod[i],
                                         i,
                                         orbit_info.name,
                                         self.data.kpuzzle.definition().name,
                                         orbit_info.num_orientations
                                     );
-                                    panic!("Invalid start state");
+                                    panic!("Invalid start pattern");
                                 };
                                 orbit_info.orientation_packer.pack(OrientationWithMod {
-                                    orientation: kstate_orbit_data.orientation[i],
+                                    orientation: orbit_data.orientation[i],
                                     orientation_mod: orientation_mod[i],
                                 })
                             
@@ -161,7 +154,7 @@ impl PackedKPuzzle {
         let new_transformation = PackedKTransformation::new(self.clone());
         for orbit_info in &self.data.orbit_iteration_info {
             let unpacked_orbit_data = unpacked_ktransformation
-                .transformation_data
+                .ktransformation_data
                 .get(&orbit_info.name);
             let unpacked_orbit_data =
                 unpacked_orbit_data.ok_or_else(|| InvalidDefinitionError {
@@ -176,7 +169,7 @@ impl PackedKPuzzle {
                 new_transformation.set_orientation(
                     orbit_info,
                     i,
-                    usize_to_u8(unpacked_orbit_data.orientation[i]),
+                    usize_to_u8(unpacked_orbit_data.orientation_delta[i]),
                 )
             }
         }

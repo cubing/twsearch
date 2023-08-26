@@ -8,13 +8,13 @@ use super::{
 };
 
 use cubing::kpuzzle::KPuzzle;
-use cubing::kpuzzle::{KState, KStateData};
+use cubing::kpuzzle::{KPattern, KPatternData};
 
-pub struct PackedKState {
+pub struct PackedKPattern {
     pub packed_orbit_data: PackedOrbitData,
 }
 
-impl PackedKState {
+impl PackedKPattern {
     pub fn new(packed_kpuzzle: PackedKPuzzle) -> Self {
         Self {
             packed_orbit_data: PackedOrbitData::new(packed_kpuzzle),
@@ -71,21 +71,21 @@ impl PackedKState {
         }
     }
 
-    // Adapted from https://github.com/cubing/cubing.rs/blob/b737c6a36528e9984b45b29f9449a9a330c272fb/src/kpuzzle/state.rs#L31-L82
+    // Adapted from https://github.com/cubing/cubing.rs/blob/b737c6a36528e9984b45b29f9449a9a330c272fb/src/kpuzzle/pattern.rs#L31-L82
     // TODO: dedup the implementation (but avoid runtime overhead for the shared abstraction).
-    pub fn apply_transformation(&self, transformation: &PackedKTransformation) -> PackedKState {
-        let mut new_state = PackedKState::new(self.packed_orbit_data.packed_kpuzzle.clone());
+    pub fn apply_transformation(&self, transformation: &PackedKTransformation) -> PackedKPattern {
+        let mut new_state = PackedKPattern::new(self.packed_orbit_data.packed_kpuzzle.clone());
         self.apply_transformation_into(transformation, &mut new_state);
         new_state
     }
 
-    // Adapted from https://github.com/cubing/cubing.rs/blob/b737c6a36528e9984b45b29f9449a9a330c272fb/src/kpuzzle/state.rs#L31-L82
+    // Adapted from https://github.com/cubing/cubing.rs/blob/b737c6a36528e9984b45b29f9449a9a330c272fb/src/kpuzzle/pattern.rs#L31-L82
     // TODO: dedup the implementation (but avoid runtime overhead for the shared abstraction).
     // TODO: assign to self from another value, not into another
     pub fn apply_transformation_into(
         &self,
         transformation: &PackedKTransformation,
-        into_state: &mut PackedKState,
+        into_state: &mut PackedKPattern,
     ) {
         for orbit_info in &self
             .packed_orbit_data
@@ -123,8 +123,8 @@ impl PackedKState {
         self.packed_orbit_data.hash()
     }
 
-    pub fn unpack(&self) -> KState {
-        let mut state_data = KStateData::new();
+    pub fn unpack(&self) -> KPattern {
+        let mut kpattern_data = KPatternData::new();
         for orbit_info in &self
             .packed_orbit_data
             .packed_kpuzzle
@@ -142,16 +142,16 @@ impl PackedKState {
                 orientation.push(orientation_with_mod.orientation);
                 orientation_mod.push(orientation_with_mod.orientation_mod);
             }
-            let orbit_data = cubing::kpuzzle::KStateOrbitData {
+            let orbit_data = cubing::kpuzzle::KPatternOrbitData {
                 pieces,
                 orientation,
                 orientation_mod: Some(orientation_mod),
             };
-            state_data.insert(orbit_info.name.clone(), orbit_data);
+            kpattern_data.insert(orbit_info.name.clone(), orbit_data);
         }
-        KState {
+        KPattern {
             kpuzzle: self.packed_orbit_data.packed_kpuzzle.data.kpuzzle.clone(),
-            state_data: Arc::new(state_data),
+            kpattern_data: Arc::new(kpattern_data),
         }
     }
 }
@@ -166,9 +166,9 @@ impl Debug for KPuzzleDebug {
     }
 }
 
-impl Debug for PackedKState {
+impl Debug for PackedKPattern {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("PackedKState")
+        f.debug_struct("PackedKPattern")
             .field(
                 "packed_kpuzzle",
                 &KPuzzleDebug {

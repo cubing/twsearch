@@ -23,7 +23,7 @@ pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), String> {
     let packed_kpuzzle = PackedKPuzzle::try_from(kpuzzle).unwrap();
 
     println!("{:?}", packed_kpuzzle.start_state());
-    // println!("{:?}", packed_kpuzzle.start_state().unpack().state_data);
+    // println!("{:?}", packed_kpuzzle.start_state().unpack().kpattern_data);
 
     let t1 = packed_kpuzzle
         .transformation_from_move(&"R".try_into().unwrap())

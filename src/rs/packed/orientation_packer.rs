@@ -53,7 +53,7 @@ pub struct OrientationPacker {
 ///
 /// `OrientationPacker` can translate between these representations,
 /// as well as applying a transformation to the packed representation
-/// efficiently. This replaces arithmetic with simple lookups for `PackedKState` logic.
+/// efficiently. This replaces arithmetic with simple lookups for `PackedKPattern` logic.
 
 impl OrientationPacker {
     pub fn new(num_orientations: usize) -> Self {
@@ -132,8 +132,8 @@ impl OrientationPacker {
 #[cfg(test)]
 mod tests {
     use cubing::kpuzzle::{
-        KPuzzle, KPuzzleDefinition, KPuzzleOrbitDefinition, KPuzzleOrbitName, KState, KStateData,
-        KStateOrbitData, KTransformationData, KTransformationOrbitData,
+        KPattern, KPatternData, KPatternOrbitData, KPuzzle, KPuzzleDefinition,
+        KPuzzleOrbitDefinition, KPuzzleOrbitName, KTransformationData, KTransformationOrbitData,
     };
     use std::collections::HashMap;
     use std::sync::Arc;
@@ -145,17 +145,14 @@ mod tests {
     fn test_orientation_mod() {
         let def = KPuzzleDefinition {
             name: "custom".to_owned(),
-            orbit_ordering: Some(vec![KPuzzleOrbitName("PIECES".to_owned())]),
-            orbits: HashMap::from([(
-                KPuzzleOrbitName("PIECES".to_owned()),
-                KPuzzleOrbitDefinition {
-                    num_pieces: 2,
-                    num_orientations: 12,
-                },
-            )]),
-            start_state_data: KStateData::from([(
-                KPuzzleOrbitName("PIECES".to_owned()),
-                KStateOrbitData {
+            orbits: vec![KPuzzleOrbitDefinition {
+                orbit_name: "PIECES".into(),
+                num_pieces: 2,
+                num_orientations: 12,
+            }],
+            default_pattern: KPatternData::from([(
+                KPuzzleOrbitName("PIECES".into()),
+                KPatternOrbitData {
                     pieces: vec![0, 1],
                     orientation: vec![0, 0],
                     orientation_mod: Some(vec![3, 4]),
@@ -169,7 +166,7 @@ mod tests {
                         KPuzzleOrbitName("PIECES".to_owned()),
                         KTransformationOrbitData {
                             permutation: vec![0, 1], // TODO: is this actually L'?
-                            orientation: vec![2, 5],
+                            orientation_delta: vec![2, 5],
                         },
                     )])),
                 ),
@@ -179,7 +176,7 @@ mod tests {
                         KPuzzleOrbitName("PIECES".to_owned()),
                         KTransformationOrbitData {
                             permutation: vec![1, 0], // TODO: is this actually R'?
-                            orientation: vec![0, 0],
+                            orientation_delta: vec![0, 0],
                         },
                     )])),
                 ),
@@ -196,23 +193,23 @@ mod tests {
             .transformation_from_move(&"SWAP".try_into().unwrap())
             .unwrap();
 
-        let state = packed_kpuzzle.start_state();
-        // println!("{:?}", state.unpack().state_data);
+        let pattern = packed_kpuzzle.start_state();
+        // println!("{:?}", pattern.unpack().kpattern_data);
 
-        let state = state.apply_transformation(&spin);
-        // println!("{:?}", state.unpack().state_data);
+        let pattern = pattern.apply_transformation(&spin);
+        // println!("{:?}", pattern.unpack().kpattern_data);
 
-        let state = state.apply_transformation(&swap);
-        // println!("{:?}", state.unpack().state_data);
+        let pattern = pattern.apply_transformation(&swap);
+        // println!("{:?}", pattern.unpack().kpattern_data);
 
-        let state = state.apply_transformation(&spin);
-        // println!("{:?}", state.unpack().state_data);
+        let pattern = pattern.apply_transformation(&spin);
+        // println!("{:?}", pattern.unpack().kpattern_data);
 
-        let expected = KState {
+        let expected = KPattern {
             kpuzzle,
-            state_data: KStateData::from([(
+            kpattern_data: KPatternData::from([(
                 KPuzzleOrbitName("PIECES".to_owned()),
-                KStateOrbitData {
+                KPatternOrbitData {
                     pieces: vec![1, 0],
                     orientation: vec![3, 1],
                     orientation_mod: Some(vec![4, 3]),
@@ -220,8 +217,8 @@ mod tests {
             )])
             .into(),
         };
-        // println!("{:?}", expected.state_data);
-        assert_eq!(state.unpack(), expected);
+        // println!("{:?}", expected.kpattern_data);
+        assert_eq!(pattern.unpack(), expected);
         println!("Custom puzzle test passes!\n--------");
     }
 }

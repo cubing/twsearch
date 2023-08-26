@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use cubing::kpuzzle::{KPuzzleDefinition, KStateData};
+use cubing::kpuzzle::{KPatternData, KPuzzleDefinition};
 use serde::Deserialize;
 use tempfile::NamedTempFile;
 
@@ -81,6 +81,7 @@ fn must_rewrite_input_file_with_optional_second_file<
     rewrite_fn: fn(T, Option<U>) -> Result<String, String>,
     debug_print_serialized_json: bool,
 ) -> (String, Option<NamedTempFile>) {
+    println!("{:?}", input_file_1);
     let input_file_1_json = read_to_json(input_file_1).unwrap();
     let input_file_2_json = match input_file_2 {
         Some(input_file_2) => read_to_json(input_file_2).unwrap(),
@@ -120,7 +121,7 @@ pub fn main_search(
             must_rewrite_input_file_with_optional_second_file(
                 def_file,
                 target_pattern_file,
-                |def: KPuzzleDefinition, custom_start_state: Option<KStateData>| {
+                |def: KPuzzleDefinition, custom_start_state: Option<KPatternData>| {
                     let def = serialize_kpuzzle_definition(
                         def,
                         Some(&KPuzzleSerializationOptions {
@@ -154,8 +155,8 @@ pub fn main_search(
                     Ok(v) => v,
                     Err(_) => must_rewrite_input_file(
                         scramble_file,
-                        |kstate_data: KStateData| {
-                            serialize_scramble_state_data("Anonymous_Scramble", &kstate_data)
+                        |kpattern_data: KPatternData| {
+                            serialize_scramble_state_data("Anonymous_Scramble", &kpattern_data)
                         },
                         debug_print_serialized_json,
                     ),

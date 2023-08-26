@@ -1,6 +1,6 @@
 use cubing::alg::Move;
+use cubing::kpuzzle::KPatternData;
 use cubing::kpuzzle::KPuzzleDefinition;
-use cubing::kpuzzle::KStateData;
 
 use rouille::router;
 use rouille::try_or_400;
@@ -52,9 +52,9 @@ struct ScrambleSolve {
 #[serde(rename_all = "camelCase")]
 struct StateSolve {
     definition: KPuzzleDefinition,
-    state: KStateData,
+    pattern: KPatternData,
     move_subset: Option<Vec<Move>>,
-    start_state: Option<KStateData>,
+    start_state: Option<KPatternData>,
     search_args: Option<ServeClientArgs>,
 }
 
@@ -75,7 +75,7 @@ fn solve_position(request: &Request, serve_command_args: &ServeCommandArgs) -> R
         Ok(_) => {}
         Err(response) => return response,
     };
-    let result = match serialize_scramble_state_data("AnonymousScramble", &state_solve.state) {
+    let result = match serialize_scramble_state_data("AnonymousScramble", &state_solve.pattern) {
         Ok(result) => result,
         Err(e) => {
             return Response::text(e).with_status_code(400);
@@ -114,7 +114,7 @@ Use with one of the following:
             (GET) (/) => {
                 Response::text("twsearch-cpp-wrapper (https://github.com/cubing/twsearch)")
             },
-            (POST) (/v0/solve/state) => { // TODO: `…/pattern`?
+            (POST) (/v0/solve/pattern) => { // TODO: `…/pattern`?
                 if let Ok(guard) = solve_mutex.try_lock() {
                     let response = solve_position(request, &serve_command_args);
                     drop(guard);

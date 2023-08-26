@@ -10,6 +10,6 @@
   "devDependencies": {
     "@types/node": "^18.11.0",
     "esbuild": "^0.15.11",
-    "rome": "^10.0.1"
+    "rome": "^12.1.3"
   }
 }

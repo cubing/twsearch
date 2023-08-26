@@ -149,14 +149,18 @@ pub fn main_search(
             _ => {
                 match rewrite_input_file(
                     scramble_file,
-                    |scramble_list: ScrambleList| serialize_scramble_list(&scramble_list),
+                    |scramble_list: ScrambleList| serialize_scramble_list(None, &scramble_list),
                     debug_print_serialized_json,
                 ) {
                     Ok(v) => v,
                     Err(_) => must_rewrite_input_file(
                         scramble_file,
                         |kpattern_data: KPatternData| {
-                            serialize_scramble_kpattern_data("Anonymous_Scramble", &kpattern_data)
+                            serialize_scramble_kpattern_data(
+                                None,
+                                "Anonymous_Scramble",
+                                &kpattern_data,
+                            )
                         },
                         debug_print_serialized_json,
                     ),

@@ -3,7 +3,8 @@ extern crate cubing;
 use cubing::{
     alg::Move,
     kpuzzle::{
-        InvalidDefinitionError, KPatternData, KPuzzle, KPuzzleDefinition, KTransformationData,
+        InvalidDefinitionError, KPatternData, KPuzzle, KPuzzleDefinition, KPuzzleOrbitName,
+        KTransformationData,
     },
 };
 
@@ -63,48 +64,71 @@ fn serialize_usize_vec(vec: &[usize]) -> String {
         .join(" ")
 }
 
-fn serialize_move_transformation(r#move: &Move, t: &KTransformationData) -> String {
+fn serialize_move_transformation(
+    kpuzzle: &KPuzzle,
+    r#move: &Move,
+    t: &KTransformationData,
+) -> String {
     let mut builder = LiteStringBuilder::new();
     builder.push(&format!(
         "MoveTransformation {}",
         sanitize(&r#move.to_string())
     ));
     // outputLines.push(`MoveTransformation ${sanitize(name)}`);
-    // TODO: use `orbit_ordering` if available?
-    for (orbit_name, orbit_data) in t {
-        builder.push(&sanitize(&orbit_name.to_string()));
-        builder.push_vec(&orbit_data.permutation);
-        builder.push_vec(&orbit_data.orientation_delta);
+    // TODO: use `orbit_ordering` if available? (TODO)
+    for orbit_definition in &kpuzzle.definition().orbits {
+        builder.push(&sanitize(&orbit_definition.orbit_name.to_string()));
+        builder.push_vec(&t[&orbit_definition.orbit_name].permutation);
+        builder.push_vec(&t[&orbit_definition.orbit_name].orientation_delta);
     }
     builder.push(END);
     builder.push(BLANK_LINE);
     builder.build()
 }
 
-fn serialize_kpattern_data(t: &KPatternData) -> Result<String, String> {
+// TODO: don't accept an `Option` for `kpuzzle`?
+fn serialize_kpattern_data(kpuzzle: Option<&KPuzzle>, t: &KPatternData) -> Result<String, String> {
     let mut builder = LiteStringBuilder::new();
-    // TODO: use `orbit_ordering` if available?
-    for (orbit_name, orbit_data) in t {
-        builder.push(&sanitize(&orbit_name.to_string()));
-        builder.push_vec(&orbit_data.pieces);
 
-        let len = orbit_data.orientation.len();
-        let mut str_vec = Vec::with_capacity(len);
-        for i in 0..len {
-            match orbit_data.orientation_mod.as_ref().map(|vec| vec[i]) {
-                None => str_vec.push(orbit_data.orientation[i].to_string()),
-                Some(0) => str_vec.push(orbit_data.orientation[i].to_string()),
-                Some(1) => str_vec.push("?".to_owned()), // TODO: assert that `orbit_data.orientation[i] == 0`?
-                Some(_) => {
-                    return Err(
-                        "Orientation mod entries other than 0 or 1 are not currently supported"
-                            .to_owned(),
-                    );
+    let mut process_orbit_name = |orbit_name: &KPuzzleOrbitName| {
+        {
+            let orbit_data = &t[orbit_name];
+            builder.push(&sanitize(&orbit_name.to_string()));
+            builder.push_vec(&orbit_data.pieces);
+
+            let len = orbit_data.orientation.len();
+            let mut str_vec = Vec::with_capacity(len);
+            for i in 0..len {
+                match orbit_data.orientation_mod.as_ref().map(|vec| vec[i]) {
+                    None => str_vec.push(orbit_data.orientation[i].to_string()),
+                    Some(0) => str_vec.push(orbit_data.orientation[i].to_string()),
+                    Some(1) => str_vec.push("?".to_owned()), // TODO: assert that `orbit_data.orientation[i] == 0`?
+                    Some(_) => {
+                        return Err(
+                            "Orientation mod entries other than 0 or 1 are not currently supported"
+                                .to_owned(),
+                        );
+                    }
                 }
             }
+            builder.push_str_vec(&str_vec);
+        };
+        Ok(())
+    };
+
+    match kpuzzle {
+        Some(kpuzzle) => {
+            for orbit_definition in &kpuzzle.definition().orbits {
+                process_orbit_name(&orbit_definition.orbit_name)?;
+            }
         }
-        builder.push_str_vec(&str_vec);
+        None => {
+            for orbit_name in t.keys() {
+                process_orbit_name(orbit_name)?;
+            }
+        }
     }
+
     builder.push(END);
     builder.push(BLANK_LINE);
     Ok(builder.build())
@@ -117,10 +141,14 @@ fn include(options: &KPuzzleSerializationOptions, move_name: &Move) -> bool {
     }
 }
 
-pub fn serialize_scramble_kpattern_data(name: &str, t: &KPatternData) -> Result<String, String> {
+pub fn serialize_scramble_kpattern_data(
+    kpuzzle: Option<&KPuzzle>,
+    name: &str,
+    t: &KPatternData,
+) -> Result<String, String> {
     let mut builder = LiteStringBuilder::new();
     builder.push(&format!("ScrambleState {}", name));
-    builder.push(&serialize_kpattern_data(t)?);
+    builder.push(&serialize_kpattern_data(kpuzzle, t)?);
     Ok(builder.build())
 }
 
@@ -133,6 +161,9 @@ pub fn serialize_kpuzzle_definition(
     def: KPuzzleDefinition, // TODO: take reference (requires a change in `cubing.rs`?)
     options: Option<&KPuzzleSerializationOptions>,
 ) -> Result<String, InvalidDefinitionError> {
+    let kpuzzle = KPuzzle::try_from(def)?;
+    let def = kpuzzle.definition();
+
     let options = options.unwrap_or(&KPuzzleSerializationOptions {
         move_subset: None,
         custom_default_pattern: None,
@@ -154,20 +185,24 @@ pub fn serialize_kpuzzle_definition(
 
     builder.push("StartState");
     if let Some(default_pattern) = &options.custom_default_pattern {
-        builder.push(&serialize_kpattern_data(default_pattern)?);
+        builder.push(&serialize_kpattern_data(Some(&kpuzzle), default_pattern)?);
     } else {
-        builder.push(&serialize_kpattern_data(&def.default_pattern)?);
+        builder.push(&serialize_kpattern_data(
+            Some(&kpuzzle),
+            &def.default_pattern,
+        )?);
     }
     builder.push(BLANK_LINE);
 
     for (move_name, move_def) in &def.moves {
         if include(options, move_name) {
-            builder.push(&serialize_move_transformation(move_name, move_def))
+            builder.push(&serialize_move_transformation(
+                &kpuzzle, move_name, move_def,
+            ))
         }
     }
 
     if let Some(derived_moves) = &def.derived_moves.clone() {
-        let kpuzzle = KPuzzle::try_new(def)?;
         for (move_name, alg) in derived_moves {
             if include(options, move_name) {
                 let transformation = match kpuzzle.transformation_from_alg(alg) {
@@ -182,6 +217,7 @@ pub fn serialize_kpuzzle_definition(
                     }
                 };
                 builder.push(&serialize_move_transformation(
+                    &kpuzzle,
                     move_name,
                     &transformation.ktransformation_data,
                 ))
@@ -201,12 +237,16 @@ pub struct ScrambleListEntry {
 
 pub type ScrambleList = Vec<ScrambleListEntry>;
 
-pub fn serialize_scramble_list(scramble_list: &ScrambleList) -> Result<String, String> {
+pub fn serialize_scramble_list(
+    kpuzzle: Option<&KPuzzle>,
+    scramble_list: &ScrambleList,
+) -> Result<String, String> {
     let mut scramble_idx = 0;
     let scramble_strings: Result<Vec<String>, String> = scramble_list
         .iter()
         .map(|entry| {
             serialize_scramble_kpattern_data(
+                kpuzzle,
                 &format!("Scramble{}", {
                     scramble_idx += 1;
                     scramble_idx

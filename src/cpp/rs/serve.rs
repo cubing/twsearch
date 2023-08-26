@@ -75,13 +75,16 @@ fn solve_position(request: &Request, serve_command_args: &ServeCommandArgs) -> R
         Ok(_) => {}
         Err(response) => return response,
     };
-    let result =
-        match serialize_scramble_kpattern_data("AnonymousScramble", &kpattern_solve.pattern) {
-            Ok(result) => result,
-            Err(e) => {
-                return Response::text(e).with_status_code(400);
-            }
-        };
+    let result = match serialize_scramble_kpattern_data(
+        None,
+        "AnonymousScramble",
+        &kpattern_solve.pattern,
+    ) {
+        Ok(result) => result,
+        Err(e) => {
+            return Response::text(e).with_status_code(400);
+        }
+    };
     println!("{}", result);
     let solution = rust_api::rust_api_solve_position(&result); // TODO: catch exceptions???
     Response::json(&ResponseAlg { alg: solution })

@@ -196,7 +196,7 @@ mod tests {
     use crate::{PackedKPuzzle, PackedKTransformation};
 
     #[test]
-    fn test_orientation_mod() -> Result<(), String> {
+    fn test_composition() -> Result<(), String> {
         let kpuzzle = cube3x3x3_kpuzzle();
         let packed_kpuzzle = PackedKPuzzle::try_from(kpuzzle).map_err(|e| e.description)?;
 

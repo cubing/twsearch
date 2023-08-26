@@ -166,9 +166,9 @@ pub fn serialize_kpuzzle_definition(
         }
     }
 
-    if let Some(experimental_derived_moves) = &def.experimental_derived_moves.clone() {
+    if let Some(derived_moves) = &def.derived_moves.clone() {
         let kpuzzle = KPuzzle::try_new(def)?;
-        for (move_name, alg) in experimental_derived_moves {
+        for (move_name, alg) in derived_moves {
             if include(options, move_name) {
                 let transformation = match kpuzzle.transformation_from_alg(alg) {
                     Ok(transformation) => transformation,

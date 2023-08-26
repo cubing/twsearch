@@ -233,7 +233,7 @@ fn test_custom_puzzle() {
                 )])),
             ),
         ]),
-        experimental_derived_moves: None,
+        derived_moves: None,
     };
     let kpuzzle = KPuzzle::try_new(def).unwrap();
     let packed_kpuzzle = PackedKPuzzle::try_from(kpuzzle.clone()).unwrap();

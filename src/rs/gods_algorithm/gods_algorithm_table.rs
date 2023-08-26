@@ -1,20 +1,21 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, vec};
 
-use crate::PackedKPattern;
+use cubing::alg::Move;
+
+use crate::{PackedKPattern, PackedKPuzzle};
 
 pub struct GodsAlgorithmTable {
     finished: bool,
-    depth_map: HashMap<PackedKPattern, /* depth */ usize>,
+    pattern_to_depth: HashMap<PackedKPattern, /* depth */ usize>,
 
-    bfs_queue: HashMap</* depth */ usize, Vec<PackedKPattern>>, // TODO: use a vector of references instead.
+    depth_to_patterns: Vec<Vec<PackedKPattern>>,
 }
 
 impl GodsAlgorithmTable {
-    pub fn new() -> Self {
-        Self {
+    pub fn new(packed_kpuzzle: PackedKPuzzle, move_set: Vec<Move>) -> Self {
             finished: false,
-            depth_map: HashMap::new(),
-            bfs_queue: HashMap::new(),
+            pattern_to_depth: HashMap::new(),
+            depth_to_patterns: vec![vec![packed_kpuzzle.]],
         }
     }
 

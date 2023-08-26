@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.3.24", features = ["derive"] }
 clap_complete = "4.3.2"
-cubing = "0.5.4"
+cubing = "0.6.0"
 cxx = "1.0.106"
 lazy_static = "1.4.0"
 num_cpus = "1.16.0"

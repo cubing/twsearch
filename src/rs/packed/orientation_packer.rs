@@ -142,7 +142,7 @@ mod tests {
 
     // TODO: Return a `Result`.
     #[test]
-    fn test_orientation_mod() {
+    fn orientation_mod() {
         let def = KPuzzleDefinition {
             name: "custom".to_owned(),
             orbits: vec![KPuzzleOrbitDefinition {

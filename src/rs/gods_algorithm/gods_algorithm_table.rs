@@ -1,14 +1,12 @@
-use std::{
-    collections::HashMap,
-    io::{stdout, Write},
-    vec,
-};
+use std::{collections::HashMap, vec};
 
 use cubing::alg::Move;
 
 use crate::{ConversionError, PackedKPattern, PackedKPuzzle, PackedKTransformation};
 
 type SearchDepth = usize;
+
+use indicatif::{MultiProgress, ProgressBar, ProgressFinish, ProgressStyle};
 
 pub struct GodsAlgorithmTable {
     completed: bool, // "completed" instead of "complete" to make an unambiguous adjective
@@ -30,16 +28,6 @@ impl Default for GodsAlgorithmTable {
     }
 }
 
-pub struct GodsAlgorithmSearch {
-    // params
-    packed_kpuzzle: PackedKPuzzle,
-    cached_move_info_list: Vec<CachedMoveInfo>,
-
-    // state
-    table: GodsAlgorithmTable,
-    depth_to_patterns: Vec<Vec<PackedKPattern>>, // TODO: `HashMap` instead of `Vec` for the other layer for sparse rep?
-}
-
 struct CachedMoveInfo {
     _move: Move,
     _transformation: PackedKTransformation,
@@ -54,6 +42,18 @@ impl CachedMoveInfo {
             inverse_transformation: packed_kpuzzle.transformation_from_move(&(r#move).invert())?, // TODO: invert the regular transformation directly.
         })
     }
+}
+
+pub struct GodsAlgorithmSearch {
+    // params
+    packed_kpuzzle: PackedKPuzzle,
+    cached_move_info_list: Vec<CachedMoveInfo>,
+
+    // state
+    table: GodsAlgorithmTable,
+    depth_to_patterns: Vec<Vec<PackedKPattern>>, // TODO: `HashMap` instead of `Vec` for the other layer for sparse rep?
+
+    multi_progress_bar: MultiProgress,
 }
 
 impl GodsAlgorithmSearch {
@@ -72,6 +72,7 @@ impl GodsAlgorithmSearch {
                 pattern_to_depth: HashMap::new(),
             },
             depth_to_patterns,
+            multi_progress_bar: MultiProgress::new(),
         })
     }
 
@@ -86,24 +87,29 @@ impl GodsAlgorithmSearch {
         let mut num_patterns_total = 1;
         while !self.table.completed {
             let last_depth_patterns = &self.depth_to_patterns[current_depth];
-            print!(
-                "{} pattern{} at depth {} ({} at all depths so far).",
-                last_depth_patterns.len(),
-                if last_depth_patterns.len() == 1 {
-                    ""
-                } else {
-                    "s"
-                },
-                current_depth,
-                num_patterns_total
-            );
+            let num_last_depth_patterns = last_depth_patterns.len();
 
             current_depth += 1;
 
+            let progress_bar = ProgressBar::new(num_last_depth_patterns.try_into().unwrap());
+            let progress_bar = self.multi_progress_bar.insert_from_back(0, progress_bar);
+            let progress_bar = progress_bar.with_finish(ProgressFinish::AndLeave);
+            // TODO share the progress bar style?
+            let progress_bar_style = ProgressStyle::with_template(
+                "{prefix:3} {bar:12.cyan/blue} {elapsed:.2} {wide_msg}",
+            )
+            .expect("Could not construct progress bar.");
+            // .progress_chars("=> ");
+            progress_bar.set_style(progress_bar_style);
+            progress_bar.set_prefix(current_depth.to_string());
+
+            let num_to_test_at_current_depth: usize =
+                num_last_depth_patterns * self.cached_move_info_list.len();
+            let mut num_tested_at_current_depth = 0;
             let mut patterns_at_current_depth = Vec::<PackedKPattern>::new();
-            let mut num_patterns_at_current_depth = 0; // TODO: is it performant to just use `patterns_at_current_depth.len()`;
             for pattern in last_depth_patterns {
                 for move_info in &self.cached_move_info_list {
+                    num_tested_at_current_depth += 1;
                     let new_pattern =
                         pattern.apply_transformation(&move_info.inverse_transformation);
                     if self.table.pattern_to_depth.get(&new_pattern).is_some() {
@@ -115,10 +121,19 @@ impl GodsAlgorithmSearch {
                         .pattern_to_depth
                         .insert(new_pattern, current_depth);
 
-                    num_patterns_at_current_depth += 1;
-                    if num_patterns_at_current_depth % 100000 == 0 {
-                        print!(".");
-                        stdout().flush().unwrap();
+                    if num_tested_at_current_depth % 1000 == 0 {
+                        let numerator = patterns_at_current_depth.len();
+                        let denominator =
+                            num_to_test_at_current_depth - num_tested_at_current_depth + numerator;
+                        progress_bar.set_length(denominator.try_into().unwrap());
+                        progress_bar.set_position(numerator.try_into().unwrap());
+                        progress_bar.set_message(format!(
+                            "{} patterns found, {} remain to test",
+                            numerator,
+                            num_to_test_at_current_depth - num_tested_at_current_depth
+                        ))
+                        // print!(".");
+                        // stdout().flush().unwrap();
                         // println!(
                         //     "Found {} pattern{} at depth {} so far.",
                         //     num_patterns_at_current_depth,
@@ -132,17 +147,28 @@ impl GodsAlgorithmSearch {
                     }
                 }
             }
-            self.depth_to_patterns.push(patterns_at_current_depth);
-            println!();
-
+            let num_patterns_at_current_depth = patterns_at_current_depth.len();
             num_patterns_total += num_patterns_at_current_depth;
+            {
+                progress_bar.set_length(patterns_at_current_depth.len().try_into().unwrap());
+                progress_bar.set_position(patterns_at_current_depth.len().try_into().unwrap());
+                progress_bar.set_message(format!(
+                    "{} patterns ({} cumulative)",
+                    num_patterns_at_current_depth, num_patterns_total
+                ))
+            }
+            self.depth_to_patterns.push(patterns_at_current_depth);
+            // println!();
 
             if num_patterns_at_current_depth == 0 {
+                // progress_bar.finish_and_clear();
                 self.table.completed = true;
-                continue;
             }
+            progress_bar.finish();
         }
         let max_depth = current_depth - 1;
+        println!();
+        println!();
         println!(
             "Found {} pattern{} with a maximum depth of {}.",
             num_patterns_total,

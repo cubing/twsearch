@@ -2,7 +2,10 @@ use std::{collections::HashMap, vec};
 
 use cubing::alg::Move;
 
-use crate::{ConversionError, PackedKPattern, PackedKPuzzle, PackedKTransformation};
+use crate::{
+    gods_algorithm::factor_number::factor_number, ConversionError, PackedKPattern, PackedKPuzzle,
+    PackedKTransformation,
+};
 
 type SearchDepth = usize;
 
@@ -178,8 +181,9 @@ impl GodsAlgorithmSearch {
         println!();
         println!();
         println!(
-            "Found {} pattern{} with a maximum depth of {}.",
+            "Found {} ({}) pattern{} with a maximum depth of {}.",
             num_patterns_total,
+            factor_number(num_patterns_total.try_into().unwrap()),
             if num_patterns_total == 1 { "" } else { "s" },
             max_depth
         );

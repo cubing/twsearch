@@ -1,4 +1,8 @@
-use std::{collections::HashMap, vec};
+use std::{
+    collections::HashMap,
+    io::{stdout, Write},
+    vec,
+};
 
 use cubing::alg::Move;
 
@@ -82,10 +86,21 @@ impl GodsAlgorithmSearch {
         let mut num_patterns_total = 1;
         while !self.table.completed {
             let last_depth_patterns = &self.depth_to_patterns[current_depth];
+            print!(
+                "{} pattern{} at depth {} ({} at all depths so far).",
+                last_depth_patterns.len(),
+                if last_depth_patterns.len() == 1 {
+                    ""
+                } else {
+                    "s"
+                },
+                current_depth,
+                num_patterns_total
+            );
+
             current_depth += 1;
 
             let mut patterns_at_current_depth = Vec::<PackedKPattern>::new();
-
             let mut num_patterns_at_current_depth = 0; // TODO: is it performant to just use `patterns_at_current_depth.len()`;
             for pattern in last_depth_patterns {
                 for move_info in &self.cached_move_info_list {
@@ -101,33 +116,26 @@ impl GodsAlgorithmSearch {
                         .insert(new_pattern, current_depth);
 
                     num_patterns_at_current_depth += 1;
-                    if num_patterns_at_current_depth % 10000 == 0 {
-                        println!(
-                            "Found {} total pattern{} so far.",
-                            num_patterns_at_current_depth,
-                            if num_patterns_at_current_depth == 1 {
-                                ""
-                            } else {
-                                "s"
-                            }
-                        );
+                    if num_patterns_at_current_depth % 100000 == 0 {
+                        print!(".");
+                        stdout().flush().unwrap();
+                        // println!(
+                        //     "Found {} pattern{} at depth {} so far.",
+                        //     num_patterns_at_current_depth,
+                        //     if num_patterns_at_current_depth == 1 {
+                        //         ""
+                        //     } else {
+                        //         "s"
+                        //     },
+                        //     current_depth
+                        // );
                     }
                 }
             }
             self.depth_to_patterns.push(patterns_at_current_depth);
+            println!();
 
             num_patterns_total += num_patterns_at_current_depth;
-            println!(
-                "Found {} pattern{} at depth {} ({} at all depths so far).",
-                num_patterns_at_current_depth,
-                if num_patterns_at_current_depth == 1 {
-                    ""
-                } else {
-                    "s"
-                },
-                current_depth,
-                num_patterns_total
-            );
 
             if num_patterns_at_current_depth == 0 {
                 self.table.completed = true;

@@ -1,16 +1,7 @@
-use std::{fs::read_to_string, path::Path};
-
 use cubing::kpuzzle::{KPuzzle, KPuzzleDefinition};
-use serde::Deserialize;
 use twsearch::{PackedKPuzzle, PackedKTransformation, _internal::cli::CanonicalAlgsArgs};
 
-fn read_to_json<T: for<'a> Deserialize<'a>>(input_file: &Path) -> Result<T, String> {
-    format!("Rewriting: {:?}", input_file);
-    let input_str = read_to_string(input_file).or(Err("Could not read input file."))?;
-    let input_parsed: T =
-        serde_json::from_str(&input_str).or(Err("Input file is not valid JSON."))?;
-    Ok(input_parsed)
-}
+use crate::io::read_to_json;
 
 fn do_transformations_commute(t1: &PackedKTransformation, t2: &PackedKTransformation) -> bool {
     t1.apply_transformation(t2) == t2.apply_transformation(t1)

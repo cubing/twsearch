@@ -1,13 +1,13 @@
 mod commands;
 mod io;
 
-use std::process::exit;
+use std::{process::exit, sync::Arc};
 
 use commands::canonical_algs::canonical_algs;
-use cubing::kpuzzle::{KPuzzle, KPuzzleDefinition};
+use cubing::kpuzzle::{KPattern, KPatternData, KPuzzle, KPuzzleDefinition};
 use io::read_to_json;
 use twsearch::{
-    GodsAlgorithmSearch, PackedKPuzzle,
+    GodsAlgorithmSearch, PackedKPattern, PackedKPuzzle,
     _internal::cli::{get_options_cpp_wrapper, CliCommand, GodsAlgorithmArgs},
 };
 
@@ -38,6 +38,21 @@ fn main() {
 fn gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), String> {
     let def: KPuzzleDefinition = read_to_json(&gods_algorithm_args.input_args.def_file)?;
     let kpuzzle = KPuzzle::try_from(def).map_err(|e| e.description)?;
+    let packed_kpuzzle: PackedKPuzzle =
+        PackedKPuzzle::try_from(kpuzzle.clone()).map_err(|e| e.description)?;
+
+    let start_pattern: Option<PackedKPattern> =
+        match gods_algorithm_args.start_pattern_args.start_pattern {
+            Some(start_pattern) => {
+                let kpattern_data: KPatternData = read_to_json(&start_pattern)?;
+                let kpattern = KPattern {
+                    kpuzzle: kpuzzle.clone(),
+                    kpattern_data: Arc::new(kpattern_data),
+                };
+                Some(packed_kpuzzle.pack_pattern(kpattern))
+            }
+            None => None,
+        };
 
     // TODO: automatic multiples.
     let move_list = gods_algorithm_args
@@ -45,10 +60,8 @@ fn gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), String> 
         .moves_parsed()
         .unwrap_or_else(|| kpuzzle.definition().moves.keys().cloned().collect());
 
-    let packed_kpuzzle: PackedKPuzzle =
-        PackedKPuzzle::try_from(kpuzzle).map_err(|e| e.description)?;
-
-    let mut gods_algorithm_table = GodsAlgorithmSearch::try_new(packed_kpuzzle, move_list)?;
+    let mut gods_algorithm_table =
+        GodsAlgorithmSearch::try_new(packed_kpuzzle, start_pattern, move_list)?;
     gods_algorithm_table.fill();
     Ok(())
 }

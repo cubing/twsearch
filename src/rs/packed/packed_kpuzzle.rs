@@ -3,7 +3,7 @@ use std::{alloc::Layout, sync::Arc, fmt::Debug};
 use cubing::{
     alg::Move,
     kpuzzle::{
-        InvalidAlgError, InvalidDefinitionError, KPuzzle, KPuzzleOrbitName, KTransformation,
+        InvalidAlgError, InvalidDefinitionError, KPuzzle, KPuzzleOrbitName, KTransformation, KPattern,
     },
 };
 
@@ -88,11 +88,16 @@ pub enum ConversionError {
 
 impl PackedKPuzzle {
     pub fn default_pattern(&self) -> PackedKPattern {
-        let default_pattern = self.data.kpuzzle.default_pattern().kpattern_data;
+        // TODO: check that `KPuzzle`s match?
+        self.pack_pattern(self.data.kpuzzle.default_pattern())
+    }
+
+    pub fn pack_pattern(&self, pattern: KPattern) -> PackedKPattern {
+        let pattern_data = pattern.kpattern_data;
 
         let new_packed_kpattern = PackedKPattern::new(self.clone());
         for orbit_info in &self.data.orbit_iteration_info {
-            let orbit_data = default_pattern
+            let orbit_data = pattern_data
                 .get(&orbit_info.name)
                 .expect("Missing orbit!");
             for i in 0..orbit_info.num_pieces {

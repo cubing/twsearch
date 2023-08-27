@@ -5,7 +5,7 @@ use twsearch::_internal::cli::{
     ServeCommandArgs, TimingTestArgs,
 };
 
-use std::fmt::Display;
+use std::{fmt::Display, process::exit};
 
 use cubing::alg::{Alg, Move};
 
@@ -126,6 +126,10 @@ impl SetCppArgs for SchreierSimsArgs {
 
 impl SetCppArgs for GodsAlgorithmArgs {
     fn set_cpp_args(&self) {
+        if self.start_pattern_args.start_pattern.is_some() {
+            eprintln!("Unsupported flag for twsearch-cpp-wrapper: --start-pattern");
+            exit(1);
+        }
         self.moves_args.set_cpp_args();
         set_boolean_arg("-g", true);
         set_boolean_arg("-F", self.force_arrays);

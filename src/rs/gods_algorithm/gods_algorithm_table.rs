@@ -47,6 +47,7 @@ impl CachedMoveInfo {
 pub struct GodsAlgorithmSearch {
     // params
     packed_kpuzzle: PackedKPuzzle,
+    start_pattern: Option<PackedKPattern>,
     cached_move_info_list: Vec<CachedMoveInfo>,
 
     // state
@@ -57,15 +58,21 @@ pub struct GodsAlgorithmSearch {
 }
 
 impl GodsAlgorithmSearch {
-    pub fn try_new(packed_kpuzzle: PackedKPuzzle, move_list: Vec<Move>) -> Result<Self, String> {
+    pub fn try_new(
+        packed_kpuzzle: PackedKPuzzle,
+        start_pattern: Option<PackedKPattern>,
+        move_list: Vec<Move>,
+    ) -> Result<Self, String> {
         let move_list: Result<Vec<CachedMoveInfo>, ConversionError> = move_list
             .into_iter()
             .map(|r#move| CachedMoveInfo::try_new(&packed_kpuzzle, r#move))
             .collect();
+
         let move_list = move_list.map_err(|e| e.to_string())?;
         let depth_to_patterns = vec![];
         Ok(Self {
             packed_kpuzzle,
+            start_pattern,
             cached_move_info_list: move_list,
             table: GodsAlgorithmTable {
                 completed: false,
@@ -77,11 +84,12 @@ impl GodsAlgorithmSearch {
     }
 
     pub fn fill(&mut self) {
-        let default_pattern = self.packed_kpuzzle.default_pattern();
-        self.table
-            .pattern_to_depth
-            .insert(default_pattern.clone(), 0);
-        self.depth_to_patterns.push(vec![default_pattern]);
+        let start_pattern = match &self.start_pattern {
+            Some(start_pattern) => start_pattern.clone(),
+            None => self.packed_kpuzzle.default_pattern(),
+        };
+        self.table.pattern_to_depth.insert(start_pattern.clone(), 0);
+        self.depth_to_patterns.push(vec![start_pattern]);
 
         let mut current_depth = 0;
         let mut num_patterns_total = 1;

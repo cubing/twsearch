@@ -200,6 +200,10 @@ pub struct GodsAlgorithmArgs {
     #[command(flatten)]
     pub input_args: InputDefFileOnlyArgs,
 
+    // TODO: move this to a shared place.
+    #[command(flatten)]
+    pub start_pattern_args: StartPatternArgs,
+
     #[command(flatten)]
     pub moves_args: MovesArgs,
 
@@ -276,6 +280,12 @@ pub struct InputDefAndOptionalScrambleFileArgs {
     /// Use the target pattern from the specified file instead of the default start pattern from the defintion.
     #[clap(long, help_heading = "Scramble input")]
     pub experimental_target_pattern: Option<PathBuf>,
+}
+
+#[derive(Args, Debug)]
+pub struct StartPatternArgs {
+    #[clap(long)]
+    pub start_pattern: Option<PathBuf>,
 }
 
 fn completions_for_shell(cmd: &mut clap::Command, generator: impl Generator) {

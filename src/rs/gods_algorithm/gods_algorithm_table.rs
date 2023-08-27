@@ -1,4 +1,4 @@
-use std::{collections::HashMap, time::Instant, vec};
+use std::{collections::HashMap, mem, time::Instant, vec};
 
 use thousands::Separable;
 
@@ -12,6 +12,8 @@ use crate::{
 type SearchDepth = usize;
 
 use indicatif::{MultiProgress, ProgressBar, ProgressFinish, ProgressStyle};
+
+use super::bulk_queue::BulkQueue;
 
 pub struct GodsAlgorithmTable {
     completed: bool, // "completed" instead of "complete" to make an unambiguous adjective
@@ -57,7 +59,7 @@ pub struct GodsAlgorithmSearch {
 
     // state
     table: GodsAlgorithmTable,
-    depth_to_patterns: Vec<Vec<PackedKPattern>>, // TODO: `HashMap` instead of `Vec` for the other layer for sparse rep?
+    bulk_queues: Vec<BulkQueue<PackedKPattern>>, // TODO: `HashMap` instead of `Vec` for the other layer for sparse rep?
 
     multi_progress_bar: MultiProgress,
 }
@@ -89,7 +91,7 @@ impl GodsAlgorithmSearch {
                 completed: false,
                 pattern_to_depth: HashMap::new(),
             },
-            depth_to_patterns,
+            bulk_queues: depth_to_patterns,
             multi_progress_bar: MultiProgress::new(),
         })
     }
@@ -100,15 +102,18 @@ impl GodsAlgorithmSearch {
             None => self.packed_kpuzzle.default_pattern(),
         };
         self.table.pattern_to_depth.insert(start_pattern.clone(), 0);
-        self.depth_to_patterns.push(vec![start_pattern]);
+        self.bulk_queues.push(BulkQueue::new(Some(start_pattern)));
 
         let mut current_depth = 0;
         let mut num_patterns_total = 1;
 
         let start_time = Instant::now();
         while !self.table.completed {
-            let last_depth_patterns = &self.depth_to_patterns[current_depth];
-            let num_last_depth_patterns = last_depth_patterns.len();
+            let last_depth_patterns: BulkQueue<PackedKPattern> = mem::replace(
+                &mut self.bulk_queues[current_depth],
+                BulkQueue::bogus_new(), // TODO: change the field to avoid the need for this?
+            );
+            let num_last_depth_patterns = last_depth_patterns.size();
 
             current_depth += 1;
 
@@ -127,64 +132,66 @@ impl GodsAlgorithmSearch {
             let num_to_test_at_current_depth: usize =
                 num_last_depth_patterns * self.cached_move_info_list.len();
             let mut num_tested_at_current_depth = 0;
-            let mut patterns_at_current_depth =
-                Vec::<PackedKPattern>::with_capacity(num_last_depth_patterns); // TODO: reserve less?
-            for pattern in last_depth_patterns {
-                for move_info in &self.cached_move_info_list {
-                    num_tested_at_current_depth += 1;
-                    let new_pattern =
-                        pattern.apply_transformation(&move_info.inverse_transformation);
-                    if self.table.pattern_to_depth.get(&new_pattern).is_some() {
-                        continue;
-                    }
+            let mut patterns_at_current_depth = BulkQueue::new(None);
+            for sublist in last_depth_patterns.sublists_for_iterator() {
+                for pattern in sublist {
+                    for move_info in &self.cached_move_info_list {
+                        num_tested_at_current_depth += 1;
+                        let new_pattern =
+                            pattern.apply_transformation(&move_info.inverse_transformation);
+                        if self.table.pattern_to_depth.get(&new_pattern).is_some() {
+                            continue;
+                        }
 
-                    patterns_at_current_depth.push(new_pattern.clone()); // TODO: manage lifetimes to allow pushing a reference instead.
-                    self.table
-                        .pattern_to_depth
-                        .insert(new_pattern, current_depth);
+                        patterns_at_current_depth.push(new_pattern.clone());
+                        self.table
+                            .pattern_to_depth
+                            .insert(new_pattern, current_depth);
 
-                    if num_tested_at_current_depth % 1000 == 0 {
-                        progress_bar.set_length(num_to_test_at_current_depth.try_into().unwrap());
-                        progress_bar.set_position(num_tested_at_current_depth);
-                        progress_bar.set_message(format!(
-                            "{} patterns ({} cumulative) — {} remaining candidates",
-                            format_num!(patterns_at_current_depth.len()),
-                            format_num!(num_patterns_total + patterns_at_current_depth.len()), // TODO: increment before
-                            format_num!(
-                                num_to_test_at_current_depth
-                                    - std::convert::TryInto::<usize>::try_into(
-                                        num_tested_at_current_depth
-                                    )
-                                    .unwrap()
-                            )
-                        ))
-                        // print!(".");
-                        // stdout().flush().unwrap();
-                        // println!(
-                        //     "Found {} pattern{} at depth {} so far.",
-                        //     num_patterns_at_current_depth,
-                        //     if num_patterns_at_current_depth == 1 {
-                        //         ""
-                        //     } else {
-                        //         "s"
-                        //     },
-                        //     current_depth
-                        // );
+                        if num_tested_at_current_depth % 1000 == 0 {
+                            progress_bar
+                                .set_length(num_to_test_at_current_depth.try_into().unwrap());
+                            progress_bar.set_position(num_tested_at_current_depth);
+                            progress_bar.set_message(format!(
+                                "{} patterns ({} cumulative) — {} remaining candidates",
+                                format_num!(patterns_at_current_depth.size()),
+                                format_num!(num_patterns_total + patterns_at_current_depth.size()), // TODO: increment before
+                                format_num!(
+                                    num_to_test_at_current_depth
+                                        - std::convert::TryInto::<usize>::try_into(
+                                            num_tested_at_current_depth
+                                        )
+                                        .unwrap()
+                                )
+                            ))
+                            // print!(".");
+                            // stdout().flush().unwrap();
+                            // println!(
+                            //     "Found {} pattern{} at depth {} so far.",
+                            //     num_patterns_at_current_depth,
+                            //     if num_patterns_at_current_depth == 1 {
+                            //         ""
+                            //     } else {
+                            //         "s"
+                            //     },
+                            //     current_depth
+                            // );
+                        }
                     }
                 }
             }
-            let num_patterns_at_current_depth = patterns_at_current_depth.len();
+            let num_patterns_at_current_depth = patterns_at_current_depth.size();
             num_patterns_total += num_patterns_at_current_depth;
             {
-                progress_bar.set_length(patterns_at_current_depth.len().try_into().unwrap());
-                progress_bar.set_position(patterns_at_current_depth.len().try_into().unwrap());
+                progress_bar.set_length(patterns_at_current_depth.size().try_into().unwrap());
+                progress_bar.set_position(patterns_at_current_depth.size().try_into().unwrap());
                 progress_bar.set_message(format!(
                     "{} patterns ({} cumulative)",
                     format_num!(num_patterns_at_current_depth),
                     format_num!(num_patterns_total)
                 ))
             }
-            self.depth_to_patterns.push(patterns_at_current_depth);
+            self.bulk_queues.push(patterns_at_current_depth);
             // println!();
 
             if num_patterns_at_current_depth == 0 {

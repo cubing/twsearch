@@ -139,8 +139,9 @@ impl GodsAlgorithmSearch {
                         progress_bar.set_length(denominator.try_into().unwrap());
                         progress_bar.set_position(numerator.try_into().unwrap());
                         progress_bar.set_message(format!(
-                            "{} patterns found, {} remain to test",
+                            "{} patterns ({} cumulative), {} remaining candidates",
                             numerator,
+                            num_patterns_total + patterns_at_current_depth.len(), // TODO: increment before
                             num_to_test_at_current_depth - num_tested_at_current_depth
                         ))
                         // print!(".");

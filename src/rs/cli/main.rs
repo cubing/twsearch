@@ -4,10 +4,7 @@ mod io;
 use std::process::exit;
 
 use commands::canonical_algs::canonical_algs;
-use cubing::{
-    kpuzzle::{KPuzzle, KPuzzleDefinition},
-    parse_move,
-};
+use cubing::kpuzzle::{KPuzzle, KPuzzleDefinition};
 use io::read_to_json;
 use twsearch::{
     GodsAlgorithmSearch, PackedKPuzzle,
@@ -41,9 +38,15 @@ fn main() {
 fn gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), String> {
     let def: KPuzzleDefinition = read_to_json(&gods_algorithm_args.input_args.def_file)?;
     let kpuzzle = KPuzzle::try_from(def).map_err(|e| e.description)?;
+
+    // TODO: automatic multiples.
+    let move_list = gods_algorithm_args
+        .moves_args
+        .moves_parsed()
+        .unwrap_or_else(|| kpuzzle.definition().moves.keys().cloned().collect());
+
     let packed_kpuzzle: PackedKPuzzle =
         PackedKPuzzle::try_from(kpuzzle).map_err(|e| e.description)?;
-    let move_list = vec![parse_move!("R2").unwrap(), parse_move!("U2").unwrap()];
 
     let mut gods_algorithm_table = GodsAlgorithmSearch::try_new(packed_kpuzzle, move_list)?;
     gods_algorithm_table.fill();

@@ -175,27 +175,28 @@ impl GodsAlgorithmSearch {
             // println!();
 
             if num_patterns_at_current_depth == 0 {
-                // progress_bar.finish_and_clear();
+                progress_bar.finish_and_clear();
                 self.table.completed = true;
-                let progress_bar_style = ProgressStyle::with_template(
-                    "{prefix:3} {bar:12.red/blue} {elapsed:.2} {wide_msg}",
-                )
-                .expect("Could not construct progress bar.");
-                // .progress_chars("=> ");
-                progress_bar.set_style(progress_bar_style);
+                // let progress_bar_style = ProgressStyle::with_template(
+                //     "{prefix:3} {bar:12.red/blue} {elapsed:.2} {wide_msg}",
+                // )
+                // .expect("Could not construct progress bar.");
+                // // .progress_chars("=> ");
+                // progress_bar.set_style(progress_bar_style);
+            } else {
+                progress_bar.finish();
             }
-            progress_bar.finish();
         }
         let max_depth = current_depth - 1;
         println!();
         println!();
         println!(
-            "Found {} ({}) pattern{} with a maximum depth of {}.",
+            "Found {} ({}) pattern{}.\nMaximum depth: {} moves\nTotal time elapsed: {:?}",
             num_patterns_total,
             factor_number(num_patterns_total.try_into().unwrap()),
             if num_patterns_total == 1 { "" } else { "s" },
-            max_depth
+            max_depth,
+            Instant::now() - start_time
         );
-        println!("Total time elapsed: {:?}", Instant::now() - start_time);
     }
 }

@@ -80,7 +80,7 @@ impl GodsAlgorithmSearch {
 
         let mut current_depth = 0;
         let mut num_patterns_total = 1;
-        while !self.table.completed && current_depth < 10 {
+        while !self.table.completed {
             let last_depth_patterns = &self.depth_to_patterns[current_depth];
             current_depth += 1;
 

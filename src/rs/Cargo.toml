@@ -15,6 +15,7 @@ derive_more = "0.99.17"
 indicatif = "0.17.6"
 serde = { version = "1.0.186", features = ["derive", "rc"] }
 serde_json = "1.0.105"
+thousands = "0.2.0"
 
 [dev-dependencies]
 wait-timeout = "0.2.0"

@@ -1,5 +1,7 @@
 use std::{collections::HashMap, time::Instant, vec};
 
+use thousands::Separable;
+
 use cubing::alg::Move;
 
 use crate::{
@@ -58,6 +60,12 @@ pub struct GodsAlgorithmSearch {
     depth_to_patterns: Vec<Vec<PackedKPattern>>, // TODO: `HashMap` instead of `Vec` for the other layer for sparse rep?
 
     multi_progress_bar: MultiProgress,
+}
+
+macro_rules! format_num {
+    ($n:expr) => {
+        $n.separate_with_underscores()
+    };
 }
 
 impl GodsAlgorithmSearch {
@@ -119,7 +127,8 @@ impl GodsAlgorithmSearch {
             let num_to_test_at_current_depth: usize =
                 num_last_depth_patterns * self.cached_move_info_list.len();
             let mut num_tested_at_current_depth = 0;
-            let mut patterns_at_current_depth = Vec::<PackedKPattern>::new();
+            let mut patterns_at_current_depth =
+                Vec::<PackedKPattern>::with_capacity(num_last_depth_patterns); // TODO: reserve less?
             for pattern in last_depth_patterns {
                 for move_info in &self.cached_move_info_list {
                     num_tested_at_current_depth += 1;
@@ -135,16 +144,19 @@ impl GodsAlgorithmSearch {
                         .insert(new_pattern, current_depth);
 
                     if num_tested_at_current_depth % 1000 == 0 {
-                        let numerator = patterns_at_current_depth.len();
-                        let denominator =
-                            num_to_test_at_current_depth - num_tested_at_current_depth + numerator;
-                        progress_bar.set_length(denominator.try_into().unwrap());
-                        progress_bar.set_position(numerator.try_into().unwrap());
+                        progress_bar.set_length(num_to_test_at_current_depth.try_into().unwrap());
+                        progress_bar.set_position(num_tested_at_current_depth);
                         progress_bar.set_message(format!(
-                            "{} patterns ({} cumulative), {} remaining candidates",
-                            numerator,
-                            num_patterns_total + patterns_at_current_depth.len(), // TODO: increment before
-                            num_to_test_at_current_depth - num_tested_at_current_depth
+                            "{} patterns ({} cumulative) — {} remaining candidates",
+                            format_num!(patterns_at_current_depth.len()),
+                            format_num!(num_patterns_total + patterns_at_current_depth.len()), // TODO: increment before
+                            format_num!(
+                                num_to_test_at_current_depth
+                                    - std::convert::TryInto::<usize>::try_into(
+                                        num_tested_at_current_depth
+                                    )
+                                    .unwrap()
+                            )
                         ))
                         // print!(".");
                         // stdout().flush().unwrap();
@@ -168,7 +180,8 @@ impl GodsAlgorithmSearch {
                 progress_bar.set_position(patterns_at_current_depth.len().try_into().unwrap());
                 progress_bar.set_message(format!(
                     "{} patterns ({} cumulative)",
-                    num_patterns_at_current_depth, num_patterns_total
+                    format_num!(num_patterns_at_current_depth),
+                    format_num!(num_patterns_total)
                 ))
             }
             self.depth_to_patterns.push(patterns_at_current_depth);
@@ -192,7 +205,7 @@ impl GodsAlgorithmSearch {
         println!();
         println!(
             "Found {} ({}) pattern{}.\nMaximum depth: {} moves\nTotal time elapsed: {:?}",
-            num_patterns_total,
+            format_num!(num_patterns_total),
             factor_number(num_patterns_total.try_into().unwrap()),
             if num_patterns_total == 1 { "" } else { "s" },
             max_depth,

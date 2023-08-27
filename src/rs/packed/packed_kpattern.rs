@@ -1,4 +1,4 @@
-use std::{fmt::Debug, sync::Arc};
+use std::{fmt::Debug, hash::Hash, sync::Arc};
 
 use super::{
     byte_conversions::{u8_to_usize, PackedOrientationWithMod},
@@ -10,6 +10,7 @@ use super::{
 use cubing::kpuzzle::KPuzzle;
 use cubing::kpuzzle::{KPattern, KPatternData};
 
+#[derive(Hash, PartialEq, Eq)]
 pub struct PackedKPattern {
     pub packed_orbit_data: PackedOrbitData,
 }
@@ -17,7 +18,7 @@ pub struct PackedKPattern {
 impl PackedKPattern {
     pub fn new(packed_kpuzzle: PackedKPuzzle) -> Self {
         Self {
-            packed_orbit_data: PackedOrbitData::new(packed_kpuzzle),
+            packed_orbit_data: PackedOrbitData::new_with_uninitialized_bytes(packed_kpuzzle),
         }
     }
 
@@ -178,5 +179,13 @@ impl Debug for PackedKPattern {
             )
             .field("bytes", &self.byte_slice())
             .finish()
+    }
+}
+
+impl Clone for PackedKPattern {
+    fn clone(&self) -> Self {
+        Self {
+            packed_orbit_data: self.packed_orbit_data.clone(),
+        }
     }
 }

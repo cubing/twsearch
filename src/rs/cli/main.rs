@@ -1,10 +1,16 @@
 mod commands;
+mod io;
 
 use std::process::exit;
 
 use commands::canonical_algs::canonical_algs;
+use cubing::{
+    kpuzzle::{KPuzzle, KPuzzleDefinition},
+    parse_move,
+};
+use io::read_to_json;
 use twsearch::{
-    GodsAlgorithmTable,
+    GodsAlgorithmSearch, PackedKPuzzle,
     _internal::cli::{get_options_cpp_wrapper, CliCommand, GodsAlgorithmArgs},
 };
 
@@ -22,7 +28,7 @@ fn main() {
         }
         // TODO: consolidate def-only arg implementations.
         CliCommand::SchreierSims(_schreier_sims_command_args) => todo!(),
-        CliCommand::GodsAlgorithm(gods_algorithm_args) => gods_algorithm(_gods_algorithm_args),
+        CliCommand::GodsAlgorithm(gods_algorithm_args) => gods_algorithm(gods_algorithm_args),
         CliCommand::TimingTest(_args) => todo!(),
         CliCommand::CanonicalAlgs(args) => canonical_algs(&args),
     };
@@ -33,6 +39,13 @@ fn main() {
 }
 
 fn gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), String> {
-    let gods_algorithm_table = GodsAlgorithmTable::new();
+    let def: KPuzzleDefinition = read_to_json(&gods_algorithm_args.input_args.def_file)?;
+    let kpuzzle = KPuzzle::try_from(def).map_err(|e| e.description)?;
+    let packed_kpuzzle: PackedKPuzzle =
+        PackedKPuzzle::try_from(kpuzzle).map_err(|e| e.description)?;
+    let move_list = vec![parse_move!("R").unwrap()];
+
+    let mut gods_algorithm_table = GodsAlgorithmSearch::try_new(packed_kpuzzle, move_list)?;
+    gods_algorithm_table.fill();
     Ok(())
 }

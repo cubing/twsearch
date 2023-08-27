@@ -12,7 +12,7 @@ use cubing::kpuzzle::{KPuzzle, KTransformation, KTransformationOrbitData};
 impl PackedKTransformation {
     pub fn new(packed_kpuzzle: PackedKPuzzle) -> Self {
         Self {
-            packed_orbit_data: PackedOrbitData::new(packed_kpuzzle),
+            packed_orbit_data: PackedOrbitData::new_with_uninitialized_bytes(packed_kpuzzle),
         }
     }
     // TODO: dedup with PackedKTransformation, or at least implement as a trait?

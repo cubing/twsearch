@@ -28,7 +28,7 @@ impl Default for GodsAlgorithmTable {
 
 pub struct GodsAlgorithmSearch {
     // params
-    _packed_kpuzzle: PackedKPuzzle,
+    packed_kpuzzle: PackedKPuzzle,
     cached_move_info_list: Vec<CachedMoveInfo>,
 
     // state
@@ -59,9 +59,9 @@ impl GodsAlgorithmSearch {
             .map(|r#move| CachedMoveInfo::try_new(&packed_kpuzzle, r#move))
             .collect();
         let move_list = move_list.map_err(|e| e.to_string())?;
-        let depth_to_patterns = vec![vec![packed_kpuzzle.default_pattern()]];
+        let depth_to_patterns = vec![];
         Ok(Self {
-            _packed_kpuzzle: packed_kpuzzle,
+            packed_kpuzzle,
             cached_move_info_list: move_list,
             table: GodsAlgorithmTable {
                 completed: false,
@@ -72,9 +72,15 @@ impl GodsAlgorithmSearch {
     }
 
     pub fn fill(&mut self) {
+        let default_pattern = self.packed_kpuzzle.default_pattern();
+        self.table
+            .pattern_to_depth
+            .insert(default_pattern.clone(), 0);
+        self.depth_to_patterns.push(vec![default_pattern]);
+
         let mut current_depth = 0;
-        let mut num_patterns = 1;
-        while !self.table.completed {
+        let mut num_patterns_total = 1;
+        while !self.table.completed && current_depth < 10 {
             let last_depth_patterns = &self.depth_to_patterns[current_depth];
             current_depth += 1;
 
@@ -95,20 +101,33 @@ impl GodsAlgorithmSearch {
                         .insert(new_pattern, current_depth);
 
                     num_patterns_at_current_depth += 1;
-                    if num_patterns % 10000 == 0 {
-                        println!("Found {} total patterns so far.", num_patterns);
+                    if num_patterns_at_current_depth % 10000 == 0 {
+                        println!(
+                            "Found {} total pattern{} so far.",
+                            num_patterns_at_current_depth,
+                            if num_patterns_at_current_depth == 1 {
+                                ""
+                            } else {
+                                "s"
+                            }
+                        );
                     }
                 }
             }
             self.depth_to_patterns.push(patterns_at_current_depth);
 
-            num_patterns += num_patterns_at_current_depth;
-            if num_patterns % 10000 == 0 {
-                println!(
-                    "Found {} patterns at depth {} ({} at all depths so far).",
-                    num_patterns_at_current_depth, current_depth, num_patterns
-                );
-            }
+            num_patterns_total += num_patterns_at_current_depth;
+            println!(
+                "Found {} pattern{} at depth {} ({} at all depths so far).",
+                num_patterns_at_current_depth,
+                if num_patterns_at_current_depth == 1 {
+                    ""
+                } else {
+                    "s"
+                },
+                current_depth,
+                num_patterns_total
+            );
 
             if num_patterns_at_current_depth == 0 {
                 self.table.completed = true;
@@ -116,11 +135,11 @@ impl GodsAlgorithmSearch {
             }
         }
         let max_depth = current_depth - 1;
-        if num_patterns % 10000 == 0 {
-            println!(
-                "Found {} patterns with a maximum depth of {}.",
-                num_patterns, max_depth
-            );
-        }
+        println!(
+            "Found {} pattern{} with a maximum depth of {}.",
+            num_patterns_total,
+            if num_patterns_total == 1 { "" } else { "s" },
+            max_depth
+        );
     }
 }

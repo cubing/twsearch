@@ -131,8 +131,8 @@ impl Clone for PackedOrbitData {
             PackedOrbitData::new_with_uninitialized_bytes(self.packed_kpuzzle.clone());
         unsafe {
             std::ptr::copy(
-                new_packed_orbit_data.bytes,
                 self.bytes,
+                new_packed_orbit_data.bytes,
                 self.packed_kpuzzle.data.num_bytes,
             )
         };

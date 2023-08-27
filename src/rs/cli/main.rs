@@ -43,7 +43,7 @@ fn gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), String> 
     let kpuzzle = KPuzzle::try_from(def).map_err(|e| e.description)?;
     let packed_kpuzzle: PackedKPuzzle =
         PackedKPuzzle::try_from(kpuzzle).map_err(|e| e.description)?;
-    let move_list = vec![parse_move!("R").unwrap()];
+    let move_list = vec![parse_move!("R2").unwrap(), parse_move!("U2").unwrap()];
 
     let mut gods_algorithm_table = GodsAlgorithmSearch::try_new(packed_kpuzzle, move_list)?;
     gods_algorithm_table.fill();

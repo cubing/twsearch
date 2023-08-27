@@ -1,4 +1,4 @@
-use std::{collections::HashMap, vec};
+use std::{collections::HashMap, time::Instant, vec};
 
 use cubing::alg::Move;
 
@@ -96,6 +96,8 @@ impl GodsAlgorithmSearch {
 
         let mut current_depth = 0;
         let mut num_patterns_total = 1;
+
+        let start_time = Instant::now();
         while !self.table.completed {
             let last_depth_patterns = &self.depth_to_patterns[current_depth];
             let num_last_depth_patterns = last_depth_patterns.len();
@@ -188,5 +190,6 @@ impl GodsAlgorithmSearch {
             if num_patterns_total == 1 { "" } else { "s" },
             max_depth
         );
+        println!("Total time elapsed: {:?}", Instant::now() - start_time);
     }
 }

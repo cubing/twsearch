@@ -5,3 +5,6 @@ pub use packed::*;
 pub mod _internal {
     pub mod cli;
 }
+
+mod gods_algorithm;
+pub use gods_algorithm::*;

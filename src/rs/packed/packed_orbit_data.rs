@@ -1,6 +1,7 @@
 use std::{
     alloc::{alloc, dealloc},
     fmt::Debug,
+    hash::Hash,
 };
 
 use super::{
@@ -35,7 +36,7 @@ trait KPatternOrKTransformation {
 }
 
 impl PackedOrbitData {
-    pub fn new(packed_kpuzzle: PackedKPuzzle) -> Self {
+    pub fn new_with_uninitialized_bytes(packed_kpuzzle: PackedKPuzzle) -> Self {
         let bytes = unsafe { alloc(packed_kpuzzle.data.layout) };
         Self {
             packed_kpuzzle,
@@ -106,5 +107,35 @@ impl Debug for PackedOrbitData {
             .field("packed_kpuzzle", &self.packed_kpuzzle)
             .field("bytes", &self.byte_slice())
             .finish()
+    }
+}
+
+impl Hash for PackedOrbitData {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.byte_slice().hash(state); // TODO: would hashing the kpuzzle significantly affect performance?
+    }
+}
+
+impl PartialEq for PackedOrbitData {
+    fn eq(&self, other: &Self) -> bool {
+        // TODO: would comparing the kpuzzles significantly affect performance?
+        self.byte_slice() == other.byte_slice()
+    }
+}
+
+impl Eq for PackedOrbitData {}
+
+impl Clone for PackedOrbitData {
+    fn clone(&self) -> Self {
+        let new_packed_orbit_data =
+            PackedOrbitData::new_with_uninitialized_bytes(self.packed_kpuzzle.clone());
+        unsafe {
+            std::ptr::copy(
+                self.bytes,
+                new_packed_orbit_data.bytes,
+                self.packed_kpuzzle.data.num_bytes,
+            )
+        };
+        new_packed_orbit_data
     }
 }

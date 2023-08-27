@@ -1,9 +1,15 @@
 mod commands;
+mod io;
 
 use std::process::exit;
 
 use commands::canonical_algs::canonical_algs;
-use twsearch::_internal::cli::{get_options_cpp_wrapper, CliCommand};
+use cubing::kpuzzle::{KPuzzle, KPuzzleDefinition};
+use io::read_to_json;
+use twsearch::{
+    GodsAlgorithmSearch, PackedKPuzzle,
+    _internal::cli::{get_options_cpp_wrapper, CliCommand, GodsAlgorithmArgs},
+};
 
 fn main() {
     let args = get_options_cpp_wrapper();
@@ -19,7 +25,7 @@ fn main() {
         }
         // TODO: consolidate def-only arg implementations.
         CliCommand::SchreierSims(_schreier_sims_command_args) => todo!(),
-        CliCommand::GodsAlgorithm(_gods_algorithm_args) => todo!(),
+        CliCommand::GodsAlgorithm(gods_algorithm_args) => gods_algorithm(gods_algorithm_args),
         CliCommand::TimingTest(_args) => todo!(),
         CliCommand::CanonicalAlgs(args) => canonical_algs(&args),
     };
@@ -27,4 +33,22 @@ fn main() {
         eprintln!("{}", err);
         exit(1);
     }
+}
+
+fn gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), String> {
+    let def: KPuzzleDefinition = read_to_json(&gods_algorithm_args.input_args.def_file)?;
+    let kpuzzle = KPuzzle::try_from(def).map_err(|e| e.description)?;
+
+    // TODO: automatic multiples.
+    let move_list = gods_algorithm_args
+        .moves_args
+        .moves_parsed()
+        .unwrap_or_else(|| kpuzzle.definition().moves.keys().cloned().collect());
+
+    let packed_kpuzzle: PackedKPuzzle =
+        PackedKPuzzle::try_from(kpuzzle).map_err(|e| e.description)?;
+
+    let mut gods_algorithm_table = GodsAlgorithmSearch::try_new(packed_kpuzzle, move_list)?;
+    gods_algorithm_table.fill();
+    Ok(())
 }

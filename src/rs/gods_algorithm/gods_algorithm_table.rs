@@ -177,6 +177,12 @@ impl GodsAlgorithmSearch {
             if num_patterns_at_current_depth == 0 {
                 // progress_bar.finish_and_clear();
                 self.table.completed = true;
+                let progress_bar_style = ProgressStyle::with_template(
+                    "{prefix:3} {bar:12.red/blue} {elapsed:.2} {wide_msg}",
+                )
+                .expect("Could not construct progress bar.");
+                // .progress_chars("=> ");
+                progress_bar.set_style(progress_bar_style);
             }
             progress_bar.finish();
         }

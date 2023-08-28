@@ -27,8 +27,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Use `node` v19
+        uses: actions/setup-node@v3
+        with:
+          node-version: 19
       - uses: actions/checkout@v2
       - uses: wasmerio/setup-wasmer@v2
+        continue-on-error: true
+        id: wasmer
+      # Fallback workaround for https://github.com/wasmerio/wasmer/issues/4183
+      # https://github.com/wasmerio/wasmer-install#install-via-package-manager
+      - if: ${{ !cancelled() }} && steps.wasmer.conclusion == 'failure'
+        run: cargo install wasmer-cli --features singlepass,cranelift # add --features=llvm for LLVM compilation support
       - run: make emsdk
       - run: make build/wasm-test/twsearch-test.wasm
       - run: make build/wasm-single-file/twsearch.mjs

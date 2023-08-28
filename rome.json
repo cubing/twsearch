@@ -9,6 +9,9 @@
       "recommended": true,
       "style": {
         "noShoutyConstants": "off"
+      },
+      "suspicious": {
+        "noExplicitAny": "off"
       }
     }
   }

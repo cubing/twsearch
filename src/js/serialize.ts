@@ -44,37 +44,37 @@ export function serializeScrambleState(name: string, t: KPatternData): string {
 
 export function serializeDefToTws(
   kpuzzle: KPuzzle,
-  options?: { moveSubset?: string[]; startState?: string },
+  options?: { moveSubset?: string[]; startPattern?: string },
 ): string {
-  let outputLines: string[] = [];
+  const outputLines: string[] = [];
   const def = kpuzzle.definition;
 
   outputLines.push(`Name ${sanitize(def.name ?? "CustomPuzzle")}`);
   outputLines.push(BLANK_LINE);
 
-  for (const [orbitName, orbitInfo] of Object.entries(def.orbits)) {
+  for (const orbitDefinition of def.orbits) {
     outputLines.push(
-      `Set ${sanitize(orbitName)} ${orbitInfo.numPieces} ${
-        orbitInfo.numOrientations
-      }`,
+      `Set ${sanitize(orbitDefinition.orbitName)} ${
+        orbitDefinition.numPieces
+      } ${orbitDefinition.numOrientations}`,
     );
   }
   outputLines.push(BLANK_LINE);
 
   outputLines.push("StartState");
-  if (options?.startState) {
-    outputLines.push(options?.startState);
+  if (options?.startPattern) {
+    outputLines.push(options?.startPattern);
   } else {
-    for (const [orbitName, orbitDef] of Object.entries(def.defaultPattern)) {
+    for (const [orbitName, orbitData] of Object.entries(def.defaultPattern)) {
       outputLines.push(sanitize(orbitName));
-      outputLines.push(orbitDef.pieces.join(" "));
-      outputLines.push(orbitDef.orientation.join(" "));
+      outputLines.push(orbitData.pieces.join(" "));
+      outputLines.push(orbitData.orientation.join(" "));
     }
   }
   outputLines.push(END);
   outputLines.push(BLANK_LINE);
 
-  function include(moveName): boolean {
+  function include(moveName: string): boolean {
     if (options?.moveSubset) {
       return options.moveSubset.includes(moveName);
     } else {

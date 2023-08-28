@@ -132,57 +132,34 @@ impl OrientationPacker {
 #[cfg(test)]
 mod tests {
     use cubing::kpuzzle::{
-        KPattern, KPatternData, KPatternOrbitData, KPuzzle, KPuzzleDefinition,
-        KPuzzleOrbitDefinition, KPuzzleOrbitName, KTransformationData, KTransformationOrbitData,
+        KPattern, KPatternData, KPatternOrbitData, KPuzzle, KPuzzleDefinition, KPuzzleOrbitName,
     };
-    use std::collections::HashMap;
-    use std::sync::Arc;
 
     use crate::PackedKPuzzle;
 
     // TODO: Return a `Result`.
     #[test]
     fn orientation_mod() {
-        let def = KPuzzleDefinition {
-            name: "custom".to_owned(),
-            orbits: vec![KPuzzleOrbitDefinition {
-                orbit_name: "PIECES".into(),
-                num_pieces: 2,
-                num_orientations: 12,
-            }],
-            default_pattern: KPatternData::from([(
-                KPuzzleOrbitName("PIECES".into()),
-                KPatternOrbitData {
-                    pieces: vec![0, 1],
-                    orientation: vec![0, 0],
-                    orientation_mod: Some(vec![3, 4]),
-                },
-            )])
-            .into(),
-            moves: HashMap::from([
-                (
-                    "SPIN".try_into().unwrap(),
-                    Arc::new(KTransformationData::from([(
-                        KPuzzleOrbitName("PIECES".to_owned()),
-                        KTransformationOrbitData {
-                            permutation: vec![0, 1], // TODO: is this actually L'?
-                            orientation_delta: vec![2, 5],
-                        },
-                    )])),
-                ),
-                (
-                    "SWAP".try_into().unwrap(),
-                    Arc::new(KTransformationData::from([(
-                        KPuzzleOrbitName("PIECES".to_owned()),
-                        KTransformationOrbitData {
-                            permutation: vec![1, 0], // TODO: is this actually R'?
-                            orientation_delta: vec![0, 0],
-                        },
-                    )])),
-                ),
-            ]),
-            derived_moves: None,
-        };
+        let def: KPuzzleDefinition = serde_json::from_str(
+            r#"
+{
+    "name": "custom",
+    "orbits": [{ "orbitName": "PIECES", "numPieces": 2, "numOrientations": 12 }],
+    "defaultPattern": {
+        "PIECES": {
+        "pieces": [0, 1],
+        "orientation": [0, 0],
+        "orientationMod": [3, 4]
+        }
+    },
+    "moves": {
+        "SWAP": { "PIECES": { "permutation": [1, 0], "orientationDelta": [0, 0] } },
+        "SPIN": { "PIECES": { "permutation": [0, 1], "orientationDelta": [2, 5] } }
+    },
+    "derivedMoves": null
+}"#,
+        )
+        .unwrap();
         let kpuzzle = KPuzzle::try_new(def).unwrap();
         let packed_kpuzzle = PackedKPuzzle::try_from(kpuzzle.clone()).unwrap();
 

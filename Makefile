@@ -10,8 +10,8 @@ test: \
 	lint \
 	test-cpp-cli \
 	test-twsearch-cpp-wrapper-cli \
-	test-rs \
-	benchmark-rs
+	test-rust \
+	benchmark-rust
 
 .PHONY: test-warning
 test-warning:
@@ -31,12 +31,12 @@ test-twsearch-cpp-wrapper-cli:
 
 # Rust testing
 
-.PHONY: test-rs
-test-rs:
+.PHONY: test-rust
+test-rust:
 	cargo test --quiet
 
-.PHONY: benchmark-rs
-benchmark-rs:
+.PHONY: benchmark-rust
+benchmark-rust:
 	cargo run --quiet --release --example benchmark
 
 .PHONY: clean
@@ -52,7 +52,7 @@ reset: clean
 	rm -rf ./emsdk ./node_modules
 
 .PHONY: lint
-lint: lint-cpp lint-js
+lint: lint-cpp lint-js lint-rust
 
 .PHONY: lint-cpp
 lint-cpp:

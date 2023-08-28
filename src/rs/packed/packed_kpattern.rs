@@ -189,3 +189,78 @@ impl Clone for PackedKPattern {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use cubing::alg::AlgParseError;
+    use cubing::kpuzzle::{KPattern, KPatternData};
+    use cubing::parse_move;
+    use cubing::puzzles::cube3x3x3_kpuzzle;
+
+    use crate::packed::packed_kpuzzle::ConversionError;
+    use crate::{PackedKPuzzle, PackedKTransformation};
+
+    #[test]
+    fn compose() -> Result<(), String> {
+        let kpuzzle = cube3x3x3_kpuzzle();
+        let packed_kpuzzle = PackedKPuzzle::try_from(&kpuzzle).map_err(|e| e.description)?;
+
+        let from_move = |move_str: &str| -> Result<PackedKTransformation, String> {
+            let r#move = parse_move!(move_str).map_err(|e: AlgParseError| e.description)?;
+            packed_kpuzzle
+                .transformation_from_move(&r#move)
+                .map_err(|e: ConversionError| e.to_string())
+        };
+
+        let start_pattern_data: KPatternData = serde_json::from_str(
+            /* Cross */
+            r#"
+{
+    "EDGES": {
+        "pieces": [0, 0, 0, 0, 1, 2, 3, 4, 0, 0, 0, 0],
+        "orientation": [1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1]
+    },
+    "CORNERS": {
+        "pieces": [0, 0, 0, 0, 0, 0, 0, 0],
+        "orientation": [1, 1, 1, 1, 1, 1, 1, 1]
+    },
+    "CENTERS": {
+        "pieces": [0, 1, 2, 3, 4, 5],
+        "orientation": [0, 0, 0, 0, 0, 0],
+        "orientationMod": [1, 1, 1, 1, 1, 1]
+    }
+}"#,
+        )
+        .unwrap();
+        let start_pattern = KPattern {
+            kpuzzle,
+            kpattern_data: Arc::new(start_pattern_data),
+        };
+        let packed_start_pattern = packed_kpuzzle.pack_pattern(start_pattern.clone());
+
+        let t1 = from_move("R")?;
+
+        assert_eq!(
+            packed_start_pattern.apply_transformation(&t1).byte_slice(),
+            vec![
+                /* EP */ 0, 0, 0, 0, 1, 0, 3, 4, 2, 0, 0, 0, /* EO */ 1, 1, 1, 1, 0, 1,
+                0, 0, 0, 1, 1, 1, /* CP */ 0, 0, 0, 0, 0, 0, 0, 0, /* CO */ 0, 2, 1, 1,
+                2, 1, 1, 0, /* MP */ 0, 1, 2, 3, 4, 5, /* MO */ 4, 4, 4, 4, 4, 4
+            ]
+        );
+        assert_eq!(
+            packed_start_pattern.apply_transformation(&t1).byte_slice(),
+            packed_kpuzzle
+                .pack_pattern(
+                    start_pattern
+                        .apply_move(&parse_move!("R").unwrap())
+                        .unwrap()
+                )
+                .byte_slice()
+        );
+
+        Ok(())
+    }
+}

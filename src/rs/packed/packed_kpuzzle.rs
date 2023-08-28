@@ -39,6 +39,14 @@ pub struct PackedKPuzzle {
                                       // pub data: PackedKPuzzleData,
 }
 
+impl TryFrom<&KPuzzle> for PackedKPuzzle {
+    type Error = InvalidDefinitionError;
+
+    fn try_from(kpuzzle: &KPuzzle) -> Result<Self, Self::Error> {
+        PackedKPuzzle::try_from(kpuzzle.clone())
+    }
+}
+
 impl TryFrom<KPuzzle> for PackedKPuzzle {
     type Error = InvalidDefinitionError;
 

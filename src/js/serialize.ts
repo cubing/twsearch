@@ -46,17 +46,17 @@ export function serializeDefToTws(
   kpuzzle: KPuzzle,
   options?: { moveSubset?: string[]; startState?: string },
 ): string {
-  let outputLines: string[] = [];
+  const outputLines: string[] = [];
   const def = kpuzzle.definition;
 
   outputLines.push(`Name ${sanitize(def.name ?? "CustomPuzzle")}`);
   outputLines.push(BLANK_LINE);
 
-  for (const [orbitName, orbitInfo] of Object.entries(def.orbits)) {
+  for (const orbitDefinition of def.orbits) {
     outputLines.push(
-      `Set ${sanitize(orbitName)} ${orbitInfo.numPieces} ${
-        orbitInfo.numOrientations
-      }`,
+      `Set ${sanitize(orbitDefinition.orbitName)} ${
+        orbitDefinition.numPieces
+      } ${orbitDefinition.numOrientations}`,
     );
   }
   outputLines.push(BLANK_LINE);

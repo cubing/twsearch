@@ -33,9 +33,11 @@ jobs:
           node-version: 19
       - uses: actions/checkout@v2
       - uses: wasmerio/setup-wasmer@v2
+        continue-on-error: true
+        id: wasmer
       # Fallback workaround for https://github.com/wasmerio/wasmer/issues/4183
       # https://github.com/wasmerio/wasmer-install#install-via-package-manager
-      - if: failure()
+      - if: ${{ !cancelled() }} && steps.wasmer.conclusion == 'failure'
         run: cargo install wasmer-cli --features singlepass,cranelift # add --features=llvm for LLVM compilation support
       - run: make emsdk
       - run: make build/wasm-test/twsearch-test.wasm

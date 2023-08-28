@@ -5,7 +5,7 @@ import { setKPuzzleDefString, solveState, serializeDefToTws } from "..";
   await setKPuzzleDefString(
     serializeDefToTws(await cube3x3x3.kpuzzle(), {
       moveSubset: ["U", "L", "F", "R", "B", "D"],
-      startState: `EDGES
+      startPattern: `EDGES
 0 0 0 0 1 2 3 4 5 6 7 8
 0 0 0 0 0 0 0 0 0 0 0 0
 CORNERS

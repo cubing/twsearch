@@ -1,5 +1,6 @@
 {
   "recommendations": [
+    "rust-lang.rust-analyzer",
     "rome.rome",
     "xaver.clang-format"
   ]

@@ -1,4 +1,7 @@
 {
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  },
   "[typescript]": {
     "editor.defaultFormatter": "rome.rome"
   },

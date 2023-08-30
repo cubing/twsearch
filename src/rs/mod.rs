@@ -8,3 +8,6 @@ pub mod _internal {
 
 mod gods_algorithm;
 pub use gods_algorithm::*;
+
+mod errors;
+pub use errors::*;

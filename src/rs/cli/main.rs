@@ -1,20 +1,20 @@
 mod commands;
 mod io;
 
-use std::{process::exit, sync::Arc};
+use std::sync::Arc;
 
 use commands::canonical_algs::canonical_algs;
 use cubing::kpuzzle::{KPattern, KPatternData, KPuzzle, KPuzzleDefinition};
 use io::read_to_json;
 use twsearch::{
-    GodsAlgorithmSearch, PackedKPattern, PackedKPuzzle,
+    ArgumentError, CommandError, GodsAlgorithmSearch, PackedKPattern, PackedKPuzzle,
     _internal::cli::{get_options_cpp_wrapper, CliCommand, GodsAlgorithmArgs},
 };
 
-fn main() {
+fn main() -> Result<(), CommandError> {
     let args = get_options_cpp_wrapper();
 
-    let result: Result<(), String> = match args.command {
+    match args.command {
         CliCommand::Completions(_completions_args) => {
             panic!("Completions should have been printed during options parsing, followed by program exit.");
         }
@@ -28,18 +28,20 @@ fn main() {
         CliCommand::GodsAlgorithm(gods_algorithm_args) => gods_algorithm(gods_algorithm_args),
         CliCommand::TimingTest(_args) => todo!(),
         CliCommand::CanonicalAlgs(args) => canonical_algs(&args),
-    };
-    if let Err(err) = result {
-        eprintln!("{}", err);
-        exit(1);
     }
 }
 
-fn gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), String> {
-    let def: KPuzzleDefinition = read_to_json(&gods_algorithm_args.input_args.def_file)?;
-    let kpuzzle = KPuzzle::try_from(def).map_err(|e| e.description)?;
+fn gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), CommandError> {
+    let def: Result<KPuzzleDefinition, ArgumentError> =
+        read_to_json(&gods_algorithm_args.input_args.def_file);
+    let def = def?;
+    let kpuzzle = KPuzzle::try_from(def).map_err(|e| ArgumentError {
+        description: format!("Invalid definition: {}", e),
+    })?;
     let packed_kpuzzle: PackedKPuzzle =
-        PackedKPuzzle::try_from(kpuzzle.clone()).map_err(|e| e.description)?;
+        PackedKPuzzle::try_from(kpuzzle.clone()).map_err(|e| ArgumentError {
+            description: format!("Invalid definition: {}", e),
+        })?;
 
     let start_pattern: Option<PackedKPattern> =
         match gods_algorithm_args.start_pattern_args.start_pattern {

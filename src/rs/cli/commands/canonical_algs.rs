@@ -1,5 +1,7 @@
 use cubing::kpuzzle::{KPuzzle, KPuzzleDefinition};
-use twsearch::{PackedKPuzzle, PackedKTransformation, _internal::cli::CanonicalAlgsArgs};
+use twsearch::{
+    CommandError, PackedKPuzzle, PackedKTransformation, _internal::cli::CanonicalAlgsArgs,
+};
 
 use crate::io::read_to_json;
 
@@ -7,9 +9,9 @@ fn do_transformations_commute(t1: &PackedKTransformation, t2: &PackedKTransforma
     t1.apply_transformation(t2) == t2.apply_transformation(t1)
 }
 
-pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), String> {
+pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), CommandError> {
     println!("{:?}", args);
-    let def: KPuzzleDefinition = read_to_json(&args.input_args.def_file).unwrap();
+    let def: KPuzzleDefinition = read_to_json(&args.input_args.def_file)?;
     let kpuzzle = KPuzzle::try_new(def).unwrap();
     let packed_kpuzzle = PackedKPuzzle::try_from(kpuzzle).unwrap();
 

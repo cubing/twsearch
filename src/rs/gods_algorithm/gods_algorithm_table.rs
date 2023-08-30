@@ -6,7 +6,7 @@ use cubing::alg::Move;
 
 use crate::{
     gods_algorithm::factor_number::factor_number, ConversionError, PackedKPattern, PackedKPuzzle,
-    PackedKTransformation,
+    PackedKTransformation, SearchError,
 };
 
 type SearchDepth = usize;
@@ -75,13 +75,15 @@ impl GodsAlgorithmSearch {
         packed_kpuzzle: PackedKPuzzle,
         start_pattern: Option<PackedKPattern>,
         move_list: Vec<Move>,
-    ) -> Result<Self, String> {
+    ) -> Result<Self, SearchError> {
         let move_list: Result<Vec<CachedMoveInfo>, ConversionError> = move_list
             .into_iter()
             .map(|r#move| CachedMoveInfo::try_new(&packed_kpuzzle, r#move))
             .collect();
 
-        let move_list = move_list.map_err(|e| e.to_string())?;
+        let move_list = move_list.map_err(|e| SearchError {
+            description: format!("Invalid move: {}", e),
+        })?;
         let depth_to_patterns = vec![];
         Ok(Self {
             packed_kpuzzle,

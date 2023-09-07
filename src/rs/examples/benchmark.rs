@@ -72,6 +72,8 @@ fn test_packed(num_moves: usize) {
             / std::convert::TryInto::<f64>::try_into(1_000_000).unwrap())
     );
 
+    let final_pattern = buffer.current.clone();
+
     let mut pattern = packed_kpuzzle.default_pattern();
     let start = Instant::now();
     for i in 0..num_moves {
@@ -90,6 +92,8 @@ fn test_packed(num_moves: usize) {
             / duration.as_secs_f64()
             / std::convert::TryInto::<f64>::try_into(1_000_000).unwrap())
     );
+    assert_eq!(pattern, final_pattern);
+
     let mut buffer = PackedKPatternBuffer::from(packed_kpuzzle.default_pattern());
     let start = Instant::now();
     for i in 0..num_moves {
@@ -109,6 +113,7 @@ fn test_packed(num_moves: usize) {
             / duration.as_secs_f64()
             / std::convert::TryInto::<f64>::try_into(1_000_000).unwrap())
     );
+    assert_eq!(buffer.current, final_pattern);
 
     let mut pattern = packed_kpuzzle.default_pattern();
     let start = Instant::now();
@@ -129,6 +134,7 @@ fn test_packed(num_moves: usize) {
             / duration.as_secs_f64()
             / std::convert::TryInto::<f64>::try_into(1_000_000).unwrap())
     );
+    assert_eq!(pattern, final_pattern);
 }
 
 fn test_unpacked(num_moves: usize) {

@@ -1,4 +1,4 @@
-use std::{fmt::Debug, hash::Hash, mem::swap, sync::Arc};
+use std::{fmt::Debug, hash::Hash, sync::Arc};
 
 use super::{
     byte_conversions::{u8_to_usize, PackedOrientationWithMod},
@@ -258,29 +258,46 @@ mod tests {
 }
 
 pub struct PackedKPatternBuffer {
-    pub current: PackedKPattern,
-    scratch_space: PackedKPattern,
+    a: PackedKPattern,
+    b: PackedKPattern,
+    // In some rough benchmarks, using a boolean to track the current pattern was just a tad faster than using `std::mem::swap(…)`.
+    // TODO: measure this properly across devices, and updated `PackedKTransformationBuffer` to match.
+    a_is_current: bool,
 }
 
 impl From<PackedKPattern> for PackedKPatternBuffer {
     fn from(initial: PackedKPattern) -> Self {
         Self {
-            scratch_space: initial.clone(), // TODO?
-            current: initial,
+            b: initial.clone(), // TODO?
+            a: initial,
+            a_is_current: true,
         }
     }
 }
 
 impl PackedKPatternBuffer {
     pub fn apply_transformation(&mut self, transformation: &PackedKTransformation) {
-        self.current
-            .apply_transformation_into(transformation, &mut self.scratch_space);
-        swap(&mut self.current, &mut self.scratch_space);
+        if self.a_is_current {
+            self.a
+                .apply_transformation_into(transformation, &mut self.b);
+        } else {
+            self.b
+                .apply_transformation_into(transformation, &mut self.a);
+        }
+        self.a_is_current = !self.a_is_current
+    }
+
+    pub fn current(&self) -> &PackedKPattern {
+        if self.a_is_current {
+            &self.a
+        } else {
+            &self.b
+        }
     }
 }
 
 impl PartialEq for PackedKPatternBuffer {
     fn eq(&self, other: &Self) -> bool {
-        self.current == other.current
+        self.current() == other.current()
     }
 }

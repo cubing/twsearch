@@ -59,8 +59,8 @@ fn test_packed(num_moves: usize) {
         buffer.apply_transformation(&move_transformations[i % 18]);
     }
     if PRINT_FINAL_PATTERN {
-        println!("{:?}", buffer.current.byte_slice());
-        println!("Hash: 0x{:x}", buffer.current.hash());
+        println!("{:?}", buffer.current().byte_slice());
+        println!("Hash: 0x{:x}", buffer.current().hash());
     }
     let duration = start.elapsed();
     println!(
@@ -72,7 +72,7 @@ fn test_packed(num_moves: usize) {
             / std::convert::TryInto::<f64>::try_into(1_000_000).unwrap())
     );
 
-    let final_pattern = buffer.current.clone();
+    let final_pattern = buffer.current().clone();
 
     let mut pattern = packed_kpuzzle.default_pattern();
     let start = Instant::now();
@@ -98,11 +98,11 @@ fn test_packed(num_moves: usize) {
     let start = Instant::now();
     for i in 0..num_moves {
         buffer.apply_transformation(&move_transformations[i % 18]);
-        _ = buffer.current.hash();
+        _ = buffer.current().hash();
     }
     if PRINT_FINAL_PATTERN {
-        println!("{:?}", buffer.current.byte_slice());
-        println!("Hash: 0x{:x}", buffer.current.hash());
+        println!("{:?}", buffer.current().byte_slice());
+        println!("Hash: 0x{:x}", buffer.current().hash());
     }
     let duration = start.elapsed();
     println!(
@@ -113,7 +113,7 @@ fn test_packed(num_moves: usize) {
             / duration.as_secs_f64()
             / std::convert::TryInto::<f64>::try_into(1_000_000).unwrap())
     );
-    assert_eq!(buffer.current, final_pattern);
+    assert_eq!(buffer.current(), &final_pattern);
 
     let mut pattern = packed_kpuzzle.default_pattern();
     let start = Instant::now();

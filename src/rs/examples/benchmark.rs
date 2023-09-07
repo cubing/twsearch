@@ -55,7 +55,7 @@ fn test_packed(num_moves: usize) {
 
     let mut buffer = PackedKPatternBuffer::from(packed_kpuzzle.default_pattern());
     let start = Instant::now();
-    for i in (0..num_moves).step_by(2) {
+    for i in 0..num_moves {
         buffer.apply_transformation(&move_transformations[i % 18]);
     }
     if PRINT_FINAL_PATTERN {
@@ -92,7 +92,7 @@ fn test_packed(num_moves: usize) {
     );
     let mut buffer = PackedKPatternBuffer::from(packed_kpuzzle.default_pattern());
     let start = Instant::now();
-    for i in (0..num_moves).step_by(2) {
+    for i in 0..num_moves {
         buffer.apply_transformation(&move_transformations[i % 18]);
         _ = buffer.current.hash();
     }

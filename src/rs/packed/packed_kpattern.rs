@@ -1,4 +1,4 @@
-use std::{fmt::Debug, hash::Hash, sync::Arc};
+use std::{fmt::Debug, hash::Hash, mem::swap, sync::Arc};
 
 use super::{
     byte_conversions::{u8_to_usize, PackedOrientationWithMod},
@@ -254,5 +254,33 @@ mod tests {
         );
 
         Ok(())
+    }
+}
+
+pub struct PackedKPatternBuffer {
+    pub current: PackedKPattern,
+    scratch_space: PackedKPattern,
+}
+
+impl From<PackedKPattern> for PackedKPatternBuffer {
+    fn from(initial: PackedKPattern) -> Self {
+        Self {
+            scratch_space: initial.clone(), // TODO?
+            current: initial,
+        }
+    }
+}
+
+impl PackedKPatternBuffer {
+    pub fn apply_transformation(&mut self, transformation: &PackedKTransformation) {
+        self.current
+            .apply_transformation_into(transformation, &mut self.scratch_space);
+        swap(&mut self.current, &mut self.scratch_space);
+    }
+}
+
+impl PartialEq for PackedKPatternBuffer {
+    fn eq(&self, other: &Self) -> bool {
+        self.current == other.current
     }
 }

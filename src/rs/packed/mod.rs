@@ -7,7 +7,7 @@ mod packed_ktransformation;
 pub use packed_ktransformation::{PackedKTransformation, PackedKTransformationBuffer};
 
 mod packed_kpattern;
-pub use packed_kpattern::PackedKPattern;
+pub use packed_kpattern::{PackedKPattern, PackedKPatternBuffer};
 
 mod byte_conversions;
 mod orientation_packer;

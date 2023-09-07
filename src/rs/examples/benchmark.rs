@@ -9,7 +9,7 @@ use cubing::kpuzzle::{
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use twsearch::PackedKPuzzle;
+use twsearch::{PackedKPatternBuffer, PackedKPuzzle};
 
 const PRINT_FINAL_PATTERN: bool = false;
 
@@ -53,20 +53,18 @@ fn test_packed(num_moves: usize) {
         m("D'"),
     ];
 
-    let mut current = packed_kpuzzle.default_pattern();
-    let mut other = packed_kpuzzle.default_pattern();
+    let mut buffer = PackedKPatternBuffer::from(packed_kpuzzle.default_pattern());
     let start = Instant::now();
     for i in (0..num_moves).step_by(2) {
-        current.apply_transformation_into(&move_transformations[i % 18], &mut other);
-        other.apply_transformation_into(&move_transformations[(i + 1) % 18], &mut current);
+        buffer.apply_transformation(&move_transformations[i % 18]);
     }
     if PRINT_FINAL_PATTERN {
-        println!("{:?}", current.byte_slice());
-        println!("Hash: 0x{:x}", current.hash());
+        println!("{:?}", buffer.current.byte_slice());
+        println!("Hash: 0x{:x}", buffer.current.hash());
     }
     let duration = start.elapsed();
     println!(
-        "Time elapsed for {} moves (packed) without hashing (minimal allocation): {:?} ({:.2}M moves/s)\n--------",
+        "Time elapsed for {} moves (packed) without hashing (using buffer): {:?} ({:.2}M moves/s)\n--------",
         num_moves,
         duration,
         (std::convert::TryInto::<f64>::try_into(num_moves as u32).unwrap()
@@ -92,23 +90,19 @@ fn test_packed(num_moves: usize) {
             / duration.as_secs_f64()
             / std::convert::TryInto::<f64>::try_into(1_000_000).unwrap())
     );
-
-    let mut current = packed_kpuzzle.default_pattern();
-    let mut other = packed_kpuzzle.default_pattern();
+    let mut buffer = PackedKPatternBuffer::from(packed_kpuzzle.default_pattern());
     let start = Instant::now();
     for i in (0..num_moves).step_by(2) {
-        current.apply_transformation_into(&move_transformations[i % 18], &mut other);
-        _ = current.hash();
-        other.apply_transformation_into(&move_transformations[(i + 1) % 18], &mut current);
-        _ = other.hash();
+        buffer.apply_transformation(&move_transformations[i % 18]);
+        _ = buffer.current.hash();
     }
     if PRINT_FINAL_PATTERN {
-        println!("{:?}", current.byte_slice());
-        println!("Hash: 0x{:x}", current.hash());
+        println!("{:?}", buffer.current.byte_slice());
+        println!("Hash: 0x{:x}", buffer.current.hash());
     }
     let duration = start.elapsed();
     println!(
-        "Time elapsed for {} moves (packed) with hashing (minimal allocation): {:?} ({:.2}M moves/s)\n--------",
+        "Time elapsed for {} moves (packed) with hashing (using buffer): {:?} ({:.2}M moves/s)\n--------",
         num_moves,
         duration,
         (std::convert::TryInto::<f64>::try_into(num_moves as u32).unwrap()

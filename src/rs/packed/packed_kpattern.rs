@@ -10,7 +10,7 @@ use super::{
 use cubing::kpuzzle::KPuzzle;
 use cubing::kpuzzle::{KPattern, KPatternData};
 
-#[derive(Hash, PartialEq, Eq)]
+#[derive(Hash, PartialEq, Eq, Clone)]
 pub struct PackedKPattern {
     pub packed_orbit_data: PackedOrbitData,
 }
@@ -45,7 +45,7 @@ impl PackedKPattern {
     }
 
     pub fn set_piece_or_permutation(
-        &self,
+        &mut self,
         orbit_info: &PackedKPuzzleOrbitInfo,
         i: usize,
         value: u8,
@@ -59,7 +59,7 @@ impl PackedKPattern {
     }
 
     pub fn set_packed_orientation(
-        &self,
+        &mut self,
         orbit_info: &PackedKPuzzleOrbitInfo,
         i: usize,
         value: PackedOrientationWithMod,
@@ -179,14 +179,6 @@ impl Debug for PackedKPattern {
             )
             .field("bytes", &self.byte_slice())
             .finish()
-    }
-}
-
-impl Clone for PackedKPattern {
-    fn clone(&self) -> Self {
-        Self {
-            packed_orbit_data: self.packed_orbit_data.clone(),
-        }
     }
 }
 

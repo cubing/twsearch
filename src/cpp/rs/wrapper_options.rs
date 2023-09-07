@@ -150,6 +150,10 @@ impl SetCppArgs for TimingTestArgs {
 
 impl SetCppArgs for CanonicalAlgsArgs {
     fn set_cpp_args(&self) {
+        if self.moves_args.moves.is_some() {
+            eprintln!("Unsupported flag for `twsearch-cpp-wrapper canonical-algs`: --moves");
+            exit(1);
+        }
         set_boolean_arg("-C", true);
         self.performance_args.set_cpp_args();
         self.metric_args.set_cpp_args();

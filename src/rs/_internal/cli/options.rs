@@ -243,6 +243,9 @@ pub struct CanonicalAlgsArgs {
     pub input_args: InputDefFileOnlyArgs,
 
     #[command(flatten)]
+    pub moves_args: MovesArgs,
+
+    #[command(flatten)]
     pub metric_args: MetricArgs,
 
     #[command(flatten)]

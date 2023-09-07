@@ -103,7 +103,7 @@ impl PackedKPuzzle {
     pub fn pack_pattern(&self, pattern: KPattern) -> PackedKPattern {
         let pattern_data = pattern.kpattern_data;
 
-        let new_packed_kpattern = PackedKPattern::new(self.clone());
+        let mut new_packed_kpattern = PackedKPattern::new(self.clone());
         for orbit_info in &self.data.orbit_iteration_info {
             let orbit_data = pattern_data
                 .get(&orbit_info.name)
@@ -154,9 +154,9 @@ impl PackedKPuzzle {
     // TODO: implement this as a `TryFrom`?
     pub fn transformation_from_move(
         &self,
-        key_move: &Move,
+        r#move: &Move,
     ) -> Result<PackedKTransformation, ConversionError> {
-        let unpacked_ktransformation = self.data.kpuzzle.transformation_from_move(key_move)?;
+        let unpacked_ktransformation = self.data.kpuzzle.transformation_from_move(r#move)?;
         self.pack_transformation(&unpacked_ktransformation)
     }
 
@@ -164,7 +164,7 @@ impl PackedKPuzzle {
         &self,
         unpacked_ktransformation: &KTransformation,
     ) -> Result<PackedKTransformation, ConversionError> {
-        let new_transformation = PackedKTransformation::new(self.clone());
+        let mut new_transformation = PackedKTransformation::new(self.clone());
         for orbit_info in &self.data.orbit_iteration_info {
             let unpacked_orbit_data = unpacked_ktransformation
                 .ktransformation_data

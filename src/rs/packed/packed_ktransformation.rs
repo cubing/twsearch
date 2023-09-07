@@ -1,9 +1,13 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, mem::swap};
 
 use super::{
-    byte_conversions::u8_to_usize, packed_kpuzzle::PackedKPuzzleOrbitInfo,
-    packed_orbit_data::PackedOrbitData, PackedKPuzzle,
+    byte_conversions::{u8_to_usize, usize_to_u8},
+    packed_kpuzzle::PackedKPuzzleOrbitInfo,
+    packed_orbit_data::PackedOrbitData,
+    PackedKPuzzle,
 };
+
+#[derive(Clone, Eq)]
 pub struct PackedKTransformation {
     pub packed_orbit_data: PackedOrbitData,
 }
@@ -37,7 +41,7 @@ impl PackedKTransformation {
 
     // TODO: dedup with PackedKTransformation, or at least implement as a trait?
     pub fn set_piece_or_permutation(
-        &self,
+        &mut self,
         orbit_info: &PackedKPuzzleOrbitInfo,
         i: usize,
         value: u8,
@@ -51,7 +55,7 @@ impl PackedKTransformation {
     }
 
     // TODO: dedup with PackedKTransformation, or at least implement as a trait?
-    pub fn set_orientation(&self, orbit_info: &PackedKPuzzleOrbitInfo, i: usize, value: u8) {
+    pub fn set_orientation(&mut self, orbit_info: &PackedKPuzzleOrbitInfo, i: usize, value: u8) {
         unsafe {
             self.packed_orbit_data
                 .bytes
@@ -154,6 +158,36 @@ impl PackedKTransformation {
             ktransformation_data: Arc::new(kpattern_data),
         }
     }
+
+    pub fn invert(&self) -> PackedKTransformation {
+        let mut new_packed_ktransformation =
+            PackedKTransformation::new(self.packed_orbit_data.packed_kpuzzle.clone());
+        for orbit_info in &self
+            .packed_orbit_data
+            .packed_kpuzzle
+            .data
+            .orbit_iteration_info
+        {
+            let num_orientations = orbit_info.num_orientations;
+
+            // TODO: optimization when either value is the identity.
+            for i in 0..orbit_info.num_pieces {
+                let from_idx = self.get_piece_or_permutation(orbit_info, i);
+                new_packed_ktransformation.set_piece_or_permutation(
+                    orbit_info,
+                    u8_to_usize(from_idx),
+                    usize_to_u8(i),
+                );
+                new_packed_ktransformation.set_orientation(
+                    orbit_info,
+                    u8_to_usize(from_idx),
+                    (num_orientations - self.get_orientation(orbit_info, i))
+                        .rem_euclid(num_orientations),
+                )
+            }
+        }
+        new_packed_ktransformation
+    }
 }
 
 struct KPuzzleDebug {
@@ -229,5 +263,33 @@ mod tests {
         assert_eq!(t2.apply_transformation(&t1).apply_transformation(&t2), t1);
 
         Ok(())
+    }
+}
+
+pub struct PackedKTransformationBuffer {
+    pub current: PackedKTransformation,
+    scratch_space: PackedKTransformation,
+}
+
+impl From<PackedKTransformation> for PackedKTransformationBuffer {
+    fn from(initial: PackedKTransformation) -> Self {
+        Self {
+            scratch_space: initial.clone(), // TODO?
+            current: initial,
+        }
+    }
+}
+
+impl PackedKTransformationBuffer {
+    pub fn apply_transformation(&mut self, transformation: &PackedKTransformation) {
+        self.current
+            .apply_transformation_into(transformation, &mut self.scratch_space);
+        swap(&mut self.current, &mut self.scratch_space);
+    }
+}
+
+impl PartialEq for PackedKTransformationBuffer {
+    fn eq(&self, other: &Self) -> bool {
+        self.current == other.current
     }
 }

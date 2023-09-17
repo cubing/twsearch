@@ -132,7 +132,7 @@ impl CanonicalFSM {
         while Into::<usize>::into(queue_index) < state_to_mask.0.len() {
             let mut next_state: Vec<CanonicalFSMState> = vec![ILLEGAL_STATE; num_move_classes];
 
-            let stateb: MoveClassMask = state_to_mask.get(queue_index);
+            let dequeue_move_class_mask: MoveClassMask = state_to_mask.get(queue_index);
             disallowed_move_classes.push(MoveClassMask(0));
 
             queue_index += CanonicalFSMState(1);
@@ -143,14 +143,15 @@ impl CanonicalFSM {
                 // If there's a greater move (multiple) in the state that
                 // commutes with this move's `move_class`, we can't move
                 // `move_class`.
-                if (stateb.0 & commutes[move_class.0].0) >> (move_class.0 + 1) != 0 {
+                if (dequeue_move_class_mask.0 & commutes[move_class.0].0) >> (move_class.0 + 1) != 0
+                {
                     let new_value = MoveClassMask(
                         disallowed_move_classes.get(from_state).0 | (1 << move_class.0),
                     );
                     disallowed_move_classes.set(from_state, new_value);
                     continue;
                 }
-                if ((stateb.0 >> move_class.0) & 1) != 0 {
+                if ((dequeue_move_class_mask.0 >> move_class.0) & 1) != 0 {
                     let new_value = MoveClassMask(
                         disallowed_move_classes.get(from_state).0 | (1 << move_class.0),
                     );
@@ -158,7 +159,7 @@ impl CanonicalFSM {
                     continue;
                 }
                 let mut next_state_bits =
-                    (stateb.0 & commutes[move_class.0].0) | (1 << move_class.0);
+                    (dequeue_move_class_mask.0 & commutes[move_class.0].0) | (1 << move_class.0);
                 // If a pair of bits are set with the same commutating moves, we
                 // can clear out the higher ones. This optimization keeps the
                 // state count from going exponential for very big cubes.

@@ -6,31 +6,14 @@ use cubing::{
 };
 
 use twsearch::{
-    CommandError, PackedKPuzzle, PackedKTransformation, PackedKTransformationBuffer, SearchError,
+    CommandError, PackedKPuzzle, PackedKTransformationBuffer, SearchError,
     _internal::cli::CanonicalAlgsArgs,
 };
 
-use crate::io::read_to_json;
-
-fn do_transformations_commute(t1: &PackedKTransformation, t2: &PackedKTransformation) -> bool {
-    t1.apply_transformation(t2) == t2.apply_transformation(t1)
-}
-
-struct MoveMultiples {
-    multiples: Vec<Move>,
-}
-
-#[derive(Debug)]
-struct MoveInfo {
-    r#move: Move,
-    metric_turns: i32,
-    transformation: PackedKTransformation,
-    inverse_transformation: PackedKTransformation,
-}
-
-struct MoveMultiplesInfo {
-    multiples: Vec<MoveInfo>,
-}
+use crate::{
+    commands::canonical_fsm::{self, AllMoveMultiples, CanonicalFSM, MoveInfo},
+    io::read_to_json,
+};
 
 pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), CommandError> {
     println!("{:?}", args);
@@ -45,10 +28,10 @@ pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), CommandError> {
                 description: e.to_string(), // TODO
             })?;
 
-    let input_moves = args
-        .moves_args
-        .moves_parsed()
-        .unwrap_or_else(|| kpuzzle.definition().moves.keys().cloned().collect());
+    // let input_moves = args
+    //     .moves_args
+    //     .moves_parsed()
+    //     .unwrap_or_else(|| kpuzzle.definition().moves.keys().cloned().collect());
 
     // let mut move_gcds = HashMapWithKeyOrdering::<QuantumMove, Move>::default();
     // for input_move in input_moves {
@@ -66,7 +49,9 @@ pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), CommandError> {
     let mut seen_quantum_moves = HashMap::<QuantumMove, Move>::new();
 
     // TODO: actually calculate GCDs
-    let mut all_multiples = Vec::<Vec<MoveInfo>>::new();
+    let mut all_multiples = AllMoveMultiples {
+        multiples: Vec::new(),
+    };
     let move_gcds = args
         .moves_args
         .moves_parsed()
@@ -106,15 +91,18 @@ pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), CommandError> {
             amount += r#move.amount;
             move_multiple_transformation.apply_transformation(&move_transformation);
         }
-        all_multiples.push(multiples);
+        all_multiples.multiples.push(multiples);
         // };
     }
 
-    for a in all_multiples {
-        for b in a {
-            println!("{}", b.r#move);
-        }
-    }
+    let canonical_fsm = CanonicalFSM::try_new(all_multiples).expect("Expected to work!");
+    dbg!(canonical_fsm);
+
+    // for a in all_multiples {
+    //     for b in a {
+    //         println!("{}", b.r#move);
+    //     }
+    // }
     // println!("{:?}", all_multiples);
 
     // let all_multiples = move_lcms.into_iter();

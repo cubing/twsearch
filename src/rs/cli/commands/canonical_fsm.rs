@@ -6,6 +6,8 @@ use std::{
 use cubing::alg::Move;
 use twsearch::PackedKTransformation;
 
+use super::move_multiples::{MoveMultiples, MoveMultiplesGroup};
+
 const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
 
 #[derive(Debug)]
@@ -19,21 +21,6 @@ impl BitAndAssign for MoveClassMask {
     fn bitand_assign(&mut self, rhs: Self) {
         self.0 = self.0 & rhs.0
     }
-}
-
-#[derive(Debug)]
-pub struct MoveInfo {
-    pub(crate) r#move: Move,
-    // move_class: MoveClass, // TODO: do we need this?
-    // pub(crate) metric_turns: i32,
-    pub(crate) transformation: PackedKTransformation,
-    pub(crate) inverse_transformation: PackedKTransformation,
-}
-
-#[derive(Debug)]
-pub struct AllMoveMultiples {
-    // Indexed by `MoveClass`, then `amount`
-    pub(crate) multiples: Vec<Vec<MoveInfo>>,
 }
 
 fn do_transformations_commute(t1: &PackedKTransformation, t2: &PackedKTransformation) -> bool {
@@ -103,8 +90,9 @@ pub struct CanonicalFSM {
 
 impl CanonicalFSM {
     // TODO: Return a more specific error.
-    pub fn try_new(all_move_multiples: AllMoveMultiples) -> Result<CanonicalFSM, String> {
-        let num_move_classes = all_move_multiples.multiples.len();
+    pub fn try_new(all_move_multiples: MoveMultiplesGroup) -> Result<CanonicalFSM, String> {
+        dbg!(MAX_NUM_MOVE_CLASSES);
+        let num_move_classes = all_move_multiples.len();
         if num_move_classes > MAX_NUM_MOVE_CLASSES {
             return Err("Too many move classes!".to_owned());
         }
@@ -121,8 +109,8 @@ impl CanonicalFSM {
         for i in 0..num_move_classes {
             for j in 0..num_move_classes {
                 if !do_transformations_commute(
-                    &all_move_multiples.multiples[i][0].transformation,
-                    &all_move_multiples.multiples[j][0].transformation,
+                    &all_move_multiples[i][0].transformation,
+                    &all_move_multiples[j][0].transformation,
                 ) {
                     commutes[i] &= MoveClassMask(!(1 << j));
                     commutes[j] &= MoveClassMask(!(1 << i));

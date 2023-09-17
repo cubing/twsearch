@@ -83,7 +83,7 @@ pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), CommandError> {
             move_multiple.amount = amount;
             multiples.push(MoveInfo {
                 r#move: move_multiple,
-                metric_turns: 1, // TODO
+                // metric_turns: 1, // TODO
                 transformation: move_multiple_transformation.current.clone(),
                 inverse_transformation: move_multiple_transformation.current.invert(),
             });

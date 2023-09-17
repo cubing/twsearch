@@ -11,7 +11,7 @@ use twsearch::{
 };
 
 use crate::{
-    commands::canonical_fsm::{self, AllMoveMultiples, CanonicalFSM, MoveInfo},
+    commands::canonical_fsm::{AllMoveMultiples, CanonicalFSM, MoveInfo},
     io::read_to_json,
 };
 

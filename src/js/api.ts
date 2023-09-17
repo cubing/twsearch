@@ -15,7 +15,7 @@ async function importOnce(): Promise<EmscriptenModule> {
 
 let cachedEmscriptenModule: null | Promise<EmscriptenModule> = null;
 async function emscriptenModule(): Promise<EmscriptenModule> {
-  // rome-ignore lint/suspicious/noAssignInExpressions: Caching pattern
+  // biome-ignore lint/suspicious/noAssignInExpressions: Caching pattern
   return (cachedEmscriptenModule ??= importOnce());
 }
 

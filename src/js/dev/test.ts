@@ -1,5 +1,5 @@
 import { cube3x3x3 } from "cubing/puzzles";
-import { setKPuzzleDefString, solveState, serializeDefToTws } from "..";
+import { serializeDefToTws, setKPuzzleDefString, solveState } from "..";
 
 (async () => {
   await setKPuzzleDefString(

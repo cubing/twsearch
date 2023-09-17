@@ -1,7 +1,7 @@
 {
   "recommendations": [
     "rust-lang.rust-analyzer",
-    "rome.rome",
+    "biomejs.biome",
     "xaver.clang-format"
   ]
 }

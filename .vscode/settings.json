@@ -3,10 +3,10 @@
     "editor.defaultFormatter": "rust-lang.rust-analyzer"
   },
   "[typescript]": {
-    "editor.defaultFormatter": "rome.rome"
+    "editor.defaultFormatter": "biomejs.biome"
   },
   "[json]": {
-    "editor.defaultFormatter": "rome.rome"
+    "editor.defaultFormatter": "biomejs.biome"
   },
   "[cpp]": {
     "editor.defaultFormatter": "xaver.clang-format"

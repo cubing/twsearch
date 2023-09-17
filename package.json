@@ -8,8 +8,8 @@
     "cubing": "^0.41.0"
   },
   "devDependencies": {
+    "@biomejs/biome": "^1.2.2",
     "@types/node": "^18.11.0",
-    "esbuild": "^0.15.11",
-    "rome": "^12.1.3"
+    "esbuild": "^0.15.11"
   }
 }

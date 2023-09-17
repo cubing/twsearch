@@ -122,7 +122,7 @@ impl CanonicalFSM {
         // - T-perm and `(R2 U2)3` commute.
         for i in 0..num_move_classes {
             for j in 0..num_move_classes {
-                if do_transformations_commute(
+                if !do_transformations_commute(
                     &all_move_multiples.multiples[i][0].transformation,
                     &all_move_multiples.multiples[j][0].transformation,
                 ) {
@@ -164,7 +164,7 @@ impl CanonicalFSM {
                     disallowed_move_classes.set(from_state, new_value);
                     continue;
                 }
-                if ((stateb.0 >> num_move_classes) & 1) != 0 {
+                if ((stateb.0 >> move_class.0) & 1) != 0 {
                     let new_value = MoveClassMask(
                         disallowed_move_classes.get(from_state).0 | (1 << move_class.0),
                     );
@@ -179,7 +179,7 @@ impl CanonicalFSM {
                 for i in 0..num_move_classes {
                     if (next_state_bits >> i) & 1 != 0 {
                         for j in (i + 1)..num_move_classes {
-                            if ((next_state_bits >> i) & 1) != 0 && commutes[i] == commutes[j] {
+                            if ((next_state_bits >> j) & 1) != 0 && commutes[i] == commutes[j] {
                                 next_state_bits &= !(1 << i);
                             }
                         }
@@ -201,8 +201,10 @@ impl CanonicalFSM {
             next_state_lookup.push(next_state);
         }
 
-        println!("next_state_lookup size: {}", next_state_lookup.len());
         dbg!(&next_state_lookup);
+        dbg!(&disallowed_move_classes);
+        dbg!(&commutes);
+        println!("next_state_lookup size: {}", next_state_lookup.len());
 
         Ok(Self {
             disallowed_move_classes,

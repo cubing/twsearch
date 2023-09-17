@@ -1,4 +1,3 @@
-use core::num;
 use std::{
     collections::HashMap,
     ops::{AddAssign, BitAndAssign},
@@ -200,11 +199,6 @@ impl CanonicalFSM {
             }
             next_state_lookup.push(next_state);
         }
-
-        dbg!(&next_state_lookup);
-        dbg!(&disallowed_move_classes);
-        dbg!(&commutes);
-        println!("next_state_lookup size: {}", next_state_lookup.len());
 
         Ok(Self {
             disallowed_move_classes,

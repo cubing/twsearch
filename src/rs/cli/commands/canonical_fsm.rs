@@ -6,8 +6,7 @@ use std::{
 use cubing::alg::Move;
 use twsearch::PackedKTransformation;
 
-// Change the appropriate types to use another type if this is updated.
-const MAX_NUM_MOVE_CLASSES: usize = 64;
+const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
 
 #[derive(Debug)]
 struct MoveClass(usize);

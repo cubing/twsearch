@@ -140,7 +140,7 @@ impl CanonicalFSM {
         // state_to_mask, indexed by state ordinal,  holds the set of move classes in the
         // move sequence so far for which there has not been a subsequent move that does not
         // commute with that move.
-        let mut disallowed_move_classes = StateToMask::default();
+        let mut disallowed_move_classes = StateToMask::new(MoveClassMask(0));
 
         let mut queue_index: CanonicalFSMState = CANONICAL_FSM_START_STATE;
         while Into::<usize>::into(queue_index) < state_to_mask.0.len() {
@@ -202,6 +202,7 @@ impl CanonicalFSM {
         }
 
         println!("next_state_lookup size: {}", next_state_lookup.len());
+        dbg!(&next_state_lookup);
 
         Ok(Self {
             disallowed_move_classes,

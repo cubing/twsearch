@@ -96,7 +96,8 @@ pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), CommandError> {
     }
 
     let canonical_fsm = CanonicalFSM::try_new(all_multiples).expect("Expected to work!");
-    dbg!(canonical_fsm);
+    // dbg!(canonical_fsm);
+    let _ = canonical_fsm;
 
     // for a in all_multiples {
     //     for b in a {

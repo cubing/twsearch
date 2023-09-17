@@ -86,11 +86,11 @@ impl StateToMask {
     }
 
     pub fn set(&mut self, state: CanonicalFSMState, value: MoveClassMask) {
-        self.0[Into::<usize>::into(state)] = value;
+        self.0[state.0] = value;
     }
 
     pub fn get(&self, state: CanonicalFSMState) -> MoveClassMask {
-        self.0[Into::<usize>::into(state)]
+        self.0[state.0]
     }
 }
 

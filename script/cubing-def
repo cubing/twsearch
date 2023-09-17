@@ -1,0 +1,17 @@
+#!/usr/bin/env bun
+
+import { puzzles } from "cubing/puzzles";
+import { argv, exit } from "process";
+
+const puzzleID = argv[2];
+if (!puzzleID) {
+  console.error("Must specify puzzle ID!");
+  exit(1);
+}
+const puzzle = puzzles[puzzleID];
+if (!puzzle) {
+  console.error("Invalid puzzle ID!");
+  exit(1);
+}
+
+console.log(JSON.stringify((await puzzle.kpuzzle()).definition, null, "  "));

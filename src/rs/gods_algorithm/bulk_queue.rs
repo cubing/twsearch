@@ -55,6 +55,7 @@ impl<T> BulkQueue<T> {
             .push(std::mem::take(&mut self.current_sublist));
     }
 
+    // TODO: provide a flat iterator
     pub fn sublists_for_iterator(mut self) -> Vec<Vec<T>> {
         self.finalize();
         self.finalized_sublists

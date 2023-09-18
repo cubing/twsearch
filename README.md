@@ -1,9 +1,28 @@
-# `twsearch`
+# Twizzle Search (`twsearch`)
 
-Twisty Puzzle searcher. Much like [KSolve](https://github.com/cubing/ksolve) but, due to licensing issues on that program, we have coded it completely from scratch  We start from a
-base of compatibility but do not guarantee it.
+A twisty puzzle search program to that can find algs and scrambles for [WCA](https://www.worldcubeassociation.org/regulations/) puzzles and a wide variety of other permutation puzzles. `twsearch` is inspired by [KSolve](https://github.com/cubing/ksolve) and can handle the same puzzles, often with better performance or additional functionality.
 
-## Running `twsearch`
+Twizzle Search powers alg search and scramble functionality for [Twizzle](https://alpha.twizzle.net/), and can be used from the commandline or as a library in many environments.
+
+Twizzle Search is currently implemented in C++, and we are prototyping a version in Rust for easier use with WASM/JavaScript.
+
+## Project Goals
+
+1. Maintainability
+  - We want `twsearch` to serve as a foundation for the cubing software ecosystem for a long time.
+  - The project has multiple maintainers from the start, and we want to focus on a sustainable model for stewardship.
+2. Ease of use
+  - Powerful APIs that are easy to get started with.
+  - Can either be used directly, or as a library in other projects.
+  - Ability to scale from mobile devices all the way to native binaries that can fully utilize high-end hardware.
+  - Can be used on any website through
+    [`cubing.js`](https://js.cubing.net/cubing/), either by running in the
+    browser itself or optionally connecting to a computer.
+3. Performance
+  - Great performance out of the box for a wide variety of puzzles.
+  - Tunable optimizations for heavy-duty searches, including reusable prune tables for time-memory tradeoff.
+
+## Building and running the `twsearch` CLI
 
 If you have a C++ toolchain on your computer, you can run:
 

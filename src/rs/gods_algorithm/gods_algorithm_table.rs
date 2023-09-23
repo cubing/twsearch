@@ -5,15 +5,15 @@ use thousands::Separable;
 use cubing::alg::Move;
 
 use crate::{
-    gods_algorithm::factor_number::factor_number, CanonicalFSM, CanonicalFSMState, PackedKPattern,
-    PackedKPuzzle, SearchError, SearchMoveCache, CANONICAL_FSM_START_STATE,
+    gods_algorithm::factor_number::factor_number, CanonicalFSM, PackedKPattern, PackedKPuzzle,
+    SearchError, SearchMoveCache, CANONICAL_FSM_START_STATE,
 };
 
 type SearchDepth = usize;
 
 use indicatif::{MultiProgress, ProgressBar, ProgressFinish, ProgressStyle};
 
-use super::bulk_queue::BulkQueue;
+use super::{bulk_queue::BulkQueue, queue_item::QueueItem};
 
 pub struct GodsAlgorithmTable {
     completed: bool, // "completed" instead of "complete" to make an unambiguous adjective
@@ -33,11 +33,6 @@ impl Default for GodsAlgorithmTable {
     fn default() -> Self {
         Self::new()
     }
-}
-
-struct QueueItem {
-    canonical_fsm_state: CanonicalFSMState,
-    pattern: PackedKPattern,
 }
 
 pub struct GodsAlgorithmSearch {
@@ -124,7 +119,7 @@ impl GodsAlgorithmSearch {
                 num_last_depth_patterns * self.search_moves.flat.len();
             let mut num_tested_at_current_depth = 0;
             let mut patterns_at_current_depth = BulkQueue::new(None);
-            for queue_item in last_depth_patterns.into_iter() {
+            for queue_item in last_depth_patterns.iter() {
                 for move_class_index in &self.canonical_fsm.move_class_indices {
                     let moves_in_class = &self.search_moves.grouped[move_class_index.0];
                     let next_state = self

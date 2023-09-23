@@ -1,4 +1,4 @@
-use std::{mem, vec::IntoIter};
+use std::{mem, slice::Iter, vec::IntoIter};
 
 const SUBLIST_INITIAL_CAPACITY: usize = 1024;
 const SUBLIST_MAX_SIZE: usize = 1_000_000; // TODO: figure out how to work nicely with final reallocation.
@@ -56,43 +56,66 @@ impl<T> BulkQueue<T> {
     }
 
     // TODO: provide a flat iterator
-    pub fn into_iter(mut self) -> BulkQueueIterator<T> {
+    pub fn iter(&mut self) -> BulkQueueIterator<T> {
         self.finalize();
         BulkQueueIterator::new(self)
     }
 }
 
-pub struct BulkQueueIterator<T> {
-    sublist_iterator: IntoIter<Vec<T>>,
-    leaf_iterator: IntoIter<T>,
+pub struct BulkQueueIterator<'a, T> {
+    sublist_iterator: Iter<'a, Vec<T>>,
+    leaf_iterator: Option<Iter<'a, T>>,
+    next_item: Option<&'a T>,
 }
 
-impl<T> BulkQueueIterator<T> {
-    pub fn new(bulk_queue: BulkQueue<T>) -> Self {
-        let mut sublist_iterator = bulk_queue.finalized_sublists.into_iter();
-        let leaf_iterator = match sublist_iterator.next() {
-            Some(leaf_iterator) => leaf_iterator.into_iter(),
-            None => vec![].into_iter(),
+impl<'a, T> BulkQueueIterator<'a, T> {
+    pub fn new(bulk_queue: &'a mut BulkQueue<T>) -> Self {
+        let mut sublist_iterator = bulk_queue.finalized_sublists.iter();
+        let (leaf_iterator, next_item) = match sublist_iterator.next() {
+            Some(leaf_iterator) => {
+                let mut leaf_iterator = leaf_iterator.iter();
+                let next_item = leaf_iterator.next();
+                (Some(leaf_iterator), next_item)
+            }
+            None => (None, None),
         };
 
         Self {
             sublist_iterator,
             leaf_iterator,
+            next_item,
         }
     }
 }
 
-impl<T> Iterator for BulkQueueIterator<T> {
-    type Item = T;
+impl<'a, T> Iterator for BulkQueueIterator<'a, T> {
+    type Item = &'a T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if let Some(leaf) = self.leaf_iterator.next() {
-            return Some(leaf);
-        }
-        self.leaf_iterator = match self.sublist_iterator.next() {
-            Some(leaf_iterator) => leaf_iterator.into_iter(),
+        let current_item = Some(match self.next_item {
+            Some(current_item) => current_item,
             None => return None,
+        });
+
+        let leaf_iterator = match &mut self.leaf_iterator {
+            Some(leaf_iterator) => leaf_iterator,
+            None => return current_item,
         };
-        self.leaf_iterator.next()
+
+        match leaf_iterator.next() {
+            Some(maybe_next_item) => {
+                self.next_item = Some(maybe_next_item);
+                return current_item;
+            }
+            None => {}
+        };
+
+        match self.sublist_iterator.next() {
+            Some(sublist_iterator) => {
+                self.next_item = Some(maybe_next_item);
+                return current_item;
+            }
+            None => {}
+        };
     }
 }

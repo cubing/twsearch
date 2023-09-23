@@ -124,57 +124,53 @@ impl GodsAlgorithmSearch {
                 num_last_depth_patterns * self.search_moves.flat.len();
             let mut num_tested_at_current_depth = 0;
             let mut patterns_at_current_depth = BulkQueue::new(None);
-            for sublist in last_depth_patterns.sublists_for_iterator() {
-                for queue_item in sublist {
-                    for move_class_index in &self.canonical_fsm.move_class_indices {
-                        let moves_in_class = &self.search_moves.grouped[move_class_index.0];
-                        let next_state = self
-                            .canonical_fsm
-                            .next_state(queue_item.canonical_fsm_state, *move_class_index);
-                        let next_state = match next_state {
-                            Some(next_state) => next_state,
-                            None => {
-                                num_tested_at_current_depth += moves_in_class.len();
-                                continue;
-                            }
+            for queue_item in last_depth_patterns.into_iter() {
+                for move_class_index in &self.canonical_fsm.move_class_indices {
+                    let moves_in_class = &self.search_moves.grouped[move_class_index.0];
+                    let next_state = self
+                        .canonical_fsm
+                        .next_state(queue_item.canonical_fsm_state, *move_class_index);
+                    let next_state = match next_state {
+                        Some(next_state) => next_state,
+                        None => {
+                            num_tested_at_current_depth += moves_in_class.len();
+                            continue;
+                        }
+                    };
+                    for move_info in moves_in_class {
+                        num_tested_at_current_depth += 1;
+                        let new_pattern = queue_item
+                            .pattern
+                            .apply_transformation(&move_info.inverse_transformation);
+                        if self.table.pattern_to_depth.get(&new_pattern).is_some() {
+                            continue;
+                        }
+
+                        let new_item = QueueItem {
+                            canonical_fsm_state: next_state,
+                            pattern: new_pattern.clone(),
                         };
-                        for move_info in moves_in_class {
-                            num_tested_at_current_depth += 1;
-                            let new_pattern = queue_item
-                                .pattern
-                                .apply_transformation(&move_info.inverse_transformation);
-                            if self.table.pattern_to_depth.get(&new_pattern).is_some() {
-                                continue;
-                            }
+                        patterns_at_current_depth.push(new_item);
+                        self.table
+                            .pattern_to_depth
+                            .insert(new_pattern, current_depth);
 
-                            let new_item = QueueItem {
-                                canonical_fsm_state: next_state,
-                                pattern: new_pattern.clone(),
-                            };
-                            patterns_at_current_depth.push(new_item);
-                            self.table
-                                .pattern_to_depth
-                                .insert(new_pattern, current_depth);
-
-                            if num_tested_at_current_depth % 1000 == 0 {
-                                progress_bar
-                                    .set_length(num_to_test_at_current_depth.try_into().unwrap());
-                                progress_bar.set_position(num_tested_at_current_depth as u64);
-                                progress_bar.set_message(format!(
-                                    "{} patterns ({} cumulative) — {} remaining candidates",
-                                    format_num!(patterns_at_current_depth.size()),
-                                    format_num!(
-                                        num_patterns_total + patterns_at_current_depth.size()
-                                    ), // TODO: increment before
-                                    format_num!(
-                                        num_to_test_at_current_depth
-                                            - std::convert::TryInto::<usize>::try_into(
-                                                num_tested_at_current_depth
-                                            )
-                                            .unwrap()
-                                    )
-                                ))
-                            }
+                        if num_tested_at_current_depth % 1000 == 0 {
+                            progress_bar
+                                .set_length(num_to_test_at_current_depth.try_into().unwrap());
+                            progress_bar.set_position(num_tested_at_current_depth as u64);
+                            progress_bar.set_message(format!(
+                                "{} patterns ({} cumulative) — {} remaining candidates",
+                                format_num!(patterns_at_current_depth.size()),
+                                format_num!(num_patterns_total + patterns_at_current_depth.size()), // TODO: increment before
+                                format_num!(
+                                    num_to_test_at_current_depth
+                                        - std::convert::TryInto::<usize>::try_into(
+                                            num_tested_at_current_depth
+                                        )
+                                        .unwrap()
+                                )
+                            ))
                         }
                     }
                 }

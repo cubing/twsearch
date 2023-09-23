@@ -4,7 +4,7 @@ use super::bulk_queue::BulkQueue;
 
 // use super::bulk_queue::{BulkQueue, BulkQueueIterator};
 
-#[derive(Clone, Eq)]
+#[derive(Clone, Eq, Debug)]
 pub(crate) struct QueueItem {
     pub(crate) canonical_fsm_state: CanonicalFSMState,
     // TODO: test if storing a byte slice reference improves performance
@@ -53,8 +53,8 @@ impl BulkQueue<QueueItem> {
 
         loop {
             // TODO: calculate this so we can store and reuse the final comparison
-            while a_iter.next_if(|v| v <= &&sorted_iter_latest).is_some() {}
-            while b_iter.next_if(|v| v <= &&sorted_iter_latest).is_some() {}
+            while a_iter.next_if(|v| v < &&sorted_iter_latest).is_some() {}
+            while b_iter.next_if(|v| v < &&sorted_iter_latest).is_some() {}
             let equal = match a_iter.peek() {
                 Some(v) => v == &&sorted_iter_latest,
                 None => false,

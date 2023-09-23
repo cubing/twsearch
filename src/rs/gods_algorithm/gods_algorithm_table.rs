@@ -1,4 +1,4 @@
-use std::{mem::swap, time::Instant, vec};
+use std::{mem::swap, process::exit, time::Instant, vec};
 
 use thousands::Separable;
 
@@ -91,7 +91,7 @@ impl GodsAlgorithmSearch {
         self.next_queue.push(start_item);
 
         let mut current_depth = 0;
-        let mut num_patterns_total = 1;
+        let mut num_patterns_total = 0;
 
         let start_time = Instant::now();
         while !self.table.completed {
@@ -102,8 +102,6 @@ impl GodsAlgorithmSearch {
             drop(swap_queue);
 
             let num_queue_patterns = self.current_queue.size();
-
-            current_depth += 1;
 
             let progress_bar = ProgressBar::new(num_queue_patterns.try_into().unwrap());
             let progress_bar = self.multi_progress_bar.insert_from_back(0, progress_bar);
@@ -172,6 +170,9 @@ impl GodsAlgorithmSearch {
             swap(&mut self.next_queue, &mut swap_queue);
             // TODO: why can't we consume and replace `self.next_queue` directly?
             self.next_queue = swap_queue.sort_and_dedup(&self.previous_queue, &self.current_queue);
+            // dbg!(&self.previous_queue);
+            // dbg!(&self.current_queue);
+            // dbg!(&self.next_queue);
 
             let num_patterns_at_current_depth = self.current_queue.size();
             num_patterns_total += num_patterns_at_current_depth;
@@ -191,6 +192,7 @@ impl GodsAlgorithmSearch {
             } else {
                 progress_bar.finish();
             }
+            current_depth += 1;
         }
         let max_depth = current_depth - 1;
         println!();

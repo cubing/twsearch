@@ -2,6 +2,7 @@ use std::{slice::Iter, vec::IntoIter};
 
 const INITIAL_CAPACITY: usize = 1024;
 
+#[derive(Debug)]
 pub struct BulkQueue<T> {
     pub(crate) list: Vec<T>,
 }
@@ -11,13 +12,13 @@ pub struct BulkQueue<T> {
 // TODO: does this actually help with performance?
 // TODO: do we actually want something like a `Set` instead?
 impl<T> BulkQueue<T> {
-    pub fn new(initial_value: Option<T>) -> Self {
-        let mut bulk_queue = Self::default();
-        if let Some(initial_value) = initial_value {
-            bulk_queue.push(initial_value)
-        }
-        bulk_queue
-    }
+    // pub fn new(initial_value: Option<T>) -> Self {
+    //     let mut bulk_queue = Self::default();
+    //     if let Some(initial_value) = initial_value {
+    //         bulk_queue.push(initial_value)
+    //     }
+    //     bulk_queue
+    // }
 
     pub fn push(&mut self, t: T) {
         self.list.push(t);

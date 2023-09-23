@@ -39,7 +39,7 @@ impl BulkQueue<QueueItem> {
         b_queue: &BulkQueue<QueueItem>,
     ) -> BulkQueue<QueueItem> {
         self.list.sort_unstable();
-        let mut output_queue = BulkQueue::<QueueItem>::new(None);
+        let mut output_queue = BulkQueue::<QueueItem>::default();
 
         let mut a_iter = a_queue.iter().peekable();
         // let mut previous_iter_latest = previous_iter.next();

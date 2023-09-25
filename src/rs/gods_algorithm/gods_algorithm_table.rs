@@ -169,7 +169,17 @@ impl GodsAlgorithmSearch {
             let mut swap_queue = BulkQueue::default();
             swap(&mut self.next_queue, &mut swap_queue);
             // TODO: why can't we consume and replace `self.next_queue` directly?
+            progress_bar.set_message(format!(
+                "{} patterns ({} cumulative) — merging…",
+                format_num!(self.current_queue.size()),
+                format_num!(num_patterns_total)
+            ));
             self.next_queue = swap_queue.sort_and_dedup(&self.previous_queue, &self.current_queue);
+            progress_bar.set_message(format!(
+                "{} patterns ({} cumulative) — merged!",
+                format_num!(self.current_queue.size()),
+                format_num!(num_patterns_total)
+            ));
             // dbg!(&self.previous_queue);
             // dbg!(&self.current_queue);
             // dbg!(&self.next_queue);

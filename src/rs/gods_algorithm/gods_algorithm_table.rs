@@ -1,4 +1,4 @@
-use std::{mem::swap, process::exit, time::Instant, vec};
+use std::{mem::swap, time::Instant, vec};
 
 use thousands::Separable;
 

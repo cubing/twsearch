@@ -37,7 +37,7 @@ impl IDFSearch {
         let start_time = Instant::now();
         let mut remaining_depth = 0;
         loop {
-            println!("Searching to depth: {}", remaining_depth)
+            println!("Searching to depth: {}", remaining_depth);
             if self.recurse(
                 &self.target_pattern,
                 CANONICAL_FSM_START_STATE,

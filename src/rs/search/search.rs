@@ -1,6 +1,6 @@
 use std::{process::exit, time::Instant};
 
-use cubing::alg::Move;
+use cubing::alg::{Alg, Move};
 
 use crate::{
     CanonicalFSM, CanonicalFSMState, MoveClassIndex, PackedKPattern, PackedKPuzzle, SearchError,
@@ -153,13 +153,14 @@ impl IDFSearch {
             prune_table.extend_for_search_depth(remaining_depth);
 
             println!("Searching to depth: {}", remaining_depth);
-            if self.recurse(
+            if let Some(solution) = self.recurse(
                 &prune_table,
                 &self.scramble_pattern,
                 CANONICAL_FSM_START_STATE,
                 remaining_depth,
             ) {
-                println!("Found a solution at depth: {}", remaining_depth);
+                println!("Solution: {}", solution);
+                println!("Found at depth: {}", remaining_depth);
                 println!("Found in: {:?}", Instant::now() - start_time);
                 exit(0);
             }
@@ -175,12 +176,16 @@ impl IDFSearch {
         current_pattern: &PackedKPattern,
         current_state: CanonicalFSMState,
         remaining_depth: usize,
-    ) -> bool {
+    ) -> Option<Alg> {
         if remaining_depth == 0 {
-            return current_pattern == &self.target_pattern;
+            return if current_pattern == &self.target_pattern {
+                Some(Alg { nodes: vec![] })
+            } else {
+                None
+            };
         }
         if prune_table.lookup(current_pattern) > remaining_depth {
-            return false;
+            return None;
         }
         for (move_class_index, move_transformation_multiples) in
             self.search_move_cache.grouped.iter().enumerate()
@@ -196,16 +201,23 @@ impl IDFSearch {
             };
 
             for move_transformation_info in move_transformation_multiples {
-                if self.recurse(
+                if let Some(solution_tail) = self.recurse(
                     prune_table,
                     &current_pattern.apply_transformation(&move_transformation_info.transformation),
                     next_state,
                     remaining_depth - 1,
                 ) {
-                    return true;
+                    let mut solution_tail_nodes = solution_tail.nodes;
+                    solution_tail_nodes.insert(
+                        0,
+                        cubing::alg::AlgNode::MoveNode(move_transformation_info.r#move.clone()),
+                    );
+                    return Some(Alg {
+                        nodes: solution_tail_nodes,
+                    });
                 }
             }
         }
-        false
+        None
     }
 }

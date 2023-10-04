@@ -26,8 +26,8 @@ fn do_transformations_commute(t1: &PackedKTransformation, t2: &PackedKTransforma
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
 pub struct CanonicalFSMState(pub usize);
-pub const CANONICAL_FSM_START_STATE: CanonicalFSMState = CanonicalFSMState(0);
-const ILLEGAL_STATE: CanonicalFSMState = CanonicalFSMState(0xFFFFFFFF);
+pub(crate) const CANONICAL_FSM_START_STATE: CanonicalFSMState = CanonicalFSMState(0);
+pub(crate) const ILLEGAL_FSM_STATE: CanonicalFSMState = CanonicalFSMState(0xFFFFFFFF);
 
 impl From<CanonicalFSMState> for usize {
     fn from(value: CanonicalFSMState) -> Self {
@@ -82,7 +82,7 @@ pub struct CanonicalFSM {
     // not be made from this state.
     // disallowed_move_classes: StateToMask,
     // Indexed by [CanonicalFSMState][MoveClassIndex]
-    next_state_lookup: Vec<Vec<CanonicalFSMState>>,
+    pub(crate) next_state_lookup: Vec<Vec<CanonicalFSMState>>,
     // commutes: Vec<MoveClassMask>,
     pub(crate) move_class_indices: Vec<MoveClassIndex>,
 }
@@ -133,7 +133,7 @@ impl CanonicalFSM {
 
         let mut queue_index: CanonicalFSMState = CANONICAL_FSM_START_STATE;
         while Into::<usize>::into(queue_index) < state_to_mask.0.len() {
-            let mut next_state: Vec<CanonicalFSMState> = vec![ILLEGAL_STATE; num_move_classes];
+            let mut next_state: Vec<CanonicalFSMState> = vec![ILLEGAL_FSM_STATE; num_move_classes];
 
             let dequeue_move_class_mask: MoveClassMask = state_to_mask.get(queue_index);
             disallowed_move_classes.push(MoveClassMask(0));
@@ -207,7 +207,7 @@ impl CanonicalFSM {
         move_class_index: MoveClassIndex,
     ) -> Option<CanonicalFSMState> {
         match self.next_state_lookup[current_state.0][move_class_index.0] {
-            ILLEGAL_STATE => None,
+            ILLEGAL_FSM_STATE => None,
             state => Some(state),
         }
     }

@@ -95,7 +95,7 @@ pub struct SearchCommandArgs {
 
     // We place this last show it shows at the end of `--help` (and therefore just above the next shell prompt).
     #[command(flatten)]
-    pub input_args: InputDefAndOptionalScrambleFileArgs,
+    pub input_def_and_optional_scramble_file_args: InputDefAndOptionalScrambleFileArgs,
 }
 
 // TODO: generalize this to a "definition modification" args struct?

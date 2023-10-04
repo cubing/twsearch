@@ -79,7 +79,8 @@ impl SetCppArgs for SearchCommandArgs {
         self.moves_args.set_cpp_args();
         self.search_args.set_cpp_args();
         self.search_persistence_args.set_cpp_args();
-        self.input_args.set_cpp_args();
+        self.input_def_and_optional_scramble_file_args
+            .set_cpp_args();
         self.metric_args.set_cpp_args();
     }
 }

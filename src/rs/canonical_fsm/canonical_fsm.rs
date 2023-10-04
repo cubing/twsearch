@@ -90,7 +90,6 @@ pub struct CanonicalFSM {
 impl CanonicalFSM {
     // TODO: Return a more specific error.
     pub fn try_new(search_moves: SearchMoveCache) -> Result<CanonicalFSM, SearchError> {
-        dbg!(MAX_NUM_MOVE_CLASSES);
         let num_move_classes = search_moves.grouped.len();
         if num_move_classes > MAX_NUM_MOVE_CLASSES {
             return Err(SearchError {

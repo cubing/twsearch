@@ -160,7 +160,7 @@ impl PackedKPuzzle {
         self.pack_transformation(&unpacked_ktransformation)
     }
 
-    fn pack_transformation(
+    pub fn pack_transformation(
         &self,
         unpacked_ktransformation: &KTransformation,
     ) -> Result<PackedKTransformation, ConversionError> {

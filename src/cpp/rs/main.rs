@@ -35,15 +35,19 @@ fn main() {
         CliCommand::Search(search_command_args) => main_search(
             &search_command_args,
             &search_command_args
-                .input_args
+                .input_def_and_optional_scramble_file_args
                 .def_file_wrapper_args
                 .def_file,
-            &search_command_args.input_args.scramble_file,
+            &search_command_args
+                .input_def_and_optional_scramble_file_args
+                .scramble_file,
             search_command_args
-                .input_args
+                .input_def_and_optional_scramble_file_args
                 .def_file_wrapper_args
                 .debug_print_serialized_json,
-            &search_command_args.input_args.experimental_target_pattern,
+            &search_command_args
+                .input_def_and_optional_scramble_file_args
+                .experimental_target_pattern,
         ),
         CliCommand::Serve(serve_command_args) => serve(serve_command_args, true),
         // TODO: consolidate def-only arg implementations.

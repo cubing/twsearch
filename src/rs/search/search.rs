@@ -3,8 +3,8 @@ use std::{process::exit, time::Instant};
 use cubing::alg::Move;
 
 use crate::{
-    CanonicalFSM, CanonicalFSMState, PackedKPattern, PackedKPuzzle, SearchError, SearchMoveCache,
-    CANONICAL_FSM_START_STATE,
+    CanonicalFSM, CanonicalFSMState, MoveClassIndex, PackedKPattern, PackedKPuzzle, SearchError,
+    SearchMoveCache, CANONICAL_FSM_START_STATE,
 };
 
 pub struct IDFSearch {
@@ -37,6 +37,7 @@ impl IDFSearch {
         let start_time = Instant::now();
         let mut remaining_depth = 0;
         loop {
+            println!("Searching to depth: {}", remaining_depth)
             if self.recurse(
                 &self.target_pattern,
                 CANONICAL_FSM_START_STATE,
@@ -60,13 +61,27 @@ impl IDFSearch {
         if remaining_depth == 0 {
             return current_pattern == &self.scramble_pattern;
         }
-        for rmove_transformation_info in &self.search_move_cache.flat {
-            if self.recurse(
-                &current_pattern.apply_transformation(&rmove_transformation_info.transformation),
-                current_state,
-                remaining_depth - 1,
-            ) {
-                return true;
+        for (move_class_index, move_transformation_multiples) in
+            self.search_move_cache.grouped.iter().enumerate()
+        {
+            let next_state = match self
+                .canonical_fsm
+                .next_state(current_state, MoveClassIndex(move_class_index))
+            {
+                Some(next_state) => next_state,
+                None => {
+                    continue;
+                }
+            };
+
+            for move_transformation_info in move_transformation_multiples {
+                if self.recurse(
+                    &current_pattern.apply_transformation(&move_transformation_info.transformation),
+                    next_state,
+                    remaining_depth - 1,
+                ) {
+                    return true;
+                }
             }
         }
         false

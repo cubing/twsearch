@@ -16,6 +16,7 @@ use std::time::Instant;
 
 use crate::CommandError;
 use crate::IDFSearch;
+use crate::IndividualSearchOptions;
 use crate::PackedKPuzzle;
 use crate::_internal::cli::ServeArgsForIndividualSearch;
 use crate::_internal::cli::ServeClientArgs;
@@ -96,7 +97,20 @@ fn solve_pattern(
         Ok(search) => search,
         Err(e) => return Response::text(e.description).with_status_code(400),
     };
-    if let Some(solution) = search.search(&search_pattern, 1).next() {
+    if let Some(solution) = search
+        .search(
+            &search_pattern,
+            IndividualSearchOptions {
+                min_num_solutions: 1, // TODO
+                min_depth: args_for_individual_search
+                    .client_args
+                    .as_ref()
+                    .and_then(|client_args| client_args.min_depth)
+                    .unwrap_or(0),
+            },
+        )
+        .next()
+    {
         println!(
             "[Search request #{}] Solution found (in {:?}): {}",
             request_counter,

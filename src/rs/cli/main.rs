@@ -20,7 +20,7 @@ use twsearch::{
     _internal::cli::{
         get_options_cpp_wrapper, CliCommand, GodsAlgorithmArgs, MovesArgs, SearchCommandArgs,
     },
-    serve,
+    serve, IndividualSearchOptions,
 };
 
 fn main() -> Result<(), CommandError> {
@@ -173,7 +173,10 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
     let search_start_time = Instant::now();
     let solutions = idf_search.search(
         &scramble_pattern,
-        search_command_args.min_num_solutions.unwrap_or(1),
+        IndividualSearchOptions {
+            min_num_solutions: search_command_args.min_num_solutions.unwrap_or(1),
+            min_depth: search_command_args.search_args.min_depth.unwrap_or(0),
+        },
     );
     let mut solution_index = 0;
     for solution in solutions {

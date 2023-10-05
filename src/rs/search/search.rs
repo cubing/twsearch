@@ -15,26 +15,6 @@ use crate::{
 
 const MAX_SEARCH_DEPTH: usize = 500; // TODO: increase
 
-struct IndividualSearchData {
-    recursive_work_tracker: RecursiveWorkTracker,
-    min_num_solutions: usize,
-    num_solutions_sofar: usize,
-    solution_sender: Sender<Option<Alg>>,
-}
-
-pub struct IDFSearchAPIData {
-    pub search_move_cache: SearchMoveCache,
-    pub canonical_fsm: CanonicalFSM,
-    pub packed_kpuzzle: PackedKPuzzle,
-    pub target_pattern: PackedKPattern,
-    pub search_logger: Arc<SearchLogger>,
-}
-
-pub struct IDFSearch {
-    api_data: Arc<IDFSearchAPIData>,
-    prune_table: PruneTable,
-}
-
 #[allow(clippy::enum_variant_names)]
 enum SearchRecursionResult {
     DoneSearching(),
@@ -110,6 +90,41 @@ impl Iterator for SearchSolutions {
     }
 }
 
+#[derive(Clone, Copy)]
+pub struct IndividualSearchOptions {
+    pub min_num_solutions: usize,
+    pub min_depth: usize,
+}
+
+impl Default for IndividualSearchOptions {
+    fn default() -> Self {
+        Self {
+            min_num_solutions: 1,
+            min_depth: 0,
+        }
+    }
+}
+
+struct IndividualSearchData {
+    individual_search_options: IndividualSearchOptions,
+    recursive_work_tracker: RecursiveWorkTracker,
+    num_solutions_sofar: usize,
+    solution_sender: Sender<Option<Alg>>,
+}
+
+pub struct IDFSearchAPIData {
+    pub search_move_cache: SearchMoveCache,
+    pub canonical_fsm: CanonicalFSM,
+    pub packed_kpuzzle: PackedKPuzzle,
+    pub target_pattern: PackedKPattern,
+    pub search_logger: Arc<SearchLogger>,
+}
+
+pub struct IDFSearch {
+    api_data: Arc<IDFSearchAPIData>,
+    prune_table: PruneTable,
+}
+
 impl IDFSearch {
     pub fn try_new(
         packed_kpuzzle: PackedKPuzzle,
@@ -137,22 +152,22 @@ impl IDFSearch {
     pub fn search(
         mut self,
         search_pattern: &PackedKPattern,
-        min_num_solutions: usize,
+        individual_search_options: IndividualSearchOptions,
     ) -> SearchSolutions {
         let (solution_sender, search_solutions) = SearchSolutions::construct();
         let mut individual_search_data = IndividualSearchData {
+            individual_search_options,
             recursive_work_tracker: RecursiveWorkTracker::new(
                 "Search".to_owned(),
                 self.api_data.search_logger.clone(),
             ),
-            min_num_solutions,
             num_solutions_sofar: 0,
             solution_sender,
         };
 
         let search_pattern = search_pattern.clone();
         spawn(move || {
-            for remaining_depth in 0..MAX_SEARCH_DEPTH {
+            for remaining_depth in individual_search_options.min_depth..MAX_SEARCH_DEPTH {
                 self.api_data.search_logger.write_info("----------------");
                 self.prune_table.extend_for_search_depth(
                     remaining_depth,
@@ -201,7 +216,9 @@ impl IDFSearch {
                     .send(Some(alg))
                     .expect("Internal error: could not send solution");
                 if individual_search_data.num_solutions_sofar
-                    >= individual_search_data.min_num_solutions
+                    >= individual_search_data
+                        .individual_search_options
+                        .min_num_solutions
                 {
                     individual_search_data
                         .solution_sender

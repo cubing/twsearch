@@ -362,9 +362,9 @@ pub struct ServeClientArgs {
     // TODO: allow the client to set performance args (with bounds checks) and prune table (if enabled by server).
     pub check_before_solve: Option<EnableAutoAlwaysNeverValueEnum>,
     pub random_start: Option<bool>,
-    pub min_depth: Option<u32>,
-    pub max_depth: Option<u32>,
-    pub start_prune_depth: Option<u32>,
+    pub min_depth: Option<usize>,
+    pub max_depth: Option<usize>,
+    pub start_prune_depth: Option<usize>,
     pub quantum_metric: Option<bool>, // TODO: enum
     pub move_subset: Option<Vec<Move>>,
 }

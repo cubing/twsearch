@@ -4,7 +4,6 @@ use thousands::Separable;
 
 pub(crate) struct RecursiveWorkTracker {
     work_name: String,
-    starting_work_description: String,
     // TODO: support custom writes intead of sending to stdout/stderr
     latest_depth: usize,
     latest_depth_num_recursive_calls: usize,
@@ -17,10 +16,9 @@ pub(crate) struct RecursiveWorkTracker {
 
 // TODO: use a logger intead of printing to stdout.
 impl RecursiveWorkTracker {
-    pub fn new(work_name: String, starting_work_description: String) -> Self {
+    pub fn new(work_name: String) -> Self {
         Self {
             work_name,
-            starting_work_description,
             latest_depth: 0,
             previous_depth_num_recursive_calls: 0,
             latest_depth_start_time: Instant::now(),
@@ -30,7 +28,7 @@ impl RecursiveWorkTracker {
         }
     }
 
-    pub fn start_depth(&mut self, depth: usize) {
+    pub fn start_depth(&mut self, depth: usize, message: &str) {
         self.latest_depth_start_time = Instant::now();
 
         self.latest_depth = depth;
@@ -42,7 +40,7 @@ impl RecursiveWorkTracker {
 
         println!(
             "[{}][Depth {}] {}",
-            self.work_name, self.latest_depth, self.starting_work_description,
+            self.work_name, self.latest_depth, message,
         )
     }
 
@@ -70,5 +68,13 @@ impl RecursiveWorkTracker {
 
     pub fn record_recursive_call(&mut self) {
         self.latest_depth_num_recursive_calls += 1;
+    }
+
+    pub fn estimate_next_level_num_recursive_calls(&self) -> usize {
+        if self.previous_depth_num_recursive_calls == 0 {
+            return self.latest_depth_num_recursive_calls;
+        }
+        self.latest_depth_num_recursive_calls * self.latest_depth_num_recursive_calls
+            / self.previous_depth_num_recursive_calls
     }
 }

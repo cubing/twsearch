@@ -1,5 +1,7 @@
 use std::rc::Rc;
 
+use thousands::Separable;
+
 use crate::{
     CanonicalFSMState, MoveClassIndex, PackedKPattern, RecursiveWorkTracker,
     CANONICAL_FSM_START_STATE,
@@ -13,13 +15,14 @@ type PruneTableEntryType = u8;
 const UNINITIALIZED_DEPTH: PruneTableEntryType = 0;
 const MAX_PRUNE_TABLE_DEPTH: PruneTableEntryType = PruneTableEntryType::MAX - 1;
 
-const PRUNE_TABLE_INDEX_MASK: usize = (0x1 << 16) - 1;
-const DEFAULT_PRUNE_TABLE_SIZE: usize = PRUNE_TABLE_INDEX_MASK + 1;
+const MIN_PRUNE_TABLE_SIZE: usize = 1 << 16;
 
 struct PruneTableImmutableData {
     search_api_data: Rc<IDFSearchAPIData>,
 }
 struct PruneTableMutableData {
+    prune_table_size: usize,       // power of 2
+    prune_table_index_mask: usize, // prune_table_size - 1
     current_pruning_depth: PruneTableEntryType,
     pattern_hash_to_depth: Vec<PruneTableEntryType>,
     recursive_work_tracker: RecursiveWorkTracker,
@@ -27,7 +30,7 @@ struct PruneTableMutableData {
 
 impl PruneTableMutableData {
     fn hash_pattern(&self, pattern: &PackedKPattern) -> usize {
-        (pattern.hash() as usize) & PRUNE_TABLE_INDEX_MASK // TODO: use modulo when the size is not a power of 2.
+        (pattern.hash() as usize) & self.prune_table_index_mask // TODO: use modulo when the size is not a power of 2.
     }
 
     // Returns a heurstic depth for the given pattern.
@@ -59,21 +62,20 @@ impl PruneTable {
         let mut prune_table = Self {
             immutable: PruneTableImmutableData { search_api_data },
             mutable: PruneTableMutableData {
+                prune_table_size: MIN_PRUNE_TABLE_SIZE,
+                prune_table_index_mask: MIN_PRUNE_TABLE_SIZE - 1,
                 current_pruning_depth: 0,
-                pattern_hash_to_depth: vec![0; DEFAULT_PRUNE_TABLE_SIZE],
-                recursive_work_tracker: RecursiveWorkTracker::new(
-                    "Prune table".to_owned(),
-                    "Populating prune table…".to_owned(),
-                ),
+                pattern_hash_to_depth: vec![0; MIN_PRUNE_TABLE_SIZE],
+                recursive_work_tracker: RecursiveWorkTracker::new("Prune table".to_owned()),
             },
         };
-        prune_table.extend_for_search_depth(0);
+        prune_table.extend_for_search_depth(0, 1);
         prune_table
     }
 
     // TODO: dedup with IDFSearch?
     // TODO: Store a reference to `search_api_data` so that you can't accidentally pass in the wrong `search_api_data`?
-    pub fn extend_for_search_depth(&mut self, search_depth: usize) {
+    pub fn extend_for_search_depth(&mut self, search_depth: usize, approximate_num_entries: usize) {
         let mut new_pruning_depth =
             std::convert::TryInto::<PruneTableEntryType>::try_into(search_depth / 2)
                 .expect("Prune table depth exceeded available size");
@@ -84,14 +86,29 @@ impl PruneTable {
             );
             new_pruning_depth = MAX_PRUNE_TABLE_DEPTH;
         }
-        if new_pruning_depth <= self.mutable.current_pruning_depth {
-            return;
+
+        let new_prune_table_size = usize::max(
+            usize::next_power_of_two(approximate_num_entries),
+            MIN_PRUNE_TABLE_SIZE,
+        );
+        if new_prune_table_size == self.mutable.prune_table_size {
+            if new_pruning_depth <= self.mutable.current_pruning_depth {
+                return;
+            }
+        } else {
+            self.mutable.pattern_hash_to_depth = vec![0; new_prune_table_size];
+            self.mutable.prune_table_size = new_prune_table_size;
+            self.mutable.prune_table_index_mask = new_prune_table_size - 1;
         }
 
         for depth in (self.mutable.current_pruning_depth + 1)..(new_pruning_depth + 1) {
-            self.mutable
-                .recursive_work_tracker
-                .start_depth(depth as usize);
+            self.mutable.recursive_work_tracker.start_depth(
+                depth as usize,
+                &format!(
+                    "Populating prune table with {} entries…",
+                    self.mutable.prune_table_size.separate_with_underscores()
+                ),
+            );
             Self::recurse(
                 &self.immutable,
                 &mut self.mutable,

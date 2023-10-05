@@ -86,18 +86,20 @@ impl IDFSearch {
     pub fn search(&mut self, search_pattern: &PackedKPattern) -> Result<(), SearchError> {
         let entire_search_start_time = Instant::now();
         let mut individual_search_data = IndividualSearchData {
-            recursive_work_tracker: RecursiveWorkTracker::new(
-                "Search".to_owned(),
-                "Starting search…".to_owned(),
-            ),
+            recursive_work_tracker: RecursiveWorkTracker::new("Search".to_owned()),
         };
 
         for remaining_depth in 0..MAX_SEARCH_DEPTH {
             println!("----------------");
-            self.prune_table.extend_for_search_depth(remaining_depth);
+            self.prune_table.extend_for_search_depth(
+                remaining_depth,
+                individual_search_data
+                    .recursive_work_tracker
+                    .estimate_next_level_num_recursive_calls(),
+            );
             individual_search_data
                 .recursive_work_tracker
-                .start_depth(remaining_depth);
+                .start_depth(remaining_depth, "Starting search…");
             let recursion_result = self.recurse(
                 &mut individual_search_data,
                 search_pattern,

@@ -15,7 +15,7 @@ type PruneTableEntryType = u8;
 const UNINITIALIZED_DEPTH: PruneTableEntryType = 0;
 const MAX_PRUNE_TABLE_DEPTH: PruneTableEntryType = PruneTableEntryType::MAX - 1;
 
-const MIN_PRUNE_TABLE_SIZE: usize = 1 << 16;
+const MIN_PRUNE_TABLE_SIZE: usize = 1 << 20;
 
 struct PruneTableImmutableData {
     search_api_data: Arc<IDFSearchAPIData>,

@@ -91,15 +91,21 @@ impl PruneTable {
             usize::next_power_of_two(approximate_num_entries),
             MIN_PRUNE_TABLE_SIZE,
         );
-        if new_prune_table_size == self.mutable.prune_table_size {
-            if new_pruning_depth <= self.mutable.current_pruning_depth {
-                return;
+        match new_prune_table_size.cmp(&self.mutable.prune_table_size) {
+            std::cmp::Ordering::Less => {
+                // Don't shrink the prune table.
             }
-        } else {
-            self.mutable.pattern_hash_to_depth = vec![0; new_prune_table_size];
-            self.mutable.prune_table_size = new_prune_table_size;
-            self.mutable.prune_table_index_mask = new_prune_table_size - 1;
-            self.mutable.current_pruning_depth = 0;
+            std::cmp::Ordering::Equal => {
+                if new_pruning_depth <= self.mutable.current_pruning_depth {
+                    return;
+                }
+            }
+            std::cmp::Ordering::Greater => {
+                self.mutable.pattern_hash_to_depth = vec![0; new_prune_table_size];
+                self.mutable.prune_table_size = new_prune_table_size;
+                self.mutable.prune_table_index_mask = new_prune_table_size - 1;
+                self.mutable.current_pruning_depth = 0;
+            }
         }
 
         for depth in (self.mutable.current_pruning_depth + 1)..(new_pruning_depth + 1) {

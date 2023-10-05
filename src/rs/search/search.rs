@@ -1,4 +1,4 @@
-use std::{process::exit, rc::Rc, time::Instant};
+use std::{rc::Rc, time::Instant};
 
 use cubing::alg::{Alg, AlgNode, Move};
 
@@ -18,7 +18,6 @@ pub struct IDFSearchAPIData {
     pub canonical_fsm: CanonicalFSM,
     pub packed_kpuzzle: PackedKPuzzle,
     pub target_pattern: PackedKPattern,
-    pub scramble_pattern: PackedKPattern,
 }
 
 pub struct IDFSearch {
@@ -67,7 +66,6 @@ impl IDFSearch {
         packed_kpuzzle: PackedKPuzzle,
         target_pattern: PackedKPattern,
         move_list: Vec<Move>,
-        scramble_pattern: PackedKPattern,
     ) -> Result<Self, SearchError> {
         let search_move_cache = SearchMoveCache::try_new(&packed_kpuzzle, &move_list)?;
         let canonical_fsm = CanonicalFSM::try_new(search_move_cache.clone())?; // TODO: avoid a clone
@@ -76,7 +74,6 @@ impl IDFSearch {
             canonical_fsm,
             packed_kpuzzle,
             target_pattern,
-            scramble_pattern,
         });
 
         let prune_table = PruneTable::new(api_data.clone()); // TODO: make the prune table reusable across searches.
@@ -86,7 +83,7 @@ impl IDFSearch {
         })
     }
 
-    pub fn search(&mut self) -> Result<(), SearchError> {
+    pub fn search(&mut self, search_pattern: &PackedKPattern) -> Result<(), SearchError> {
         let start_time = Instant::now();
         let mut individual_search_data = IndividualSearchData {
             current_depth_num_recursive_calls: 0,
@@ -99,7 +96,7 @@ impl IDFSearch {
             println!("Searching to depth: {}", remaining_depth);
             if let SearchRecursionResult::SolutionFound(solution) = self.recurse(
                 &mut individual_search_data,
-                &self.api_data.scramble_pattern,
+                search_pattern,
                 CANONICAL_FSM_START_STATE,
                 remaining_depth,
                 SolutionMoves(None),
@@ -107,7 +104,7 @@ impl IDFSearch {
                 println!("Solution: {}", solution);
                 println!("Found at depth: {}", remaining_depth);
                 println!("Found in: {:?}", Instant::now() - start_time);
-                exit(0);
+                return Ok(()); // TODO: return the first solution? A generator?
             }
             println!(
                 "Number of recursive calls at depth {}: {}",

@@ -8,7 +8,7 @@ type PruneTableEntryType = u8;
 const UNINITIALIZED_DEPTH: PruneTableEntryType = 0xff;
 const MAX_PRUNE_TABLE_DEPTH: PruneTableEntryType = UNINITIALIZED_DEPTH - 1;
 
-const PRUNE_TABLE_INDEX_MASK: usize = 0xffff;
+const PRUNE_TABLE_INDEX_MASK: usize = 0xffffff;
 const DEFAULT_PRUNE_TABLE_SIZE: usize = PRUNE_TABLE_INDEX_MASK + 1;
 
 struct PruneTableImmutableData {

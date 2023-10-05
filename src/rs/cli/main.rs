@@ -158,9 +158,12 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
         }
     };
 
-    let mut idf_search =
-        IDFSearch::try_new(packed_kpuzzle, target_pattern, move_list, scramble_pattern)?;
-    let _ = idf_search.search();
+    let mut idf_search = IDFSearch::try_new(packed_kpuzzle, target_pattern, move_list)?;
+    let _ = idf_search.search(&scramble_pattern);
+    // println!("--------");
+    // let _ = idf_search.search(&scramble_pattern);
+    // println!("--------");
+    // let _ = idf_search.search(&scramble_pattern);
 
     Ok(())
 }

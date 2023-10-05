@@ -1,6 +1,6 @@
 use std::{process::exit, time::Instant};
 
-use cubing::alg::{Alg, Move};
+use cubing::alg::{Alg, AlgNode, Move};
 
 use crate::{
     CanonicalFSM, CanonicalFSMState, MoveClassIndex, PackedKPattern, PackedKPuzzle, SearchError,
@@ -139,6 +139,33 @@ enum SearchRecursionResult {
     SolutionNotFoundExcludingCurrentMoveClass(),
 }
 
+struct SolutionPreviousMoves<'a> {
+    latest_move: &'a Move,
+    previous_moves: &'a SolutionMoves<'a>,
+}
+
+struct SolutionMoves<'a>(Option<&'a SolutionPreviousMoves<'a>>);
+
+impl<'a> SolutionMoves<'a> {
+    pub fn get_alg(&self) -> Alg {
+        let nodes = self.get_alg_nodes();
+        Alg { nodes }
+    }
+
+    fn get_alg_nodes(&self) -> Vec<AlgNode> {
+        match self.0 {
+            Some(solution_previous_moves) => {
+                let mut nodes = solution_previous_moves.previous_moves.get_alg_nodes();
+                nodes.push(cubing::alg::AlgNode::MoveNode(
+                    solution_previous_moves.latest_move.clone(),
+                ));
+                nodes
+            }
+            None => vec![],
+        }
+    }
+}
+
 impl IDFSearch {
     pub fn try_new(
         packed_kpuzzle: PackedKPuzzle,
@@ -177,6 +204,7 @@ impl IDFSearch {
                 &self.scramble_pattern,
                 CANONICAL_FSM_START_STATE,
                 remaining_depth,
+                SolutionMoves(None),
             ) {
                 println!("Solution: {}", solution);
                 println!("Found at depth: {}", remaining_depth);
@@ -199,10 +227,12 @@ impl IDFSearch {
         current_pattern: &PackedKPattern,
         current_state: CanonicalFSMState,
         remaining_depth: usize,
+        solution_moves: SolutionMoves,
     ) -> SearchRecursionResult {
         individual_search_data.current_depth_num_recursive_calls += 1;
         if remaining_depth == 0 {
             return if current_pattern == &self.target_pattern {
+                println!("Found a solution: {}", solution_moves.get_alg());
                 SearchRecursionResult::SolutionFound(Alg { nodes: vec![] })
             } else {
                 SearchRecursionResult::SolutionNotFoundDefault()
@@ -234,6 +264,10 @@ impl IDFSearch {
                     &current_pattern.apply_transformation(&move_transformation_info.transformation),
                     next_state,
                     remaining_depth - 1,
+                    SolutionMoves(Some(&SolutionPreviousMoves {
+                        latest_move: &move_transformation_info.r#move,
+                        previous_moves: &solution_moves,
+                    })),
                 ) {
                     SearchRecursionResult::SolutionFound(solution_tail) => {
                         let mut solution_tail_nodes = solution_tail.nodes;

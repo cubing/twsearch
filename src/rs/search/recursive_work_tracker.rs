@@ -28,7 +28,12 @@ impl RecursiveWorkTracker {
         }
     }
 
-    pub fn start_depth(&mut self, depth: usize, message: &str) {
+    pub fn print_message(&self, message: &str) {
+        println!("[{}] {}", self.work_name, message,)
+    }
+
+    // Pass `None` as the message to avoid printing anything.
+    pub fn start_depth(&mut self, depth: usize, message: Option<&str>) {
         self.latest_depth_start_time = Instant::now();
 
         self.latest_depth = depth;
@@ -38,10 +43,12 @@ impl RecursiveWorkTracker {
         self.previous_depth_num_recursive_calls = self.latest_depth_num_recursive_calls;
         self.latest_depth_num_recursive_calls = 0;
 
-        println!(
-            "[{}][Depth {}] {}",
-            self.work_name, self.latest_depth, message,
-        )
+        if let Some(message) = message {
+            println!(
+                "[{}][Depth {}] {}",
+                self.work_name, self.latest_depth, message,
+            )
+        }
     }
 
     pub fn finish_latest_depth(&mut self) {

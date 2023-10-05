@@ -99,7 +99,7 @@ impl IDFSearch {
             );
             individual_search_data
                 .recursive_work_tracker
-                .start_depth(remaining_depth, "Starting search…");
+                .start_depth(remaining_depth, Some("Starting search…"));
             let recursion_result = self.recurse(
                 &mut individual_search_data,
                 search_pattern,

@@ -108,14 +108,14 @@ impl PruneTable {
             }
         }
 
+        self.mutable.recursive_work_tracker.print_message(&format!(
+            "Populating prune table with {} entries…",
+            self.mutable.prune_table_size.separate_with_underscores()
+        ));
         for depth in (self.mutable.current_pruning_depth + 1)..(new_pruning_depth + 1) {
-            self.mutable.recursive_work_tracker.start_depth(
-                depth as usize,
-                &format!(
-                    "Populating prune table with {} entries…",
-                    self.mutable.prune_table_size.separate_with_underscores()
-                ),
-            );
+            self.mutable
+                .recursive_work_tracker
+                .start_depth(depth as usize, None);
             Self::recurse(
                 &self.immutable,
                 &mut self.mutable,

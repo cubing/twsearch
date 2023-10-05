@@ -132,6 +132,13 @@ pub struct IDFSearch {
     pub scramble_pattern: PackedKPattern,
 }
 
+#[allow(clippy::enum_variant_names)]
+enum SearchRecursionResult {
+    SolutionFound(Alg),
+    SolutionNotFoundDefault(),
+    SolutionNotFoundExcludingCurrentMoveClass(),
+}
+
 impl IDFSearch {
     pub fn try_new(
         packed_kpuzzle: PackedKPuzzle,
@@ -165,7 +172,7 @@ impl IDFSearch {
             individual_search_data.current_depth_num_recursive_calls = 0;
 
             println!("Searching to depth: {}", remaining_depth);
-            if let Some(solution) = self.recurse(
+            if let SearchRecursionResult::SolutionFound(solution) = self.recurse(
                 &mut individual_search_data,
                 &self.scramble_pattern,
                 CANONICAL_FSM_START_STATE,
@@ -192,17 +199,21 @@ impl IDFSearch {
         current_pattern: &PackedKPattern,
         current_state: CanonicalFSMState,
         remaining_depth: usize,
-    ) -> Option<Alg> {
+    ) -> SearchRecursionResult {
         individual_search_data.current_depth_num_recursive_calls += 1;
         if remaining_depth == 0 {
             return if current_pattern == &self.target_pattern {
-                Some(Alg { nodes: vec![] })
+                SearchRecursionResult::SolutionFound(Alg { nodes: vec![] })
             } else {
-                None
+                SearchRecursionResult::SolutionNotFoundDefault()
             };
         }
-        if individual_search_data.prune_table.lookup(current_pattern) > remaining_depth {
-            return None;
+        let prune_table_depth = individual_search_data.prune_table.lookup(current_pattern);
+        if prune_table_depth > remaining_depth + 1 {
+            return SearchRecursionResult::SolutionNotFoundExcludingCurrentMoveClass();
+        }
+        if prune_table_depth > remaining_depth {
+            return SearchRecursionResult::SolutionNotFoundDefault();
         }
         for (move_class_index, move_transformation_multiples) in
             self.search_move_cache.grouped.iter().enumerate()
@@ -218,23 +229,29 @@ impl IDFSearch {
             };
 
             for move_transformation_info in move_transformation_multiples {
-                if let Some(solution_tail) = self.recurse(
+                match self.recurse(
                     individual_search_data,
                     &current_pattern.apply_transformation(&move_transformation_info.transformation),
                     next_state,
                     remaining_depth - 1,
                 ) {
-                    let mut solution_tail_nodes = solution_tail.nodes;
-                    solution_tail_nodes.insert(
-                        0,
-                        cubing::alg::AlgNode::MoveNode(move_transformation_info.r#move.clone()),
-                    );
-                    return Some(Alg {
-                        nodes: solution_tail_nodes,
-                    });
+                    SearchRecursionResult::SolutionFound(solution_tail) => {
+                        let mut solution_tail_nodes = solution_tail.nodes;
+                        solution_tail_nodes.insert(
+                            0,
+                            cubing::alg::AlgNode::MoveNode(move_transformation_info.r#move.clone()),
+                        );
+                        return SearchRecursionResult::SolutionFound(Alg {
+                            nodes: solution_tail_nodes,
+                        });
+                    }
+                    SearchRecursionResult::SolutionNotFoundExcludingCurrentMoveClass() => {
+                        break;
+                    }
+                    SearchRecursionResult::SolutionNotFoundDefault() => {}
                 }
             }
         }
-        None
+        SearchRecursionResult::SolutionNotFoundDefault()
     }
 }

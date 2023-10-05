@@ -13,7 +13,7 @@ use crate::{
     RecursiveWorkTracker, SearchError, SearchLogger, SearchMoveCache, CANONICAL_FSM_START_STATE,
 };
 
-const MAX_SEARCH_DEPTH: usize = 500; // TODO: increase
+const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase
 
 #[allow(clippy::enum_variant_names)]
 enum SearchRecursionResult {
@@ -90,18 +90,22 @@ impl Iterator for SearchSolutions {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 pub struct IndividualSearchOptions {
-    pub min_num_solutions: usize,
-    pub min_depth: usize,
+    pub min_num_solutions: Option<usize>,
+    pub min_depth: Option<usize>,
+    pub max_depth: Option<usize>,
 }
 
-impl Default for IndividualSearchOptions {
-    fn default() -> Self {
-        Self {
-            min_num_solutions: 1,
-            min_depth: 0,
-        }
+impl IndividualSearchOptions {
+    pub fn get_min_num_solutions(&self) -> usize {
+        self.min_num_solutions.unwrap_or(1)
+    }
+    pub fn get_min_depth(&self) -> usize {
+        self.min_depth.unwrap_or(0)
+    }
+    pub fn get_max_depth(&self) -> usize {
+        self.max_depth.unwrap_or(MAX_SUPPORTED_SEARCH_DEPTH)
     }
 }
 
@@ -152,8 +156,26 @@ impl IDFSearch {
     pub fn search(
         mut self,
         search_pattern: &PackedKPattern,
-        individual_search_options: IndividualSearchOptions,
+        mut individual_search_options: IndividualSearchOptions,
     ) -> SearchSolutions {
+        // TODO: do validation more consistently.
+        if let Some(min_depth) = individual_search_options.min_depth {
+            if min_depth > MAX_SUPPORTED_SEARCH_DEPTH {
+                self.api_data
+                    .search_logger
+                    .write_error("Min depth too large, capping at maximum.");
+                individual_search_options.min_depth = Some(MAX_SUPPORTED_SEARCH_DEPTH);
+            }
+        }
+        if let Some(max_depth) = individual_search_options.max_depth {
+            if max_depth > MAX_SUPPORTED_SEARCH_DEPTH {
+                self.api_data
+                    .search_logger
+                    .write_error("Max depth too large, capping at maximum.");
+                individual_search_options.max_depth = Some(MAX_SUPPORTED_SEARCH_DEPTH);
+            }
+        }
+
         let (solution_sender, search_solutions) = SearchSolutions::construct();
         let mut individual_search_data = IndividualSearchData {
             individual_search_options,
@@ -167,7 +189,9 @@ impl IDFSearch {
 
         let search_pattern = search_pattern.clone();
         spawn(move || {
-            for remaining_depth in individual_search_options.min_depth..MAX_SEARCH_DEPTH {
+            for remaining_depth in
+                individual_search_options.get_min_depth()..individual_search_options.get_max_depth()
+            {
                 self.api_data.search_logger.write_info("----------------");
                 self.prune_table.extend_for_search_depth(
                     remaining_depth,
@@ -218,7 +242,7 @@ impl IDFSearch {
                 if individual_search_data.num_solutions_sofar
                     >= individual_search_data
                         .individual_search_options
-                        .min_num_solutions
+                        .get_min_num_solutions()
                 {
                     individual_search_data
                         .solution_sender

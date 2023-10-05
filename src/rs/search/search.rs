@@ -1,4 +1,11 @@
-use std::{rc::Rc, time::Instant};
+use std::{
+    sync::{
+        mpsc::{channel, Receiver, Sender},
+        Arc,
+    },
+    thread::spawn,
+    time::Instant,
+};
 
 use cubing::alg::{Alg, AlgNode, Move};
 
@@ -11,8 +18,9 @@ const MAX_SEARCH_DEPTH: usize = 500; // TODO: increase
 
 struct IndividualSearchData {
     recursive_work_tracker: RecursiveWorkTracker,
-    pub min_num_solutions: usize,
-    pub num_solutions_sofar: usize,
+    min_num_solutions: usize,
+    num_solutions_sofar: usize,
+    solution_sender: Sender<Option<Alg>>,
 }
 
 pub struct IDFSearchAPIData {
@@ -20,11 +28,11 @@ pub struct IDFSearchAPIData {
     pub canonical_fsm: CanonicalFSM,
     pub packed_kpuzzle: PackedKPuzzle,
     pub target_pattern: PackedKPattern,
-    pub search_logger: Rc<SearchLogger>,
+    pub search_logger: Arc<SearchLogger>,
 }
 
 pub struct IDFSearch {
-    pub api_data: Rc<IDFSearchAPIData>,
+    api_data: Arc<IDFSearchAPIData>,
     prune_table: PruneTable,
 }
 
@@ -64,16 +72,55 @@ impl<'a> SolutionMoves<'a> {
     }
 }
 
+pub struct SearchSolutions {
+    receiver: Receiver<Option<Alg>>,
+    done: bool,
+}
+
+impl SearchSolutions {
+    pub fn construct() -> (Sender<Option<Alg>>, Self) {
+        // TODO: use `sync_channel` to control resumption?
+        let (sender, receiver) = channel::<Option<Alg>>();
+        (
+            sender,
+            Self {
+                receiver,
+                done: false,
+            },
+        )
+    }
+}
+
+impl Iterator for SearchSolutions {
+    type Item = Alg;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.done {
+            None
+        } else {
+            match Some(self.receiver.recv().expect(
+                "Internal error: could not determine next search solution or end of search.",
+            )) {
+                Some(alg) => alg,
+                None => {
+                    self.done = true;
+                    None
+                }
+            }
+        }
+    }
+}
+
 impl IDFSearch {
     pub fn try_new(
         packed_kpuzzle: PackedKPuzzle,
         target_pattern: PackedKPattern,
         move_list: Vec<Move>,
-        search_logger: Rc<SearchLogger>,
+        search_logger: Arc<SearchLogger>,
     ) -> Result<Self, SearchError> {
         let search_move_cache = SearchMoveCache::try_new(&packed_kpuzzle, &move_list)?;
         let canonical_fsm = CanonicalFSM::try_new(search_move_cache.clone())?; // TODO: avoid a clone
-        let api_data = Rc::new(IDFSearchAPIData {
+        let api_data = Arc::new(IDFSearchAPIData {
             search_move_cache,
             canonical_fsm,
             packed_kpuzzle,
@@ -89,11 +136,12 @@ impl IDFSearch {
     }
 
     pub fn search(
-        &mut self,
+        mut self,
         search_pattern: &PackedKPattern,
         min_num_solutions: usize,
-    ) -> Result<(), SearchError> {
+    ) -> SearchSolutions {
         let entire_search_start_time = Instant::now();
+        let (solution_sender, search_solutions) = SearchSolutions::construct();
         let mut individual_search_data = IndividualSearchData {
             recursive_work_tracker: RecursiveWorkTracker::new(
                 "Search".to_owned(),
@@ -101,44 +149,46 @@ impl IDFSearch {
             ),
             min_num_solutions,
             num_solutions_sofar: 0,
+            solution_sender,
         };
 
-        for remaining_depth in 0..MAX_SEARCH_DEPTH {
-            self.api_data.search_logger.write_info("----------------");
-            self.prune_table.extend_for_search_depth(
-                remaining_depth,
+        let search_pattern = search_pattern.clone();
+        spawn(move || {
+            for remaining_depth in 0..MAX_SEARCH_DEPTH {
+                self.api_data.search_logger.write_info("----------------");
+                self.prune_table.extend_for_search_depth(
+                    remaining_depth,
+                    individual_search_data
+                        .recursive_work_tracker
+                        .estimate_next_level_num_recursive_calls(),
+                );
                 individual_search_data
                     .recursive_work_tracker
-                    .estimate_next_level_num_recursive_calls(),
-            );
-            individual_search_data
-                .recursive_work_tracker
-                .start_depth(remaining_depth, Some("Starting search…"));
-            let recursion_result = self.recurse(
-                &mut individual_search_data,
-                search_pattern,
-                CANONICAL_FSM_START_STATE,
-                remaining_depth,
-                SolutionMoves(None),
-            );
-            individual_search_data
-                .recursive_work_tracker
-                .finish_latest_depth();
-            if let SearchRecursionResult::DoneSearching() = recursion_result {
-                self.api_data.search_logger.write_info(&format!(
-                    "Entire search duration: {:?}",
-                    Instant::now() - entire_search_start_time
-                ));
-                return Ok(()); // TODO: return solutions via a generator
+                    .start_depth(remaining_depth, Some("Starting search…"));
+                let recursion_result = self.recurse(
+                    &mut individual_search_data,
+                    &search_pattern,
+                    CANONICAL_FSM_START_STATE,
+                    remaining_depth,
+                    SolutionMoves(None),
+                );
+                individual_search_data
+                    .recursive_work_tracker
+                    .finish_latest_depth();
+                if let SearchRecursionResult::DoneSearching() = recursion_result {
+                    self.api_data.search_logger.write_info(&format!(
+                        "Entire search duration: {:?}",
+                        Instant::now() - entire_search_start_time
+                    ));
+                    return;
+                }
             }
-        }
-        self.api_data.search_logger.write_info(&format!(
-            "Entire search duration: {:?}",
-            Instant::now() - entire_search_start_time
-        ));
-        Err(SearchError {
-            description: "No solution".to_owned(),
-        })
+            self.api_data.search_logger.write_info(&format!(
+                "Entire search duration: {:?}",
+                Instant::now() - entire_search_start_time
+            ));
+        });
+        search_solutions
     }
 
     fn recurse(
@@ -156,15 +206,17 @@ impl IDFSearch {
             return if current_pattern == &self.api_data.target_pattern {
                 individual_search_data.num_solutions_sofar += 1;
                 let alg = Alg::from(solution_moves);
-                println!(
-                    "{} // solution #{} ({} moves)",
-                    alg,
-                    individual_search_data.num_solutions_sofar,
-                    alg.nodes.len(),
-                );
+                individual_search_data
+                    .solution_sender
+                    .send(Some(alg))
+                    .expect("Internal error: could not send solution");
                 if individual_search_data.num_solutions_sofar
                     >= individual_search_data.min_num_solutions
                 {
+                    individual_search_data
+                        .solution_sender
+                        .send(None)
+                        .expect("Internal error: could not send end of search");
                     SearchRecursionResult::DoneSearching()
                 } else {
                     SearchRecursionResult::ContinueSearchingDefault()

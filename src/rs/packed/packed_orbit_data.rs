@@ -139,3 +139,7 @@ impl Clone for PackedOrbitData {
         new_packed_orbit_data
     }
 }
+
+// TODO
+unsafe impl Send for PackedOrbitData {}
+unsafe impl Sync for PackedOrbitData {}

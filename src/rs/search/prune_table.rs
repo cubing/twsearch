@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::sync::Arc;
 
 use thousands::Separable;
 
@@ -18,7 +18,7 @@ const MAX_PRUNE_TABLE_DEPTH: PruneTableEntryType = PruneTableEntryType::MAX - 1;
 const MIN_PRUNE_TABLE_SIZE: usize = 1 << 16;
 
 struct PruneTableImmutableData {
-    search_api_data: Rc<IDFSearchAPIData>,
+    search_api_data: Arc<IDFSearchAPIData>,
 }
 struct PruneTableMutableData {
     prune_table_size: usize,       // power of 2
@@ -26,7 +26,7 @@ struct PruneTableMutableData {
     current_pruning_depth: PruneTableEntryType,
     pattern_hash_to_depth: Vec<PruneTableEntryType>,
     recursive_work_tracker: RecursiveWorkTracker,
-    search_logger: Rc<SearchLogger>,
+    search_logger: Arc<SearchLogger>,
 }
 
 impl PruneTableMutableData {
@@ -59,7 +59,7 @@ pub struct PruneTable {
 }
 
 impl PruneTable {
-    pub fn new(search_api_data: Rc<IDFSearchAPIData>, search_logger: Rc<SearchLogger>) -> Self {
+    pub fn new(search_api_data: Arc<IDFSearchAPIData>, search_logger: Arc<SearchLogger>) -> Self {
         let mut prune_table = Self {
             immutable: PruneTableImmutableData { search_api_data },
             mutable: PruneTableMutableData {

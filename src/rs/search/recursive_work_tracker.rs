@@ -1,5 +1,5 @@
 use std::{
-    rc::Rc,
+    sync::Arc,
     time::{Duration, Instant},
 };
 
@@ -18,12 +18,12 @@ pub(crate) struct RecursiveWorkTracker {
 
     previous_depth_num_recursive_calls: usize,
 
-    search_logger: Rc<SearchLogger>,
+    search_logger: Arc<SearchLogger>,
 }
 
 // TODO: use a logger intead of printing to stdout.
 impl RecursiveWorkTracker {
-    pub fn new(work_name: String, search_logger: Rc<SearchLogger>) -> Self {
+    pub fn new(work_name: String, search_logger: Arc<SearchLogger>) -> Self {
         Self {
             work_name,
             latest_depth: 0,

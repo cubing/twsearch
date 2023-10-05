@@ -4,7 +4,6 @@ mod io;
 use std::{
     path::{Path, PathBuf},
     process::exit,
-    rc::Rc,
     sync::Arc,
 };
 
@@ -160,25 +159,31 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
         }
     };
 
-    let mut idf_search = IDFSearch::try_new(
+    let idf_search = IDFSearch::try_new(
         packed_kpuzzle,
         target_pattern,
         move_list,
-        Rc::new(SearchLogger {
+        Arc::new(SearchLogger {
             verbosity: search_command_args
                 .verbosity_args
                 .verbosity
                 .unwrap_or(twsearch::_internal::cli::VerbosityLevel::Error),
         }),
     )?;
-    let _ = idf_search.search(
+    let solutions = idf_search.search(
         &scramble_pattern,
         search_command_args.min_num_solutions.unwrap_or(1),
     );
-    // println!("--------");
-    // let _ = idf_search.search(&scramble_pattern);
-    // println!("--------");
-    // let _ = idf_search.search(&scramble_pattern);
+    let mut solution_index = 0;
+    for solution in solutions {
+        solution_index += 1;
+        println!(
+            "{} // solution #{} ({} moves)",
+            solution,
+            solution_index,
+            solution.nodes.len()
+        )
+    }
 
     Ok(())
 }

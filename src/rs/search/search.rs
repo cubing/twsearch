@@ -146,12 +146,14 @@ struct SolutionPreviousMoves<'a> {
 
 struct SolutionMoves<'a>(Option<&'a SolutionPreviousMoves<'a>>);
 
-impl<'a> SolutionMoves<'a> {
-    pub fn get_alg(&self) -> Alg {
-        let nodes = self.get_alg_nodes();
+impl<'a> From<SolutionMoves<'a>> for Alg {
+    fn from(value: SolutionMoves<'a>) -> Self {
+        let nodes = value.get_alg_nodes();
         Alg { nodes }
     }
+}
 
+impl<'a> SolutionMoves<'a> {
     fn get_alg_nodes(&self) -> Vec<AlgNode> {
         match self.0 {
             Some(solution_previous_moves) => {
@@ -232,7 +234,7 @@ impl IDFSearch {
         individual_search_data.current_depth_num_recursive_calls += 1;
         if remaining_depth == 0 {
             return if current_pattern == &self.target_pattern {
-                println!("Found a solution: {}", solution_moves.get_alg());
+                println!("Found a solution: {}", Alg::from(solution_moves));
                 SearchRecursionResult::SolutionFound(Alg { nodes: vec![] })
             } else {
                 SearchRecursionResult::SolutionNotFoundDefault()

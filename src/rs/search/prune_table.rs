@@ -1,5 +1,7 @@
 use std::{rc::Rc, time::Instant};
 
+use thousands::Separable;
+
 use crate::{CanonicalFSMState, MoveClassIndex, PackedKPattern, CANONICAL_FSM_START_STATE};
 
 use super::search::IDFSearchAPIData;
@@ -17,6 +19,7 @@ struct PruneTableImmutableData {
 struct PruneTableMutableData {
     current_pruning_depth: PruneTableEntryType,
     pattern_hash_to_depth: Vec<PruneTableEntryType>,
+    current_depth_num_recursive_calls: usize,
 }
 
 impl PruneTableMutableData {
@@ -48,6 +51,7 @@ impl PruneTable {
             mutable: PruneTableMutableData {
                 current_pruning_depth: 0,
                 pattern_hash_to_depth: vec![UNINITIALIZED_DEPTH; DEFAULT_PRUNE_TABLE_SIZE],
+                current_depth_num_recursive_calls: 0,
             },
         };
         prune_table.extend_for_search_depth(0);
@@ -62,7 +66,7 @@ impl PruneTable {
                 .expect("Prune table depth exceeded available size");
         if new_pruning_depth >= MAX_PRUNE_TABLE_DEPTH {
             println!(
-                "Prune table hit max depth, limiting to {}.",
+                "[Prune table] Hit max depth, limiting to {}.",
                 MAX_PRUNE_TABLE_DEPTH
             );
             new_pruning_depth = MAX_PRUNE_TABLE_DEPTH;
@@ -71,9 +75,13 @@ impl PruneTable {
             return;
         }
 
-        let start_time = Instant::now();
         for depth in (self.mutable.current_pruning_depth + 1)..(new_pruning_depth + 1) {
-            println!("Populating prune table to pruning depth: {}", depth);
+            let start_time = Instant::now();
+            self.mutable.current_depth_num_recursive_calls = 0;
+            println!(
+                "[Prune table][Pruning depth {}] Populating prune table…",
+                depth
+            );
             Self::recurse(
                 &self.immutable,
                 &mut self.mutable,
@@ -82,7 +90,11 @@ impl PruneTable {
                 depth,
             );
             println!(
-                "Populating prune table took: {:?}",
+                "[Prune table][Pruning depth {}] {} recursive calls ({:?})",
+                depth,
+                self.mutable
+                    .current_depth_num_recursive_calls
+                    .separate_with_underscores(),
                 Instant::now() - start_time
             );
         }
@@ -98,6 +110,7 @@ impl PruneTable {
         current_state: CanonicalFSMState,
         remaining_depth: PruneTableEntryType,
     ) {
+        mutable_data.current_depth_num_recursive_calls += 1;
         if remaining_depth == 0 {
             let pattern_hash = mutable_data.hash_pattern(current_pattern);
             if mutable_data.pattern_hash_to_depth[pattern_hash] == UNINITIALIZED_DEPTH {

@@ -24,6 +24,27 @@ pub struct SearchMoveCache {
     pub(crate) flat: Vec<MoveTransformationInfo>, // TODO: avoid duplicate data
 }
 
+fn transformation_order(
+    identity_transformation: &PackedKTransformation,
+    transformation: &PackedKTransformation,
+) -> i32 {
+    let mut order: i32 = 1;
+    let mut current_transformation = PackedKTransformationBuffer::from(transformation.clone());
+    println!("start");
+    while &current_transformation.current != identity_transformation {
+        println!("while");
+        current_transformation.apply_transformation(transformation);
+        order += 1;
+    }
+    order
+}
+
+// See: https://github.com/cubing/cubing.js/blob/145d0a7a3271a71fd1051c871bb170560561a24b/src/cubing/alg/simplify/options.ts#L15
+fn canonicalize_center_amount(order: i32, amount: i32) -> i32 {
+    let offset = (order - 1) / 2;
+    (amount + offset).rem_euclid(order) - offset
+}
+
 impl SearchMoveCache {
     pub fn try_new(
         packed_kpuzzle: &PackedKPuzzle,
@@ -52,7 +73,19 @@ impl SearchMoveCache {
                 seen_quantum_moves.insert(r#move.quantum.as_ref().clone(), r#move.clone());
             }
 
-            // let f = |move_lcm| -> Result<Vec<MoveInfo>, CommandError> {
+            let move_quantum = Move {
+                quantum: r#move.quantum.clone(),
+                amount: 1,
+            };
+            let move_quantum_transformation = packed_kpuzzle
+                .transformation_from_move(&move_quantum)
+                .map_err(|e| SearchError {
+                    description: e.to_string(), // TODO
+                })?;
+            let order =
+                transformation_order(&identity_transformation, &move_quantum_transformation);
+            dbg!(order);
+
             let mut multiples = MoveTransformationMultiples::default(); // TODO: use order to set capacity.
             let move_transformation =
                 packed_kpuzzle
@@ -65,7 +98,7 @@ impl SearchMoveCache {
             let mut amount: i32 = r#move.amount;
             while move_multiple_transformation.current != identity_transformation {
                 let mut move_multiple = r#move.clone();
-                move_multiple.amount = amount;
+                move_multiple.amount = canonicalize_center_amount(order, amount);
                 let info = MoveTransformationInfo {
                     r#move: move_multiple,
                     // metric_turns: 1, // TODO
@@ -79,7 +112,6 @@ impl SearchMoveCache {
                 move_multiple_transformation.apply_transformation(&move_transformation);
             }
             grouped.push(multiples);
-            // };
         }
         Ok(Self { grouped, flat })
     }

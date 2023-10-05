@@ -99,6 +99,7 @@ impl PruneTable {
             self.mutable.pattern_hash_to_depth = vec![0; new_prune_table_size];
             self.mutable.prune_table_size = new_prune_table_size;
             self.mutable.prune_table_index_mask = new_prune_table_size - 1;
+            self.mutable.current_pruning_depth = 0;
         }
 
         for depth in (self.mutable.current_pruning_depth + 1)..(new_pruning_depth + 1) {

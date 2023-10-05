@@ -155,10 +155,12 @@ impl IDFSearch {
         if remaining_depth == 0 {
             return if current_pattern == &self.api_data.target_pattern {
                 individual_search_data.num_solutions_sofar += 1;
+                let alg = Alg::from(solution_moves);
                 println!(
-                    "{} // solution #{}",
-                    Alg::from(solution_moves),
+                    "{} // solution #{} ({} moves)",
+                    alg,
                     individual_search_data.num_solutions_sofar,
+                    alg.nodes.len(),
                 );
                 if individual_search_data.num_solutions_sofar
                     >= individual_search_data.min_num_solutions

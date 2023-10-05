@@ -119,6 +119,11 @@ impl<'a> PruneTable<'a> {
     }
 }
 
+struct IndividualSearchData<'a> {
+    prune_table: &'a mut PruneTable<'a>, // TODO: store this on `IDFSearch`.
+    current_depth_num_recursive_calls: usize,
+}
+
 pub struct IDFSearch {
     pub search_move_cache: SearchMoveCache,
     pub canonical_fsm: CanonicalFSM,
@@ -148,13 +153,20 @@ impl IDFSearch {
     pub fn search(&self) -> Result<(), SearchError> {
         let start_time = Instant::now();
         let mut prune_table = PruneTable::new(self); // TODO: make the prune table reusable across searches.
+        let mut individual_search_data = IndividualSearchData {
+            prune_table: &mut prune_table,
+            current_depth_num_recursive_calls: 0,
+        };
 
         for remaining_depth in 0..MAX_SEARCH_DEPTH {
-            prune_table.extend_for_search_depth(remaining_depth);
+            individual_search_data
+                .prune_table
+                .extend_for_search_depth(remaining_depth);
+            individual_search_data.current_depth_num_recursive_calls = 0;
 
             println!("Searching to depth: {}", remaining_depth);
             if let Some(solution) = self.recurse(
-                &prune_table,
+                &mut individual_search_data,
                 &self.scramble_pattern,
                 CANONICAL_FSM_START_STATE,
                 remaining_depth,
@@ -164,6 +176,10 @@ impl IDFSearch {
                 println!("Found in: {:?}", Instant::now() - start_time);
                 exit(0);
             }
+            println!(
+                "Number of recursive calls at depth {}: {}",
+                remaining_depth, individual_search_data.current_depth_num_recursive_calls
+            );
         }
         Err(SearchError {
             description: "No solution".to_owned(),
@@ -172,11 +188,12 @@ impl IDFSearch {
 
     fn recurse(
         &self,
-        prune_table: &PruneTable, // TODO: store this on the struct.
+        individual_search_data: &mut IndividualSearchData,
         current_pattern: &PackedKPattern,
         current_state: CanonicalFSMState,
         remaining_depth: usize,
     ) -> Option<Alg> {
+        individual_search_data.current_depth_num_recursive_calls += 1;
         if remaining_depth == 0 {
             return if current_pattern == &self.target_pattern {
                 Some(Alg { nodes: vec![] })
@@ -184,7 +201,7 @@ impl IDFSearch {
                 None
             };
         }
-        if prune_table.lookup(current_pattern) > remaining_depth {
+        if individual_search_data.prune_table.lookup(current_pattern) > remaining_depth {
             return None;
         }
         for (move_class_index, move_transformation_multiples) in
@@ -202,7 +219,7 @@ impl IDFSearch {
 
             for move_transformation_info in move_transformation_multiples {
                 if let Some(solution_tail) = self.recurse(
-                    prune_table,
+                    individual_search_data,
                     &current_pattern.apply_transformation(&move_transformation_info.transformation),
                     next_state,
                     remaining_depth - 1,

@@ -7,10 +7,12 @@ use crate::{CanonicalFSMState, MoveClassIndex, PackedKPattern, CANONICAL_FSM_STA
 use super::search::IDFSearchAPIData;
 
 type PruneTableEntryType = u8;
-const UNINITIALIZED_DEPTH: PruneTableEntryType = 0xff;
-const MAX_PRUNE_TABLE_DEPTH: PruneTableEntryType = UNINITIALIZED_DEPTH - 1;
+// 0 is uninitialized, all other values are stored as 1+depth.
+// This allows us to save initialization time by allowing table memory pages to start as "blank" (all 0).
+const UNINITIALIZED_DEPTH: PruneTableEntryType = 0;
+const MAX_PRUNE_TABLE_DEPTH: PruneTableEntryType = PruneTableEntryType::MAX - 1;
 
-const PRUNE_TABLE_INDEX_MASK: usize = 0x1ffffffff;
+const PRUNE_TABLE_INDEX_MASK: usize = (0x1 << 16) - 1;
 const DEFAULT_PRUNE_TABLE_SIZE: usize = PRUNE_TABLE_INDEX_MASK + 1;
 
 struct PruneTableImmutableData {
@@ -34,8 +36,15 @@ impl PruneTableMutableData {
         if table_value == UNINITIALIZED_DEPTH {
             (self.current_pruning_depth as usize) + 1
         } else {
-            table_value as usize
+            (table_value as usize) - 1
         }
+    }
+
+    pub fn set_if_uninitialized(&mut self, pattern: &PackedKPattern, depth: u8) {
+        let pattern_hash = self.hash_pattern(pattern);
+        if self.pattern_hash_to_depth[pattern_hash] == UNINITIALIZED_DEPTH {
+            self.pattern_hash_to_depth[pattern_hash] = depth + 1
+        };
     }
 }
 
@@ -50,7 +59,7 @@ impl PruneTable {
             immutable: PruneTableImmutableData { search_api_data },
             mutable: PruneTableMutableData {
                 current_pruning_depth: 0,
-                pattern_hash_to_depth: vec![UNINITIALIZED_DEPTH; DEFAULT_PRUNE_TABLE_SIZE],
+                pattern_hash_to_depth: vec![0; DEFAULT_PRUNE_TABLE_SIZE],
                 current_depth_num_recursive_calls: 0,
             },
         };
@@ -116,10 +125,7 @@ impl PruneTable {
     ) {
         mutable_data.current_depth_num_recursive_calls += 1;
         if remaining_depth == 0 {
-            let pattern_hash = mutable_data.hash_pattern(current_pattern);
-            if mutable_data.pattern_hash_to_depth[pattern_hash] == UNINITIALIZED_DEPTH {
-                mutable_data.pattern_hash_to_depth[pattern_hash] = remaining_depth;
-            };
+            mutable_data.set_if_uninitialized(current_pattern, remaining_depth);
             return;
         }
         for (move_class_index, move_transformation_multiples) in immutable_data

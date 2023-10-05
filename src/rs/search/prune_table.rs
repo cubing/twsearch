@@ -89,13 +89,17 @@ impl PruneTable {
                 CANONICAL_FSM_START_STATE,
                 depth,
             );
+            let current_depth_elapsed = Instant::now() - start_time;
+            let rate = (self.mutable.current_depth_num_recursive_calls as f64
+                / (current_depth_elapsed).as_secs_f64()) as usize;
             println!(
-                "[Prune table][Pruning depth {}] {} recursive calls ({:?})",
+                "[Prune table][Pruning depth {}] {} recursive calls ({:?}) ({}Hz)",
                 depth,
                 self.mutable
                     .current_depth_num_recursive_calls
                     .separate_with_underscores(),
-                Instant::now() - start_time
+                current_depth_elapsed,
+                rate.separate_with_underscores()
             );
         }
         self.mutable.current_pruning_depth = new_pruning_depth

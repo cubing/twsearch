@@ -104,13 +104,17 @@ impl IDFSearch {
                 remaining_depth,
                 SolutionMoves(None),
             );
+            let current_depth_elapsed = Instant::now() - current_depth_start_time;
+            let rate = (individual_search_data.current_depth_num_recursive_calls as f64
+                / (current_depth_elapsed).as_secs_f64()) as usize;
             println!(
-                "[Search][Depth {}] {} recursive calls ({:?})",
+                "[Search][Depth {}] {} recursive calls ({:?}) ({}Hz)",
                 remaining_depth,
                 individual_search_data
                     .current_depth_num_recursive_calls
                     .separate_with_underscores(),
-                Instant::now() - current_depth_start_time
+                current_depth_elapsed,
+                rate.separate_with_underscores()
             );
             if let SearchRecursionResult::SolutionFound(solution) = recursion_result {
                 println!("Solution: {}", solution);

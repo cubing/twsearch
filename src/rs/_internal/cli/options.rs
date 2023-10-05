@@ -200,8 +200,8 @@ pub struct CompletionsArgs {
     /// Print completions for the given shell.
     /// These can be loaded/stored permanently (e.g. when using Homebrew), but they can also be sourced directly, e.g.:
     ///
-    ///  twsearch-cpp-wrapper completions fish | source # fish
-    ///  source <(twsearch-cpp-wrapper completions zsh) # zsh
+    ///  twsearch completions fish | source # fish
+    ///  source <(twsearch completions zsh) # zsh
     #[clap(verbatim_doc_comment, id = "SHELL")]
     shell: Shell,
 }
@@ -313,7 +313,7 @@ pub struct StartPatternArgs {
 }
 
 fn completions_for_shell(cmd: &mut clap::Command, generator: impl Generator) {
-    generate(generator, cmd, "twsearch-cpp-wrapper", &mut stdout());
+    generate(generator, cmd, "twsearch", &mut stdout());
 }
 
 pub fn get_options() -> TwsearchArgs {
@@ -327,13 +327,16 @@ pub fn get_options() -> TwsearchArgs {
 
     args
 }
+fn completions_for_shell_cpp_wrapper(cmd: &mut clap::Command, generator: impl Generator) {
+    generate(generator, cmd, "twsearch-cpp-wrapper", &mut stdout());
+}
 
 pub fn get_options_cpp_wrapper() -> TwsearchCppWrapperArgs {
     let mut command = TwsearchCppWrapperArgs::command();
 
     let args = TwsearchCppWrapperArgs::parse();
     if let CliCommand::Completions(completions_args) = args.command {
-        completions_for_shell(&mut command, completions_args.shell);
+        completions_for_shell_cpp_wrapper(&mut command, completions_args.shell);
         exit(0);
     };
 

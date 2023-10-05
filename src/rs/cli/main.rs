@@ -17,14 +17,12 @@ use io::read_to_json;
 use twsearch::{
     ArgumentError, CommandError, GodsAlgorithmSearch, IDFSearch, PackedKPattern, PackedKPuzzle,
     SearchLogger,
-    _internal::cli::{
-        get_options_cpp_wrapper, CliCommand, GodsAlgorithmArgs, MovesArgs, SearchCommandArgs,
-    },
+    _internal::cli::{get_options, CliCommand, GodsAlgorithmArgs, MovesArgs, SearchCommandArgs},
     serve, IndividualSearchOptions,
 };
 
 fn main() -> Result<(), CommandError> {
-    let args = get_options_cpp_wrapper();
+    let args = get_options();
 
     match args.command {
         CliCommand::Completions(_completions_args) => {

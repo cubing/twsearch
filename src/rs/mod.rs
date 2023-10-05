@@ -17,3 +17,6 @@ pub use errors::*;
 
 mod search;
 pub use search::*;
+
+mod serve;
+pub use serve::*;

@@ -20,6 +20,7 @@ use twsearch::{
     _internal::cli::{
         get_options_cpp_wrapper, CliCommand, GodsAlgorithmArgs, MovesArgs, SearchCommandArgs,
     },
+    serve,
 };
 
 fn main() -> Result<(), CommandError> {
@@ -30,10 +31,7 @@ fn main() -> Result<(), CommandError> {
             panic!("Completions should have been printed during options parsing, followed by program exit.");
         }
         CliCommand::Search(search_command_args) => search(search_command_args),
-        CliCommand::Serve(_serve_command_args) => {
-            eprintln!("Skipping `serve` command.");
-            Ok(())
-        }
+        CliCommand::Serve(serve_command_args) => serve(serve_command_args),
         // TODO: consolidate def-only arg implementations.
         CliCommand::SchreierSims(_schreier_sims_command_args) => todo!(),
         CliCommand::GodsAlgorithm(gods_algorithm_args) => gods_algorithm(gods_algorithm_args),

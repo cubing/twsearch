@@ -1318,6 +1318,7 @@ dependencies = [
  "cubing",
  "derive_more",
  "indicatif",
+ "rouille",
  "serde",
  "serde_json",
  "thousands",

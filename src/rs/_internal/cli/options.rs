@@ -100,7 +100,7 @@ pub struct SearchCommandArgs {
     pub input_def_and_optional_scramble_file_args: InputDefAndOptionalScrambleFileArgs,
 }
 
-#[derive(Debug, Clone, ValueEnum, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, ValueEnum, Serialize, Deserialize)]
 pub enum VerbosityLevel {
     Error,
     Warning,
@@ -351,6 +351,8 @@ pub struct ServeArgsForIndividualSearch<'a> {
 pub struct ServeCommandArgs {
     #[command(flatten)]
     pub performance_args: PerformanceArgs,
+    #[command(flatten)]
+    pub verbosity_args: VerbosityArgs,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

@@ -4,7 +4,6 @@ use std::{
         Arc,
     },
     thread::spawn,
-    time::Instant,
 };
 
 use cubing::alg::{Alg, AlgNode, Move};
@@ -140,7 +139,6 @@ impl IDFSearch {
         search_pattern: &PackedKPattern,
         min_num_solutions: usize,
     ) -> SearchSolutions {
-        let entire_search_start_time = Instant::now();
         let (solution_sender, search_solutions) = SearchSolutions::construct();
         let mut individual_search_data = IndividualSearchData {
             recursive_work_tracker: RecursiveWorkTracker::new(
@@ -176,17 +174,9 @@ impl IDFSearch {
                     .recursive_work_tracker
                     .finish_latest_depth();
                 if let SearchRecursionResult::DoneSearching() = recursion_result {
-                    self.api_data.search_logger.write_info(&format!(
-                        "Entire search duration: {:?}",
-                        Instant::now() - entire_search_start_time
-                    ));
                     return;
                 }
             }
-            self.api_data.search_logger.write_info(&format!(
-                "Entire search duration: {:?}",
-                Instant::now() - entire_search_start_time
-            ));
         });
         search_solutions
     }

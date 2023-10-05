@@ -82,7 +82,7 @@ pub struct CommonSearchArgs {
 #[derive(Args, Debug)]
 pub struct SearchCommandArgs {
     #[clap(long/* , visible_short_alias = 't' */)]
-    pub min_num_solutions: Option<u32>,
+    pub min_num_solutions: Option<usize>,
 
     #[command(flatten)]
     pub moves_args: MovesArgs,
@@ -92,10 +92,31 @@ pub struct SearchCommandArgs {
     pub search_persistence_args: SearchPersistenceArgs,
     #[command(flatten)]
     pub metric_args: MetricArgs,
+    #[command(flatten)]
+    pub verbosity_args: VerbosityArgs,
 
     // We place this last show it shows at the end of `--help` (and therefore just above the next shell prompt).
     #[command(flatten)]
     pub input_def_and_optional_scramble_file_args: InputDefAndOptionalScrambleFileArgs,
+}
+
+#[derive(Debug, Clone, ValueEnum, Serialize, Deserialize)]
+pub enum VerbosityLevel {
+    Error,
+    Warning,
+    Info,
+}
+
+impl Default for VerbosityLevel {
+    fn default() -> Self {
+        Self::Warning
+    }
+}
+
+#[derive(Args, Debug)]
+pub struct VerbosityArgs {
+    #[clap(long)]
+    pub verbosity: Option<VerbosityLevel>,
 }
 
 // TODO: generalize this to a "definition modification" args struct?

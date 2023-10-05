@@ -30,9 +30,7 @@ fn transformation_order(
 ) -> i32 {
     let mut order: i32 = 1;
     let mut current_transformation = PackedKTransformationBuffer::from(transformation.clone());
-    println!("start");
     while &current_transformation.current != identity_transformation {
-        println!("while");
         current_transformation.apply_transformation(transformation);
         order += 1;
     }
@@ -84,7 +82,6 @@ impl SearchMoveCache {
                 })?;
             let order =
                 transformation_order(&identity_transformation, &move_quantum_transformation);
-            dbg!(order);
 
             let mut multiples = MoveTransformationMultiples::default(); // TODO: use order to set capacity.
             let move_transformation =

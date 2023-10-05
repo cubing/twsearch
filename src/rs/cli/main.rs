@@ -4,6 +4,7 @@ mod io;
 use std::{
     path::{Path, PathBuf},
     process::exit,
+    rc::Rc,
     sync::Arc,
 };
 
@@ -15,6 +16,7 @@ use cubing::{
 use io::read_to_json;
 use twsearch::{
     ArgumentError, CommandError, GodsAlgorithmSearch, IDFSearch, PackedKPattern, PackedKPuzzle,
+    SearchLogger,
     _internal::cli::{
         get_options_cpp_wrapper, CliCommand, GodsAlgorithmArgs, MovesArgs, SearchCommandArgs,
     },
@@ -158,8 +160,21 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
         }
     };
 
-    let mut idf_search = IDFSearch::try_new(packed_kpuzzle, target_pattern, move_list)?;
-    let _ = idf_search.search(&scramble_pattern);
+    let mut idf_search = IDFSearch::try_new(
+        packed_kpuzzle,
+        target_pattern,
+        move_list,
+        Rc::new(SearchLogger {
+            verbosity: search_command_args
+                .verbosity_args
+                .verbosity
+                .unwrap_or(twsearch::_internal::cli::VerbosityLevel::Error),
+        }),
+    )?;
+    let _ = idf_search.search(
+        &scramble_pattern,
+        search_command_args.min_num_solutions.unwrap_or(1),
+    );
     // println!("--------");
     // let _ = idf_search.search(&scramble_pattern);
     // println!("--------");

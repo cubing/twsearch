@@ -3,7 +3,7 @@ use std::rc::Rc;
 use thousands::Separable;
 
 use crate::{
-    CanonicalFSMState, MoveClassIndex, PackedKPattern, RecursiveWorkTracker,
+    CanonicalFSMState, MoveClassIndex, PackedKPattern, RecursiveWorkTracker, SearchLogger,
     CANONICAL_FSM_START_STATE,
 };
 
@@ -26,6 +26,7 @@ struct PruneTableMutableData {
     current_pruning_depth: PruneTableEntryType,
     pattern_hash_to_depth: Vec<PruneTableEntryType>,
     recursive_work_tracker: RecursiveWorkTracker,
+    search_logger: Rc<SearchLogger>,
 }
 
 impl PruneTableMutableData {
@@ -58,7 +59,7 @@ pub struct PruneTable {
 }
 
 impl PruneTable {
-    pub fn new(search_api_data: Rc<IDFSearchAPIData>) -> Self {
+    pub fn new(search_api_data: Rc<IDFSearchAPIData>, search_logger: Rc<SearchLogger>) -> Self {
         let mut prune_table = Self {
             immutable: PruneTableImmutableData { search_api_data },
             mutable: PruneTableMutableData {
@@ -66,7 +67,11 @@ impl PruneTable {
                 prune_table_index_mask: MIN_PRUNE_TABLE_SIZE - 1,
                 current_pruning_depth: 0,
                 pattern_hash_to_depth: vec![0; MIN_PRUNE_TABLE_SIZE],
-                recursive_work_tracker: RecursiveWorkTracker::new("Prune table".to_owned()),
+                recursive_work_tracker: RecursiveWorkTracker::new(
+                    "Prune table".to_owned(),
+                    search_logger.clone(),
+                ),
+                search_logger,
             },
         };
         prune_table.extend_for_search_depth(0, 1);
@@ -80,10 +85,10 @@ impl PruneTable {
             std::convert::TryInto::<PruneTableEntryType>::try_into(search_depth / 2)
                 .expect("Prune table depth exceeded available size");
         if new_pruning_depth >= MAX_PRUNE_TABLE_DEPTH {
-            println!(
+            self.mutable.search_logger.write_warning(&format!(
                 "[Prune table] Hit max depth, limiting to {}.",
                 MAX_PRUNE_TABLE_DEPTH
-            );
+            ));
             new_pruning_depth = MAX_PRUNE_TABLE_DEPTH;
         }
 

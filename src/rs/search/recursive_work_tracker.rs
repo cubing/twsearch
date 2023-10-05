@@ -1,6 +1,11 @@
-use std::time::{Duration, Instant};
+use std::{
+    rc::Rc,
+    time::{Duration, Instant},
+};
 
 use thousands::Separable;
+
+use crate::SearchLogger;
 
 pub(crate) struct RecursiveWorkTracker {
     work_name: String,
@@ -12,11 +17,13 @@ pub(crate) struct RecursiveWorkTracker {
     latest_depth_finished: bool,
 
     previous_depth_num_recursive_calls: usize,
+
+    search_logger: Rc<SearchLogger>,
 }
 
 // TODO: use a logger intead of printing to stdout.
 impl RecursiveWorkTracker {
-    pub fn new(work_name: String) -> Self {
+    pub fn new(work_name: String, search_logger: Rc<SearchLogger>) -> Self {
         Self {
             work_name,
             latest_depth: 0,
@@ -25,11 +32,13 @@ impl RecursiveWorkTracker {
             latest_depth_duration: Duration::ZERO,
             latest_depth_finished: true,
             latest_depth_num_recursive_calls: 0,
+            search_logger,
         }
     }
 
     pub fn print_message(&self, message: &str) {
-        println!("[{}] {}", self.work_name, message,)
+        self.search_logger
+            .write_info(&format!("[{}] {}", self.work_name, message));
     }
 
     // Pass `None` as the message to avoid printing anything.
@@ -44,24 +53,24 @@ impl RecursiveWorkTracker {
         self.latest_depth_num_recursive_calls = 0;
 
         if let Some(message) = message {
-            println!(
+            self.search_logger.write_info(&format!(
                 "[{}][Depth {}] {}",
                 self.work_name, self.latest_depth, message,
-            )
+            ));
         }
     }
 
     pub fn finish_latest_depth(&mut self) {
         if self.latest_depth_finished {
-            eprintln!(
+            self.search_logger.write_warning(&format!(
                 "WARNING: tried to finish tracking work for depth {} multiple times.",
                 self.latest_depth,
-            );
+            ));
         }
         self.latest_depth_duration = Instant::now() - self.latest_depth_start_time;
         let rate = (self.latest_depth_num_recursive_calls as f64
             / (self.latest_depth_duration).as_secs_f64()) as usize;
-        println!(
+        self.search_logger.write_info(&format!(
             "[{}][Depth {}] {} recursive calls ({:?}) ({}Hz)",
             self.work_name,
             self.latest_depth,
@@ -69,7 +78,7 @@ impl RecursiveWorkTracker {
                 .separate_with_underscores(),
             self.latest_depth_duration,
             rate.separate_with_underscores()
-        );
+        ));
         self.latest_depth_finished = true;
     }
 

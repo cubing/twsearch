@@ -4,13 +4,15 @@ use cubing::alg::{Alg, AlgNode, Move};
 
 use crate::{
     CanonicalFSM, CanonicalFSMState, MoveClassIndex, PackedKPattern, PackedKPuzzle, PruneTable,
-    RecursiveWorkTracker, SearchError, SearchMoveCache, CANONICAL_FSM_START_STATE,
+    RecursiveWorkTracker, SearchError, SearchLogger, SearchMoveCache, CANONICAL_FSM_START_STATE,
 };
 
 const MAX_SEARCH_DEPTH: usize = 500; // TODO: increase
 
 struct IndividualSearchData {
     recursive_work_tracker: RecursiveWorkTracker,
+    pub min_num_solutions: usize,
+    pub num_solutions_sofar: usize,
 }
 
 pub struct IDFSearchAPIData {
@@ -18,6 +20,7 @@ pub struct IDFSearchAPIData {
     pub canonical_fsm: CanonicalFSM,
     pub packed_kpuzzle: PackedKPuzzle,
     pub target_pattern: PackedKPattern,
+    pub search_logger: Rc<SearchLogger>,
 }
 
 pub struct IDFSearch {
@@ -27,9 +30,9 @@ pub struct IDFSearch {
 
 #[allow(clippy::enum_variant_names)]
 enum SearchRecursionResult {
-    SolutionFound(Alg),
-    SolutionNotFoundDefault(),
-    SolutionNotFoundExcludingCurrentMoveClass(),
+    DoneSearching(),
+    ContinueSearchingDefault(),
+    ContinueSearchingExcludingCurrentMoveClass(),
 }
 
 struct SolutionPreviousMoves<'a> {
@@ -66,6 +69,7 @@ impl IDFSearch {
         packed_kpuzzle: PackedKPuzzle,
         target_pattern: PackedKPattern,
         move_list: Vec<Move>,
+        search_logger: Rc<SearchLogger>,
     ) -> Result<Self, SearchError> {
         let search_move_cache = SearchMoveCache::try_new(&packed_kpuzzle, &move_list)?;
         let canonical_fsm = CanonicalFSM::try_new(search_move_cache.clone())?; // TODO: avoid a clone
@@ -74,23 +78,33 @@ impl IDFSearch {
             canonical_fsm,
             packed_kpuzzle,
             target_pattern,
+            search_logger: search_logger.clone(),
         });
 
-        let prune_table = PruneTable::new(api_data.clone()); // TODO: make the prune table reusable across searches.
+        let prune_table = PruneTable::new(api_data.clone(), search_logger); // TODO: make the prune table reusable across searches.
         Ok(Self {
             api_data,
             prune_table,
         })
     }
 
-    pub fn search(&mut self, search_pattern: &PackedKPattern) -> Result<(), SearchError> {
+    pub fn search(
+        &mut self,
+        search_pattern: &PackedKPattern,
+        min_num_solutions: usize,
+    ) -> Result<(), SearchError> {
         let entire_search_start_time = Instant::now();
         let mut individual_search_data = IndividualSearchData {
-            recursive_work_tracker: RecursiveWorkTracker::new("Search".to_owned()),
+            recursive_work_tracker: RecursiveWorkTracker::new(
+                "Search".to_owned(),
+                self.api_data.search_logger.clone(),
+            ),
+            min_num_solutions,
+            num_solutions_sofar: 0,
         };
 
         for remaining_depth in 0..MAX_SEARCH_DEPTH {
-            println!("----------------");
+            self.api_data.search_logger.write_info("----------------");
             self.prune_table.extend_for_search_depth(
                 remaining_depth,
                 individual_search_data
@@ -110,13 +124,18 @@ impl IDFSearch {
             individual_search_data
                 .recursive_work_tracker
                 .finish_latest_depth();
-            if let SearchRecursionResult::SolutionFound(solution) = recursion_result {
-                println!("Solution: {}", solution);
-                println!("Found at depth: {}", remaining_depth);
-                println!("Found in: {:?}", Instant::now() - entire_search_start_time);
-                return Ok(()); // TODO: return the first solution? A generator?
+            if let SearchRecursionResult::DoneSearching() = recursion_result {
+                self.api_data.search_logger.write_info(&format!(
+                    "Entire search duration: {:?}",
+                    Instant::now() - entire_search_start_time
+                ));
+                return Ok(()); // TODO: return solutions via a generator
             }
         }
+        self.api_data.search_logger.write_info(&format!(
+            "Entire search duration: {:?}",
+            Instant::now() - entire_search_start_time
+        ));
         Err(SearchError {
             description: "No solution".to_owned(),
         })
@@ -135,18 +154,29 @@ impl IDFSearch {
             .record_recursive_call();
         if remaining_depth == 0 {
             return if current_pattern == &self.api_data.target_pattern {
-                println!("Found a solution: {}", Alg::from(solution_moves));
-                SearchRecursionResult::SolutionFound(Alg { nodes: vec![] })
+                individual_search_data.num_solutions_sofar += 1;
+                println!(
+                    "{} // solution #{}",
+                    Alg::from(solution_moves),
+                    individual_search_data.num_solutions_sofar,
+                );
+                if individual_search_data.num_solutions_sofar
+                    >= individual_search_data.min_num_solutions
+                {
+                    SearchRecursionResult::DoneSearching()
+                } else {
+                    SearchRecursionResult::ContinueSearchingDefault()
+                }
             } else {
-                SearchRecursionResult::SolutionNotFoundDefault()
+                SearchRecursionResult::ContinueSearchingDefault()
             };
         }
         let prune_table_depth = self.prune_table.lookup(current_pattern);
         if prune_table_depth > remaining_depth + 1 {
-            return SearchRecursionResult::SolutionNotFoundExcludingCurrentMoveClass();
+            return SearchRecursionResult::ContinueSearchingExcludingCurrentMoveClass();
         }
         if prune_table_depth > remaining_depth {
-            return SearchRecursionResult::SolutionNotFoundDefault();
+            return SearchRecursionResult::ContinueSearchingDefault();
         }
         for (move_class_index, move_transformation_multiples) in
             self.api_data.search_move_cache.grouped.iter().enumerate()
@@ -173,23 +203,16 @@ impl IDFSearch {
                         previous_moves: &solution_moves,
                     })),
                 ) {
-                    SearchRecursionResult::SolutionFound(solution_tail) => {
-                        let mut solution_tail_nodes = solution_tail.nodes;
-                        solution_tail_nodes.insert(
-                            0,
-                            cubing::alg::AlgNode::MoveNode(move_transformation_info.r#move.clone()),
-                        );
-                        return SearchRecursionResult::SolutionFound(Alg {
-                            nodes: solution_tail_nodes,
-                        });
+                    SearchRecursionResult::DoneSearching() => {
+                        return SearchRecursionResult::DoneSearching();
                     }
-                    SearchRecursionResult::SolutionNotFoundExcludingCurrentMoveClass() => {
+                    SearchRecursionResult::ContinueSearchingDefault() => {}
+                    SearchRecursionResult::ContinueSearchingExcludingCurrentMoveClass() => {
                         break;
                     }
-                    SearchRecursionResult::SolutionNotFoundDefault() => {}
                 }
             }
         }
-        SearchRecursionResult::SolutionNotFoundDefault()
+        SearchRecursionResult::ContinueSearchingDefault()
     }
 }

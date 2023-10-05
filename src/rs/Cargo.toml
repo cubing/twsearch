@@ -10,7 +10,7 @@ default = []
 cityhash = "0.1.1"
 clap = { version = "4.3.24", features = ["derive"] }
 clap_complete = "4.3.2"
-cubing = "0.7.2"
+cubing = { version = "0.7.3" }
 derive_more = "0.99.17"
 indicatif = "0.17.6"
 serde = { version = "1.0.186", features = ["derive", "rc"] }

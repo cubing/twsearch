@@ -1,17 +1,16 @@
 use std::{rc::Rc, time::Instant};
 
 use cubing::alg::{Alg, AlgNode, Move};
-use thousands::Separable;
 
 use crate::{
     CanonicalFSM, CanonicalFSMState, MoveClassIndex, PackedKPattern, PackedKPuzzle, PruneTable,
-    SearchError, SearchMoveCache, CANONICAL_FSM_START_STATE,
+    RecursiveWorkTracker, SearchError, SearchMoveCache, CANONICAL_FSM_START_STATE,
 };
 
 const MAX_SEARCH_DEPTH: usize = 500; // TODO: increase
 
 struct IndividualSearchData {
-    current_depth_num_recursive_calls: usize,
+    recursive_work_tracker: RecursiveWorkTracker,
 }
 
 pub struct IDFSearchAPIData {
@@ -87,16 +86,18 @@ impl IDFSearch {
     pub fn search(&mut self, search_pattern: &PackedKPattern) -> Result<(), SearchError> {
         let entire_search_start_time = Instant::now();
         let mut individual_search_data = IndividualSearchData {
-            current_depth_num_recursive_calls: 0,
+            recursive_work_tracker: RecursiveWorkTracker::new(
+                "Search".to_owned(),
+                "Starting search…".to_owned(),
+            ),
         };
 
         for remaining_depth in 0..MAX_SEARCH_DEPTH {
-            let current_depth_start_time = Instant::now();
             println!("----------------");
             self.prune_table.extend_for_search_depth(remaining_depth);
-            individual_search_data.current_depth_num_recursive_calls = 0;
-
-            println!("[Search][Depth {}] Starting search…", remaining_depth);
+            individual_search_data
+                .recursive_work_tracker
+                .start_depth(remaining_depth);
             let recursion_result = self.recurse(
                 &mut individual_search_data,
                 search_pattern,
@@ -104,18 +105,9 @@ impl IDFSearch {
                 remaining_depth,
                 SolutionMoves(None),
             );
-            let current_depth_elapsed = Instant::now() - current_depth_start_time;
-            let rate = (individual_search_data.current_depth_num_recursive_calls as f64
-                / (current_depth_elapsed).as_secs_f64()) as usize;
-            println!(
-                "[Search][Depth {}] {} recursive calls ({:?}) ({}Hz)",
-                remaining_depth,
-                individual_search_data
-                    .current_depth_num_recursive_calls
-                    .separate_with_underscores(),
-                current_depth_elapsed,
-                rate.separate_with_underscores()
-            );
+            individual_search_data
+                .recursive_work_tracker
+                .finish_latest_depth();
             if let SearchRecursionResult::SolutionFound(solution) = recursion_result {
                 println!("Solution: {}", solution);
                 println!("Found at depth: {}", remaining_depth);
@@ -136,7 +128,9 @@ impl IDFSearch {
         remaining_depth: usize,
         solution_moves: SolutionMoves,
     ) -> SearchRecursionResult {
-        individual_search_data.current_depth_num_recursive_calls += 1;
+        individual_search_data
+            .recursive_work_tracker
+            .record_recursive_call();
         if remaining_depth == 0 {
             return if current_pattern == &self.api_data.target_pattern {
                 println!("Found a solution: {}", Alg::from(solution_moves));

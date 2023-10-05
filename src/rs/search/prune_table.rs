@@ -1,8 +1,9 @@
-use std::{rc::Rc, time::Instant};
+use std::rc::Rc;
 
-use thousands::Separable;
-
-use crate::{CanonicalFSMState, MoveClassIndex, PackedKPattern, CANONICAL_FSM_START_STATE};
+use crate::{
+    CanonicalFSMState, MoveClassIndex, PackedKPattern, RecursiveWorkTracker,
+    CANONICAL_FSM_START_STATE,
+};
 
 use super::search::IDFSearchAPIData;
 
@@ -21,7 +22,7 @@ struct PruneTableImmutableData {
 struct PruneTableMutableData {
     current_pruning_depth: PruneTableEntryType,
     pattern_hash_to_depth: Vec<PruneTableEntryType>,
-    current_depth_num_recursive_calls: usize,
+    recursive_work_tracker: RecursiveWorkTracker,
 }
 
 impl PruneTableMutableData {
@@ -60,7 +61,10 @@ impl PruneTable {
             mutable: PruneTableMutableData {
                 current_pruning_depth: 0,
                 pattern_hash_to_depth: vec![0; DEFAULT_PRUNE_TABLE_SIZE],
-                current_depth_num_recursive_calls: 0,
+                recursive_work_tracker: RecursiveWorkTracker::new(
+                    "Prune table".to_owned(),
+                    "Populating prune table…".to_owned(),
+                ),
             },
         };
         prune_table.extend_for_search_depth(0);
@@ -85,12 +89,9 @@ impl PruneTable {
         }
 
         for depth in (self.mutable.current_pruning_depth + 1)..(new_pruning_depth + 1) {
-            let start_time = Instant::now();
-            self.mutable.current_depth_num_recursive_calls = 0;
-            println!(
-                "[Prune table][Pruning depth {}] Populating prune table…",
-                depth
-            );
+            self.mutable
+                .recursive_work_tracker
+                .start_depth(depth as usize);
             Self::recurse(
                 &self.immutable,
                 &mut self.mutable,
@@ -98,18 +99,7 @@ impl PruneTable {
                 CANONICAL_FSM_START_STATE,
                 depth,
             );
-            let current_depth_elapsed = Instant::now() - start_time;
-            let rate = (self.mutable.current_depth_num_recursive_calls as f64
-                / (current_depth_elapsed).as_secs_f64()) as usize;
-            println!(
-                "[Prune table][Pruning depth {}] {} recursive calls ({:?}) ({}Hz)",
-                depth,
-                self.mutable
-                    .current_depth_num_recursive_calls
-                    .separate_with_underscores(),
-                current_depth_elapsed,
-                rate.separate_with_underscores()
-            );
+            self.mutable.recursive_work_tracker.finish_latest_depth();
         }
         self.mutable.current_pruning_depth = new_pruning_depth
     }
@@ -123,7 +113,7 @@ impl PruneTable {
         current_state: CanonicalFSMState,
         remaining_depth: PruneTableEntryType,
     ) {
-        mutable_data.current_depth_num_recursive_calls += 1;
+        mutable_data.recursive_work_tracker.record_recursive_call();
         if remaining_depth == 0 {
             mutable_data.set_if_uninitialized(current_pattern, remaining_depth);
             return;

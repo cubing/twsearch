@@ -93,6 +93,7 @@ fn solve_pattern(
         target_pattern,
         move_list.clone(),
         search_logger,
+        serve_command_args.performance_args.memory_mebibytes,
     ) {
         Ok(search) => search,
         Err(e) => return Response::text(e.description).with_status_code(400),

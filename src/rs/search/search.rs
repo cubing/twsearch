@@ -122,6 +122,7 @@ pub struct IDFSearchAPIData {
     pub packed_kpuzzle: PackedKPuzzle,
     pub target_pattern: PackedKPattern,
     pub search_logger: Arc<SearchLogger>,
+    pub memory_mebibytes: Option<usize>,
 }
 
 pub struct IDFSearch {
@@ -135,6 +136,7 @@ impl IDFSearch {
         target_pattern: PackedKPattern,
         move_list: Vec<Move>,
         search_logger: Arc<SearchLogger>,
+        memory_mebibytes: Option<usize>,
     ) -> Result<Self, SearchError> {
         let search_move_cache = SearchMoveCache::try_new(&packed_kpuzzle, &move_list)?;
         let canonical_fsm = CanonicalFSM::try_new(search_move_cache.clone())?; // TODO: avoid a clone
@@ -144,6 +146,7 @@ impl IDFSearch {
             packed_kpuzzle,
             target_pattern,
             search_logger: search_logger.clone(),
+            memory_mebibytes,
         });
 
         let prune_table = PruneTable::new(api_data.clone(), search_logger); // TODO: make the prune table reusable across searches.

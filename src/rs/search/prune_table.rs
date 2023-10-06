@@ -106,6 +106,10 @@ impl PruneTable {
                 }
             }
             std::cmp::Ordering::Greater => {
+                self.mutable.recursive_work_tracker.print_message(&format!(
+                    "Increasing prune table size to {} entries…",
+                    new_prune_table_size.separate_with_underscores()
+                ));
                 self.mutable.pattern_hash_to_depth = vec![0; new_prune_table_size];
                 self.mutable.prune_table_size = new_prune_table_size;
                 self.mutable.prune_table_index_mask = new_prune_table_size - 1;
@@ -113,10 +117,6 @@ impl PruneTable {
             }
         }
 
-        self.mutable.recursive_work_tracker.print_message(&format!(
-            "Populating prune table with {} entries…",
-            self.mutable.prune_table_size.separate_with_underscores()
-        ));
         for depth in (self.mutable.current_pruning_depth + 1)..(new_pruning_depth + 1) {
             self.mutable
                 .recursive_work_tracker

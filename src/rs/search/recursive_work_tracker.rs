@@ -71,7 +71,7 @@ impl RecursiveWorkTracker {
         let rate = (self.latest_depth_num_recursive_calls as f64
             / (self.latest_depth_duration).as_secs_f64()) as usize;
         self.search_logger.write_info(&format!(
-            "[{}][Depth {}] {} recursive calls ({:?}) ({}Hz)",
+            "[{}][Depth {}] {} recursive calls ({:?}) ({} calls/s)",
             self.work_name,
             self.latest_depth,
             self.latest_depth_num_recursive_calls

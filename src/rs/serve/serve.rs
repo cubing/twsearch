@@ -12,7 +12,6 @@ use serde::Serialize;
 
 use std::sync::Arc;
 use std::sync::Mutex;
-use std::time::Instant;
 
 use crate::CommandError;
 use crate::IDFSearch;
@@ -49,7 +48,7 @@ fn solve_pattern(
     request_counter: usize,
 ) -> Response {
     println!("[Search request #{}] Starting search…", request_counter);
-    let start_time = Instant::now();
+    let start_time = instant::Instant::now();
     let kpattern_solve: KPatternSolve = try_or_400!(rouille::input::json_input(request));
     // TODO: use the client args
     let args_for_individual_search = ServeArgsForIndividualSearch {
@@ -117,7 +116,7 @@ fn solve_pattern(
         println!(
             "[Search request #{}] Solution found (in {:?}): {}",
             request_counter,
-            Instant::now() - start_time,
+            instant::Instant::now() - start_time,
             solution
         );
         return Response::json(&ResponseAlg {

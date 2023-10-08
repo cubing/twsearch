@@ -1,7 +1,7 @@
 use std::{alloc::Layout, sync::Arc, fmt::Debug};
 
 use cubing::{
-    alg::Move,
+    alg::{Move, Alg},
     kpuzzle::{
         InvalidAlgError, InvalidDefinitionError, KPuzzle, KPuzzleOrbitName, KTransformation, KPattern,
     },
@@ -157,6 +157,15 @@ impl PackedKPuzzle {
         r#move: &Move,
     ) -> Result<PackedKTransformation, ConversionError> {
         let unpacked_ktransformation = self.data.kpuzzle.transformation_from_move(r#move)?;
+        self.pack_transformation(&unpacked_ktransformation)
+    }
+
+    // TODO: implement this directly
+    pub fn transformation_from_alg(
+        &self,
+        alg: &Alg,
+    ) -> Result<PackedKTransformation, ConversionError> {
+        let unpacked_ktransformation = self.data.kpuzzle.transformation_from_alg(alg)?;
         self.pack_transformation(&unpacked_ktransformation)
     }
 

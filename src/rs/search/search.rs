@@ -1,9 +1,6 @@
-use std::{
-    sync::{
-        mpsc::{channel, Receiver, Sender},
-        Arc,
-    },
-    thread::spawn,
+use std::sync::{
+    mpsc::{channel, Receiver, Sender},
+    Arc,
 };
 
 use cubing::alg::{Alg, AlgNode, Move};
@@ -188,35 +185,34 @@ impl IDFSearch {
         };
 
         let search_pattern = search_pattern.clone();
-        spawn(move || {
-            for remaining_depth in
-                individual_search_options.get_min_depth()..individual_search_options.get_max_depth()
-            {
-                self.api_data.search_logger.write_info("----------------");
-                self.prune_table.extend_for_search_depth(
-                    remaining_depth,
-                    individual_search_data
-                        .recursive_work_tracker
-                        .estimate_next_level_num_recursive_calls(),
-                );
+
+        for remaining_depth in
+            individual_search_options.get_min_depth()..individual_search_options.get_max_depth()
+        {
+            self.api_data.search_logger.write_info("----------------");
+            self.prune_table.extend_for_search_depth(
+                remaining_depth,
                 individual_search_data
                     .recursive_work_tracker
-                    .start_depth(remaining_depth, Some("Starting search…"));
-                let recursion_result = self.recurse(
-                    &mut individual_search_data,
-                    &search_pattern,
-                    CANONICAL_FSM_START_STATE,
-                    remaining_depth,
-                    SolutionMoves(None),
-                );
-                individual_search_data
-                    .recursive_work_tracker
-                    .finish_latest_depth();
-                if let SearchRecursionResult::DoneSearching() = recursion_result {
-                    return;
-                }
+                    .estimate_next_level_num_recursive_calls(),
+            );
+            individual_search_data
+                .recursive_work_tracker
+                .start_depth(remaining_depth, Some("Starting search…"));
+            let recursion_result = self.recurse(
+                &mut individual_search_data,
+                &search_pattern,
+                CANONICAL_FSM_START_STATE,
+                remaining_depth,
+                SolutionMoves(None),
+            );
+            individual_search_data
+                .recursive_work_tracker
+                .finish_latest_depth();
+            if let SearchRecursionResult::DoneSearching() = recursion_result {
+                break;
             }
-        });
+        }
         search_solutions
     }
 

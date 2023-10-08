@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use cubing::{parse_alg, parse_move, puzzles::cube3x3x3_kpuzzle};
 
 use cubing::kpuzzle::{
@@ -54,7 +52,7 @@ fn test_packed(num_moves: usize) {
     ];
 
     let mut buffer = PackedKPatternBuffer::from(packed_kpuzzle.default_pattern());
-    let start = Instant::now();
+    let start = instant::Instant::now();
     for i in 0..num_moves {
         buffer.apply_transformation(&move_transformations[i % 18]);
     }
@@ -75,7 +73,7 @@ fn test_packed(num_moves: usize) {
     let final_pattern = buffer.current().clone();
 
     let mut pattern = packed_kpuzzle.default_pattern();
-    let start = Instant::now();
+    let start = instant::Instant::now();
     for i in 0..num_moves {
         pattern = pattern.apply_transformation(&move_transformations[i % 18]);
     }
@@ -95,7 +93,7 @@ fn test_packed(num_moves: usize) {
     assert_eq!(pattern, final_pattern);
 
     let mut buffer = PackedKPatternBuffer::from(packed_kpuzzle.default_pattern());
-    let start = Instant::now();
+    let start = instant::Instant::now();
     for i in 0..num_moves {
         buffer.apply_transformation(&move_transformations[i % 18]);
         _ = buffer.current().hash();
@@ -116,7 +114,7 @@ fn test_packed(num_moves: usize) {
     assert_eq!(buffer.current(), &final_pattern);
 
     let mut pattern = packed_kpuzzle.default_pattern();
-    let start = Instant::now();
+    let start = instant::Instant::now();
     for i in 0..num_moves {
         pattern = pattern.apply_transformation(&move_transformations[i % 18]);
         // _ = pattern.hash()
@@ -166,7 +164,7 @@ fn test_unpacked(num_moves: usize) {
     ];
 
     let mut pattern = kpuzzle.default_pattern();
-    let start = Instant::now();
+    let start = instant::Instant::now();
     for i in 0..num_moves {
         pattern = pattern.apply_transformation(&move_transformations[i % 18]);
     }

@@ -1,7 +1,4 @@
-use std::{
-    sync::Arc,
-    time::{Duration, Instant},
-};
+use std::{sync::Arc, time::Duration};
 
 use thousands::Separable;
 
@@ -12,7 +9,7 @@ pub(crate) struct RecursiveWorkTracker {
     // TODO: support custom writes intead of sending to stdout/stderr
     latest_depth: usize,
     latest_depth_num_recursive_calls: usize,
-    latest_depth_start_time: Instant,
+    latest_depth_start_time: instant::Instant,
     latest_depth_duration: Duration,
     latest_depth_finished: bool,
 
@@ -28,7 +25,7 @@ impl RecursiveWorkTracker {
             work_name,
             latest_depth: 0,
             previous_depth_num_recursive_calls: 0,
-            latest_depth_start_time: Instant::now(),
+            latest_depth_start_time: instant::Instant::now(),
             latest_depth_duration: Duration::ZERO,
             latest_depth_finished: true,
             latest_depth_num_recursive_calls: 0,
@@ -43,7 +40,7 @@ impl RecursiveWorkTracker {
 
     // Pass `None` as the message to avoid printing anything.
     pub fn start_depth(&mut self, depth: usize, message: Option<&str>) {
-        self.latest_depth_start_time = Instant::now();
+        self.latest_depth_start_time = instant::Instant::now();
 
         self.latest_depth = depth;
         self.latest_depth_duration = Duration::ZERO;
@@ -67,7 +64,7 @@ impl RecursiveWorkTracker {
                 self.latest_depth,
             ));
         }
-        self.latest_depth_duration = Instant::now() - self.latest_depth_start_time;
+        self.latest_depth_duration = instant::Instant::now() - self.latest_depth_start_time;
         let rate = (self.latest_depth_num_recursive_calls as f64
             / (self.latest_depth_duration).as_secs_f64()) as usize;
         self.search_logger.write_info(&format!(

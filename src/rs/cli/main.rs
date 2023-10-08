@@ -5,7 +5,6 @@ use std::{
     path::{Path, PathBuf},
     process::exit,
     sync::Arc,
-    time::Instant,
 };
 
 use commands::canonical_algs::canonical_algs;
@@ -168,7 +167,7 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
         }),
     )?;
 
-    let search_start_time = Instant::now();
+    let search_start_time = instant::Instant::now();
     let solutions = idf_search.search(
         &scramble_pattern,
         IndividualSearchOptions {
@@ -189,7 +188,7 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
     }
     println!(
         "// Entire search duration: {:?}",
-        Instant::now() - search_start_time
+        instant::Instant::now() - search_start_time
     );
 
     Ok(())

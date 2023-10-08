@@ -1,4 +1,4 @@
-use std::{collections::HashMap, mem, time::Instant, vec};
+use std::{collections::HashMap, mem, vec};
 
 use thousands::Separable;
 
@@ -98,7 +98,7 @@ impl GodsAlgorithmSearch {
         let mut current_depth = 0;
         let mut num_patterns_total = 1;
 
-        let start_time = Instant::now();
+        let start_time = instant::Instant::now();
         while !self.table.completed {
             let last_depth_patterns: BulkQueue<QueueItem> = mem::replace(
                 &mut self.bulk_queues[current_depth],
@@ -204,7 +204,7 @@ impl GodsAlgorithmSearch {
             factor_number(num_patterns_total.try_into().unwrap()),
             if num_patterns_total == 1 { "" } else { "s" },
             max_depth,
-            Instant::now() - start_time
+            instant::Instant::now() - start_time
         );
     }
 }

@@ -12,4 +12,4 @@ await init();
 await internal_init();
 
 console.log("Initialized!");
-console.log("Inverted alg test:", search_test());
+console.log("Found alg:", search_test());

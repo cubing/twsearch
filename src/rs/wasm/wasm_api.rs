@@ -37,7 +37,7 @@ pub fn search_test() -> String {
     let target_pattern = packed_kpuzzle.default_pattern();
     let search_pattern = target_pattern.apply_transformation(
         &packed_kpuzzle
-            .transformation_from_alg(&"L' U L F U2 R".parse::<Alg>().unwrap())
+            .transformation_from_alg(&"L' U' L F U2 R".parse::<Alg>().unwrap())
             .expect("Could not create search pattern."),
     );
 

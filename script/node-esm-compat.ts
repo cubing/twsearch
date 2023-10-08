@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
 
-import { readdir, readFile, writeFile } from "fs/promises";
-import { join } from "path";
+import { readFile, writeFile } from "fs/promises";
 
 const filePath = new URL("../dist/wasm/twsearch.js", import.meta.url);
 

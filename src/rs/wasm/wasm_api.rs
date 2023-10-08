@@ -23,7 +23,7 @@ extern "C" {
 }
 
 #[wasm_bindgen]
-pub fn search_test() -> String {
+pub fn search_test(scramble: String) -> String {
     let kpuzzle = cube3x3x3_kpuzzle();
     let packed_kpuzzle =
         PackedKPuzzle::try_from(kpuzzle).expect("Could not create `packed_kpuzzle");
@@ -37,8 +37,8 @@ pub fn search_test() -> String {
     let target_pattern = packed_kpuzzle.default_pattern();
     let search_pattern = target_pattern.apply_transformation(
         &packed_kpuzzle
-            .transformation_from_alg(&"L' U' L F U2 R".parse::<Alg>().unwrap())
-            .expect("Could not create search pattern."),
+            .transformation_from_alg(&scramble.parse::<Alg>().unwrap())
+            .expect("Could not create search pattern from scramble alg."),
     );
 
     let idf_search = IDFSearch::try_new(

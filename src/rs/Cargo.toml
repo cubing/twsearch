@@ -29,13 +29,12 @@ wait-timeout = "0.2.0"
 path = "./mod.rs"
 crate-type = ["cdylib", "rlib"]
 
-[target.'cfg(target_arch = "wasm32")'.lib]
+[package.metadata.wasm-pack.lib]
 path = "./wasm/mod.rs"
 
 [dependencies.getrandom]
 features = ["js"]
 
-[target.'cfg(target_arch = "wasm32")'.profile.release]
+[package.metadata.wasm-pack.profile.release]
 # Tell `rustc` to optimize for small code size.
 opt-level = "s"
-debug = true

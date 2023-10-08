@@ -12,4 +12,4 @@ await init();
 await internal_init();
 
 console.log("Initialized!");
-console.log("Found alg:", search_test());
+console.log("Found alg:", search_test("R U R' U' R' F R2 U' R' U' R U R' F'"));

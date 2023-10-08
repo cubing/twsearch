@@ -1,10 +1,10 @@
 console.log("loading…");
 
-import { internal_init, invert_alg } from "./pkg/twsearch_bg.js";
+import { default as init, invert_alg } from "../../dist/wasm/twsearch.js";
 
 console.log("Initializating WASM");
 
-await internal_init();
+await init();
 
 console.log("Initialized!");
 console.log("Inverted alg test:", invert_alg("R U R'"));

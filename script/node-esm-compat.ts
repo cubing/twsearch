@@ -3,7 +3,7 @@
 import { readdir, readFile, writeFile } from "fs/promises";
 import { join } from "path";
 
-const filePath = new URL("../dist/cubing_rust_wasm.js", import.meta.url);
+const filePath = new URL("../dist/wasm/twsearch.js", import.meta.url);
 
 let modified = false; // For idempotence
 

@@ -1,4 +1,4 @@
-use std::{fmt::Debug, mem::swap};
+use std::{fmt::Debug, hash::BuildHasher, mem::swap};
 
 use super::{
     byte_conversions::{u8_to_usize, usize_to_u8},
@@ -126,7 +126,8 @@ impl PackedKTransformation {
     }
 
     pub fn hash(&self) -> u64 {
-        cityhash::city_hash_64(self.byte_slice())
+        let h = cityhasher::CityHasher::new();
+        h.hash_one(self.byte_slice())
     }
 
     pub fn unpack(&self) -> KTransformation {

@@ -1,7 +1,7 @@
 use std::{
     alloc::{alloc, dealloc},
     fmt::Debug,
-    hash::Hash,
+    hash::{BuildHasher, Hash},
 };
 
 use super::{
@@ -97,7 +97,8 @@ impl PackedOrbitData {
     }
 
     pub fn hash(&self) -> u64 {
-        cityhash::city_hash_64(self.byte_slice())
+        let h = cityhasher::CityHasher::new();
+        h.hash_one(self.byte_slice())
     }
 }
 

@@ -25,6 +25,10 @@ wasm-bindgen = "0.2.87"
 [dev-dependencies]
 wait-timeout = "0.2.0"
 
+[[bin]]
+name = "twsearch"
+path = "./cli/main.rs"
+
 [lib]
 path = "./mod.rs"
 crate-type = ["cdylib", "rlib"]

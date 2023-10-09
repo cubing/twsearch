@@ -34,6 +34,7 @@ fn main() -> Result<(), CommandError> {
         CliCommand::GodsAlgorithm(gods_algorithm_args) => gods_algorithm(gods_algorithm_args),
         CliCommand::TimingTest(_args) => todo!(),
         CliCommand::CanonicalAlgs(args) => canonical_algs(&args),
+        CliCommand::Benchmark(_args) => todo!(),
     }
 }
 

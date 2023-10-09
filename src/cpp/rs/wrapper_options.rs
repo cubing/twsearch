@@ -1,8 +1,8 @@
 use twsearch::_internal::cli::{
-    CanonicalAlgsArgs, CommonSearchArgs, EnableAutoAlwaysNeverValueEnum, GodsAlgorithmArgs,
-    InputDefAndOptionalScrambleFileArgs, MetricArgs, MovesArgs, PerformanceArgs, SchreierSimsArgs,
-    SearchCommandArgs, SearchPersistenceArgs, ServeArgsForIndividualSearch, ServeClientArgs,
-    ServeCommandArgs, TimingTestArgs,
+    BenchmarkArgs, CanonicalAlgsArgs, CommonSearchArgs, EnableAutoAlwaysNeverValueEnum,
+    GodsAlgorithmArgs, InputDefAndOptionalScrambleFileArgs, MetricArgs, MovesArgs, PerformanceArgs,
+    SchreierSimsArgs, SearchCommandArgs, SearchPersistenceArgs, ServeArgsForIndividualSearch,
+    ServeClientArgs, ServeCommandArgs, TimingTestArgs,
 };
 
 use std::{fmt::Display, process::exit};
@@ -216,5 +216,11 @@ impl SetCppArgs for ServeClientArgs {
         if let Some(move_subset) = &self.move_subset {
             set_moves_arg(move_subset);
         }
+    }
+}
+
+impl SetCppArgs for BenchmarkArgs {
+    fn set_cpp_args(&self) {
+        set_boolean_arg("-T", true);
     }
 }

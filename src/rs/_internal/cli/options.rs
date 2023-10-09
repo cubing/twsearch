@@ -46,6 +46,9 @@ pub enum CliCommand {
     // Enumerate canonical algs (move sequences) at iterative depths.
     CanonicalAlgs(CanonicalAlgsArgs),
 
+    /// Run an internal benchmark suite.
+    Benchmark(BenchmarkArgs),
+
     /// Print completions for the given shell.
     Completions(CompletionsArgs),
 }
@@ -310,6 +313,12 @@ pub struct InputDefAndOptionalScrambleFileArgs {
 pub struct StartPatternArgs {
     #[clap(long)]
     pub start_pattern: Option<PathBuf>,
+}
+
+#[derive(Args, Debug)]
+pub struct BenchmarkArgs {
+    #[command(flatten)]
+    pub input_args: InputDefFileOnlyArgs,
 }
 
 fn completions_for_shell(cmd: &mut clap::Command, generator: impl Generator) {

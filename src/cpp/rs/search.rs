@@ -16,9 +16,9 @@ pub fn main_search(
 ) -> Result<(), String> {
     reset_args_from(vec![args_for_reset]);
 
-    let def_file = rewrite_def_file(input_args, target_pattern_file)?;
-    let scramble_file =
-        rewrite_scramble_file(scramble_file, input_args.debug_print_serialized_json)?;
+    let (def_file, _temp1) = rewrite_def_file(input_args, target_pattern_file)?;
+    let (scramble_file, _temp2) =
+        rewrite_scramble_file(scramble_file, input_args.debug_print_serialized_json);
 
     rust_api::rust_api_main_search(&def_file, &scramble_file);
 

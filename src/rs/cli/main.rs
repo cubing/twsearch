@@ -7,6 +7,7 @@ use std::{
     sync::Arc,
 };
 
+use commands::benchmark::benchmark;
 use commands::canonical_algs::canonical_algs;
 use cubing::{
     alg::{Alg, Move},
@@ -34,7 +35,7 @@ fn main() -> Result<(), CommandError> {
         CliCommand::GodsAlgorithm(gods_algorithm_args) => gods_algorithm(gods_algorithm_args),
         CliCommand::TimingTest(_args) => todo!(),
         CliCommand::CanonicalAlgs(args) => canonical_algs(&args),
-        CliCommand::Benchmark(_args) => todo!(),
+        CliCommand::Benchmark(benchmark_args) => benchmark(&benchmark_args),
     }
 }
 

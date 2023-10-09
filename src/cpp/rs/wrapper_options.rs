@@ -222,5 +222,6 @@ impl SetCppArgs for ServeClientArgs {
 impl SetCppArgs for BenchmarkArgs {
     fn set_cpp_args(&self) {
         set_boolean_arg("-T", true);
+        self.performance_args.set_cpp_args();
     }
 }

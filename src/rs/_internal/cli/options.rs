@@ -319,6 +319,9 @@ pub struct StartPatternArgs {
 pub struct BenchmarkArgs {
     #[command(flatten)]
     pub input_args: InputDefFileOnlyArgs,
+
+    #[command(flatten)]
+    pub performance_args: PerformanceArgs,
 }
 
 fn completions_for_shell(cmd: &mut clap::Command, generator: impl Generator) {

@@ -16,6 +16,7 @@ cubing = { version = "0.7.3" }
 derive_more = "0.99.17"
 indicatif = "0.17.6"
 instant = { version = "0.1.12", features = ["wasm-bindgen"] }
+rand = "0.8.5"
 rouille = "3.6.2"
 serde = { version = "1.0.186", features = ["derive", "rc"] }
 serde_json = "1.0.105"

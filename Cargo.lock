@@ -1047,6 +1047,7 @@ dependencies = [
  "getrandom",
  "indicatif",
  "instant",
+ "rand",
  "rouille",
  "serde",
  "serde_json",

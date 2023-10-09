@@ -328,6 +328,12 @@ pub struct BenchmarkArgs {
 
     #[command(flatten)]
     pub memory_args: MemoryArgs,
+
+    #[command(flatten)]
+    pub moves_args: MovesArgs,
+
+    #[command(flatten)]
+    pub metric_args: MetricArgs,
 }
 
 fn completions_for_shell(cmd: &mut clap::Command, generator: impl Generator) {

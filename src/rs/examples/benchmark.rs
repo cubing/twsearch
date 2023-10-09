@@ -13,7 +13,7 @@ const PRINT_FINAL_PATTERN: bool = false;
 
 // Run using: cargo run --release --example benchmark
 fn main() {
-    let num_moves = 10_000_000;
+    let num_moves = 100_000_000;
     println!("Testing custom puzzle…\n--------");
     test_custom_puzzle();
     println!("Running timing tests…\n--------");

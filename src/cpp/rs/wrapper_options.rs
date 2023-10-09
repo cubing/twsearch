@@ -229,5 +229,7 @@ impl SetCppArgs for BenchmarkArgs {
     fn set_cpp_args(&self) {
         set_boolean_arg("-T", true);
         self.memory_args.set_cpp_args();
+        self.moves_args.set_cpp_args();
+        self.metric_args.set_cpp_args();
     }
 }

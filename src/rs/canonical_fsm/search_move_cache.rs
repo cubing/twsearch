@@ -7,12 +7,12 @@ use crate::{PackedKPuzzle, PackedKTransformation, PackedKTransformationBuffer, S
 #[derive(Clone, Debug)]
 pub struct MoveTransformationInfo {
     #[allow(dead_code)] // TODO
-    pub(crate) r#move: Move,
+    pub r#move: Move,
     // move_class: MoveClass, // TODO: do we need this?
-    // pub(crate) metric_turns: i32,
-    pub(crate) transformation: PackedKTransformation,
+    // pub metric_turns: i32,
+    pub transformation: PackedKTransformation,
     #[allow(dead_code)] // TODO
-    pub(crate) inverse_transformation: PackedKTransformation,
+    pub inverse_transformation: PackedKTransformation,
 }
 
 pub type MoveTransformationMultiples = Vec<MoveTransformationInfo>;
@@ -20,8 +20,8 @@ pub type MoveTransformationMultiples = Vec<MoveTransformationInfo>;
 #[derive(Clone, Debug)]
 pub struct SearchMoveCache {
     // TODO: figure out the most reusable abstraction
-    pub(crate) grouped: Vec<MoveTransformationMultiples>,
-    pub(crate) flat: Vec<MoveTransformationInfo>, // TODO: avoid duplicate data
+    pub grouped: Vec<MoveTransformationMultiples>,
+    pub flat: Vec<MoveTransformationInfo>, // TODO: avoid duplicate data
 }
 
 fn transformation_order(

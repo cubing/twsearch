@@ -1,8 +1,8 @@
 use twsearch::_internal::cli::{
     BenchmarkArgs, CanonicalAlgsArgs, CommonSearchArgs, EnableAutoAlwaysNeverValueEnum,
-    GodsAlgorithmArgs, InputDefAndOptionalScrambleFileArgs, MetricArgs, MovesArgs, PerformanceArgs,
-    SchreierSimsArgs, SearchCommandArgs, SearchPersistenceArgs, ServeArgsForIndividualSearch,
-    ServeClientArgs, ServeCommandArgs, TimingTestArgs,
+    GodsAlgorithmArgs, InputDefAndOptionalScrambleFileArgs, MemoryArgs, MetricArgs, MovesArgs,
+    PerformanceArgs, SchreierSimsArgs, SearchCommandArgs, SearchPersistenceArgs,
+    ServeArgsForIndividualSearch, ServeClientArgs, ServeCommandArgs, TimingTestArgs,
 };
 
 use std::{fmt::Display, process::exit};
@@ -114,6 +114,12 @@ impl SetCppArgs for PerformanceArgs {
         println!("Setting twsearch to use {} threads.", num_threads);
         rust_api::rust_api_set_arg(&format!("-t {}", num_threads));
 
+        self.memory_args.set_cpp_args();
+    }
+}
+
+impl SetCppArgs for MemoryArgs {
+    fn set_cpp_args(&self) {
         set_optional_arg("-M", &self.memory_mebibytes);
     }
 }
@@ -222,6 +228,6 @@ impl SetCppArgs for ServeClientArgs {
 impl SetCppArgs for BenchmarkArgs {
     fn set_cpp_args(&self) {
         set_boolean_arg("-T", true);
-        self.performance_args.set_cpp_args();
+        self.memory_args.set_cpp_args();
     }
 }

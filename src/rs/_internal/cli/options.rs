@@ -193,6 +193,12 @@ pub struct PerformanceArgs {
     #[clap(long, help_heading = "Performance"/* , visible_short_alias = 't' */)]
     pub num_threads: Option<usize>,
 
+    #[command(flatten)]
+    pub memory_args: MemoryArgs,
+}
+
+#[derive(Args, Debug)]
+pub struct MemoryArgs {
     /// Memory to use in MiB. See `README.md` for advice on how to tune memory usage.
     #[clap(long = "memory-MiB", help_heading = "Performance"/* , visible_short_alias = 'm' */, id = "MEBIBYTES")]
     pub memory_mebibytes: Option<usize>,
@@ -321,7 +327,7 @@ pub struct BenchmarkArgs {
     pub input_args: InputDefFileOnlyArgs,
 
     #[command(flatten)]
-    pub performance_args: PerformanceArgs,
+    pub memory_args: MemoryArgs,
 }
 
 fn completions_for_shell(cmd: &mut clap::Command, generator: impl Generator) {

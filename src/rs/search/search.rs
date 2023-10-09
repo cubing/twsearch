@@ -7,7 +7,8 @@ use cubing::alg::{Alg, AlgNode, Move};
 
 use crate::{
     CanonicalFSM, CanonicalFSMState, MoveClassIndex, PackedKPattern, PackedKPuzzle, PruneTable,
-    RecursiveWorkTracker, SearchError, SearchLogger, SearchMoveCache, CANONICAL_FSM_START_STATE,
+    RecursiveWorkTracker, SearchError, SearchLogger, SearchMoveCache, _internal::cli::MetricEnum,
+    CANONICAL_FSM_START_STATE,
 };
 
 const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase
@@ -132,8 +133,9 @@ impl IDFSearch {
         target_pattern: PackedKPattern,
         move_list: Vec<Move>,
         search_logger: Arc<SearchLogger>,
+        metric: &MetricEnum,
     ) -> Result<Self, SearchError> {
-        let search_move_cache = SearchMoveCache::try_new(&packed_kpuzzle, &move_list)?;
+        let search_move_cache = SearchMoveCache::try_new(&packed_kpuzzle, &move_list, metric)?;
         let canonical_fsm = CanonicalFSM::try_new(search_move_cache.clone())?; // TODO: avoid a clone
         let api_data = Arc::new(IDFSearchAPIData {
             search_move_cache,

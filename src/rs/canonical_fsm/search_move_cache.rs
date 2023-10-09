@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use cubing::alg::{Move, QuantumMove};
 
-use crate::{PackedKPuzzle, PackedKTransformation, PackedKTransformationBuffer, SearchError};
+use crate::{
+    PackedKPuzzle, PackedKTransformation, PackedKTransformationBuffer, SearchError,
+    _internal::cli::MetricEnum,
+};
 
 #[derive(Clone, Debug)]
 pub struct MoveTransformationInfo {
@@ -47,6 +50,7 @@ impl SearchMoveCache {
     pub fn try_new(
         packed_kpuzzle: &PackedKPuzzle,
         moves: &Vec<Move>,
+        metric: &MetricEnum,
     ) -> Result<SearchMoveCache, SearchError> {
         let identity_transformation =
             packed_kpuzzle
@@ -92,21 +96,47 @@ impl SearchMoveCache {
                     })?;
             let mut move_multiple_transformation =
                 PackedKTransformationBuffer::from(move_transformation.clone());
-            let mut amount: i32 = r#move.amount;
-            while move_multiple_transformation.current != identity_transformation {
-                let mut move_multiple = r#move.clone();
-                move_multiple.amount = canonicalize_center_amount(order, amount);
-                let info = MoveTransformationInfo {
-                    r#move: move_multiple,
-                    // metric_turns: 1, // TODO
-                    transformation: move_multiple_transformation.current.clone(),
-                    inverse_transformation: move_multiple_transformation.current.invert(),
-                };
-                multiples.push(info.clone());
-                flat.push(info);
 
-                amount += r#move.amount;
-                move_multiple_transformation.apply_transformation(&move_transformation);
+            match metric {
+                MetricEnum::Hand => {
+                    let mut amount: i32 = r#move.amount;
+                    while move_multiple_transformation.current != identity_transformation {
+                        let mut move_multiple = r#move.clone();
+                        move_multiple.amount = canonicalize_center_amount(order, amount);
+                        let info = MoveTransformationInfo {
+                            r#move: move_multiple,
+                            // metric_turns: 1, // TODO
+                            transformation: move_multiple_transformation.current.clone(),
+                            inverse_transformation: move_multiple_transformation.current.invert(),
+                        };
+                        multiples.push(info.clone());
+                        flat.push(info);
+
+                        amount += r#move.amount;
+                        move_multiple_transformation.apply_transformation(&move_transformation);
+                    }
+                }
+                MetricEnum::Quantum => {
+                    let info = MoveTransformationInfo {
+                        r#move: r#move.clone(),
+                        // metric_turns: 1, // TODO
+                        transformation: move_multiple_transformation.current.clone(),
+                        inverse_transformation: move_multiple_transformation.current.invert(),
+                    };
+                    let is_self_inverse = info.transformation == info.inverse_transformation;
+                    multiples.push(info.clone());
+                    flat.push(info);
+                    if !is_self_inverse {
+                        let info = MoveTransformationInfo {
+                            r#move: r#move.invert(),
+                            // metric_turns: 1, // TODO
+                            transformation: move_multiple_transformation.current.invert(),
+                            inverse_transformation: move_multiple_transformation.current.clone(),
+                        };
+                        multiples.push(info.clone());
+                        flat.push(info);
+                    }
+                }
             }
             grouped.push(multiples);
         }

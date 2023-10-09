@@ -79,8 +79,12 @@ fn gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), CommandE
         &gods_algorithm_args.start_pattern_args.start_pattern,
         &gods_algorithm_args.moves_args,
     )?;
-    let mut gods_algorithm_table =
-        GodsAlgorithmSearch::try_new(packed_kpuzzle, start_pattern, move_list)?;
+    let mut gods_algorithm_table = GodsAlgorithmSearch::try_new(
+        packed_kpuzzle,
+        start_pattern,
+        move_list,
+        &gods_algorithm_args.metric_args.metric,
+    )?;
     gods_algorithm_table.fill();
     Ok(())
 }
@@ -167,6 +171,7 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
                 .verbosity
                 .unwrap_or(twsearch::_internal::cli::VerbosityLevel::Error),
         }),
+        &search_command_args.metric_args.metric,
     )?;
 
     let search_start_time = instant::Instant::now();

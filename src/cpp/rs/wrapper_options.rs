@@ -169,7 +169,12 @@ impl SetCppArgs for CanonicalAlgsArgs {
 
 impl SetCppArgs for MetricArgs {
     fn set_cpp_args(&self) {
-        set_boolean_arg("-q", self.quantum_metric);
+        match self.metric {
+            twsearch::_internal::cli::MetricEnum::Hand => {}
+            twsearch::_internal::cli::MetricEnum::Quantum => {
+                set_boolean_arg("-q", true);
+            }
+        }
     }
 }
 

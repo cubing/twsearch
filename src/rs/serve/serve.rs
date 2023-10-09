@@ -92,6 +92,7 @@ fn solve_pattern(
         target_pattern,
         move_list.clone(),
         search_logger,
+        &crate::_internal::cli::MetricEnum::Hand, // TODO
     ) {
         Ok(search) => search,
         Err(e) => return Response::text(e.description).with_status_code(400),

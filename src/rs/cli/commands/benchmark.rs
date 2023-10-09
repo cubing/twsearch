@@ -15,10 +15,6 @@ const NUM_RANDOM_MOVES: usize = 65536;
 const NUM_TEST_TRANSFORMATIONS: usize = 100_000_000;
 
 pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
-    if benchmark_args.metric_args.quantum_metric {
-        panic!("Quantum metric benchmark is not implemented in Rust yet");
-    }
-
     let def: KPuzzleDefinition =
         read_to_json(&benchmark_args.input_args.def_file).expect("Invalid definition"); // TODO: automatic error conversion.
     let kpuzzle = KPuzzle::try_new(def).expect("Invalid definition"); // TODO: automatic error conversion.
@@ -34,8 +30,12 @@ pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
             .cloned()
             .collect()
     });
-    let search_move_cache = SearchMoveCache::try_new(&packed_kpuzzle, &move_list)
-        .expect("Could not get search move cache"); // TODO: automatic error conversion.
+    let search_move_cache = SearchMoveCache::try_new(
+        &packed_kpuzzle,
+        &move_list,
+        &benchmark_args.metric_args.metric,
+    )
+    .expect("Could not get search move cache"); // TODO: automatic error conversion.
 
     let mut rng = rand::thread_rng();
     let random_move_list: Vec<&PackedKTransformation> = (0..NUM_RANDOM_MOVES)

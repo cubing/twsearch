@@ -282,10 +282,26 @@ pub struct CanonicalAlgsArgs {
     pub performance_args: PerformanceArgs,
 }
 
-#[derive(Args, Debug)]
+#[derive(Clone, Args, Debug)]
 pub struct MetricArgs {
-    #[clap(long/* , visible_short_alias = 'q' */)]
-    pub quantum_metric: bool,
+    #[clap(long, default_value_t = MetricEnum::Hand)]
+    pub metric: MetricEnum,
+}
+
+#[derive(Debug, Clone, ValueEnum, Serialize, Deserialize)]
+pub enum MetricEnum {
+    Hand,
+    Quantum,
+}
+
+impl Display for MetricEnum {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            MetricEnum::Hand => "hand",
+            MetricEnum::Quantum => "quantum",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 #[derive(Args, Debug)]

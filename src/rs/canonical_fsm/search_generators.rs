@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use cubing::alg::{Move, QuantumMove};
+use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
     PackedKPuzzle, PackedKTransformation, PackedKTransformationBuffer, SearchError,
@@ -51,6 +52,7 @@ impl SearchGenerators {
         packed_kpuzzle: &PackedKPuzzle,
         generators: &Generators,
         metric: &MetricEnum,
+        random_start: bool,
     ) -> Result<SearchGenerators, SearchError> {
         let identity_transformation =
             packed_kpuzzle
@@ -158,6 +160,12 @@ impl SearchGenerators {
             }
             grouped.push(multiples);
         }
+        let mut rng = thread_rng();
+        if random_start {
+            grouped.shuffle(&mut rng);
+            flat.shuffle(&mut rng);
+        }
+
         Ok(Self { grouped, flat })
     }
 }

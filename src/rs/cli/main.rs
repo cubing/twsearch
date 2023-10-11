@@ -165,6 +165,7 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
                 .unwrap_or(twsearch::_internal::cli::VerbosityLevel::Error),
         }),
         &search_command_args.metric_args.metric,
+        search_command_args.search_args.random_start,
     )?;
 
     let search_start_time = instant::Instant::now();

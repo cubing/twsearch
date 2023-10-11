@@ -68,7 +68,8 @@ impl GodsAlgorithmSearch {
         quantum_metric: &MetricEnum,
     ) -> Result<Self, SearchError> {
         let depth_to_patterns = vec![];
-        let search_moves = SearchGenerators::try_new(&packed_kpuzzle, generators, quantum_metric)?;
+        let search_moves =
+            SearchGenerators::try_new(&packed_kpuzzle, generators, quantum_metric, false)?;
         let canonical_fsm = CanonicalFSM::try_new(search_moves.clone())?;
         Ok(Self {
             packed_kpuzzle,

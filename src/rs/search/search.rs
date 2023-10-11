@@ -135,8 +135,10 @@ impl IDFSearch {
         generators: Generators,
         search_logger: Arc<SearchLogger>,
         metric: &MetricEnum,
+        random_start: bool,
     ) -> Result<Self, SearchError> {
-        let search_generators = SearchGenerators::try_new(&packed_kpuzzle, &generators, metric)?;
+        let search_generators =
+            SearchGenerators::try_new(&packed_kpuzzle, &generators, metric, random_start)?;
         let canonical_fsm = CanonicalFSM::try_new(search_generators.clone())?; // TODO: avoid a clone
         let api_data = Arc::new(IDFSearchAPIData {
             search_generators,

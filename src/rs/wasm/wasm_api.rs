@@ -54,6 +54,7 @@ pub fn search_test(scramble: String) -> String {
             verbosity: VerbosityLevel::Info,
         }),
         &crate::_internal::cli::MetricEnum::Hand, // TODO
+        false,
     )
     .expect("Could not construct search.");
 

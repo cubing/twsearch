@@ -98,6 +98,10 @@ fn solve_pattern(
         }),
         search_logger,
         &crate::_internal::cli::MetricEnum::Hand, // TODO
+        match args_for_individual_search.client_args {
+            Some(client_args) => client_args.random_start == Some(true),
+            None => false,
+        },
     ) {
         Ok(search) => search,
         Err(e) => return Response::text(e.description).with_status_code(400),

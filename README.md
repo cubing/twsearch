@@ -291,9 +291,9 @@ To run commands similar to the examples above:
 ```shell
 cargo run --package twsearch-cpp-wrapper -- search samples/main/3x3x3.tws samples/main/tperm.scr
 cargo run --package twsearch-cpp-wrapper -- gods-algorithm samples/main/2x2x2.tws
-cargo run --package twsearch-cpp-wrapper -- search --check-before-solve never --min-num-solutions 20 --moves 2L,2R,U,F samples/main/4x4x4.tws samples/main/flip.scr
-cargo run --package twsearch-cpp-wrapper -- search --moves F,R,D,B,L --scramble-alg U samples/main/3x3x3.tws
-cargo run --package twsearch-cpp-wrapper -- gods-algorithm --quantum-metric --moves U,R,F samples/main/kilominx.tws
+cargo run --package twsearch-cpp-wrapper -- search --check-before-solve never --min-num-solutions 20 --generator-moves 2L,2R,U,F samples/main/4x4x4.tws samples/main/flip.scr
+cargo run --package twsearch-cpp-wrapper -- search --generator-moves F,R,D,B,L --scramble-alg U samples/main/3x3x3.tws
+cargo run --package twsearch-cpp-wrapper -- gods-algorithm --metric quantum --generator-moves U,R,F samples/main/kilominx.tws
 ```
 
 To get completions in your shell, install using one of:

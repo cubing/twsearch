@@ -1,6 +1,6 @@
 use twsearch::_internal::cli::{
     BenchmarkArgs, CanonicalAlgsArgs, CommonSearchArgs, EnableAutoAlwaysNeverValueEnum,
-    GodsAlgorithmArgs, InputDefAndOptionalScrambleFileArgs, MemoryArgs, MetricArgs, MovesArgs,
+    GeneratorArgs, GodsAlgorithmArgs, InputDefAndOptionalScrambleFileArgs, MemoryArgs, MetricArgs,
     PerformanceArgs, SchreierSimsArgs, SearchCommandArgs, SearchPersistenceArgs,
     ServeArgsForIndividualSearch, ServeClientArgs, ServeCommandArgs, TimingTestArgs,
 };
@@ -76,7 +76,7 @@ impl SetCppArgs for SearchCommandArgs {
     fn set_cpp_args(&self) {
         set_optional_arg("-c", &self.min_num_solutions);
 
-        self.moves_args.set_cpp_args();
+        self.generator_args.set_cpp_args();
         self.search_args.set_cpp_args();
         self.search_persistence_args.set_cpp_args();
         self.input_def_and_optional_scramble_file_args
@@ -85,11 +85,18 @@ impl SetCppArgs for SearchCommandArgs {
     }
 }
 
-impl SetCppArgs for MovesArgs {
+impl SetCppArgs for GeneratorArgs {
     fn set_cpp_args(&self) {
-        if let Some(moves_parsed) = &self.moves_parsed() {
-            set_moves_arg(moves_parsed);
-        }
+        let parsed = self.parse();
+        match parsed {
+            twsearch::_internal::cli::Generators::Default => {}
+            twsearch::_internal::cli::Generators::Custom(parsed) => {
+                if !parsed.algs.is_empty() {
+                    panic!("Alg generators are unsupported.")
+                }
+                set_moves_arg(&parsed.moves);
+            }
+        };
     }
 }
 
@@ -137,7 +144,7 @@ impl SetCppArgs for GodsAlgorithmArgs {
             eprintln!("Unsupported flag for twsearch-cpp-wrapper: --start-pattern");
             exit(1);
         }
-        self.moves_args.set_cpp_args();
+        self.generator_args.set_cpp_args();
         set_boolean_arg("-g", true);
         set_boolean_arg("-F", self.force_arrays);
         set_boolean_arg("-H", self.hash_patterns);
@@ -157,8 +164,16 @@ impl SetCppArgs for TimingTestArgs {
 
 impl SetCppArgs for CanonicalAlgsArgs {
     fn set_cpp_args(&self) {
-        if self.moves_args.moves.is_some() {
-            eprintln!("Unsupported flag for `twsearch-cpp-wrapper canonical-algs`: --moves");
+        if self.generator_args.generator_moves.is_some() {
+            eprintln!(
+                "Unsupported flag for `twsearch-cpp-wrapper canonical-algs`: --generator-moves"
+            );
+            exit(1);
+        }
+        if self.generator_args.generator_algs.is_some() {
+            eprintln!(
+                "Unsupported flag for `twsearch-cpp-wrapper canonical-algs`: --generator-algs"
+            );
             exit(1);
         }
         set_boolean_arg("-C", true);
@@ -234,7 +249,7 @@ impl SetCppArgs for BenchmarkArgs {
     fn set_cpp_args(&self) {
         set_boolean_arg("-T", true);
         self.memory_args.set_cpp_args();
-        self.moves_args.set_cpp_args();
+        self.generator_args.set_cpp_args();
         self.metric_args.set_cpp_args();
     }
 }

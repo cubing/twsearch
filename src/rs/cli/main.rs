@@ -10,14 +10,14 @@ use std::{
 use commands::benchmark::benchmark;
 use commands::canonical_algs::canonical_algs;
 use cubing::{
-    alg::{Alg, Move},
+    alg::Alg,
     kpuzzle::{KPattern, KPatternData, KPuzzle, KPuzzleDefinition},
 };
 use io::read_to_json;
 use twsearch::{
     ArgumentError, CommandError, GodsAlgorithmSearch, IDFSearch, PackedKPattern, PackedKPuzzle,
     SearchLogger,
-    _internal::cli::{get_options, CliCommand, GodsAlgorithmArgs, MovesArgs, SearchCommandArgs},
+    _internal::cli::{get_options, CliCommand, GodsAlgorithmArgs, SearchCommandArgs},
     serve, IndividualSearchOptions,
 };
 
@@ -42,8 +42,7 @@ fn main() -> Result<(), CommandError> {
 fn common(
     def_file: &Path,
     start_or_target_pattern_file: &Option<PathBuf>,
-    moves_args: &MovesArgs,
-) -> Result<(PackedKPuzzle, Option<PackedKPattern>, Vec<Move>), CommandError> {
+) -> Result<(PackedKPuzzle, Option<PackedKPattern>), CommandError> {
     let def: Result<KPuzzleDefinition, ArgumentError> = read_to_json(def_file);
     let def = def?;
     let kpuzzle = KPuzzle::try_from(def).map_err(|e| ArgumentError {
@@ -66,23 +65,18 @@ fn common(
         None => None,
     };
 
-    // TODO: automatic multiples.
-    let move_list = moves_args
-        .moves_parsed()
-        .unwrap_or_else(|| kpuzzle.definition().moves.keys().cloned().collect());
-    Ok((packed_kpuzzle, start_or_target_pattern, move_list))
+    Ok((packed_kpuzzle, start_or_target_pattern))
 }
 
 fn gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), CommandError> {
-    let (packed_kpuzzle, start_pattern, move_list) = common(
+    let (packed_kpuzzle, start_pattern) = common(
         &gods_algorithm_args.input_args.def_file,
         &gods_algorithm_args.start_pattern_args.start_pattern,
-        &gods_algorithm_args.moves_args,
     )?;
     let mut gods_algorithm_table = GodsAlgorithmSearch::try_new(
         packed_kpuzzle,
         start_pattern,
-        move_list,
+        &gods_algorithm_args.generator_args.parse(),
         &gods_algorithm_args.metric_args.metric,
     )?;
     gods_algorithm_table.fill();
@@ -90,7 +84,7 @@ fn gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), CommandE
 }
 
 fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
-    let (packed_kpuzzle, target_pattern, move_list) = common(
+    let (packed_kpuzzle, target_pattern) = common(
         &search_command_args
             .input_def_and_optional_scramble_file_args
             .def_file_wrapper_args
@@ -98,7 +92,6 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
         &search_command_args
             .input_def_and_optional_scramble_file_args
             .experimental_target_pattern,
-        &search_command_args.moves_args,
     )?;
     let target_pattern = target_pattern.unwrap_or_else(|| packed_kpuzzle.default_pattern());
     let scramble_pattern: PackedKPattern = match (
@@ -164,7 +157,7 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
     let idf_search = IDFSearch::try_new(
         packed_kpuzzle,
         target_pattern,
-        move_list,
+        search_command_args.generator_args.parse(),
         Arc::new(SearchLogger {
             verbosity: search_command_args
                 .verbosity_args

@@ -4,7 +4,7 @@ use cubing::alg::{Move, QuantumMove};
 
 use crate::{
     PackedKPuzzle, PackedKTransformation, PackedKTransformationBuffer, SearchError,
-    _internal::cli::MetricEnum,
+    _internal::cli::{Generators, MetricEnum},
 };
 
 #[derive(Clone, Debug)]
@@ -21,7 +21,7 @@ pub struct MoveTransformationInfo {
 pub type MoveTransformationMultiples = Vec<MoveTransformationInfo>;
 
 #[derive(Clone, Debug)]
-pub struct SearchMoveCache {
+pub struct SearchGenerators {
     // TODO: figure out the most reusable abstraction
     pub grouped: Vec<MoveTransformationMultiples>,
     pub flat: Vec<MoveTransformationInfo>, // TODO: avoid duplicate data
@@ -46,12 +46,12 @@ fn canonicalize_center_amount(order: i32, amount: i32) -> i32 {
     (amount + offset).rem_euclid(order) - offset
 }
 
-impl SearchMoveCache {
+impl SearchGenerators {
     pub fn try_new(
         packed_kpuzzle: &PackedKPuzzle,
-        moves: &Vec<Move>,
+        generators: &Generators,
         metric: &MetricEnum,
-    ) -> Result<SearchMoveCache, SearchError> {
+    ) -> Result<SearchGenerators, SearchError> {
         let identity_transformation =
             packed_kpuzzle
                 .identity_transformation()
@@ -60,6 +60,24 @@ impl SearchMoveCache {
                 })?;
 
         let mut seen_quantum_moves = HashMap::<QuantumMove, Move>::new();
+
+        let moves: Vec<&Move> = match generators {
+            Generators::Default => {
+                let def = packed_kpuzzle.data.kpuzzle.definition();
+                let moves = def.moves.keys();
+                if let Some(derived_moves) = &def.derived_moves {
+                    moves.chain(derived_moves.keys()).collect()
+                } else {
+                    moves.collect()
+                }
+            }
+            Generators::Custom(generators) => generators.moves.iter().collect(),
+        };
+        if let Generators::Custom(custom_generators) = generators {
+            if !custom_generators.algs.is_empty() {
+                eprintln!("WARNING: Alg generators are not implemented yet. Ignoring.");
+            }
+        };
 
         // TODO: actually calculate GCDs
         let mut grouped = Vec::<MoveTransformationMultiples>::default();

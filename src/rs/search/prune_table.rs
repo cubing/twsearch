@@ -149,7 +149,7 @@ impl PruneTable {
         }
         for (move_class_index, move_transformation_multiples) in immutable_data
             .search_api_data
-            .search_move_cache
+            .search_generators
             .grouped
             .iter()
             .enumerate()

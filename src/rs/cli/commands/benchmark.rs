@@ -1,11 +1,8 @@
-use cubing::{
-    alg::Move,
-    kpuzzle::{KPuzzle, KPuzzleDefinition},
-};
+use cubing::kpuzzle::{KPuzzle, KPuzzleDefinition};
 use instant::Instant;
 use rand::seq::SliceRandom;
 use twsearch::{
-    CommandError, PackedKPatternBuffer, PackedKPuzzle, PackedKTransformation, SearchMoveCache,
+    CommandError, PackedKPatternBuffer, PackedKPuzzle, PackedKTransformation, SearchGenerators,
     _internal::cli::BenchmarkArgs,
 };
 
@@ -20,19 +17,9 @@ pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
     let kpuzzle = KPuzzle::try_new(def).expect("Invalid definition"); // TODO: automatic error conversion.
     let packed_kpuzzle = PackedKPuzzle::try_from(kpuzzle).expect("Invalid definition"); // TODO: automatic error conversion.
 
-    let move_list: Vec<Move> = benchmark_args.moves_args.moves_parsed().unwrap_or_else(|| {
-        packed_kpuzzle
-            .data
-            .kpuzzle
-            .definition()
-            .moves
-            .keys()
-            .cloned()
-            .collect()
-    });
-    let search_move_cache = SearchMoveCache::try_new(
+    let search_generators = SearchGenerators::try_new(
         &packed_kpuzzle,
-        &move_list,
+        &benchmark_args.generator_args.parse(),
         &benchmark_args.metric_args.metric,
     )
     .expect("Could not get search move cache"); // TODO: automatic error conversion.
@@ -40,7 +27,7 @@ pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
     let mut rng = rand::thread_rng();
     let random_move_list: Vec<&PackedKTransformation> = (0..NUM_RANDOM_MOVES)
         .map(|_| {
-            &search_move_cache
+            &search_generators
                 .flat
                 .choose(&mut rng)
                 .unwrap()

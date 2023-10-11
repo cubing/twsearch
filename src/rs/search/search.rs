@@ -7,7 +7,8 @@ use cubing::alg::{Alg, AlgNode, Move};
 
 use crate::{
     CanonicalFSM, CanonicalFSMState, MoveClassIndex, PackedKPattern, PackedKPuzzle, PruneTable,
-    RecursiveWorkTracker, SearchError, SearchLogger, SearchMoveCache, _internal::cli::MetricEnum,
+    RecursiveWorkTracker, SearchError, SearchGenerators, SearchLogger,
+    _internal::cli::{Generators, MetricEnum},
     CANONICAL_FSM_START_STATE,
 };
 
@@ -115,7 +116,7 @@ struct IndividualSearchData {
 }
 
 pub struct IDFSearchAPIData {
-    pub search_move_cache: SearchMoveCache,
+    pub search_generators: SearchGenerators,
     pub canonical_fsm: CanonicalFSM,
     pub packed_kpuzzle: PackedKPuzzle,
     pub target_pattern: PackedKPattern,
@@ -131,14 +132,14 @@ impl IDFSearch {
     pub fn try_new(
         packed_kpuzzle: PackedKPuzzle,
         target_pattern: PackedKPattern,
-        move_list: Vec<Move>,
+        generators: Generators,
         search_logger: Arc<SearchLogger>,
         metric: &MetricEnum,
     ) -> Result<Self, SearchError> {
-        let search_move_cache = SearchMoveCache::try_new(&packed_kpuzzle, &move_list, metric)?;
-        let canonical_fsm = CanonicalFSM::try_new(search_move_cache.clone())?; // TODO: avoid a clone
+        let search_generators = SearchGenerators::try_new(&packed_kpuzzle, &generators, metric)?;
+        let canonical_fsm = CanonicalFSM::try_new(search_generators.clone())?; // TODO: avoid a clone
         let api_data = Arc::new(IDFSearchAPIData {
-            search_move_cache,
+            search_generators,
             canonical_fsm,
             packed_kpuzzle,
             target_pattern,
@@ -262,7 +263,7 @@ impl IDFSearch {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
         for (move_class_index, move_transformation_multiples) in
-            self.api_data.search_move_cache.grouped.iter().enumerate()
+            self.api_data.search_generators.grouped.iter().enumerate()
         {
             let next_state = match self
                 .api_data

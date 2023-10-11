@@ -17,6 +17,8 @@ use crate::CommandError;
 use crate::IDFSearch;
 use crate::IndividualSearchOptions;
 use crate::PackedKPuzzle;
+use crate::_internal::cli::CustomGenerators;
+
 use crate::_internal::cli::ServeArgsForIndividualSearch;
 use crate::_internal::cli::ServeClientArgs;
 use crate::_internal::cli::ServeCommandArgs;
@@ -90,7 +92,10 @@ fn solve_pattern(
     let search = match IDFSearch::try_new(
         packed_kpuzzle,
         target_pattern,
-        move_list.clone(),
+        crate::_internal::cli::Generators::Custom(CustomGenerators {
+            moves: move_list.clone(),
+            algs: vec![],
+        }),
         search_logger,
         &crate::_internal::cli::MetricEnum::Hand, // TODO
     ) {

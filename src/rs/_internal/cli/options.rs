@@ -1,12 +1,13 @@
 use clap::{Args, CommandFactory, Parser, Subcommand, ValueEnum};
 use clap_complete::generator::generate;
 use clap_complete::{Generator, Shell};
-use cubing::alg::Move;
+use cubing::alg::{Alg, Move};
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::io::stdout;
 use std::path::PathBuf;
 use std::process::exit;
+use std::str::FromStr;
 
 /// twsearch-cpp-wrapper — a native Rust wrapper for `twsearch` functionality.
 #[derive(Parser, Debug)]
@@ -88,7 +89,7 @@ pub struct SearchCommandArgs {
     pub min_num_solutions: Option<usize>,
 
     #[command(flatten)]
-    pub moves_args: MovesArgs,
+    pub generator_args: GeneratorArgs,
     #[command(flatten)]
     pub search_args: CommonSearchArgs,
     #[command(flatten)]
@@ -122,32 +123,61 @@ pub struct VerbosityArgs {
     pub verbosity: Option<VerbosityLevel>,
 }
 
-// TODO: generalize this to a "definition modification" args struct?
 #[derive(Args, Debug)]
-pub struct MovesArgs {
+pub struct GeneratorArgs {
     /// A comma-separated list of moves to use. All multiples of these
     /// moves are considered. For example, `--moves U,F,R2` only permits
     /// half-turns on R, and all possible turns on U and F.
     #[clap(long)]
-    pub moves: Option<String>,
+    pub generator_moves: Option<String>,
+
+    /// A comma-separated list of algs to use. All multiples of these
+    /// algs are considered. For example, `--algs U,F,R2` only permits
+    /// half-turns on R, and all possible turns on U and F.
+    #[clap(long)]
+    pub generator_algs: Option<String>,
 }
 
-impl MovesArgs {
-    pub fn moves_parsed(&self) -> Option<Vec<Move>> {
-        self.moves.as_ref().map(|moves| {
-            moves
-                .split(',')
-                .by_ref()
-                .map(|move_str| match move_str.parse::<Move>() {
-                    Ok(r#move) => r#move,
-                    Err(err) => {
-                        eprintln!("Invalid move ({}): {}", err, move_str);
-                        panic!("Exiting due to invalid move.")
-                    }
-                })
-                .collect()
-        })
+pub enum Generators {
+    Default,
+    Custom(CustomGenerators),
+}
+
+pub struct CustomGenerators {
+    pub moves: Vec<Move>,
+    pub algs: Vec<Alg>,
+}
+
+impl GeneratorArgs {
+    pub fn parse(&self) -> Generators {
+        let moves = parse_comma_separated(&self.generator_moves);
+        let algs = parse_comma_separated(&self.generator_algs);
+        match (moves, algs) {
+            (None, None) => Generators::Default,
+            (moves, algs) => Generators::Custom(CustomGenerators {
+                moves: moves.unwrap_or_default(),
+                algs: algs.unwrap_or_default(),
+            }),
+        }
     }
+}
+
+fn parse_comma_separated<T: FromStr<Err = E>, E: Display>(
+    input: &Option<String>,
+) -> Option<Vec<T>> {
+    input.as_ref().map(|moves| {
+        moves
+            .split(',')
+            .by_ref()
+            .map(|move_str| match move_str.parse::<T>() {
+                Ok(r#move) => r#move,
+                Err(err) => {
+                    eprintln!("Invalid move ({}): {}", err, move_str);
+                    panic!("Exiting due to invalid move.")
+                }
+            })
+            .collect()
+    })
 }
 
 #[derive(Args, Debug)]
@@ -235,7 +265,7 @@ pub struct GodsAlgorithmArgs {
     pub start_pattern_args: StartPatternArgs,
 
     #[command(flatten)]
-    pub moves_args: MovesArgs,
+    pub generator_args: GeneratorArgs,
 
     #[clap(long/* , visible_short_alias = 'a' */, default_value_t = 20)]
     pub num_antipodes: u32, // TODO: Change this to `Option<u32>` while still displaying a semantic default value?
@@ -273,7 +303,7 @@ pub struct CanonicalAlgsArgs {
     pub input_args: InputDefFileOnlyArgs,
 
     #[command(flatten)]
-    pub moves_args: MovesArgs,
+    pub generator_args: GeneratorArgs,
 
     #[command(flatten)]
     pub metric_args: MetricArgs,
@@ -346,7 +376,7 @@ pub struct BenchmarkArgs {
     pub memory_args: MemoryArgs,
 
     #[command(flatten)]
-    pub moves_args: MovesArgs,
+    pub generator_args: GeneratorArgs,
 
     #[command(flatten)]
     pub metric_args: MetricArgs,

@@ -8,7 +8,9 @@ use cubing::{
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    utils::set_panic_hook, IDFSearch, PackedKPuzzle, SearchLogger, _internal::cli::VerbosityLevel,
+    utils::set_panic_hook,
+    IDFSearch, PackedKPuzzle, SearchLogger,
+    _internal::cli::{CustomGenerators, VerbosityLevel},
 };
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -28,7 +30,7 @@ pub fn search_test(scramble: String) -> String {
     let packed_kpuzzle =
         PackedKPuzzle::try_from(kpuzzle).expect("Could not create `packed_kpuzzle");
 
-    let move_list = vec![
+    let moves = vec![
         "U".parse::<Move>().expect("Could not parse move"),
         "F".parse::<Move>().expect("Could not parse move"),
         "R".parse::<Move>().expect("Could not parse move"),
@@ -44,7 +46,10 @@ pub fn search_test(scramble: String) -> String {
     let idf_search = IDFSearch::try_new(
         packed_kpuzzle,
         target_pattern.clone(),
-        move_list,
+        crate::_internal::cli::Generators::Custom(CustomGenerators {
+            algs: vec![],
+            moves,
+        }),
         Arc::new(SearchLogger {
             verbosity: VerbosityLevel::Info,
         }),

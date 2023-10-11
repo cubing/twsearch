@@ -2,11 +2,10 @@ use std::{collections::HashMap, mem, vec};
 
 use thousands::Separable;
 
-use cubing::alg::Move;
-
 use crate::{
-    gods_algorithm::factor_number::factor_number, CanonicalFSM, CanonicalFSMState, PackedKPattern,
-    PackedKPuzzle, SearchError, SearchMoveCache, _internal::cli::MetricEnum,
+    gods_algorithm::factor_number::factor_number,
+    CanonicalFSM, CanonicalFSMState, PackedKPattern, PackedKPuzzle, SearchError, SearchGenerators,
+    _internal::cli::{Generators, MetricEnum},
     CANONICAL_FSM_START_STATE,
 };
 
@@ -45,7 +44,7 @@ pub struct GodsAlgorithmSearch {
     // params
     packed_kpuzzle: PackedKPuzzle,
     start_pattern: Option<PackedKPattern>,
-    search_moves: SearchMoveCache,
+    search_moves: SearchGenerators,
 
     // state
     canonical_fsm: CanonicalFSM,
@@ -65,11 +64,11 @@ impl GodsAlgorithmSearch {
     pub fn try_new(
         packed_kpuzzle: PackedKPuzzle,
         start_pattern: Option<PackedKPattern>,
-        move_list: Vec<Move>,
+        generators: &Generators,
         quantum_metric: &MetricEnum,
     ) -> Result<Self, SearchError> {
         let depth_to_patterns = vec![];
-        let search_moves = SearchMoveCache::try_new(&packed_kpuzzle, &move_list, quantum_metric)?;
+        let search_moves = SearchGenerators::try_new(&packed_kpuzzle, generators, quantum_metric)?;
         let canonical_fsm = CanonicalFSM::try_new(search_moves.clone())?;
         Ok(Self {
             packed_kpuzzle,

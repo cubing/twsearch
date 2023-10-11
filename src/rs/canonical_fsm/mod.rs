@@ -2,5 +2,5 @@
 mod canonical_fsm;
 pub use canonical_fsm::*;
 
-mod search_move_cache;
-pub use search_move_cache::*;
+mod search_generators;
+pub use search_generators::*;

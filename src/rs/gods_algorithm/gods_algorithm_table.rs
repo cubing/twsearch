@@ -6,7 +6,8 @@ use cubing::alg::Move;
 
 use crate::{
     gods_algorithm::factor_number::factor_number, CanonicalFSM, CanonicalFSMState, PackedKPattern,
-    PackedKPuzzle, SearchError, SearchMoveCache, CANONICAL_FSM_START_STATE,
+    PackedKPuzzle, SearchError, SearchMoveCache, _internal::cli::MetricEnum,
+    CANONICAL_FSM_START_STATE,
 };
 
 type SearchDepth = usize;
@@ -65,9 +66,10 @@ impl GodsAlgorithmSearch {
         packed_kpuzzle: PackedKPuzzle,
         start_pattern: Option<PackedKPattern>,
         move_list: Vec<Move>,
+        quantum_metric: &MetricEnum,
     ) -> Result<Self, SearchError> {
         let depth_to_patterns = vec![];
-        let search_moves = SearchMoveCache::try_new(&packed_kpuzzle, &move_list)?;
+        let search_moves = SearchMoveCache::try_new(&packed_kpuzzle, &move_list, quantum_metric)?;
         let canonical_fsm = CanonicalFSM::try_new(search_moves.clone())?;
         Ok(Self {
             packed_kpuzzle,

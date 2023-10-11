@@ -16,7 +16,8 @@ pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), CommandError> {
         .moves_parsed()
         .unwrap_or_else(|| kpuzzle.definition().moves.keys().cloned().collect()); // TODO: `Iterator` instead of `Vec`.
 
-    let search_move_cache = SearchMoveCache::try_new(&packed_kpuzzle, &move_seeds)?;
+    let search_move_cache =
+        SearchMoveCache::try_new(&packed_kpuzzle, &move_seeds, &args.metric_args.metric)?;
 
     let canonical_fsm = CanonicalFSM::try_new(search_move_cache).expect("Expected to work!");
     dbg!(canonical_fsm);

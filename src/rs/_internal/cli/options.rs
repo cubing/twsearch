@@ -46,6 +46,9 @@ pub enum CliCommand {
     // Enumerate canonical algs (move sequences) at iterative depths.
     CanonicalAlgs(CanonicalAlgsArgs),
 
+    /// Run an internal benchmark suite.
+    Benchmark(BenchmarkArgs),
+
     /// Print completions for the given shell.
     Completions(CompletionsArgs),
 }
@@ -190,6 +193,12 @@ pub struct PerformanceArgs {
     #[clap(long, help_heading = "Performance"/* , visible_short_alias = 't' */)]
     pub num_threads: Option<usize>,
 
+    #[command(flatten)]
+    pub memory_args: MemoryArgs,
+}
+
+#[derive(Args, Debug)]
+pub struct MemoryArgs {
     /// Memory to use in MiB. See `README.md` for advice on how to tune memory usage.
     #[clap(long = "memory-MiB", help_heading = "Performance"/* , visible_short_alias = 'm' */, id = "MEBIBYTES")]
     pub memory_mebibytes: Option<usize>,
@@ -273,10 +282,26 @@ pub struct CanonicalAlgsArgs {
     pub performance_args: PerformanceArgs,
 }
 
-#[derive(Args, Debug)]
+#[derive(Clone, Args, Debug)]
 pub struct MetricArgs {
-    #[clap(long/* , visible_short_alias = 'q' */)]
-    pub quantum_metric: bool,
+    #[clap(long, default_value_t = MetricEnum::Hand)]
+    pub metric: MetricEnum,
+}
+
+#[derive(Debug, Clone, ValueEnum, Serialize, Deserialize)]
+pub enum MetricEnum {
+    Hand,
+    Quantum,
+}
+
+impl Display for MetricEnum {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let s = match self {
+            MetricEnum::Hand => "hand",
+            MetricEnum::Quantum => "quantum",
+        };
+        write!(f, "{}", s)
+    }
 }
 
 #[derive(Args, Debug)]
@@ -310,6 +335,21 @@ pub struct InputDefAndOptionalScrambleFileArgs {
 pub struct StartPatternArgs {
     #[clap(long)]
     pub start_pattern: Option<PathBuf>,
+}
+
+#[derive(Args, Debug)]
+pub struct BenchmarkArgs {
+    #[command(flatten)]
+    pub input_args: InputDefFileOnlyArgs,
+
+    #[command(flatten)]
+    pub memory_args: MemoryArgs,
+
+    #[command(flatten)]
+    pub moves_args: MovesArgs,
+
+    #[command(flatten)]
+    pub metric_args: MetricArgs,
 }
 
 fn completions_for_shell(cmd: &mut clap::Command, generator: impl Generator) {

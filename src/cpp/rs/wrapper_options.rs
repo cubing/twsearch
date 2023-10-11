@@ -1,8 +1,8 @@
 use twsearch::_internal::cli::{
-    CanonicalAlgsArgs, CommonSearchArgs, EnableAutoAlwaysNeverValueEnum, GodsAlgorithmArgs,
-    InputDefAndOptionalScrambleFileArgs, MetricArgs, MovesArgs, PerformanceArgs, SchreierSimsArgs,
-    SearchCommandArgs, SearchPersistenceArgs, ServeArgsForIndividualSearch, ServeClientArgs,
-    ServeCommandArgs, TimingTestArgs,
+    BenchmarkArgs, CanonicalAlgsArgs, CommonSearchArgs, EnableAutoAlwaysNeverValueEnum,
+    GodsAlgorithmArgs, InputDefAndOptionalScrambleFileArgs, MemoryArgs, MetricArgs, MovesArgs,
+    PerformanceArgs, SchreierSimsArgs, SearchCommandArgs, SearchPersistenceArgs,
+    ServeArgsForIndividualSearch, ServeClientArgs, ServeCommandArgs, TimingTestArgs,
 };
 
 use std::{fmt::Display, process::exit};
@@ -114,6 +114,12 @@ impl SetCppArgs for PerformanceArgs {
         println!("Setting twsearch to use {} threads.", num_threads);
         rust_api::rust_api_set_arg(&format!("-t {}", num_threads));
 
+        self.memory_args.set_cpp_args();
+    }
+}
+
+impl SetCppArgs for MemoryArgs {
+    fn set_cpp_args(&self) {
         set_optional_arg("-M", &self.memory_mebibytes);
     }
 }
@@ -163,7 +169,12 @@ impl SetCppArgs for CanonicalAlgsArgs {
 
 impl SetCppArgs for MetricArgs {
     fn set_cpp_args(&self) {
-        set_boolean_arg("-q", self.quantum_metric);
+        match self.metric {
+            twsearch::_internal::cli::MetricEnum::Hand => {}
+            twsearch::_internal::cli::MetricEnum::Quantum => {
+                set_boolean_arg("-q", true);
+            }
+        }
     }
 }
 
@@ -216,5 +227,14 @@ impl SetCppArgs for ServeClientArgs {
         if let Some(move_subset) = &self.move_subset {
             set_moves_arg(move_subset);
         }
+    }
+}
+
+impl SetCppArgs for BenchmarkArgs {
+    fn set_cpp_args(&self) {
+        set_boolean_arg("-T", true);
+        self.memory_args.set_cpp_args();
+        self.moves_args.set_cpp_args();
+        self.metric_args.set_cpp_args();
     }
 }

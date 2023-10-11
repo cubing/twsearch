@@ -48,6 +48,7 @@ pub fn search_test(scramble: String) -> String {
         Arc::new(SearchLogger {
             verbosity: VerbosityLevel::Info,
         }),
+        &crate::_internal::cli::MetricEnum::Hand, // TODO
     )
     .expect("Could not construct search.");
 

@@ -1,3 +1,5 @@
+mod benchmark;
+mod rewrite;
 mod search;
 mod serialize;
 mod serve;
@@ -5,6 +7,7 @@ mod wrapper_options;
 
 use std::process::exit;
 
+use benchmark::benchmark;
 use search::main_search;
 use serve::serve;
 use twsearch::_internal::cli::{get_options_cpp_wrapper, CliCommand};
@@ -36,15 +39,10 @@ fn main() {
             &search_command_args,
             &search_command_args
                 .input_def_and_optional_scramble_file_args
-                .def_file_wrapper_args
-                .def_file,
+                .def_file_wrapper_args,
             &search_command_args
                 .input_def_and_optional_scramble_file_args
                 .scramble_file,
-            search_command_args
-                .input_def_and_optional_scramble_file_args
-                .def_file_wrapper_args
-                .debug_print_serialized_json,
             &search_command_args
                 .input_def_and_optional_scramble_file_args
                 .experimental_target_pattern,
@@ -56,35 +54,30 @@ fn main() {
 
             main_search(
                 &schreier_sims_command_args,
-                &schreier_sims_command_args.input_args.def_file,
+                &schreier_sims_command_args.input_args,
                 &None,
-                schreier_sims_command_args
-                    .input_args
-                    .debug_print_serialized_json,
                 &None, // TODO: allow custom target pattern?
             )
         }
         CliCommand::GodsAlgorithm(gods_algorithm_args) => main_search(
             &gods_algorithm_args,
-            &gods_algorithm_args.input_args.def_file,
+            &gods_algorithm_args.input_args,
             &None,
-            gods_algorithm_args.input_args.debug_print_serialized_json,
             &None, // TODO: allow custom target pattern?
         ),
         CliCommand::TimingTest(args) => main_search(
             &args,
-            &args.input_args.def_file,
+            &args.input_args,
             &None,
-            args.input_args.debug_print_serialized_json,
             &None, // TODO: allow custom target pattern?
         ),
         CliCommand::CanonicalAlgs(args) => main_search(
             &args,
-            &args.input_args.def_file,
+            &args.input_args,
             &None,
-            args.input_args.debug_print_serialized_json,
             &None, // TODO: allow custom target pattern?
         ),
+        CliCommand::Benchmark(benchmark_args) => benchmark(benchmark_args),
     };
     if let Err(err) = result {
         eprintln!("{}", err);

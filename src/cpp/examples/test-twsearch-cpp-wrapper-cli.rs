@@ -10,7 +10,7 @@ fn json_tests() -> Result<(), ()> {
     test_search_succeeds(
         common::CliCommand::Rust(),
         &[
-            "--moves",
+            "--generator-moves",
             "U,R,F",
             "samples/json/3x3x3/3x3x3-Reid.def.json",
             "samples/json/3x3x3/FRURUF.exact.search-pattern.json",
@@ -25,7 +25,7 @@ fn json_tests() -> Result<(), ()> {
         &[
             "--experimental-target-pattern",
             "samples/json/3x3x3/OLL-or-CLS.target-pattern.json",
-            "--moves",
+            "--generator-moves",
             "U,R,F",
             "samples/json/3x3x3/3x3x3-Reid.def.json",
             "samples/json/3x3x3/FRURUF.search-pattern.json",
@@ -38,7 +38,7 @@ fn json_tests() -> Result<(), ()> {
     test_search_fails(
         common::CliCommand::Rust(),
         &[
-            "--moves",
+            "--generator-moves",
             "U,R,F",
             "samples/json/3x3x3/3x3x3-Reid.def.json",
             "samples/json/3x3x3/FRURUF.search-pattern.json",
@@ -53,7 +53,7 @@ fn json_tests() -> Result<(), ()> {
         &[
             "--experimental-target-pattern",
             "samples/json/3x3x3/OLL-or-CLS.target-pattern.json",
-            "--moves",
+            "--generator-moves",
             "U,R,F",
             "samples/json/3x3x3/3x3x3-Reid.def.json",
             "samples/json/3x3x3/FRURUF.exact.search-pattern.json",
@@ -68,7 +68,7 @@ fn json_tests() -> Result<(), ()> {
         &[
             "--experimental-target-pattern",
             "samples/json/3x3x3/ELS-FR.target-pattern.json",
-            "--moves",
+            "--generator-moves",
             "U,R,r",
             "samples/json/3x3x3/3x3x3-Reid.def.json",
             "samples/json/3x3x3/ELS-E3.search-pattern.json",

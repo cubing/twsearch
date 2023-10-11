@@ -261,13 +261,13 @@ Examples:
 
 ```shell
 cargo run --release -- search \
-  --moves "U,F,R" \
+  --generator-moves "U,F,R" \
   --min-num-solutions 10 \
   samples/json/3x3x3/3x3x3-Reid.def.json \
   samples/json/3x3x3/T-perm.scramble.json
 
 cargo run --release -- gods-algorithm \
-  --moves U,F,R \
+  --generator-moves U,F,R \
   samples/json/2x2x2/2x2x2.kpuzzle.json
 ```
 

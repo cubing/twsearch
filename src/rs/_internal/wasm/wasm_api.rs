@@ -1,17 +1,6 @@
-use std::sync::Arc;
-
-use cubing::{
-    alg::{Alg, Move},
-    parse_alg,
-    puzzles::cube3x3x3_kpuzzle,
-};
 use wasm_bindgen::prelude::*;
 
-use crate::_internal::{
-    cli::{CustomGenerators, VerbosityLevel},
-    utils::set_panic_hook,
-    IDFSearch, IndividualSearchOptions, PackedKPuzzle, SearchLogger,
-};
+use crate::scramble::Event;
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
 // allocator.
@@ -24,57 +13,18 @@ extern "C" {
     fn alert(s: &str);
 }
 
-#[wasm_bindgen]
-pub fn search_test(scramble: String) -> String {
-    let kpuzzle = cube3x3x3_kpuzzle();
-    let packed_kpuzzle =
-        PackedKPuzzle::try_from(kpuzzle).expect("Could not create `packed_kpuzzle");
-
-    let moves = vec![
-        "U".parse::<Move>().expect("Could not parse move"),
-        "F".parse::<Move>().expect("Could not parse move"),
-        "R".parse::<Move>().expect("Could not parse move"),
-    ];
-
-    let target_pattern = packed_kpuzzle.default_pattern();
-    let search_pattern = target_pattern.apply_transformation(
-        &packed_kpuzzle
-            .transformation_from_alg(&scramble.parse::<Alg>().unwrap())
-            .expect("Could not create search pattern from scramble alg."),
-    );
-
-    let mut idf_search = IDFSearch::try_new(
-        packed_kpuzzle,
-        target_pattern.clone(),
-        crate::_internal::cli::Generators::Custom(CustomGenerators {
-            algs: vec![],
-            moves,
-        }),
-        Arc::new(SearchLogger {
-            verbosity: VerbosityLevel::Info,
-        }),
-        &crate::_internal::cli::MetricEnum::Hand, // TODO
-        false,
-        None,
-    )
-    .expect("Could not construct search.");
-
-    match idf_search
-        .search(&search_pattern, IndividualSearchOptions::default())
-        .next()
-    {
-        Some(alg) => alg.to_string(),
-        None => "// no solution?".to_owned(),
-    }
-}
-
-#[wasm_bindgen]
 pub fn internal_init() {
-    set_panic_hook()
+    console_error_panic_hook::set_once();
 }
 
 #[wasm_bindgen]
-pub fn invert_alg(alg_str: String) -> Result<String, String> {
-    let parsed = parse_alg!(alg_str).map_err(|e| e.description)?;
-    Ok(parsed.invert().to_string())
+#[allow(non_snake_case)]
+pub fn wasmRandomScrambleForEvent(event_str: String) -> Result<String, String> {
+    internal_init();
+
+    let event = Event::try_from(event_str.as_str()).map_err(|e| e.description)?;
+    match crate::scramble::random_scramble_for_event(event) {
+        Ok(scramble) => Ok(scramble.to_string()),
+        Err(e) => Err(e.description),
+    }
 }

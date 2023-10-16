@@ -2,14 +2,14 @@ console.log("loading…");
 
 import {
   default as init,
-  internal_init,
-  search_test,
+  wasmRandomScrambleForEvent,
 } from "../dist/wasm/twsearch.js";
 
 console.log("Initializating WASM");
 
 await init();
-await internal_init();
 
 console.log("Initialized!");
-console.log("Found alg:", search_test("R U R' U' R' F R2 U' R' U' R U R' F'"));
+console.log("Found alg:", wasmRandomScrambleForEvent("222"));
+console.log("Found alg:", wasmRandomScrambleForEvent("pyram"));
+console.log("Found alg:", wasmRandomScrambleForEvent("333"));

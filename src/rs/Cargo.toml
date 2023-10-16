@@ -16,6 +16,7 @@ clap_complete = "4.3.2"
 console_error_panic_hook = "0.1.7"
 cubing = { version = "0.7.3" }
 derive_more = "0.99.17"
+getrandom = { version = "0.2.10", features = ["js"] } # We don't use `getrandom` directly (only through `rand`), but this is the easiest way to enable the `js` feature that we need for WASM compat.
 indicatif = "0.17.6"
 instant = { version = "0.1.12", features = ["wasm-bindgen"] }
 rand = "0.8.5"
@@ -38,9 +39,6 @@ crate-type = ["cdylib", "rlib"]
 
 [package.metadata.wasm-pack.lib]
 path = "./wasm/mod.rs"
-
-[dependencies.getrandom]
-features = ["js"]
 
 [package.metadata.wasm-pack.profile.release]
 # Tell `rustc` to optimize for small code size.

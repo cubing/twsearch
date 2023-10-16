@@ -1,0 +1,21 @@
+[package]
+name = "twsearch-ffi"
+version = "0.6.1"
+edition = "2021"
+description = "Twizzle Search FFI — C FFI bindings for twsearch"
+license = "MPL-2.0"
+
+[features]
+default = []
+
+[dependencies]
+twsearch = { path = "../rs", version = "0.6.1" }
+
+[lib]
+path = "./lib.rs"
+crate-type = ["cdylib"]
+
+[dev-dependencies]
+cubing = "0.7.3"
+libloading = "0.8.1"
+test-cdylib = "1.1.0"

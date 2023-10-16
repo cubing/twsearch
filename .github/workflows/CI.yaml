@@ -52,8 +52,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: Swatinem/rust-cache@v2
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
       - run: make build-rust
       - run: make lint-rust
       - run: make test-twsearch-cpp-wrapper-cli
       - run: make test-rust
+      - run: make test-rust-ffi
       - run: make benchmark-rust

@@ -4,6 +4,7 @@ resolver = "2"
 members = [
   "src/cpp",
   "src/rs",
+  "src/rs-ffi",
 ]
 default-members = [
   "src/rs"

@@ -1,6 +1,7 @@
 use crate::_internal::SearchError;
 
 // TODO: move this to another export location.
+#[derive(Debug)]
 pub enum Event {
     Cube2x2x2,
     Cube3x3x3,

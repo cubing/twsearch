@@ -141,6 +141,7 @@ impl IDFSearch {
         search_logger: Arc<SearchLogger>,
         metric: &MetricEnum,
         random_start: bool,
+        min_size: Option<usize>,
     ) -> Result<Self, PuzzleError> {
         let search_generators =
             SearchGenerators::try_new(&packed_kpuzzle, &generators, metric, random_start)?;
@@ -153,7 +154,7 @@ impl IDFSearch {
             search_logger: search_logger.clone(),
         });
 
-        let prune_table = PruneTable::new(api_data.clone(), search_logger); // TODO: make the prune table reusable across searches.
+        let prune_table = PruneTable::new(api_data.clone(), search_logger, min_size); // TODO: make the prune table reusable across searches.
         Ok(Self {
             api_data,
             prune_table,

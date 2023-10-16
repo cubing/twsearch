@@ -55,6 +55,7 @@ pub fn search_test(scramble: String) -> String {
         }),
         &crate::_internal::cli::MetricEnum::Hand, // TODO
         false,
+        None,
     )
     .expect("Could not construct search.");
 

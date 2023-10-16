@@ -110,6 +110,7 @@ fn solve_pattern(
             Some(client_args) => client_args.random_start == Some(true),
             None => false,
         },
+        None,
     ) {
         Ok(search) => search,
         Err(e) => return Response::text(e.description).with_status_code(400),

@@ -10,6 +10,7 @@ pub(crate) fn idfs_with_target_pattern(
     packed_kpuzzle: &PackedKPuzzle,
     generators: Generators,
     target_pattern: PackedKPattern,
+    min_size: Option<usize>,
 ) -> IDFSearch {
     IDFSearch::try_new(
         packed_kpuzzle.clone(),
@@ -20,12 +21,22 @@ pub(crate) fn idfs_with_target_pattern(
         }),
         &crate::_internal::MetricEnum::Hand,
         true,
+        min_size,
     )
     .unwrap()
 }
 
-pub(crate) fn basic_idfs(packed_kpuzzle: &PackedKPuzzle, generators: Generators) -> IDFSearch {
-    idfs_with_target_pattern(packed_kpuzzle, generators, packed_kpuzzle.default_pattern())
+pub(crate) fn basic_idfs(
+    packed_kpuzzle: &PackedKPuzzle,
+    generators: Generators,
+    min_size: Option<usize>,
+) -> IDFSearch {
+    idfs_with_target_pattern(
+        packed_kpuzzle,
+        generators,
+        packed_kpuzzle.default_pattern(),
+        min_size,
+    )
 }
 
 pub(crate) fn filtered_search(
@@ -37,6 +48,7 @@ pub(crate) fn filtered_search(
     let mut idfs = basic_idfs(
         &scramble_pattern.packed_orbit_data.packed_kpuzzle,
         generators,
+        None,
     );
     if idfs
         .search(

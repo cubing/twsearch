@@ -1106,6 +1106,7 @@ dependencies = [
  "getrandom",
  "indicatif",
  "instant",
+ "lazy_static",
  "rand",
  "rouille",
  "serde",

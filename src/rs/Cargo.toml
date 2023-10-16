@@ -19,6 +19,7 @@ derive_more = "0.99.17"
 getrandom = { version = "0.2.10", features = ["js"] } # We don't use `getrandom` directly (only through `rand`), but this is the easiest way to enable the `js` feature that we need for WASM compat.
 indicatif = "0.17.6"
 instant = { version = "0.1.12", features = ["wasm-bindgen"] }
+lazy_static = "1.4.0"
 rand = "0.8.5"
 rouille = "3.6.2"
 serde = { version = "1.0.186", features = ["derive", "rc"] }

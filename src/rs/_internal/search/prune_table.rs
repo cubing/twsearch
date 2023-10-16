@@ -15,12 +15,13 @@ type PruneTableEntryType = u8;
 const UNINITIALIZED_DEPTH: PruneTableEntryType = 0;
 const MAX_PRUNE_TABLE_DEPTH: PruneTableEntryType = PruneTableEntryType::MAX - 1;
 
-const MIN_PRUNE_TABLE_SIZE: usize = 1 << 20;
+const DEFAULT_MIN_PRUNE_TABLE_SIZE: usize = 1 << 20;
 
 struct PruneTableImmutableData {
     search_api_data: Arc<IDFSearchAPIData>,
 }
 struct PruneTableMutableData {
+    min_size: usize,               // power of 2
     prune_table_size: usize,       // power of 2
     prune_table_index_mask: usize, // prune_table_size - 1
     current_pruning_depth: PruneTableEntryType,
@@ -59,14 +60,23 @@ pub struct PruneTable {
 }
 
 impl PruneTable {
-    pub fn new(search_api_data: Arc<IDFSearchAPIData>, search_logger: Arc<SearchLogger>) -> Self {
+    pub fn new(
+        search_api_data: Arc<IDFSearchAPIData>,
+        search_logger: Arc<SearchLogger>,
+        min_size: Option<usize>,
+    ) -> Self {
+        let min_size = match min_size {
+            Some(min_size) => min_size.next_power_of_two(),
+            None => DEFAULT_MIN_PRUNE_TABLE_SIZE,
+        };
         let mut prune_table = Self {
             immutable: PruneTableImmutableData { search_api_data },
             mutable: PruneTableMutableData {
-                prune_table_size: MIN_PRUNE_TABLE_SIZE,
-                prune_table_index_mask: MIN_PRUNE_TABLE_SIZE - 1,
+                min_size,
+                prune_table_size: min_size,
+                prune_table_index_mask: min_size - 1,
                 current_pruning_depth: 0,
-                pattern_hash_to_depth: vec![0; MIN_PRUNE_TABLE_SIZE],
+                pattern_hash_to_depth: vec![0; min_size],
                 recursive_work_tracker: RecursiveWorkTracker::new(
                     "Prune table".to_owned(),
                     search_logger.clone(),
@@ -94,11 +104,12 @@ impl PruneTable {
 
         let new_prune_table_size = usize::max(
             usize::next_power_of_two(approximate_num_entries),
-            MIN_PRUNE_TABLE_SIZE,
+            self.mutable.min_size,
         );
         match new_prune_table_size.cmp(&self.mutable.prune_table_size) {
             std::cmp::Ordering::Less => {
                 // Don't shrink the prune table.
+                return;
             }
             std::cmp::Ordering::Equal => {
                 if new_pruning_depth <= self.mutable.current_pruning_depth {

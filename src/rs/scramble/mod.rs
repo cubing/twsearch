@@ -1,3 +1,6 @@
+mod randomize;
+mod scramble_search;
+
 mod event;
 pub use event::Event;
 

@@ -1,0 +1,67 @@
+{
+  "name": "pyraminx",
+  "orbits": [
+    {
+      "orbitName": "EDGES",
+      "numPieces": 6,
+      "numOrientations": 2
+    },
+    {
+      "orbitName": "CORNERS",
+      "numPieces": 4,
+      "numOrientations": 3
+    }
+  ],
+  "defaultPattern": {
+    "EDGES": {
+      "pieces": [0, 1, 2, 3, 4, 5],
+      "orientation": [0, 0, 0, 0, 0, 0]
+    },
+    "CORNERS": {
+      "pieces": [0, 1, 2, 3],
+      "orientation": [0, 0, 0, 0]
+    }
+  },
+  "moves": {
+    "R": {
+      "EDGES": {
+        "permutation": [0, 1, 3, 5, 4, 2],
+        "orientationDelta": [0, 0, 0, 0, 0, 0]
+      },
+      "CORNERS": {
+        "permutation": [0, 1, 2, 3],
+        "orientationDelta": [0, 0, 1, 0]
+      }
+    },
+    "L": {
+      "EDGES": {
+        "permutation": [4, 1, 0, 3, 2, 5],
+        "orientationDelta": [0, 0, 1, 0, 1, 0]
+      },
+      "CORNERS": {
+        "permutation": [0, 1, 2, 3],
+        "orientationDelta": [0, 0, 0, 1]
+      }
+    },
+    "B": {
+      "EDGES": {
+        "permutation": [0, 3, 2, 4, 1, 5],
+        "orientationDelta": [0, 1, 0, 0, 1, 0]
+      },
+      "CORNERS": {
+        "permutation": [0, 1, 2, 3],
+        "orientationDelta": [0, 1, 0, 0]
+      }
+    },
+    "U": {
+      "EDGES": {
+        "permutation": [5, 0, 2, 3, 4, 1],
+        "orientationDelta": [0, 0, 0, 0, 0, 0]
+      },
+      "CORNERS": {
+        "permutation": [0, 1, 2, 3],
+        "orientationDelta": [1, 0, 0, 0]
+      }
+    }
+  }
+}

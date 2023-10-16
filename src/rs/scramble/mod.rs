@@ -1,3 +1,4 @@
+mod definitions;
 mod randomize;
 mod scramble_search;
 

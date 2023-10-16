@@ -17,7 +17,7 @@ const {
   },
 });
 
-for (const eventID of ["222", "pyram"]) {
+for (const eventID of ["222", "pyram", "333"]) {
   console.log(`// ${eventID}`);
   console.log(ffi_random_scramble_for_event(new TextEncoder().encode(eventID)));
 }

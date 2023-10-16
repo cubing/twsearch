@@ -139,11 +139,13 @@ pub struct GeneratorArgs {
     pub generator_algs: Option<String>,
 }
 
+#[derive(Clone, Debug)]
 pub enum Generators {
     Default,
     Custom(CustomGenerators),
 }
 
+#[derive(Clone, Debug)]
 pub struct CustomGenerators {
     pub moves: Vec<Move>,
     pub algs: Vec<Alg>,

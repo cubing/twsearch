@@ -1,3 +1,6 @@
+mod errors;
+pub use errors::*;
+
 mod packed_kpuzzle;
 pub use packed_kpuzzle::{ConversionError, PackedKPuzzle, PackedKPuzzleOrbitInfo};
 

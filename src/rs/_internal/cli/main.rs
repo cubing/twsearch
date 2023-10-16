@@ -54,7 +54,14 @@ fn common(
                 kpuzzle: kpuzzle.clone(),
                 kpattern_data: Arc::new(kpattern_data),
             };
-            Some(packed_kpuzzle.pack_pattern(kpattern))
+            Some(match packed_kpuzzle.try_pack_pattern(kpattern) {
+                Ok(start_or_target_pattern) => start_or_target_pattern,
+                Err(e) => {
+                    return Err(CommandError::ArgumentError(ArgumentError {
+                        description: e.to_string(),
+                    }))
+                }
+            })
         }
         None => None,
     };
@@ -113,7 +120,14 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
                 kpuzzle: packed_kpuzzle.data.kpuzzle.clone(),
                 kpattern_data: Arc::new(kpattern_data),
             };
-            packed_kpuzzle.pack_pattern(unpacked_kpattern)
+            match packed_kpuzzle.try_pack_pattern(unpacked_kpattern) {
+                Ok(scramble_pattern) => scramble_pattern,
+                Err(e) => {
+                    return Err(CommandError::ArgumentError(ArgumentError {
+                        description: e.to_string(),
+                    }))
+                }
+            }
         }
         (Some(scramble_alg), None) => {
             let alg = match scramble_alg.parse::<Alg>() {

@@ -1,17 +1,21 @@
-use std::sync::OnceLock;
-
-use cubing::{
-    alg::{Alg, AlgNode, Move},
-    puzzles::cube2x2x2_kpuzzle,
-};
+use cubing::alg::{Alg, AlgNode, Move};
 use rand::{thread_rng, Rng};
 
-use crate::_internal::{CustomGenerators, Generators, PackedKPuzzle, PuzzleError};
+use crate::{
+    _internal::{CustomGenerators, Generators, IndividualSearchOptions, PuzzleError},
+    scramble::{
+        randomize::{basic_parity, BasicParity},
+        scramble_search::{basic_idfs, idfs_with_target_pattern},
+    },
+};
 
 use super::{
-    definitions::tetraminx_kpuzzle,
+    definitions::{
+        cube2x2x2_packed_kpuzzle, cube3x3x3_centerless_packed_kpuzzle, cube3x3x3_g1_target_pattern,
+        tetraminx_packed_kpuzzle,
+    },
     randomize::{randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint},
-    scramble_search::scramble_search,
+    scramble_search::filtered_search,
     Event,
 };
 
@@ -20,15 +24,15 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
         description: format!("Scrambles are not implement for this event yet: {}", event),
     });
     match event {
-        Event::Cube3x3x3Speedsolving => err,
-        Event::Cube2x2x2Speedsolving => Ok(scramble_222()),
+        Event::Cube3x3x3Speedsolving => Ok(scramble_3x3x3()),
+        Event::Cube2x2x2Speedsolving => Ok(scramble_2x2x2()),
         Event::Cube4x4x4Speedsolving => err,
         Event::Cube5x5x5Speedsolving => err,
         Event::Cube6x6x6Speedsolving => err,
         Event::Cube7x7x7Speedsolving => err,
         Event::Cube3x3x3Blindfolded => err,
         Event::Cube3x3x3FewestMoves => err,
-        Event::Cube3x3x3OneHanded => err,
+        Event::Cube3x3x3OneHanded => Ok(scramble_3x3x3()),
         Event::ClockSpeedsolving => err,
         Event::MegaminxSpeedsolving => err,
         Event::PyraminxSpeedsolving => Ok(scramble_pyraminx()),
@@ -58,11 +62,8 @@ fn generators_from_vec_str(move_str_list: Vec<&str>) -> Generators {
     })
 }
 
-static CUBE222_KPUZZLE_CELL: OnceLock<PackedKPuzzle> = OnceLock::new();
-pub fn scramble_222() -> Alg {
-    let packed_kpuzzle =
-        CUBE222_KPUZZLE_CELL.get_or_init(|| PackedKPuzzle::try_from(cube2x2x2_kpuzzle()).unwrap());
-
+pub fn scramble_2x2x2() -> Alg {
+    let packed_kpuzzle = cube2x2x2_packed_kpuzzle();
     loop {
         let mut scramble_pattern = packed_kpuzzle.default_pattern();
         let orbit_info = &packed_kpuzzle.data.orbit_iteration_info[0];
@@ -73,17 +74,134 @@ pub fn scramble_222() -> Alg {
             OrbitOrientationConstraint::OrientationsMustSumToZero,
         );
         let generators = generators_from_vec_str(vec!["U", "L", "F", "R"]);
-        if let Some(scramble) = scramble_search(&scramble_pattern, generators, 4, 11) {
+        if let Some(scramble) = filtered_search(&scramble_pattern, generators, Some(4), Some(11)) {
             return scramble;
         }
     }
 }
 
-static TETRAMINX_KPUZZLE_CELL: OnceLock<PackedKPuzzle> = OnceLock::new();
-pub fn scramble_pyraminx() -> Alg {
-    let packed_kpuzzle = TETRAMINX_KPUZZLE_CELL
-        .get_or_init(|| PackedKPuzzle::try_from(tetraminx_kpuzzle()).unwrap());
+pub fn scramble_3x3x3() -> Alg {
+    let packed_kpuzzle = cube3x3x3_centerless_packed_kpuzzle();
+    let g1_target_pattern = cube3x3x3_g1_target_pattern();
+    loop {
+        let scramble_pattern = {
+            let mut scramble_pattern = packed_kpuzzle.default_pattern();
+            let orbit_info = &packed_kpuzzle.data.orbit_iteration_info[0];
+            assert_eq!(orbit_info.name.0, "EDGES");
+            let edge_order = randomize_orbit_naive(
+                &mut scramble_pattern,
+                orbit_info,
+                OrbitPermutationConstraint::AnyPermutation,
+                OrbitOrientationConstraint::OrientationsMustSumToZero,
+            );
+            let each_orbit_parity = basic_parity(&edge_order);
+            let orbit_info = &packed_kpuzzle.data.orbit_iteration_info[1];
+            assert_eq!(orbit_info.name.0, "CORNERS");
+            randomize_orbit_naive(
+                &mut scramble_pattern,
+                orbit_info,
+                match each_orbit_parity {
+                    BasicParity::Even => OrbitPermutationConstraint::SingleOrbitEvenParity,
+                    BasicParity::Odd => OrbitPermutationConstraint::SingleOrbitOddParity,
+                },
+                OrbitOrientationConstraint::OrientationsMustSumToZero,
+            );
+            scramble_pattern
+        };
+        let generators = generators_from_vec_str(vec!["U", "L", "F", "R", "B", "D"]);
 
+        {
+            // TODO: cache across runs
+            let mut filtering_idfs = basic_idfs(&packed_kpuzzle, generators.clone());
+            if filtering_idfs
+                .search(
+                    &scramble_pattern,
+                    IndividualSearchOptions {
+                        min_num_solutions: Some(1),
+                        min_depth: Some(0),
+                        max_depth: Some(2),
+                    },
+                )
+                .next()
+                .is_some()
+            {
+                continue;
+            }
+        }
+
+        let phase1_alg = {
+            let phase1_search_pattern = g1_target_pattern.clone();
+            for orbit_info in &packed_kpuzzle.data.orbit_iteration_info {
+                for i in 0..orbit_info.num_pieces {
+                    let old_piece = scramble_pattern
+                        .packed_orbit_data
+                        .get_packed_piece_or_permutation(orbit_info, i);
+                    let old_piece_mapped = g1_target_pattern
+                        .packed_orbit_data
+                        .get_packed_piece_or_permutation(orbit_info, old_piece as usize);
+                    phase1_search_pattern
+                        .packed_orbit_data
+                        .set_packed_piece_or_permutation(orbit_info, i, old_piece_mapped);
+                    let ori = scramble_pattern
+                        .packed_orbit_data
+                        .get_packed_orientation(orbit_info, i);
+                    phase1_search_pattern
+                        .packed_orbit_data
+                        .set_packed_orientation(orbit_info, i, ori);
+                }
+            }
+
+            // TODO: cache across runs
+            let mut phase1_idfs = idfs_with_target_pattern(
+                &packed_kpuzzle,
+                generators.clone(),
+                g1_target_pattern.clone(),
+            );
+            phase1_idfs
+                .search(
+                    &phase1_search_pattern,
+                    IndividualSearchOptions {
+                        min_num_solutions: Some(1),
+                        min_depth: None,
+                        max_depth: None,
+                    },
+                )
+                .next()
+                .unwrap()
+        };
+
+        let mut phase2_alg = {
+            let phase2_search_pattern = scramble_pattern.apply_transformation(
+                &packed_kpuzzle.transformation_from_alg(&phase1_alg).unwrap(),
+            );
+            let phase2_generators = generators_from_vec_str(vec!["U", "L2", "F2", "R2", "B2", "D"]);
+
+            let mut phase2_idfs = idfs_with_target_pattern(
+                &packed_kpuzzle,
+                phase2_generators.clone(),
+                packed_kpuzzle.default_pattern(),
+            );
+            phase2_idfs
+                .search(
+                    &phase2_search_pattern,
+                    IndividualSearchOptions {
+                        min_num_solutions: Some(1),
+                        min_depth: None,
+                        max_depth: None,
+                    },
+                )
+                .next()
+                .unwrap()
+        };
+
+        let mut nodes = phase1_alg.nodes;
+        nodes.append(&mut phase2_alg.nodes);
+        return Alg { nodes };
+    }
+}
+
+pub fn scramble_pyraminx() -> Alg {
+    let packed_kpuzzle = tetraminx_packed_kpuzzle();
     loop {
         let mut scramble_pattern = packed_kpuzzle.default_pattern();
 
@@ -109,7 +227,7 @@ pub fn scramble_pyraminx() -> Alg {
 
         let mut rng = thread_rng();
         let generators = generators_from_vec_str(vec!["U", "L", "R", "B"]); // TODO: cache
-        if let Some(scramble) = scramble_search(&scramble_pattern, generators, 4, 11) {
+        if let Some(scramble) = filtered_search(&scramble_pattern, generators, Some(4), Some(11)) {
             let mut alg_nodes: Vec<AlgNode> = vec![];
             for tip_move in tip_moves {
                 let amount = rng.gen_range(-1..2);

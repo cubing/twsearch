@@ -9,7 +9,7 @@ pub struct EventError {
 }
 
 // TODO: move this to another export location.
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Event {
     Cube3x3x3Speedsolving,
     Cube2x2x2Speedsolving,

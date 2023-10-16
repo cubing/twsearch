@@ -4,7 +4,7 @@ use super::{
     byte_conversions::{u8_to_usize, PackedOrientationWithMod},
     packed_kpuzzle::PackedKPuzzleOrbitInfo,
     packed_orbit_data::PackedOrbitData,
-    PackedKPuzzle, PackedKTransformation,
+    ConversionError, PackedKPuzzle, PackedKTransformation,
 };
 
 use cubing::kpuzzle::KPuzzle;
@@ -20,6 +20,28 @@ impl PackedKPattern {
         Self {
             packed_orbit_data: PackedOrbitData::new_with_uninitialized_bytes(packed_kpuzzle),
         }
+    }
+
+    pub fn try_from_json(
+        packed_kpuzzle: &PackedKPuzzle,
+        json_bytes: &[u8],
+    ) -> Result<Self, ConversionError> {
+        // TODO: implement this directly
+        let kpattern_data: KPatternData = match serde_json::from_slice(json_bytes) {
+            Ok(kpattern_data) => kpattern_data,
+            Err(e) => {
+                return Err(ConversionError::InvalidPatternData(
+                    super::InvalidPatternDataError {
+                        description: format!("Could not parse JSON for KPattern data: {}", e),
+                    },
+                ))
+            }
+        };
+        let kpattern = KPattern {
+            kpuzzle: packed_kpuzzle.data.kpuzzle.clone(),
+            kpattern_data: Arc::new(kpattern_data),
+        };
+        packed_kpuzzle.try_pack_pattern(kpattern)
     }
 
     pub fn get_piece_or_permutation(&self, orbit_info: &PackedKPuzzleOrbitInfo, i: usize) -> u8 {
@@ -230,7 +252,9 @@ mod tests {
             kpuzzle,
             kpattern_data: Arc::new(start_pattern_data),
         };
-        let packed_start_pattern = packed_kpuzzle.pack_pattern(start_pattern.clone());
+        let packed_start_pattern = packed_kpuzzle
+            .try_pack_pattern(start_pattern.clone())
+            .unwrap();
 
         let t1 = from_move("R")?;
 
@@ -245,11 +269,12 @@ mod tests {
         assert_eq!(
             packed_start_pattern.apply_transformation(&t1).byte_slice(),
             packed_kpuzzle
-                .pack_pattern(
+                .try_pack_pattern(
                     start_pattern
                         .apply_move(&parse_move!("R").unwrap())
                         .unwrap()
                 )
+                .unwrap()
                 .byte_slice()
         );
 

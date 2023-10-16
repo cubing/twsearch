@@ -4,7 +4,7 @@ pub struct PuzzleError {
     pub description: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Puzzle {
     Cube3x3x3,
     Cube2x2x2,

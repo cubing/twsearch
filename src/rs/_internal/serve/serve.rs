@@ -66,10 +66,15 @@ fn solve_pattern(
         Err(e) => return Response::text(e.description).with_status_code(400),
     };
     let target_pattern = match kpattern_solve.start_pattern {
-        Some(kpattern_data) => packed_kpuzzle.pack_pattern(KPattern {
-            kpuzzle: kpuzzle.clone(),
-            kpattern_data: Arc::new(kpattern_data),
-        }),
+        Some(kpattern_data) => {
+            match packed_kpuzzle.try_pack_pattern(KPattern {
+                kpuzzle: kpuzzle.clone(),
+                kpattern_data: Arc::new(kpattern_data),
+            }) {
+                Ok(target_pattern) => target_pattern,
+                Err(e) => return Response::text(e.to_string()).with_status_code(400),
+            }
+        }
         None => packed_kpuzzle.default_pattern(),
     };
     let search_logger = Arc::new(crate::_internal::SearchLogger {
@@ -85,10 +90,13 @@ fn solve_pattern(
     };
     let move_list =
         move_subset.unwrap_or_else(|| kpuzzle.definition().moves.keys().cloned().collect());
-    let search_pattern = packed_kpuzzle.pack_pattern(KPattern {
+    let search_pattern = match packed_kpuzzle.try_pack_pattern(KPattern {
         kpuzzle,
         kpattern_data: Arc::new(kpattern_solve.pattern),
-    });
+    }) {
+        Ok(search_pattern) => search_pattern,
+        Err(e) => return Response::text(e.to_string()).with_status_code(400),
+    };
     let mut search = match IDFSearch::try_new(
         packed_kpuzzle,
         target_pattern,

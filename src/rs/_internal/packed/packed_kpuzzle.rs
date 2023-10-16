@@ -9,7 +9,7 @@ use cubing::{
 
 use crate::_internal::PackedKPattern;
 
-use super::{byte_conversions::{usize_to_u8, u8_to_usize},  PackedKTransformation, orientation_packer::{OrientationPacker, OrientationWithMod}};
+use super::{byte_conversions::{usize_to_u8, u8_to_usize},  PackedKTransformation, orientation_packer::{OrientationPacker, OrientationWithMod}, InvalidPatternDataError};
 
 // TODO: allow certain values over 107?
 const MAX_NUM_ORIENTATIONS_INCLUSIVE: usize = 107;
@@ -92,22 +92,31 @@ impl TryFrom<KPuzzle> for PackedKPuzzle {
 pub enum ConversionError {
     InvalidAlg(InvalidAlgError),
     InvalidDefinition(InvalidDefinitionError),
+    InvalidPatternData(InvalidPatternDataError),
 }
 
 impl PackedKPuzzle {
     pub fn default_pattern(&self) -> PackedKPattern {
         // TODO: check that `KPuzzle`s match?
-        self.pack_pattern(self.data.kpuzzle.default_pattern())
+        self.try_pack_pattern(self.data.kpuzzle.default_pattern()).expect("Default pattern is invalid?") // TODO: cache at construction time instead
     }
 
-    pub fn pack_pattern(&self, pattern: KPattern) -> PackedKPattern {
+    // TODO: `try_pack_pattern`?
+    pub fn try_pack_pattern(&self, pattern: KPattern) -> Result<PackedKPattern , ConversionError>{
         let pattern_data = pattern.kpattern_data;
 
         let mut new_packed_kpattern = PackedKPattern::new(self.clone());
         for orbit_info in &self.data.orbit_iteration_info {
-            let orbit_data = pattern_data
+            let orbit_data = match pattern_data
                 .get(&orbit_info.name)
-                .expect("Missing orbit!");
+                 {
+                    Some(orbit_data) => orbit_data,
+                    None => {return Err( 
+                        ConversionError::InvalidPatternData(InvalidPatternDataError {
+                            description: format!("Missing data for orbit: {}", orbit_info.name),
+                        })
+                        )}
+                };
             for i in 0..orbit_info.num_pieces {
                 new_packed_kpattern.set_piece_or_permutation(
                     orbit_info,
@@ -120,17 +129,15 @@ impl PackedKPuzzle {
                     match &orbit_data.orientation_mod {
                         None => usize_to_u8(orbit_data.orientation[i]),
                         Some(orientation_mod) => {
-                            
                                 if orientation_mod[i] != 0 && u8_to_usize(orbit_info.num_orientations) % orientation_mod[i] != 0 {
-                                    eprintln!(
+                                    return Err(ConversionError::InvalidPatternData(InvalidPatternDataError { description: format!(
                                         "`orientation_mod` of {} seen for piece at index {} in orbit {} in the start pattern for puzzle {}. This must be a factor of `num_orientations` for the orbit ({}). See: https://js.cubing.net/cubing/api/interfaces/kpuzzle.KPatternOrbitData.html#orientationMod",
                                         orientation_mod[i],
                                         i,
                                         orbit_info.name,
                                         self.data.kpuzzle.definition().name,
                                         orbit_info.num_orientations
-                                    );
-                                    panic!("Invalid start pattern");
+                                    )}));
                                 };
                                 orbit_info.orientation_packer.pack(OrientationWithMod {
                                     orientation: orbit_data.orientation[i],
@@ -143,7 +150,7 @@ impl PackedKPuzzle {
             }
         }
 
-        new_packed_kpattern
+        Ok(new_packed_kpattern)
     }
 
     pub fn identity_transformation(&self) -> Result<PackedKTransformation, ConversionError> {

@@ -8,7 +8,7 @@ use cubing::alg::{Alg, AlgNode, Move};
 use crate::_internal::{
     cli::{Generators, MetricEnum},
     CanonicalFSM, CanonicalFSMState, MoveClassIndex, PackedKPattern, PackedKPuzzle, PruneTable,
-    RecursiveWorkTracker, SearchError, SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
+    PuzzleError, RecursiveWorkTracker, SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
 const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase
@@ -141,7 +141,7 @@ impl IDFSearch {
         search_logger: Arc<SearchLogger>,
         metric: &MetricEnum,
         random_start: bool,
-    ) -> Result<Self, SearchError> {
+    ) -> Result<Self, PuzzleError> {
         let search_generators =
             SearchGenerators::try_new(&packed_kpuzzle, &generators, metric, random_start)?;
         let canonical_fsm = CanonicalFSM::try_new(search_generators.clone())?; // TODO: avoid a clone

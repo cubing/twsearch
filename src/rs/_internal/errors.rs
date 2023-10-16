@@ -1,6 +1,6 @@
 #[derive(derive_more::From, Debug)]
 pub enum CommandError {
-    SearchError(SearchError),
+    SearchError(PuzzleError),
     ArgumentError(ArgumentError),
 }
 
@@ -18,11 +18,11 @@ impl From<&str> for ArgumentError {
 }
 
 #[derive(Debug)]
-pub struct SearchError {
+pub struct PuzzleError {
     pub description: String,
 }
 
-impl From<&str> for SearchError {
+impl From<&str> for PuzzleError {
     fn from(description: &str) -> Self {
         Self {
             description: description.to_owned(),

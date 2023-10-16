@@ -1095,7 +1095,7 @@ dependencies = [
 
 [[package]]
 name = "twsearch"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "cityhasher",
  "clap",
@@ -1137,7 +1137,7 @@ dependencies = [
 
 [[package]]
 name = "twsearch-ffi"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "cubing",
  "libloading",

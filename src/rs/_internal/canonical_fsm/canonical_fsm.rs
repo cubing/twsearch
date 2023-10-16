@@ -3,7 +3,7 @@ use std::{
     ops::{AddAssign, BitAndAssign},
 };
 
-use crate::_internal::{PackedKTransformation, SearchError, SearchGenerators};
+use crate::_internal::{PackedKTransformation, PuzzleError, SearchGenerators};
 
 const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
 
@@ -89,10 +89,10 @@ pub struct CanonicalFSM {
 
 impl CanonicalFSM {
     // TODO: Return a more specific error.
-    pub fn try_new(generators: SearchGenerators) -> Result<CanonicalFSM, SearchError> {
+    pub fn try_new(generators: SearchGenerators) -> Result<CanonicalFSM, PuzzleError> {
         let num_move_classes = generators.grouped.len();
         if num_move_classes > MAX_NUM_MOVE_CLASSES {
-            return Err(SearchError {
+            return Err(PuzzleError {
                 description: "Too many move classes!".to_owned(),
             });
         }

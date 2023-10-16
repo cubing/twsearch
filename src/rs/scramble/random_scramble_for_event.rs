@@ -6,7 +6,7 @@ use cubing::{
 };
 use rand::{thread_rng, Rng};
 
-use crate::_internal::{CustomGenerators, Generators, PackedKPuzzle, SearchError};
+use crate::_internal::{CustomGenerators, Generators, PackedKPuzzle, PuzzleError};
 
 use super::{
     definitions::tetraminx_kpuzzle,
@@ -15,16 +15,33 @@ use super::{
     Event,
 };
 
-pub fn random_scramble_for_event(event: Event) -> Result<Alg, SearchError> {
-    Ok(match event {
-        Event::Cube2x2x2 => scramble_222(),
-        Event::Pyraminx => scramble_pyraminx(),
-        _ => {
-            return Err(SearchError {
-                description: "Unknown event".to_owned(),
-            })
-        }
-    })
+pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
+    let err = Err(PuzzleError {
+        description: format!("Scrambles are not implement for this event yet: {}", event),
+    });
+    match event {
+        Event::Cube3x3x3Speedsolving => err,
+        Event::Cube2x2x2Speedsolving => Ok(scramble_222()),
+        Event::Cube4x4x4Speedsolving => err,
+        Event::Cube5x5x5Speedsolving => err,
+        Event::Cube6x6x6Speedsolving => err,
+        Event::Cube7x7x7Speedsolving => err,
+        Event::Cube3x3x3Blindfolded => err,
+        Event::Cube3x3x3FewestMoves => err,
+        Event::Cube3x3x3OneHanded => err,
+        Event::ClockSpeedsolving => err,
+        Event::MegaminxSpeedsolving => err,
+        Event::PyraminxSpeedsolving => Ok(scramble_pyraminx()),
+        Event::SkewbSpeedsolving => err,
+        Event::Square1Speedsolving => err,
+        Event::Cube4x4x4Blindfolded => err,
+        Event::Cube5x5x5Blindfolded => err,
+        Event::Cube3x3x3MultiBlind => err,
+        Event::FTOSpeedsolving => err,
+        Event::MasterTetraminxSpeedsolving => err,
+        Event::KilominxSpeedsolving => err,
+        Event::RediCubeSpeedsolving => err,
+    }
 }
 
 fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {

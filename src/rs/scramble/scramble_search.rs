@@ -1,10 +1,25 @@
 use std::sync::Arc;
 
-use cubing::alg::Alg;
+use cubing::alg::{Alg, Move};
 
 use crate::_internal::{
-    Generators, IDFSearch, IndividualSearchOptions, PackedKPattern, PackedKPuzzle, SearchLogger,
+    CustomGenerators, Generators, IDFSearch, IndividualSearchOptions, PackedKPattern,
+    PackedKPuzzle, SearchLogger,
 };
+
+pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
+    move_str_list
+        .iter()
+        .map(|move_str| move_str.parse::<Move>().unwrap())
+        .collect()
+}
+
+pub fn generators_from_vec_str(move_str_list: Vec<&str>) -> Generators {
+    crate::_internal::Generators::Custom(CustomGenerators {
+        moves: move_list_from_vec(move_str_list),
+        algs: vec![],
+    })
+}
 
 pub(crate) fn idfs_with_target_pattern(
     packed_kpuzzle: &PackedKPuzzle,

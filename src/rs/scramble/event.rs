@@ -15,6 +15,7 @@ impl TryFrom<&str> for Event {
         Ok(match event_str {
             "222" => Event::Cube2x2x2,
             "333" => Event::Cube3x3x3,
+            "pyram" => Event::Pyraminx,
             _ => {
                 return Err(SearchError {
                     description: format!("Unknown event ID: {}", event_str),

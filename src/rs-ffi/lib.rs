@@ -37,12 +37,13 @@ fn ffi_test() {
     let lib = unsafe { libloading::Library::new(dylib_path).unwrap() };
     let func: libloading::Symbol<unsafe extern "C" fn(event_raw_cstr: *mut c_char) -> *mut c_char> =
         unsafe { lib.get(b"ffi_random_scramble_for_event").unwrap() };
-
-    let event_raw_cstr = CString::new(("222").to_owned()).unwrap().into_raw();
-    let scramble_raw_cstr = unsafe { func(event_raw_cstr) };
-    let scramble_cstr = unsafe { CStr::from_ptr(scramble_raw_cstr) };
-    let scramble_str = scramble_cstr.to_str().map_err(|_| ()).unwrap();
-    let alg = scramble_str.parse::<cubing::alg::Alg>().unwrap();
-    assert!(alg.nodes.len() >= 11);
-    assert!(alg.nodes.len() <= 12); // TODO: are there any states that can't be reached in exactly 11 moves for our scramble generators?
+    for event_id in ["222", "pyram"] {
+        let event_raw_cstr = CString::new((event_id).to_owned()).unwrap().into_raw();
+        let scramble_raw_cstr = unsafe { func(event_raw_cstr) };
+        let scramble_cstr = unsafe { CStr::from_ptr(scramble_raw_cstr) };
+        let scramble_str = scramble_cstr.to_str().map_err(|_| ()).unwrap();
+        let alg = scramble_str.parse::<cubing::alg::Alg>().unwrap();
+        assert!(alg.nodes.len() >= 11);
+        assert!(alg.nodes.len() <= 15); // TODO: are there any states that can't be reached in exactly 11 moves for our scramble generators (plus tips for pyra)?
+    }
 }

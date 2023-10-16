@@ -8,8 +8,13 @@ use twsearch::scramble::{random_scramble_for_event, Event};
 /// # Safety
 ///
 /// This function can panic. If you are working in pure Rust, use [`twsearch::scramble::random_scramble_for_event`] instead.
+///
+/// Returns:
+/// - A null pointer for *any* error.
+/// - A valid scramble (in the form of C string) otherwise.
 #[no_mangle]
 pub unsafe extern "C" fn ffi_random_scramble_for_event(event_raw_cstr: *mut c_char) -> *mut c_char {
+    // TODO: we can't avoid leaking the return value, but we could give a function to free all past returned values.
     match ffi_random_scramble_for_event_internal(event_raw_cstr) {
         Ok(scramble_raw_cstr) => scramble_raw_cstr,
         Err(_) => null_mut(),

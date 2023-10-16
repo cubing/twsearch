@@ -106,6 +106,7 @@ pub struct SearchCommandArgs {
 
 #[derive(Debug, Clone, Copy, ValueEnum, Serialize, Deserialize)]
 pub enum VerbosityLevel {
+    Silent,
     Error,
     Warning,
     Info,

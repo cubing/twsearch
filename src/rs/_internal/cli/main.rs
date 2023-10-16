@@ -148,7 +148,7 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
         }
     };
 
-    let idf_search = IDFSearch::try_new(
+    let mut idf_search = IDFSearch::try_new(
         packed_kpuzzle,
         target_pattern,
         search_command_args.generator_args.parse(),

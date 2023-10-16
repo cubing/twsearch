@@ -43,7 +43,7 @@ pub fn search_test(scramble: String) -> String {
             .expect("Could not create search pattern from scramble alg."),
     );
 
-    let idf_search = IDFSearch::try_new(
+    let mut idf_search = IDFSearch::try_new(
         packed_kpuzzle,
         target_pattern.clone(),
         crate::_internal::cli::Generators::Custom(CustomGenerators {

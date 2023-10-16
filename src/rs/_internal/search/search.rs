@@ -75,10 +75,16 @@ impl Iterator for SearchSolutions {
         if self.done {
             None
         } else {
-            match Some(self.receiver.recv().expect(
-                "Internal error: could not determine next search solution or end of search.",
-            )) {
-                Some(alg) => alg,
+            let received = match self.receiver.recv() {
+                Ok(received) => received,
+                Err(_) => {
+                    // TODO: this could be either a channel failure or no solutions found. We should find a way for the latter to avoid hitting this code path.
+                    self.done = true;
+                    return None;
+                }
+            };
+            match received {
+                Some(alg) => Some(alg),
                 None => {
                     self.done = true;
                     None
@@ -155,7 +161,7 @@ impl IDFSearch {
     }
 
     pub fn search(
-        mut self,
+        &mut self,
         search_pattern: &PackedKPattern,
         mut individual_search_options: IndividualSearchOptions,
     ) -> SearchSolutions {

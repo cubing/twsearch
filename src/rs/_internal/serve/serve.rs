@@ -89,7 +89,7 @@ fn solve_pattern(
         kpuzzle,
         kpattern_data: Arc::new(kpattern_solve.pattern),
     });
-    let search = match IDFSearch::try_new(
+    let mut search = match IDFSearch::try_new(
         packed_kpuzzle,
         target_pattern,
         crate::_internal::cli::Generators::Custom(CustomGenerators {

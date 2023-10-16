@@ -1,5 +1,5 @@
 mod packed_kpuzzle;
-pub use packed_kpuzzle::{ConversionError, PackedKPuzzle};
+pub use packed_kpuzzle::{ConversionError, PackedKPuzzle, PackedKPuzzleOrbitInfo};
 
 mod packed_orbit_data;
 

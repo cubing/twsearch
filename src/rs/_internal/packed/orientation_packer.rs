@@ -135,7 +135,7 @@ mod tests {
         KPattern, KPatternData, KPatternOrbitData, KPuzzle, KPuzzleDefinition, KPuzzleOrbitName,
     };
 
-    use crate::PackedKPuzzle;
+    use crate::_internal::PackedKPuzzle;
 
     // TODO: Return a `Result`.
     #[test]

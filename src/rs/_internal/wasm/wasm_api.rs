@@ -7,10 +7,10 @@ use cubing::{
 };
 use wasm_bindgen::prelude::*;
 
-use crate::{
+use crate::_internal::{
+    cli::{CustomGenerators, VerbosityLevel},
     utils::set_panic_hook,
-    IDFSearch, PackedKPuzzle, SearchLogger,
-    _internal::cli::{CustomGenerators, VerbosityLevel},
+    IDFSearch, IndividualSearchOptions, PackedKPuzzle, SearchLogger,
 };
 
 // When the `wee_alloc` feature is enabled, use `wee_alloc` as the global
@@ -59,7 +59,7 @@ pub fn search_test(scramble: String) -> String {
     .expect("Could not construct search.");
 
     match idf_search
-        .search(&search_pattern, crate::IndividualSearchOptions::default())
+        .search(&search_pattern, IndividualSearchOptions::default())
         .next()
     {
         Some(alg) => alg.to_string(),

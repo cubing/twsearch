@@ -227,8 +227,8 @@ mod tests {
     use cubing::parse_move;
     use cubing::puzzles::cube3x3x3_kpuzzle;
 
-    use crate::packed::packed_kpuzzle::ConversionError;
-    use crate::{PackedKPuzzle, PackedKTransformation};
+    use crate::_internal::packed::packed_kpuzzle::ConversionError;
+    use crate::_internal::{PackedKPuzzle, PackedKTransformation};
 
     #[test]
     fn compose() -> Result<(), String> {

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use thousands::Separable;
 
-use crate::{
+use crate::_internal::{
     CanonicalFSMState, MoveClassIndex, PackedKPattern, RecursiveWorkTracker, SearchLogger,
     CANONICAL_FSM_START_STATE,
 };

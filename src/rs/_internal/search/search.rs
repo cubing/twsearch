@@ -5,11 +5,10 @@ use std::sync::{
 
 use cubing::alg::{Alg, AlgNode, Move};
 
-use crate::{
+use crate::_internal::{
+    cli::{Generators, MetricEnum},
     CanonicalFSM, CanonicalFSMState, MoveClassIndex, PackedKPattern, PackedKPuzzle, PruneTable,
-    RecursiveWorkTracker, SearchError, SearchGenerators, SearchLogger,
-    _internal::cli::{Generators, MetricEnum},
-    CANONICAL_FSM_START_STATE,
+    RecursiveWorkTracker, SearchError, SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
 const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase

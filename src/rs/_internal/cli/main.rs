@@ -1,24 +1,18 @@
-mod commands;
-mod io;
-
 use std::{
     path::{Path, PathBuf},
     process::exit,
     sync::Arc,
 };
 
-use commands::benchmark::benchmark;
-use commands::canonical_algs::canonical_algs;
 use cubing::{
     alg::Alg,
     kpuzzle::{KPattern, KPatternData, KPuzzle, KPuzzleDefinition},
 };
-use io::read_to_json;
-use twsearch::{
-    ArgumentError, CommandError, GodsAlgorithmSearch, IDFSearch, PackedKPattern, PackedKPuzzle,
-    SearchLogger,
-    _internal::cli::{get_options, CliCommand, GodsAlgorithmArgs, SearchCommandArgs},
-    serve, IndividualSearchOptions,
+use twsearch::_internal::{
+    benchmark, canonical_algs,
+    cli::{get_options, CliCommand, GodsAlgorithmArgs, SearchCommandArgs},
+    read_to_json, serve, ArgumentError, CommandError, GodsAlgorithmSearch, IDFSearch,
+    IndividualSearchOptions, PackedKPattern, PackedKPuzzle, SearchLogger,
 };
 
 fn main() -> Result<(), CommandError> {

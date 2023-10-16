@@ -1,7 +1,7 @@
 use std::{fs::read_to_string, path::Path};
 
+use crate::_internal::ArgumentError;
 use serde::Deserialize;
-use twsearch::ArgumentError;
 
 pub fn read_to_json<T: for<'a> Deserialize<'a>>(input_file: &Path) -> Result<T, ArgumentError> {
     format!("Rewriting: {:?}", input_file);

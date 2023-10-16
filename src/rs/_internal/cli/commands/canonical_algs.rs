@@ -1,10 +1,9 @@
 use cubing::kpuzzle::{KPuzzle, KPuzzleDefinition};
 
-use twsearch::{
-    CanonicalFSM, CommandError, PackedKPuzzle, SearchGenerators, _internal::cli::CanonicalAlgsArgs,
+use crate::_internal::{
+    cli::CanonicalAlgsArgs, read_to_json, CanonicalFSM, CommandError, PackedKPuzzle,
+    SearchGenerators,
 };
-
-use crate::io::read_to_json;
 
 pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), CommandError> {
     let def: KPuzzleDefinition = read_to_json(&args.input_args.def_file)?;

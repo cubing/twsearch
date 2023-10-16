@@ -13,11 +13,11 @@ use serde::Serialize;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use crate::CommandError;
-use crate::IDFSearch;
-use crate::IndividualSearchOptions;
-use crate::PackedKPuzzle;
 use crate::_internal::cli::CustomGenerators;
+use crate::_internal::CommandError;
+use crate::_internal::IDFSearch;
+use crate::_internal::IndividualSearchOptions;
+use crate::_internal::PackedKPuzzle;
 
 use crate::_internal::cli::ServeArgsForIndividualSearch;
 use crate::_internal::cli::ServeClientArgs;
@@ -72,7 +72,7 @@ fn solve_pattern(
         }),
         None => packed_kpuzzle.default_pattern(),
     };
-    let search_logger = Arc::new(crate::SearchLogger {
+    let search_logger = Arc::new(crate::_internal::SearchLogger {
         verbosity: args_for_individual_search
             .commandline_args
             .verbosity_args

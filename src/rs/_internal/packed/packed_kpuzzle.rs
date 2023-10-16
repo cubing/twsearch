@@ -7,7 +7,7 @@ use cubing::{
     },
 };
 
-use crate::PackedKPattern;
+use crate::_internal::PackedKPattern;
 
 use super::{byte_conversions::{usize_to_u8, u8_to_usize},  PackedKTransformation, orientation_packer::{OrientationPacker, OrientationWithMod}};
 

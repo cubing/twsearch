@@ -28,7 +28,7 @@ wait-timeout = "0.2.0"
 
 [[bin]]
 name = "twsearch"
-path = "./cli/main.rs"
+path = "./_internal/cli/main.rs"
 
 [lib]
 path = "./mod.rs"

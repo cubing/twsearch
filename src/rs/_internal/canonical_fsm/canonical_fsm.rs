@@ -3,7 +3,7 @@ use std::{
     ops::{AddAssign, BitAndAssign},
 };
 
-use crate::{PackedKTransformation, SearchError, SearchGenerators};
+use crate::_internal::{PackedKTransformation, SearchError, SearchGenerators};
 
 const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
 

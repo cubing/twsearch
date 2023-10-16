@@ -3,9 +3,9 @@ use std::collections::HashMap;
 use cubing::alg::{Move, QuantumMove};
 use rand::{seq::SliceRandom, thread_rng};
 
-use crate::{
+use crate::_internal::{
+    cli::{Generators, MetricEnum},
     PackedKPuzzle, PackedKTransformation, PackedKTransformationBuffer, SearchError,
-    _internal::cli::{Generators, MetricEnum},
 };
 
 #[derive(Clone, Debug)]

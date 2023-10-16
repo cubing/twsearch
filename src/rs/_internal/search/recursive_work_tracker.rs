@@ -2,7 +2,7 @@ use std::{sync::Arc, time::Duration};
 
 use thousands::Separable;
 
-use crate::SearchLogger;
+use crate::_internal::SearchLogger;
 
 pub(crate) struct RecursiveWorkTracker {
     work_name: String,

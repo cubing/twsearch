@@ -1,6 +1,6 @@
 [package]
 name = "twsearch-ffi"
-version = "0.6.2"
+version = "0.6.3"
 edition = "2021"
 description = "Twizzle Search FFI — C FFI bindings for twsearch"
 license = "MPL-2.0"
@@ -9,7 +9,7 @@ license = "MPL-2.0"
 default = []
 
 [dependencies]
-twsearch = { path = "../rs", version = "0.6.1" }
+twsearch = { path = "../rs", version = "0.6.3" }
 
 [lib]
 path = "./lib.rs"

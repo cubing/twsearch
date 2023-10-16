@@ -231,3 +231,7 @@ build-rust-wasm:
 .PHONY: test-rust-wasm
 test-rust-wasm:
 	node "script/test-dist-wasm.js"
+
+.PHONY: publish
+publish:
+	cargo publish --package twsearch

@@ -1,9 +1,9 @@
 [package]
 name = "twsearch"
-version = "0.6.4"
-edition = "2021"
+version.workspace = true
+license.workspace = true
+edition.workspace = true
 description = "Twizzle Search — Twisty puzzle search library"
-license = "MPL-2.0"
 
 [features]
 default = []

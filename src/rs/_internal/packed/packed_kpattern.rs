@@ -22,6 +22,18 @@ impl PackedKPattern {
         }
     }
 
+    // TODO: validation?
+    pub fn from_data(
+        packed_kpuzzle: &PackedKPuzzle,
+        kpattern_data: KPatternData,
+    ) -> Result<Self, ConversionError> {
+        let kpattern = KPattern {
+            kpuzzle: packed_kpuzzle.data.kpuzzle.clone(),
+            kpattern_data: Arc::new(kpattern_data),
+        };
+        packed_kpuzzle.try_pack_pattern(kpattern)
+    }
+
     pub fn try_from_json(
         packed_kpuzzle: &PackedKPuzzle,
         json_bytes: &[u8],
@@ -37,11 +49,7 @@ impl PackedKPattern {
                 ))
             }
         };
-        let kpattern = KPattern {
-            kpuzzle: packed_kpuzzle.data.kpuzzle.clone(),
-            kpattern_data: Arc::new(kpattern_data),
-        };
-        packed_kpuzzle.try_pack_pattern(kpattern)
+        Self::from_data(packed_kpuzzle, kpattern_data)
     }
 
     pub fn get_piece_or_permutation(&self, orbit_info: &PackedKPuzzleOrbitInfo, i: usize) -> u8 {

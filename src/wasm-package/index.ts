@@ -2,7 +2,9 @@ import { Alg } from "cubing/alg";
 import {
   default as init,
   wasmRandomScrambleForEvent as rawWasmRandomScrambleForEvent,
+  wasmTwsearch as rawWasmTwsearch,
 } from "../../.temp/rust-wasm/twsearch_wasm";
+import { KPattern, KPuzzleDefinition } from "cubing/kpuzzle";
 
 let cachedInitWrapper: Promise<void> | undefined;
 async function initWrapper(): Promise<void> {
@@ -23,4 +25,20 @@ export async function wasmRandomScrambleForEvent(
 ): Promise<Alg> {
   await initWrapper();
   return new Alg(rawWasmRandomScrambleForEvent(eventId));
+}
+
+export async function wasmTwsearch(
+  kpuzzleDefinition: KPuzzleDefinition,
+  searchPattern: KPattern,
+  options?: { minDepth?: number },
+): Promise<Alg> {
+  await initWrapper();
+  return new Alg(
+    rawWasmTwsearch(
+      JSON.stringify(kpuzzleDefinition),
+      // biome-ignore lint/complexity/useLiteralKeys: JSON field access
+      JSON.stringify(searchPattern.toJSON()["patternData"]),
+      JSON.stringify(options),
+    ),
+  );
 }

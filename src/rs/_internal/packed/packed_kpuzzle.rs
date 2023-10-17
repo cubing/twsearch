@@ -3,7 +3,7 @@ use std::{alloc::Layout, sync::Arc, fmt::Debug};
 use cubing::{
     alg::{Move, Alg},
     kpuzzle::{
-        InvalidAlgError, InvalidDefinitionError, KPuzzle, KPuzzleOrbitName, KTransformation, KPattern,
+        InvalidAlgError, InvalidDefinitionError, KPuzzle, KPuzzleOrbitName, KTransformation, KPattern, KPuzzleDefinition,
     },
 };
 
@@ -84,6 +84,22 @@ impl TryFrom<KPuzzle> for PackedKPuzzle {
                 })?,
             }),
         })
+    }
+}
+
+impl TryFrom<&[u8]> for PackedKPuzzle {
+    type Error = InvalidDefinitionError;
+
+    fn try_from(json_bytes: &[u8]) -> Result<Self, Self::Error>  {
+        // TODO: implement this directly
+        let kpuzzle_data: KPuzzleDefinition = match serde_json::from_slice(json_bytes) {
+            Ok(kpuzzle_data) => kpuzzle_data,
+            Err(e) => {
+                return Err(InvalidDefinitionError { description: e.to_string().to_owned() })
+            }
+        };
+        let kpuzzle = KPuzzle::try_new(Arc::new(kpuzzle_data))?;
+        Self::try_from(kpuzzle)
     }
 }
 

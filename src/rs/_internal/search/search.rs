@@ -4,6 +4,7 @@ use std::sync::{
 };
 
 use cubing::alg::{Alg, AlgNode, Move};
+use serde::{Deserialize, Serialize};
 
 use crate::_internal::{
     cli::options::{Generators, MetricEnum},
@@ -94,7 +95,8 @@ impl Iterator for SearchSolutions {
     }
 }
 
-#[derive(Clone, Copy, Default)]
+#[derive(Clone, Copy, Default, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct IndividualSearchOptions {
     pub min_num_solutions: Option<usize>,
     pub min_depth: Option<usize>,
@@ -141,7 +143,7 @@ impl IDFSearch {
         search_logger: Arc<SearchLogger>,
         metric: &MetricEnum,
         random_start: bool,
-        min_size: Option<usize>,
+        min_prune_table_size: Option<usize>,
     ) -> Result<Self, PuzzleError> {
         let search_generators =
             SearchGenerators::try_new(&packed_kpuzzle, &generators, metric, random_start)?;
@@ -154,7 +156,7 @@ impl IDFSearch {
             search_logger: search_logger.clone(),
         });
 
-        let prune_table = PruneTable::new(api_data.clone(), search_logger, min_size); // TODO: make the prune table reusable across searches.
+        let prune_table = PruneTable::new(api_data.clone(), search_logger, min_prune_table_size); // TODO: make the prune table reusable across searches.
         Ok(Self {
             api_data,
             prune_table,

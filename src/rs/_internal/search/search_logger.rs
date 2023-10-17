@@ -1,7 +1,7 @@
 use crate::_internal::cli::options::VerbosityLevel;
 
 // TODO: replace this with something less custom (ideally from the stdlib?)
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct SearchLogger {
     // TODO: writers for logs and error
     pub verbosity: VerbosityLevel,

@@ -1,17 +1,22 @@
+mod commands;
+mod serve;
+
 use std::{
     path::{Path, PathBuf},
     process::exit,
     sync::Arc,
 };
 
+use commands::{benchmark, canonical_algs};
 use cubing::{
     alg::Alg,
     kpuzzle::{KPattern, KPatternData, KPuzzle, KPuzzleDefinition},
 };
+use serve::serve;
 use twsearch::_internal::{
-    benchmark, canonical_algs,
-    cli::{get_options, CliCommand, GodsAlgorithmArgs, SearchCommandArgs},
-    read_to_json, serve, ArgumentError, CommandError, GodsAlgorithmSearch, IDFSearch,
+    cli::options::{get_options, CliCommand, GodsAlgorithmArgs, SearchCommandArgs},
+    options::VerbosityLevel,
+    read_to_json, ArgumentError, CommandError, GodsAlgorithmSearch, IDFSearch,
     IndividualSearchOptions, PackedKPattern, PackedKPuzzle, SearchLogger,
 };
 
@@ -170,7 +175,7 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
             verbosity: search_command_args
                 .verbosity_args
                 .verbosity
-                .unwrap_or(twsearch::_internal::cli::VerbosityLevel::Error),
+                .unwrap_or(VerbosityLevel::Error),
         }),
         &search_command_args.metric_args.metric,
         search_command_args.search_args.random_start,

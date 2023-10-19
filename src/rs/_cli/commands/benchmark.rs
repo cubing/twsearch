@@ -1,10 +1,10 @@
-use crate::_internal::{
-    cli::BenchmarkArgs, read_to_json, CommandError, PackedKPatternBuffer, PackedKPuzzle,
-    PackedKTransformation, SearchGenerators,
-};
 use cubing::kpuzzle::{KPuzzle, KPuzzleDefinition};
 use instant::Instant;
 use rand::seq::SliceRandom;
+use twsearch::_internal::{
+    cli::options::BenchmarkArgs, read_to_json, CommandError, PackedKPatternBuffer, PackedKPuzzle,
+    PackedKTransformation, SearchGenerators,
+};
 
 const NUM_RANDOM_MOVES: usize = 65536;
 const NUM_TEST_TRANSFORMATIONS: usize = 100_000_000;

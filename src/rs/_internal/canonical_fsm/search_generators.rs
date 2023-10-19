@@ -4,7 +4,7 @@ use cubing::alg::{Move, QuantumMove};
 use rand::{seq::SliceRandom, thread_rng};
 
 use crate::_internal::{
-    cli::{Generators, MetricEnum},
+    cli::options::{Generators, MetricEnum},
     PackedKPuzzle, PackedKTransformation, PackedKTransformationBuffer, PuzzleError,
 };
 

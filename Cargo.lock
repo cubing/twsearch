@@ -1100,7 +1100,6 @@ dependencies = [
  "cityhasher",
  "clap",
  "clap_complete",
- "console_error_panic_hook",
  "cubing",
  "derive_more",
  "getrandom",
@@ -1112,8 +1111,6 @@ dependencies = [
  "serde",
  "serde_json",
  "thousands",
- "wait-timeout",
- "wasm-bindgen",
 ]
 
 [[package]]
@@ -1144,6 +1141,15 @@ dependencies = [
  "libloading",
  "test-cdylib",
  "twsearch",
+]
+
+[[package]]
+name = "twsearch-wasm"
+version = "0.6.4"
+dependencies = [
+ "console_error_panic_hook",
+ "twsearch",
+ "wasm-bindgen",
 ]
 
 [[package]]

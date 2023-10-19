@@ -3,8 +3,9 @@ use std::sync::Arc;
 use cubing::alg::{Alg, Move};
 
 use crate::_internal::{
-    CustomGenerators, Generators, IDFSearch, IndividualSearchOptions, PackedKPattern,
-    PackedKPuzzle, SearchLogger,
+    options::{CustomGenerators, VerbosityLevel},
+    options::{Generators, MetricEnum},
+    IDFSearch, IndividualSearchOptions, PackedKPattern, PackedKPuzzle, SearchLogger,
 };
 
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
@@ -15,7 +16,7 @@ pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
 }
 
 pub fn generators_from_vec_str(move_str_list: Vec<&str>) -> Generators {
-    crate::_internal::Generators::Custom(CustomGenerators {
+    Generators::Custom(CustomGenerators {
         moves: move_list_from_vec(move_str_list),
         algs: vec![],
     })
@@ -32,9 +33,9 @@ pub(crate) fn idfs_with_target_pattern(
         target_pattern,
         generators,
         Arc::new(SearchLogger {
-            verbosity: crate::_internal::VerbosityLevel::Silent,
+            verbosity: VerbosityLevel::Silent,
         }),
-        &crate::_internal::MetricEnum::Hand,
+        &MetricEnum::Hand,
         true,
         min_size,
     )

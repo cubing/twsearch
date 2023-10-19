@@ -17,9 +17,9 @@ use crate::rust_api;
 use crate::serialize::serialize_kpuzzle_definition;
 use crate::serialize::serialize_scramble_kpattern_data;
 use crate::serialize::KPuzzleSerializationOptions;
-use twsearch::_internal::cli::ServeArgsForIndividualSearch;
-use twsearch::_internal::cli::ServeClientArgs;
-use twsearch::_internal::cli::ServeCommandArgs;
+use twsearch::_internal::cli::options::ServeArgsForIndividualSearch;
+use twsearch::_internal::cli::options::ServeClientArgs;
+use twsearch::_internal::cli::options::ServeCommandArgs;
 
 fn set_definition(
     def: KPuzzleDefinition,

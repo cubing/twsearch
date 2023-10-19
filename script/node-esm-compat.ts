@@ -2,7 +2,7 @@
 
 import { readFile, writeFile } from "fs/promises";
 
-const filePath = new URL("../dist/wasm/twsearch.js", import.meta.url);
+const filePath = new URL("../dist/wasm/twsearch_wasm.js", import.meta.url);
 
 let modified = false; // For idempotence
 

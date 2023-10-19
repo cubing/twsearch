@@ -6,7 +6,7 @@ use std::sync::{
 use cubing::alg::{Alg, AlgNode, Move};
 
 use crate::_internal::{
-    cli::{Generators, MetricEnum},
+    cli::options::{Generators, MetricEnum},
     CanonicalFSM, CanonicalFSMState, MoveClassIndex, PackedKPattern, PackedKPuzzle, PruneTable,
     PuzzleError, RecursiveWorkTracker, SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };

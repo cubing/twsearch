@@ -1,8 +1,11 @@
-use twsearch::_internal::cli::{
-    BenchmarkArgs, CanonicalAlgsArgs, CommonSearchArgs, EnableAutoAlwaysNeverValueEnum,
-    GeneratorArgs, GodsAlgorithmArgs, InputDefAndOptionalScrambleFileArgs, MemoryArgs, MetricArgs,
-    PerformanceArgs, SchreierSimsArgs, SearchCommandArgs, SearchPersistenceArgs,
-    ServeArgsForIndividualSearch, ServeClientArgs, ServeCommandArgs, TimingTestArgs,
+use twsearch::_internal::{
+    cli::options::{
+        BenchmarkArgs, CanonicalAlgsArgs, CommonSearchArgs, EnableAutoAlwaysNeverValueEnum,
+        GeneratorArgs, GodsAlgorithmArgs, InputDefAndOptionalScrambleFileArgs, MemoryArgs,
+        MetricArgs, PerformanceArgs, SchreierSimsArgs, SearchCommandArgs, SearchPersistenceArgs,
+        ServeArgsForIndividualSearch, ServeClientArgs, ServeCommandArgs, TimingTestArgs,
+    },
+    options::{Generators, MetricEnum},
 };
 
 use std::{fmt::Display, process::exit};
@@ -89,8 +92,8 @@ impl SetCppArgs for GeneratorArgs {
     fn set_cpp_args(&self) {
         let parsed = self.parse();
         match parsed {
-            twsearch::_internal::cli::Generators::Default => {}
-            twsearch::_internal::cli::Generators::Custom(parsed) => {
+            Generators::Default => {}
+            Generators::Custom(parsed) => {
                 if !parsed.algs.is_empty() {
                     panic!("Alg generators are unsupported.")
                 }
@@ -185,8 +188,8 @@ impl SetCppArgs for CanonicalAlgsArgs {
 impl SetCppArgs for MetricArgs {
     fn set_cpp_args(&self) {
         match self.metric {
-            twsearch::_internal::cli::MetricEnum::Hand => {}
-            twsearch::_internal::cli::MetricEnum::Quantum => {
+            MetricEnum::Hand => {}
+            MetricEnum::Quantum => {
                 set_boolean_arg("-q", true);
             }
         }

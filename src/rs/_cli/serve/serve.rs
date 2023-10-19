@@ -9,19 +9,22 @@ use rouille::Request;
 use rouille::Response;
 use serde::Deserialize;
 use serde::Serialize;
+use twsearch::_internal::SearchLogger;
 
 use std::sync::Arc;
 use std::sync::Mutex;
 
-use crate::_internal::cli::CustomGenerators;
-use crate::_internal::CommandError;
-use crate::_internal::IDFSearch;
-use crate::_internal::IndividualSearchOptions;
-use crate::_internal::PackedKPuzzle;
+use twsearch::_internal::cli::options::CustomGenerators;
+use twsearch::_internal::CommandError;
+use twsearch::_internal::IDFSearch;
+use twsearch::_internal::IndividualSearchOptions;
+use twsearch::_internal::PackedKPuzzle;
 
-use crate::_internal::cli::ServeArgsForIndividualSearch;
-use crate::_internal::cli::ServeClientArgs;
-use crate::_internal::cli::ServeCommandArgs;
+use twsearch::_internal::cli::options::ServeArgsForIndividualSearch;
+use twsearch::_internal::cli::options::ServeClientArgs;
+use twsearch::_internal::cli::options::ServeCommandArgs;
+use twsearch::_internal::options::Generators;
+use twsearch::_internal::options::MetricEnum;
 
 #[derive(Serialize)]
 struct ResponseAlg {
@@ -77,7 +80,7 @@ fn solve_pattern(
         }
         None => packed_kpuzzle.default_pattern(),
     };
-    let search_logger = Arc::new(crate::_internal::SearchLogger {
+    let search_logger = Arc::new(SearchLogger {
         verbosity: args_for_individual_search
             .commandline_args
             .verbosity_args
@@ -100,12 +103,12 @@ fn solve_pattern(
     let mut search = match IDFSearch::try_new(
         packed_kpuzzle,
         target_pattern,
-        crate::_internal::cli::Generators::Custom(CustomGenerators {
+        Generators::Custom(CustomGenerators {
             moves: move_list.clone(),
             algs: vec![],
         }),
         search_logger,
-        &crate::_internal::cli::MetricEnum::Hand, // TODO
+        &MetricEnum::Hand, // TODO
         match args_for_individual_search.client_args {
             Some(client_args) => client_args.random_start == Some(true),
             None => false,

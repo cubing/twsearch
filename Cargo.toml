@@ -5,6 +5,7 @@ members = [
   "src/cpp",
   "src/rs",
   "src/rs-ffi",
+  "src/rs-wasm",
 ]
 default-members = [
   "src/rs"
@@ -14,4 +15,3 @@ default-members = [
 version = "0.6.4"
 license = "MPL-2.0"
 edition = "2021"
-

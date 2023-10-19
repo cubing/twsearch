@@ -17,7 +17,14 @@ const {
   },
 });
 
-for (const eventID of ["222", "pyram", "333"]) {
-  console.log(`// ${eventID}`);
-  console.log(ffi_random_scramble_for_event(new TextEncoder().encode(eventID)));
+for (const eventID of ["222", "pyram", ...new Array(10).fill("333")]) {
+  const startTime = performance.now();
+  const scramble = ffi_random_scramble_for_event(
+    new TextEncoder().encode(eventID),
+  );
+  console.log(
+    `${scramble} // ${eventID} (${Math.floor(
+      performance.now() - startTime,
+    )}ms)`,
+  );
 }

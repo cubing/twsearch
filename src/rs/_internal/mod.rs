@@ -15,9 +15,3 @@ pub use errors::*;
 
 mod search;
 pub use search::*;
-
-mod serve;
-pub use serve::*;
-
-mod wasm;
-pub use wasm::*;

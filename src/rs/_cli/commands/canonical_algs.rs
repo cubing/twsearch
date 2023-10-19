@@ -1,7 +1,7 @@
 use cubing::kpuzzle::{KPuzzle, KPuzzleDefinition};
 
-use crate::_internal::{
-    cli::CanonicalAlgsArgs, read_to_json, CanonicalFSM, CommandError, PackedKPuzzle,
+use twsearch::_internal::{
+    cli::options::CanonicalAlgsArgs, read_to_json, CanonicalFSM, CommandError, PackedKPuzzle,
     SearchGenerators,
 };
 

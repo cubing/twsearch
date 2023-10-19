@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use twsearch::_internal::cli::InputDefFileOnlyArgs;
+use twsearch::_internal::cli::options::InputDefFileOnlyArgs;
 
 use crate::{
     rewrite::{rewrite_def_file, rewrite_scramble_file},

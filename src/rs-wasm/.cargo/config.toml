@@ -1,0 +1,5 @@
+
+[profile.release]
+strip = true
+opt-level = "s"
+lto = true

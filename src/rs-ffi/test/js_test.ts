@@ -1,4 +1,4 @@
-#!/usr/bin/env bun 
+#!/usr/bin/env bun
 
 // @ts-ignore
 import { dlopen, FFIType, suffix } from "bun:ffi";

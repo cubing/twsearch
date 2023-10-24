@@ -23,7 +23,7 @@ jobs:
           name: windows-build
           path: build/bin/
 
-  wasm:
+  cpp-wasm:
     runs-on: ubuntu-latest
 
     steps:
@@ -46,6 +46,17 @@ jobs:
       - run: make test-build-js
       - run: make lint-js
 
+  cpp-wrapper-cli:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v2
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      - run: make test-twsearch-cpp-wrapper-cli
+
   rust:
     runs-on: ubuntu-latest
 
@@ -56,8 +67,43 @@ jobs:
         with:
           bun-version: latest
       - run: make build-rust
+      - run: make test-rust-lib
       - run: make lint-rust
-      - run: make test-twsearch-cpp-wrapper-cli
-      - run: make test-rust
-      - run: make test-rust-ffi
       - run: make benchmark-rust
+
+  rust-ffi:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v2
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      - run: make build-rust-ffi
+      - run: make test-rust-ffi
+
+  rust-wasm:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Use `node` v19
+        uses: actions/setup-node@v3
+        with:
+          node-version: 19
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      - uses: actions/checkout@v2
+      - uses: Swatinem/rust-cache@v2
+      - uses: cargo-bins/cargo-binstall@main
+      - run: cargo binstall --no-confirm wasm-pack
+      - run: make build-rust-wasm
+      - run: make test-rust-wasm
+
+  rust-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - run: make build-rust

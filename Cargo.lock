@@ -1102,7 +1102,6 @@ dependencies = [
  "clap_complete",
  "cubing",
  "derive_more",
- "getrandom",
  "indicatif",
  "instant",
  "lazy_static",
@@ -1148,6 +1147,7 @@ name = "twsearch-wasm"
 version = "0.6.4"
 dependencies = [
  "console_error_panic_hook",
+ "getrandom",
  "twsearch",
  "wasm-bindgen",
 ]

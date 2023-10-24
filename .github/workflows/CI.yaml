@@ -96,8 +96,9 @@ jobs:
           bun-version: latest
       - uses: actions/checkout@v2
       - uses: Swatinem/rust-cache@v2
-      - uses: cargo-bins/cargo-binstall@main
-      - run: cargo binstall --no-confirm wasm-pack
+      - uses: jetli/wasm-pack-action@v0.4.0
+        with:
+          version: "latest"
       - run: make build-rust-wasm
       - run: make test-rust-wasm
 

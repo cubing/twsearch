@@ -14,6 +14,8 @@ const C_SOURCE_PATH = new URL("./c_test.c", import.meta.url).pathname;
 const BIN_PATH = new URL("./c_test.bin", import.meta.url).pathname;
 
 async function runChecked(command: string[]): Promise<void> {
+  console.log(command.map((v) => JSON.stringify(v)).join(" "));
+
   const statusCode = await Bun.spawn(command, {
     stdout: "inherit",
     stdin: "inherit",

@@ -5,7 +5,7 @@
     "dev": "make dev"
   },
   "dependencies": {
-    "cubing": "^0.41.0"
+    "cubing": "^0.41.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.2.2",

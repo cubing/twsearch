@@ -1,8 +1,11 @@
 #!/usr/bin/env bun
 
-import { readFile, writeFile } from "fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 
-const filePath = new URL("../dist/wasm/twsearch_wasm.js", import.meta.url);
+const filePath = new URL(
+  "../.temp/rust-wasm/twsearch_wasm.js",
+  import.meta.url,
+);
 
 let modified = false; // For idempotence
 

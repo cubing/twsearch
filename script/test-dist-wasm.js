@@ -1,15 +1,6 @@
 console.log("loading…");
 
-import {
-  default as init,
-  wasmRandomScrambleForEvent,
-} from "../dist/wasm/twsearch_wasm.js";
-
-console.log("Initializating WASM");
-
-await init();
-
-console.log("Initialized!");
+import { wasmRandomScrambleForEvent } from "../dist/wasm/index.js";
 
 for (const eventID of ["222", "pyram", "minx", ...new Array(10).fill("333")]) {
   const startTime = performance.now();

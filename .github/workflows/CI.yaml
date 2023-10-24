@@ -108,3 +108,4 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: make build-rust
+      - run: make benchmark-rust

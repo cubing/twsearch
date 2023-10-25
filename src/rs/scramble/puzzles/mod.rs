@@ -3,4 +3,4 @@ pub mod cube3x3x3;
 pub mod megaminx;
 pub mod pyraminx;
 
-pub mod definitions;
+mod definitions;

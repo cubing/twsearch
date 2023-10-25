@@ -41,7 +41,7 @@ pub fn scramble_pyraminx() -> Alg {
         if let Some(scramble) = filtered_search(&scramble_pattern, generators, Some(4), Some(11)) {
             let mut alg_nodes: Vec<AlgNode> = vec![];
             for tip_move in tip_moves {
-                let amount = rng.gen_range(-1..2);
+                let amount = rng.gen_range(-1..=1);
                 if amount == 0 {
                     continue;
                 }

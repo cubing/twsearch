@@ -44,6 +44,13 @@ pub fn wasmTwsearch(
         Ok(options) => options,
         Err(e) => return Err(e.to_string()),
     };
+    if options
+        .inidividual_search_options
+        .min_num_solutions
+        .is_some()
+    {
+        return Err("`minNumSolutions` is not implemented yet".to_owned());
+    }
 
     let target_pattern = match options.target_pattern {
         Some(target_pattern_data) => {

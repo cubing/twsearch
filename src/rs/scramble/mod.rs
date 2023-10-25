@@ -1,4 +1,5 @@
 mod cube3x3x3;
+mod megaminx;
 mod definitions;
 mod randomize;
 mod scramble_search;

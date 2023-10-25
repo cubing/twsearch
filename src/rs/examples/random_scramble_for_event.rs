@@ -10,6 +10,7 @@ pub fn main() {
         Event::Cube3x3x3Speedsolving,
         Event::Cube3x3x3Speedsolving,
         Event::Cube3x3x3Speedsolving,
+        Event::MegaminxSpeedsolving,
     ] {
         let start_time = Instant::now();
         let scramble = random_scramble_for_event(event).unwrap();

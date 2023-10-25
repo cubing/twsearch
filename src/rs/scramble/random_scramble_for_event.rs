@@ -11,7 +11,7 @@ use super::{
     definitions::{cube2x2x2_packed_kpuzzle, tetraminx_packed_kpuzzle},
     randomize::{randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint},
     scramble_search::{filtered_search, generators_from_vec_str},
-    Event,
+    Event, megaminx::scramble_megaminx,
 };
 
 pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
@@ -31,7 +31,7 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
         Event::Cube3x3x3FewestMoves => err,
         Event::Cube3x3x3OneHanded => Ok(SCRAMBLE3X3X3_TWO_PHASE.lock().unwrap().scramble_3x3x3()),
         Event::ClockSpeedsolving => err,
-        Event::MegaminxSpeedsolving => err,
+        Event::MegaminxSpeedsolving => Ok(scramble_megaminx()),
         Event::PyraminxSpeedsolving => Ok(scramble_pyraminx()),
         Event::SkewbSpeedsolving => err,
         Event::Square1Speedsolving => err,
@@ -114,3 +114,4 @@ pub fn scramble_pyraminx() -> Alg {
         }
     }
 }
+

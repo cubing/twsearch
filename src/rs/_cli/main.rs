@@ -195,7 +195,7 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
     for solution in solutions {
         solution_index += 1;
         println!(
-            "{} // solution #{} ({} moves)",
+            "{} // solution #{} ({} nodes)",
             solution,
             solution_index,
             solution.nodes.len()

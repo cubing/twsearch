@@ -15,7 +15,7 @@ pub fn main() {
         let start_time = Instant::now();
         let scramble = random_scramble_for_event(event).unwrap();
         println!(
-            "{} // {} scramble found in {:?} ({} moves)",
+            "{} // {} scramble found in {:?} ({} nodes)",
             scramble,
             event,
             Instant::now() - start_time,

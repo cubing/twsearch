@@ -6,8 +6,11 @@ use cubing::alg::Alg;
 use crate::_internal::PuzzleError;
 
 use super::{
-    cube2x2x2::scramble_2x2x2, cube3x3x3::Scramble3x3x3TwoPhase, megaminx::scramble_megaminx,
-    pyraminx::scramble_pyraminx, Event,
+    puzzles::{
+        cube2x2x2::scramble_2x2x2, cube3x3x3::Scramble3x3x3TwoPhase, megaminx::scramble_megaminx,
+        pyraminx::scramble_pyraminx,
+    },
+    Event,
 };
 
 pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {

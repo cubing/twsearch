@@ -9,9 +9,11 @@ use crate::{
 };
 
 use super::{
+    super::randomize::{
+        randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint,
+    },
+    super::scramble_search::generators_from_vec_str,
     definitions::{cube3x3x3_centerless_packed_kpuzzle, cube3x3x3_g1_target_pattern},
-    randomize::{randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint},
-    scramble_search::generators_from_vec_str,
 };
 
 pub struct Scramble3x3x3TwoPhase {

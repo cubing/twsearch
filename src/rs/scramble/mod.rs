@@ -1,8 +1,4 @@
-mod cube2x2x2;
-mod cube3x3x3;
-mod definitions;
-mod megaminx;
-mod pyraminx;
+mod puzzles;
 mod randomize;
 mod scramble_search;
 

@@ -4,9 +4,11 @@ use rand::{thread_rng, Rng};
 use crate::scramble::scramble_search::move_list_from_vec;
 
 use super::{
+    super::randomize::{
+        randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint,
+    },
+    super::scramble_search::{filtered_search, generators_from_vec_str},
     definitions::tetraminx_packed_kpuzzle,
-    randomize::{randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint},
-    scramble_search::{filtered_search, generators_from_vec_str},
 };
 
 pub fn scramble_pyraminx() -> Alg {

@@ -1,11 +1,9 @@
-console.log("loading…");
-
+import assert from "node:assert";
 import { cube2x2x2 } from "cubing/puzzles";
 import {
   wasmRandomScrambleForEvent,
   wasmTwsearch,
 } from "../dist/wasm/index.js";
-import assert from "assert";
 
 for (const eventID of ["222", "pyram", "minx", ...new Array(10).fill("333")]) {
   const startTime = performance.now();

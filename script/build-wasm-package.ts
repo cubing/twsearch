@@ -7,6 +7,10 @@ const distDir = new URL("../dist/wasm/", import.meta.url).pathname;
 
 await mkdir(distDir, { recursive: true });
 
+const version = await new Response(
+  Bun.spawn(["git", "describe", "--tags"], { stdout: "pipe" }).stdout,
+).text();
+
 build({
   entryPoints: [
     new URL("../src/wasm-package/index.ts", import.meta.url).pathname,
@@ -17,4 +21,7 @@ build({
   loader: { ".wasm": "binary" },
   outdir: distDir,
   external: ["cubing"],
+  banner: {
+    js: `// Generated from \`twsearch\` ${version}`,
+  },
 });

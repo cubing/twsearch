@@ -17,7 +17,7 @@ const {
   },
 });
 
-for (const eventID of ["222", "pyram", ...new Array(10).fill("333")]) {
+for (const eventID of ["222", "pyram", "minx", ...new Array(10).fill("333")]) {
   const startTime = performance.now();
   const scramble = ffi_random_scramble_for_event(
     new TextEncoder().encode(eventID),

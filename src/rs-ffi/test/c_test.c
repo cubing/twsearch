@@ -9,6 +9,9 @@ int main() {
   puts("// pyram");
   puts(ffi_random_scramble_for_event("pyram"));
 
+  puts("// minx");
+  puts(ffi_random_scramble_for_event("minx"));
+
   puts("// 333");
   puts(ffi_random_scramble_for_event("333"));
 }

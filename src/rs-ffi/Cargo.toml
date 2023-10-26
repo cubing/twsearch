@@ -9,7 +9,7 @@ description = "Twizzle Search FFI — C FFI bindings for twsearch"
 default = []
 
 [dependencies]
-twsearch = { path = "../rs", version = "0.6.4" }
+twsearch = { path = "../rs", version = "0.6.5" }
 
 [lib]
 path = "./lib.rs"

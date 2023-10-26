@@ -1095,7 +1095,7 @@ dependencies = [
 
 [[package]]
 name = "twsearch"
-version = "0.6.4"
+version = "0.6.5"
 dependencies = [
  "cityhasher",
  "clap",
@@ -1134,7 +1134,7 @@ dependencies = [
 
 [[package]]
 name = "twsearch-ffi"
-version = "0.6.4"
+version = "0.6.5"
 dependencies = [
  "cubing",
  "libloading",
@@ -1144,7 +1144,7 @@ dependencies = [
 
 [[package]]
 name = "twsearch-wasm"
-version = "0.6.4"
+version = "0.6.5"
 dependencies = [
  "console_error_panic_hook",
  "cubing",

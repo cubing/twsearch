@@ -1,6 +1,6 @@
 #[allow(clippy::module_inception)]
-mod search;
-pub use search::*;
+mod idf_search;
+pub use idf_search::*;
 
 mod prune_table;
 pub(crate) use prune_table::*;

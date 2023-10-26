@@ -7,7 +7,7 @@ use crate::_internal::{
     CANONICAL_FSM_START_STATE,
 };
 
-use super::search::IDFSearchAPIData;
+use super::idf_search::IDFSearchAPIData;
 
 type PruneTableEntryType = u8;
 // 0 is uninitialized, all other values are stored as 1+depth.

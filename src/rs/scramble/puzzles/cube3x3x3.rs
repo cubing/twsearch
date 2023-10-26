@@ -1,6 +1,6 @@
 use std::sync::Mutex;
 
-use cubing::alg::Alg;
+use cubing::alg::{Alg, AlgNode, Move, QuantumMove};
 use lazy_static::lazy_static;
 
 use crate::{
@@ -17,7 +17,7 @@ use super::{
     },
     super::scramble_search::generators_from_vec_str,
     definitions::{cube3x3x3_centerless_packed_kpuzzle, cube3x3x3_g1_target_pattern},
-    static_move_list::{add_random_suffixes_from, static_move_opt_list},
+    static_move_list::{add_random_suffixes_from, static_parsed_list, static_parsed_opt_list},
 };
 
 pub struct Scramble3x3x3TwoPhase {
@@ -91,8 +91,26 @@ pub fn random_3x3x3_pattern() -> PackedKPattern {
     scramble_pattern
 }
 
+pub(crate) enum PrefixOrSuffixConstraints {
+    None,
+    ForFMC,
+}
+
 impl Scramble3x3x3TwoPhase {
-    pub fn solve_3x3x3_pattern(&mut self, pattern: &PackedKPattern) -> Alg {
+    pub(crate) fn solve_3x3x3_pattern(
+        &mut self,
+        pattern: &PackedKPattern,
+        constraints: PrefixOrSuffixConstraints,
+    ) -> Alg {
+        // TODO: once perf is good enough, use `F`` as "required first move" and `R'` as "required last move" in the search (overlapping with the affixes).
+        let (phase1_disallowed_initial_quanta, disallowed_final_quanta) = match constraints {
+            PrefixOrSuffixConstraints::None => (None, None),
+            PrefixOrSuffixConstraints::ForFMC => (
+                Some(static_parsed_list::<QuantumMove>(&["F", "B"])),
+                Some(static_parsed_list::<QuantumMove>(&["R", "L"])),
+            ),
+        };
+
         let phase1_alg = {
             let phase1_search_pattern = self.phase1_target_pattern.clone();
             for orbit_info in &self.packed_kpuzzle.data.orbit_iteration_info {
@@ -123,6 +141,8 @@ impl Scramble3x3x3TwoPhase {
                         min_num_solutions: Some(1),
                         min_depth: None,
                         max_depth: None,
+                        disallowed_initial_quanta: phase1_disallowed_initial_quanta,
+                        disallowed_final_quanta: disallowed_final_quanta.clone(), // TODO: We currently need to pass this in case phase 2 return the empty alg. Can we handle this in another way?
                     },
                 )
                 .next()
@@ -143,6 +163,8 @@ impl Scramble3x3x3TwoPhase {
                         min_num_solutions: Some(1),
                         min_depth: None,
                         max_depth: None,
+                        disallowed_initial_quanta: None,
+                        disallowed_final_quanta,
                     },
                 )
                 .next()
@@ -163,19 +185,21 @@ impl Scramble3x3x3TwoPhase {
                     min_num_solutions: Some(1),
                     min_depth: Some(0),
                     max_depth: Some(2),
+                    disallowed_initial_quanta: None,
+                    disallowed_final_quanta: None,
                 },
             )
             .next()
             .is_none()
     }
 
-    pub fn scramble_3x3x3(&mut self) -> Alg {
+    pub(crate) fn scramble_3x3x3(&mut self, constraints: PrefixOrSuffixConstraints) -> Alg {
         loop {
             let scramble_pattern = random_3x3x3_pattern();
             if !self.is_valid_scramble_pattern(&scramble_pattern) {
                 continue;
             }
-            return self.solve_3x3x3_pattern(&scramble_pattern);
+            return self.solve_3x3x3_pattern(&scramble_pattern, constraints);
         }
     }
 }
@@ -187,11 +211,40 @@ lazy_static! {
 }
 
 pub fn scramble_3x3x3() -> Alg {
-    SCRAMBLE3X3X3_TWO_PHASE.lock().unwrap().scramble_3x3x3()
+    SCRAMBLE3X3X3_TWO_PHASE
+        .lock()
+        .unwrap()
+        .scramble_3x3x3(PrefixOrSuffixConstraints::None)
 }
 
 pub fn scramble_3x3x3_bld() -> Alg {
-    let s1 = static_move_opt_list(&["", "Rw", "Rw2", "Rw'", "Fw", "Fw'"]);
-    let s2 = static_move_opt_list(&["", "Uw", "Uw2", "Uw'"]);
+    let s1 = static_parsed_opt_list(&["", "Rw", "Rw2", "Rw'", "Fw", "Fw'"]);
+    let s2 = static_parsed_opt_list(&["", "Uw", "Uw2", "Uw'"]);
     add_random_suffixes_from(scramble_3x3x3(), [s1, s2])
+}
+
+const FMC_AFFIX: [&str; 3] = ["R'", "U'", "F"];
+
+pub fn scramble_3x3x3_fmc() -> Alg {
+    let mut nodes = Vec::<AlgNode>::new();
+
+    let prefix_and_suffix: Vec<Move> = static_parsed_list(&FMC_AFFIX);
+    for r#move in prefix_and_suffix {
+        nodes.push(r#move.into());
+    }
+
+    nodes.append(
+        &mut SCRAMBLE3X3X3_TWO_PHASE
+            .lock()
+            .unwrap()
+            .scramble_3x3x3(PrefixOrSuffixConstraints::ForFMC)
+            .nodes,
+    );
+
+    let affix: Vec<Move> = static_parsed_list(&FMC_AFFIX);
+    for r#move in affix {
+        nodes.push(r#move.into());
+    }
+
+    Alg { nodes }
 }

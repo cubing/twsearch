@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use cubing::alg::{Alg, Move};
 use rand::{seq::SliceRandom, thread_rng};
 
@@ -5,21 +7,24 @@ use rand::{seq::SliceRandom, thread_rng};
 const NUM_RANDOM_SUFFIX_CHOICES: usize = 2;
 
 // TODO: figure out how to make these actually static
-pub(crate) fn static_move_list(move_strings: &[&str]) -> Vec<Move> {
-    move_strings
-        .iter()
-        .map(|s| s.parse::<Move>().unwrap())
-        .collect()
+pub(crate) fn static_parsed_list<T: FromStr>(strings: &[&str]) -> Vec<T>
+where
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
+    strings.iter().map(|s| s.parse::<T>().unwrap()).collect()
 }
 
-// An empty move string corresponds to `None`.
+// An empty input string corresponds to `None`.
 // TODO: figure out how to make these actually static
-pub(crate) fn static_move_opt_list(move_strings: &[&str]) -> Vec<Option<Move>> {
-    move_strings
+pub(crate) fn static_parsed_opt_list<T: FromStr>(strings: &[&str]) -> Vec<Option<T>>
+where
+    <T as std::str::FromStr>::Err: std::fmt::Debug,
+{
+    strings
         .iter()
         .map(|s| match s {
             &"" => None,
-            s => Some(s.parse::<Move>().unwrap()),
+            s => Some(s.parse::<T>().unwrap()),
         })
         .collect()
 }

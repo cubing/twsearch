@@ -73,6 +73,8 @@ pub(crate) fn filtered_search(
                 min_num_solutions: Some(1),
                 min_depth: Some(0),
                 max_depth: min_optimal_moves.map(|v| v - 1),
+                disallowed_initial_quanta: None,
+                disallowed_final_quanta: None,
             },
         )
         .next()
@@ -87,6 +89,8 @@ pub(crate) fn filtered_search(
                 min_num_solutions: Some(1),
                 min_depth: min_scramble_moves,
                 max_depth: None,
+                disallowed_initial_quanta: None,
+                disallowed_final_quanta: None,
             },
         )
         .next()

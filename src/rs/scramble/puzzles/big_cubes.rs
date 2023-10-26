@@ -10,7 +10,7 @@ use crate::_internal::{
 
 use super::{
     definitions::{cube5x5x5_packed_kpuzzle, cube6x6x6_packed_kpuzzle, cube7x7x7_packed_kpuzzle},
-    static_move_list::{add_random_suffixes_from, static_move_list, static_move_opt_list},
+    static_move_list::{add_random_suffixes_from, static_parsed_list, static_parsed_opt_list},
 };
 
 const NUM_5X5X5_RANDOM_MOVES: usize = 60;
@@ -47,7 +47,7 @@ pub fn scramble_5x5x5() -> Alg {
     let scramble_info = CUBE5X5X5_SCRAMBLE_INFO_CELL.get_or_init(|| {
         ScrambleInfo::new(
             &cube5x5x5_packed_kpuzzle(),
-            static_move_list(&[
+            static_parsed_list(&[
                 "U", "Uw", //
                 "L", "Lw", //
                 "F", "Fw", //
@@ -61,8 +61,8 @@ pub fn scramble_5x5x5() -> Alg {
 }
 
 pub fn scramble_5x5x5_bld() -> Alg {
-    let s1 = static_move_opt_list(&["", "3Rw", "3Rw2", "3Rw'", "3Fw", "3Fw'"]);
-    let s2 = static_move_opt_list(&["", "3Uw", "3Uw2", "3Uw'"]);
+    let s1 = static_parsed_opt_list(&["", "3Rw", "3Rw2", "3Rw'", "3Fw", "3Fw'"]);
+    let s2 = static_parsed_opt_list(&["", "3Uw", "3Uw2", "3Uw'"]);
     add_random_suffixes_from(scramble_5x5x5(), [s1, s2])
 }
 
@@ -71,7 +71,7 @@ pub fn scramble_6x6x6() -> Alg {
     let scramble_info = CUBE6X6X6_SCRAMBLE_INFO_CELL.get_or_init(|| {
         ScrambleInfo::new(
             &cube6x6x6_packed_kpuzzle(),
-            static_move_list(&[
+            static_parsed_list(&[
                 "U", "Uw", "3Uw", //
                 "L", "Lw", // Avoid adjacent moves that combine into a cube rotation.
                 "F", "Fw", "3Fw", //
@@ -89,7 +89,7 @@ pub fn scramble_7x7x7() -> Alg {
     let scramble_info = CUBE7X7X7_SCRAMBLE_INFO_CELL.get_or_init(|| {
         ScrambleInfo::new(
             &cube7x7x7_packed_kpuzzle(),
-            static_move_list(&[
+            static_parsed_list(&[
                 "U", "Uw", "3Uw", //
                 "L", "Lw", "3Lw", //
                 "F", "Fw", "3Fw", //

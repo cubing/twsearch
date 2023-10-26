@@ -6,7 +6,7 @@ use super::{
     puzzles::{
         big_cubes::{scramble_5x5x5, scramble_5x5x5_bld, scramble_6x6x6, scramble_7x7x7},
         cube2x2x2::scramble_2x2x2,
-        cube3x3x3::{scramble_3x3x3, scramble_3x3x3_bld},
+        cube3x3x3::{scramble_3x3x3, scramble_3x3x3_bld, scramble_3x3x3_fmc},
         megaminx::scramble_megaminx,
         pyraminx::scramble_pyraminx,
     },
@@ -25,7 +25,7 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
         Event::Cube6x6x6Speedsolving => Ok(scramble_6x6x6()),
         Event::Cube7x7x7Speedsolving => Ok(scramble_7x7x7()),
         Event::Cube3x3x3Blindfolded => Ok(scramble_3x3x3_bld()),
-        Event::Cube3x3x3FewestMoves => err,
+        Event::Cube3x3x3FewestMoves => Ok(scramble_3x3x3_fmc()),
         Event::Cube3x3x3OneHanded => Ok(scramble_3x3x3()),
         Event::ClockSpeedsolving => err,
         Event::MegaminxSpeedsolving => Ok(scramble_megaminx()),

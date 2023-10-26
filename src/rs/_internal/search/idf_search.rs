@@ -3,7 +3,7 @@ use std::sync::{
     Arc,
 };
 
-use cubing::alg::{Alg, AlgNode, Move};
+use cubing::alg::{Alg, AlgNode, Move, QuantumMove};
 use serde::{Deserialize, Serialize};
 
 use crate::_internal::{
@@ -95,12 +95,26 @@ impl Iterator for SearchSolutions {
     }
 }
 
-#[derive(Clone, Copy, Default, Debug, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IndividualSearchOptions {
     pub min_num_solutions: Option<usize>,
     pub min_depth: Option<usize>,
     pub max_depth: Option<usize>,
+    pub disallowed_initial_quanta: Option<Vec<QuantumMove>>, // TODO: Change this to `fsm_pre_moves` so we can compute disallowed initial FSM states.
+    pub disallowed_final_quanta: Option<Vec<QuantumMove>>, // TODO: Find a way to represent this using disallowed final FSM states?
+}
+
+fn is_move_disallowed(r#move: &Move, disallowed_quanta: &Option<Vec<QuantumMove>>) -> bool {
+    // TODO Use something like a `HashSet` to speed this up?
+    if let Some(disallowed_quanta) = disallowed_quanta {
+        for disallowed_quantum in disallowed_quanta {
+            if r#move.quantum.as_ref() == disallowed_quantum {
+                return true;
+            }
+        }
+    }
+    false
 }
 
 impl IndividualSearchOptions {
@@ -199,8 +213,12 @@ impl IDFSearch {
 
         let search_pattern = search_pattern.clone();
 
-        for remaining_depth in
-            individual_search_options.get_min_depth()..individual_search_options.get_max_depth()
+        for remaining_depth in individual_search_data
+            .individual_search_options
+            .get_min_depth()
+            ..individual_search_data
+                .individual_search_options
+                .get_max_depth()
         {
             self.api_data.search_logger.write_info("----------------");
             self.prune_table.extend_for_search_depth(
@@ -241,6 +259,16 @@ impl IDFSearch {
             .recursive_work_tracker
             .record_recursive_call();
         if remaining_depth == 0 {
+            if let Some(previous_moves) = solution_moves.0 {
+                if is_move_disallowed(
+                    previous_moves.latest_move,
+                    &individual_search_data
+                        .individual_search_options
+                        .disallowed_final_quanta,
+                ) {
+                    return SearchRecursionResult::ContinueSearchingDefault();
+                }
+            }
             return if current_pattern == &self.api_data.target_pattern {
                 individual_search_data.num_solutions_sofar += 1;
                 let alg = Alg::from(solution_moves);
@@ -287,6 +315,17 @@ impl IDFSearch {
             };
 
             for move_transformation_info in move_transformation_multiples {
+                if current_state == CANONICAL_FSM_START_STATE
+                    && is_move_disallowed(
+                        &move_transformation_info.r#move,
+                        &individual_search_data
+                            .individual_search_options
+                            .disallowed_initial_quanta,
+                    )
+                {
+                    // TODO: is it always safe to `break` here?
+                    continue;
+                }
                 match self.recurse(
                     individual_search_data,
                     &current_pattern.apply_transformation(&move_transformation_info.transformation),

@@ -8,20 +8,14 @@ use crate::_internal::{
     CANONICAL_FSM_START_STATE,
 };
 
-use super::definitions::{
-    cube5x5x5_packed_kpuzzle, cube6x6x6_packed_kpuzzle, cube7x7x7_packed_kpuzzle,
+use super::{
+    definitions::{cube5x5x5_packed_kpuzzle, cube6x6x6_packed_kpuzzle, cube7x7x7_packed_kpuzzle},
+    static_move_list::{add_random_suffixes_from, static_move_list, static_move_opt_list},
 };
 
 const NUM_5X5X5_RANDOM_MOVES: usize = 60;
 const NUM_6X6X6_RANDOM_MOVES: usize = 80;
 const NUM_7X7X7_RANDOM_MOVES: usize = 100;
-
-fn static_move_list(move_strings: &[&str]) -> Vec<Move> {
-    move_strings
-        .iter()
-        .map(|s| s.parse::<Move>().unwrap())
-        .collect()
-}
 
 struct ScrambleInfo {
     generators: SearchGenerators,
@@ -64,6 +58,12 @@ pub fn scramble_5x5x5() -> Alg {
         )
     });
     scramble_big_cube(scramble_info, NUM_5X5X5_RANDOM_MOVES)
+}
+
+pub fn scramble_5x5x5_bld() -> Alg {
+    let s1 = static_move_opt_list(&["", "3Rw", "3Rw2", "3Rw'", "3Fw", "3Fw'"]);
+    let s2 = static_move_opt_list(&["", "3Uw", "3Uw2", "3Uw'"]);
+    add_random_suffixes_from(scramble_5x5x5(), [s1, s2])
 }
 
 static CUBE6X6X6_SCRAMBLE_INFO_CELL: OnceLock<ScrambleInfo> = OnceLock::new();

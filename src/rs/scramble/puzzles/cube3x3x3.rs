@@ -1,4 +1,7 @@
+use std::sync::Mutex;
+
 use cubing::alg::Alg;
+use lazy_static::lazy_static;
 
 use crate::{
     _internal::{IDFSearch, IndividualSearchOptions, PackedKPattern, PackedKPuzzle},
@@ -14,6 +17,7 @@ use super::{
     },
     super::scramble_search::generators_from_vec_str,
     definitions::{cube3x3x3_centerless_packed_kpuzzle, cube3x3x3_g1_target_pattern},
+    static_move_list::{add_random_suffixes_from, static_move_opt_list},
 };
 
 pub struct Scramble3x3x3TwoPhase {
@@ -174,4 +178,20 @@ impl Scramble3x3x3TwoPhase {
             return self.solve_3x3x3_pattern(&scramble_pattern);
         }
     }
+}
+
+// TODO: switch to `LazyLock` once that's stable: https://doc.rust-lang.org/nightly/std/cell/struct.LazyCell.html
+lazy_static! {
+    static ref SCRAMBLE3X3X3_TWO_PHASE: Mutex<Scramble3x3x3TwoPhase> =
+        Mutex::new(Scramble3x3x3TwoPhase::default());
+}
+
+pub fn scramble_3x3x3() -> Alg {
+    SCRAMBLE3X3X3_TWO_PHASE.lock().unwrap().scramble_3x3x3()
+}
+
+pub fn scramble_3x3x3_bld() -> Alg {
+    let s1 = static_move_opt_list(&["", "Rw", "Rw2", "Rw'", "Fw", "Fw'"]);
+    let s2 = static_move_opt_list(&["", "Uw", "Uw2", "Uw'"]);
+    add_random_suffixes_from(scramble_3x3x3(), [s1, s2])
 }

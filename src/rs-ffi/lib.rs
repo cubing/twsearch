@@ -38,6 +38,9 @@ fn ffi_test() {
         ("222", 11, 13), // TODO: are there any states that can't be reached in exactly 11 moves for our scramble generators?
         ("pyram", 11, 15), // TODO: are there any states that can't be reached in exactly 11 moves for our scramble generators (ignoring tips)?
         ("333", 15, 30),
+        ("555", 60, 60),
+        ("666", 80, 80),
+        ("777", 100, 100),
         ("minx", 83, 83),
     ];
 

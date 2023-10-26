@@ -14,4 +14,13 @@ int main() {
 
   puts("// 333");
   puts(ffi_random_scramble_for_event("333"));
+
+  puts("// 555");
+  puts(ffi_random_scramble_for_event("555"));
+
+  puts("// 666");
+  puts(ffi_random_scramble_for_event("666"));
+
+  puts("// 777");
+  puts(ffi_random_scramble_for_event("777"));
 }

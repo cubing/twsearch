@@ -46,10 +46,37 @@ pub(crate) fn cube3x3x3_g1_target_pattern() -> PackedKPattern {
 }
 
 static CUBE5X5X5_KPUZZLE_CELL: OnceLock<PackedKPuzzle> = OnceLock::new();
+// TODO: Require the WASM caller to pass in the JSON, to save on build size.
 pub(crate) fn cube5x5x5_packed_kpuzzle() -> PackedKPuzzle {
     CUBE5X5X5_KPUZZLE_CELL
         .get_or_init(|| {
             let json_bytes = include_bytes!("5x5x5.kpuzzle.json");
+            let def: KPuzzleDefinition = serde_json::from_slice(json_bytes).unwrap();
+            let kpuzzle: KPuzzle = def.try_into().unwrap();
+            PackedKPuzzle::try_from(kpuzzle).unwrap()
+        })
+        .clone()
+}
+
+static CUBE6X6X6_KPUZZLE_CELL: OnceLock<PackedKPuzzle> = OnceLock::new();
+// TODO: Require the WASM caller to pass in the JSON, to save on build size.
+pub(crate) fn cube6x6x6_packed_kpuzzle() -> PackedKPuzzle {
+    CUBE6X6X6_KPUZZLE_CELL
+        .get_or_init(|| {
+            let json_bytes = include_bytes!("6x6x6.kpuzzle.json");
+            let def: KPuzzleDefinition = serde_json::from_slice(json_bytes).unwrap();
+            let kpuzzle: KPuzzle = def.try_into().unwrap();
+            PackedKPuzzle::try_from(kpuzzle).unwrap()
+        })
+        .clone()
+}
+
+static CUBE7X7X7_KPUZZLE_CELL: OnceLock<PackedKPuzzle> = OnceLock::new();
+// TODO: Require the WASM caller to pass in the JSON, to save on build size.
+pub(crate) fn cube7x7x7_packed_kpuzzle() -> PackedKPuzzle {
+    CUBE7X7X7_KPUZZLE_CELL
+        .get_or_init(|| {
+            let json_bytes = include_bytes!("7x7x7.kpuzzle.json");
             let def: KPuzzleDefinition = serde_json::from_slice(json_bytes).unwrap();
             let kpuzzle: KPuzzle = def.try_into().unwrap();
             PackedKPuzzle::try_from(kpuzzle).unwrap()

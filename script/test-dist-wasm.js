@@ -5,7 +5,15 @@ import {
   wasmTwsearch,
 } from "../dist/wasm/index.js";
 
-for (const eventID of ["222", "pyram", "minx", ...new Array(10).fill("333")]) {
+for (const eventID of [
+  "222",
+  "pyram",
+  "minx",
+  "555",
+  "666",
+  "777",
+  ...new Array(10).fill("333"),
+]) {
   const startTime = performance.now();
   const scramble = await wasmRandomScrambleForEvent(eventID);
   console.log(

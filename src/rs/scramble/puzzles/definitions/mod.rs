@@ -45,6 +45,18 @@ pub(crate) fn cube3x3x3_g1_target_pattern() -> PackedKPattern {
         .clone()
 }
 
+static CUBE5X5X5_KPUZZLE_CELL: OnceLock<PackedKPuzzle> = OnceLock::new();
+pub(crate) fn cube5x5x5_packed_kpuzzle() -> PackedKPuzzle {
+    CUBE5X5X5_KPUZZLE_CELL
+        .get_or_init(|| {
+            let json_bytes = include_bytes!("5x5x5.kpuzzle.json");
+            let def: KPuzzleDefinition = serde_json::from_slice(json_bytes).unwrap();
+            let kpuzzle: KPuzzle = def.try_into().unwrap();
+            PackedKPuzzle::try_from(kpuzzle).unwrap()
+        })
+        .clone()
+}
+
 static TETRAMINX_KPUZZLE_CELL: OnceLock<PackedKPuzzle> = OnceLock::new();
 pub(crate) fn tetraminx_packed_kpuzzle() -> PackedKPuzzle {
     TETRAMINX_KPUZZLE_CELL

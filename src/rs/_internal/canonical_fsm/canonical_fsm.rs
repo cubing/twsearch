@@ -202,10 +202,10 @@ impl CanonicalFSM {
 
     pub(crate) fn next_state(
         &self,
-        current_state: CanonicalFSMState,
+        current_fsm_state: CanonicalFSMState,
         move_class_index: MoveClassIndex,
     ) -> Option<CanonicalFSMState> {
-        match self.next_state_lookup[current_state.0][move_class_index.0] {
+        match self.next_state_lookup[current_fsm_state.0][move_class_index.0] {
             ILLEGAL_FSM_STATE => None,
             state => Some(state),
         }

@@ -27,6 +27,10 @@ for (const line of contents.split("\n")) {
             input = await (await import(node_fs_promises_unmangled())).readFile(input);
         }`);
     modified = true;
+  } else if (line.includes("new URL") && line.includes("import.meta.url")) {
+    lines.push(
+      `throw new Error("Default \`wasm-pack\` WASM loading code path triggered! This is currently not supported for \`twsearch\` due to incompatibility with some bundlers.");`,
+    );
   } else {
     lines.push(line);
   }

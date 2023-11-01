@@ -14,13 +14,50 @@ use crate::{
             cube4x4x4_phase2_target_pattern,
         },
         randomize::{
-            randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint,
+            basic_parity, randomize_orbit_naive, BasicParity, OrbitOrientationConstraint,
+            OrbitPermutationConstraint,
         },
         scramble_search::{basic_idfs, idfs_with_target_pattern},
     },
 };
 
 use super::super::scramble_search::generators_from_vec_str;
+
+// There are 12 indices `i` for which `EDGE_TO_HIGH[i] == i`. These indices are the high values.
+// The other 12 indices are low values, whose value maps to a unique high value.
+// Note that edges corresponding to high values are permuted exactly among high values (and low values among low values) by `<U, L, F2, R, B2, D>`.
+// http://cubezzz.dyndns.org/drupal/?q=node/view/73#comment-2588
+const EDGE_TO_HIGH: [usize; 24] = [
+    0,  // high
+    1,  // high
+    2,  // high
+    3,  // high
+    3,  // low
+    1,  // low
+    23, // low
+    17, // low
+    2,  // low
+    9,  // high
+    20, // low
+    11, // high
+    1,  // low
+    19, // low
+    21, // low
+    9,  // low
+    0,  // low
+    17, // high
+    22, // low
+    19, // high
+    20, // high
+    21, // high
+    22, // high
+    23, // high
+];
+
+// Checks if either a position or a piece is high (same code for both).
+fn is_high(position: usize) -> bool {
+    EDGE_TO_HIGH[position] == position
+}
 
 pub struct Scramble4x4x4FourPhase {
     packed_kpuzzle: PackedKPuzzle,
@@ -105,7 +142,7 @@ pub fn random_4x4x4_pattern(hardcoded_scramble_alg_for_testing: Option<&Alg>) ->
 impl Scramble4x4x4FourPhase {
     pub(crate) fn solve_4x4x4_pattern(
         &mut self,
-        pattern: &PackedKPattern, // TODO: avoid assuming a superpattern.
+        main_search_pattern: &PackedKPattern, // TODO: avoid assuming a superpattern.
     ) -> Alg {
         dbg!("solve_4x4x4_pattern");
         let phase1_alg = {
@@ -114,7 +151,7 @@ impl Scramble4x4x4FourPhase {
                 for i in 0..orbit_info.num_pieces {
                     remap_piece_for_search_pattern(
                         orbit_info,
-                        pattern,
+                        main_search_pattern,
                         &self.phase1_target_pattern,
                         &mut phase1_search_pattern,
                         i,
@@ -156,7 +193,7 @@ impl Scramble4x4x4FourPhase {
                 for i in 0..orbit_info.num_pieces {
                     remap_piece_for_search_pattern(
                         orbit_info,
-                        pattern,
+                        main_search_pattern,
                         &self.phase2_center_target_pattern,
                         &mut phase2_search_pattern,
                         i,
@@ -181,20 +218,67 @@ impl Scramble4x4x4FourPhase {
                     .transformation_from_alg(&phase1_alg)
                     .unwrap(),
             );
+            let mut search = self.phase2_idfs.search(
+                &phase2_search_pattern,
+                IndividualSearchOptions {
+                    min_num_solutions: Some(usize::MAX), // TODO
+                    min_depth: None,
+                    max_depth: None,
+                    disallowed_initial_quanta: None,
+                    disallowed_final_quanta: None,
+                },
+            );
             dbg!(&self.phase2_center_target_pattern);
-            self.phase2_idfs
-                .search(
-                    &phase2_search_pattern,
-                    IndividualSearchOptions {
-                        min_num_solutions: Some(1),
-                        min_depth: None,
-                        max_depth: None,
-                        disallowed_initial_quanta: None,
-                        disallowed_final_quanta: None,
-                    },
-                )
-                .next()
-                .unwrap()
+            'outer: loop {
+                let candidate_alg = search.next().unwrap();
+                let transformation = self
+                    .packed_kpuzzle
+                    .transformation_from_alg(&candidate_alg)
+                    .expect("Internal error applying an alg from a search result.");
+                let pattern_with_alg_applied =
+                    main_search_pattern.apply_transformation(&transformation);
+                let edge_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[1];
+                assert!(edge_orbit_info.name == "EDGES".into());
+
+                if basic_parity(pattern_with_alg_applied.packed_orbit_data.byte_slice())
+                    != BasicParity::Even
+                {
+                    continue;
+                }
+
+                let mut edge_parity = 0;
+                for position in 0..23 {
+                    let position_is_high = is_high(position);
+                    if position_is_high {
+                        continue;
+                    }
+                    let partner_position = EDGE_TO_HIGH[position];
+
+                    let piece = pattern_with_alg_applied
+                        .packed_orbit_data
+                        .get_packed_piece_or_permutation(edge_orbit_info, position);
+                    let piece_is_high = is_high(piece as usize);
+
+                    let partner_piece = pattern_with_alg_applied
+                        .packed_orbit_data
+                        .get_packed_piece_or_permutation(edge_orbit_info, partner_position);
+                    let partner_piece_is_high = is_high(partner_piece as usize);
+
+                    if piece_is_high == partner_piece_is_high {
+                        continue 'outer;
+                    }
+
+                    if position_is_high != piece_is_high {
+                        edge_parity += 1;
+                    }
+                    j
+                }
+                if edge_parity % 4 != 0 {
+                    continue;
+                }
+
+                break candidate_alg;
+            }
         };
 
         let mut nodes = phase1_alg.nodes;

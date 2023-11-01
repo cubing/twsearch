@@ -77,6 +77,7 @@ pub(crate) fn cube4x4x4_phase1_target_pattern() -> PackedKPattern {
 
 static CUBE4X4X4_PHASE2_PATTERN_CELL: OnceLock<PackedKPattern> = OnceLock::new();
 // TODO: Require the WASM caller to pass in the JSON, to save on build size.
+// TODO: add a way to allow any of the 12 possibilities instead of requiring L and R to both be solved.
 // TODO: ignore edges and corners
 pub(crate) fn cube4x4x4_phase2_target_pattern() -> PackedKPattern {
     CUBE4X4X4_PHASE2_PATTERN_CELL

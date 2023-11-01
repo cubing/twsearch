@@ -44,26 +44,32 @@ use super::super::scramble_search::generators_from_vec_str;
 #[derive(Copy, Clone, PartialEq)]
 struct EdgePairIndex(usize);
 const EDGE_TO_INDEX: [EdgePairIndex; 24] = [
-    EdgePairIndex(0),  // high
-    EdgePairIndex(1),  // high
-    EdgePairIndex(2),  // high
-    EdgePairIndex(3),  // high
+    // U
+    EdgePairIndex(0), // high
+    EdgePairIndex(1), // high
+    EdgePairIndex(2), // high
+    EdgePairIndex(3), // high
+    // L
     EdgePairIndex(3),  // low
-    EdgePairIndex(1),  // low
+    EdgePairIndex(11), // low
     EdgePairIndex(23), // low
     EdgePairIndex(17), // low
+    // F
     EdgePairIndex(2),  // low
     EdgePairIndex(9),  // high
     EdgePairIndex(20), // low
     EdgePairIndex(11), // high
+    // R
     EdgePairIndex(1),  // low
     EdgePairIndex(19), // low
     EdgePairIndex(21), // low
     EdgePairIndex(9),  // low
+    // B
     EdgePairIndex(0),  // low
     EdgePairIndex(17), // high
     EdgePairIndex(22), // low
     EdgePairIndex(19), // high
+    // D
     EdgePairIndex(20), // high
     EdgePairIndex(21), // high
     EdgePairIndex(22), // high

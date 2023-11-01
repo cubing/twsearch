@@ -247,7 +247,7 @@ impl Scramble4x4x4FourPhase {
             let mut search = self.phase2_idfs.search(
                 &phase2_search_pattern,
                 IndividualSearchOptions {
-                    min_num_solutions: Some(usize::MAX), // TODO
+                    min_num_solutions: Some(1), // TODO
                     min_depth: None,
                     max_depth: None,
                     disallowed_initial_quanta: None,

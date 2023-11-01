@@ -133,6 +133,7 @@ struct IndividualSearchData {
     recursive_work_tracker: RecursiveWorkTracker,
     num_solutions_sofar: usize,
     solution_sender: SyncSender<Option<Alg>>,
+    pub additional_check: Option<fn(&PackedKPattern, &Alg) -> bool>, // TODO: handle this with backpressure on the iterator instead.
 }
 
 pub struct IDFSearchAPIData {
@@ -176,10 +177,19 @@ impl IDFSearch {
         })
     }
 
-    pub(crate) fn search(
+    pub fn search(
+        &mut self,
+        search_pattern: &PackedKPattern,
+        individual_search_options: IndividualSearchOptions,
+    ) -> SearchSolutions {
+        self.search_with_additional_check(search_pattern, individual_search_options, None)
+    }
+
+    pub(crate) fn search_with_additional_check(
         &mut self,
         search_pattern: &PackedKPattern,
         mut individual_search_options: IndividualSearchOptions,
+        additional_check: Option<fn(&PackedKPattern, &Alg) -> bool>,
     ) -> SearchSolutions {
         // TODO: do validation more consistently.
         if let Some(min_depth) = individual_search_options.min_depth {
@@ -208,6 +218,7 @@ impl IDFSearch {
             ),
             num_solutions_sofar: 0,
             solution_sender,
+            additional_check,
         };
 
         let search_pattern = search_pattern.clone();
@@ -270,6 +281,12 @@ impl IDFSearch {
             }
             return if current_pattern == &self.api_data.target_pattern {
                 let alg = Alg::from(solution_moves);
+                if let Some(additional_check) = individual_search_data.additional_check {
+                    if !additional_check(current_pattern, &alg) {
+                        return SearchRecursionResult::ContinueSearchingDefault();
+                    }
+                }
+
                 individual_search_data.num_solutions_sofar += 1;
                 individual_search_data
                     .solution_sender

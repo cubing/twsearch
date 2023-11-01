@@ -24,6 +24,8 @@ use crate::{
 
 use super::super::scramble_search::generators_from_vec_str;
 
+const NUM_4_X4X4_EDGES: usize = 24;
+
 /**
  * Each pair of edges ("wings") on a solved 4x4x4 has two position:
  *
@@ -43,7 +45,7 @@ use super::super::scramble_search::generators_from_vec_str;
  */
 #[derive(Copy, Clone, PartialEq)]
 struct EdgePairIndex(usize);
-const EDGE_TO_INDEX: [EdgePairIndex; 24] = [
+const EDGE_TO_INDEX: [EdgePairIndex; NUM_4_X4X4_EDGES] = [
     // U
     EdgePairIndex(0), // high
     EdgePairIndex(1), // high
@@ -194,12 +196,13 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
         if basic_parity(pattern_with_alg_applied.packed_orbit_data.byte_slice())
             != BasicParity::Even
         {
+            println!("false1");
             return false;
         }
 
         let mut edge_parity = 0;
         // Indexed by the value stored in an `EdgePairIndex` (i.e. half of the entries will always be `Unknown`).
-        let mut known_pair_orientations = vec![Phase2EdgeOrientation::Unknown; 24];
+        let mut known_pair_orientations = vec![Phase2EdgeOrientation::Unknown; NUM_4_X4X4_EDGES];
         for position in 0..23 {
             let position_is_high = is_high(position);
 

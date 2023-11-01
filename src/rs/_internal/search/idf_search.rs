@@ -1,5 +1,5 @@
 use std::sync::{
-    mpsc::{channel, Receiver, Sender},
+    mpsc::{sync_channel, Receiver, SyncSender},
     Arc,
 };
 
@@ -56,9 +56,8 @@ pub struct SearchSolutions {
 }
 
 impl SearchSolutions {
-    pub fn construct() -> (Sender<Option<Alg>>, Self) {
-        // TODO: use `sync_channel` to control resumption?
-        let (sender, receiver) = channel::<Option<Alg>>();
+    pub fn construct() -> (SyncSender<Option<Alg>>, Self) {
+        let (sender, receiver) = sync_channel::<Option<Alg>>(0);
         (
             sender,
             Self {
@@ -133,7 +132,7 @@ struct IndividualSearchData {
     individual_search_options: IndividualSearchOptions,
     recursive_work_tracker: RecursiveWorkTracker,
     num_solutions_sofar: usize,
-    solution_sender: Sender<Option<Alg>>,
+    solution_sender: SyncSender<Option<Alg>>,
 }
 
 pub struct IDFSearchAPIData {
@@ -177,7 +176,7 @@ impl IDFSearch {
         })
     }
 
-    pub fn search(
+    pub(crate) fn search(
         &mut self,
         search_pattern: &PackedKPattern,
         mut individual_search_options: IndividualSearchOptions,
@@ -270,8 +269,8 @@ impl IDFSearch {
                 }
             }
             return if current_pattern == &self.api_data.target_pattern {
-                individual_search_data.num_solutions_sofar += 1;
                 let alg = Alg::from(solution_moves);
+                individual_search_data.num_solutions_sofar += 1;
                 individual_search_data
                     .solution_sender
                     .send(Some(alg))

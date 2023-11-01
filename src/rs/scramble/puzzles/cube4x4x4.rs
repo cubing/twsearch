@@ -210,6 +210,8 @@ impl Scramble4x4x4FourPhase {
                 .unwrap()
         };
 
+        dbg!(&phase1_alg.to_string());
+
         let mut phase2_alg = {
             // TODO: unify with phase 1 (almost identical code)
             let mut phase2_search_pattern = self.phase2_center_target_pattern.clone();
@@ -252,10 +254,11 @@ impl Scramble4x4x4FourPhase {
                     disallowed_final_quanta: None,
                 },
             );
+            dbg!(&phase2_search_pattern);
             dbg!(&self.phase2_center_target_pattern);
+            dbg!(phase2_search_pattern == self.phase2_center_target_pattern);
             'search_loop: loop {
                 let candidate_alg = search.next().unwrap();
-                dbg!(&candidate_alg);
                 let transformation = self
                     .packed_kpuzzle
                     .transformation_from_alg(&candidate_alg)

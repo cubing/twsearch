@@ -61,6 +61,7 @@ pub(crate) fn cube4x4x4_packed_kpuzzle() -> PackedKPuzzle {
 
 static CUBE4X4X4_PHASE1_PATTERN_CELL: OnceLock<PackedKPattern> = OnceLock::new();
 // TODO: Require the WASM caller to pass in the JSON, to save on build size.
+// TODO: ignore edges and corners
 pub(crate) fn cube4x4x4_phase1_target_pattern() -> PackedKPattern {
     CUBE4X4X4_PHASE1_PATTERN_CELL
         .get_or_init(|| {
@@ -68,6 +69,22 @@ pub(crate) fn cube4x4x4_phase1_target_pattern() -> PackedKPattern {
             PackedKPattern::try_from_json(
                 &packed_kpuzzle,
                 include_bytes!("4x4x4-Phase1.target.json"),
+            )
+            .unwrap()
+        })
+        .clone()
+}
+
+static CUBE4X4X4_PHASE2_PATTERN_CELL: OnceLock<PackedKPattern> = OnceLock::new();
+// TODO: Require the WASM caller to pass in the JSON, to save on build size.
+// TODO: ignore edges and corners
+pub(crate) fn cube4x4x4_phase2_target_pattern() -> PackedKPattern {
+    CUBE4X4X4_PHASE2_PATTERN_CELL
+        .get_or_init(|| {
+            let packed_kpuzzle = cube4x4x4_packed_kpuzzle();
+            PackedKPattern::try_from_json(
+                &packed_kpuzzle,
+                include_bytes!("4x4x4-Phase2.target.json"),
             )
             .unwrap()
         })

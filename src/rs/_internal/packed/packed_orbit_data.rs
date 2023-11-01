@@ -65,7 +65,7 @@ impl PackedOrbitData {
     }
 
     pub fn set_packed_piece_or_permutation(
-        &self,
+        &mut self,
         orbit_info: &PackedKPuzzleOrbitInfo,
         i: usize,
         value: u8,
@@ -78,7 +78,7 @@ impl PackedOrbitData {
     }
 
     pub fn set_packed_orientation(
-        &self,
+        &mut self,
         orbit_info: &PackedKPuzzleOrbitInfo,
         i: usize,
         value: PackedOrientationWithMod,

@@ -112,7 +112,7 @@ impl Scramble3x3x3TwoPhase {
         };
 
         let phase1_alg = {
-            let phase1_search_pattern = self.phase1_target_pattern.clone();
+            let mut phase1_search_pattern = self.phase1_target_pattern.clone();
             for orbit_info in &self.packed_kpuzzle.data.orbit_iteration_info {
                 for i in 0..orbit_info.num_pieces {
                     let old_piece = pattern

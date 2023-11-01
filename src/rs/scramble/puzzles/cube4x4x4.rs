@@ -1,12 +1,17 @@
 use std::sync::Mutex;
 
-use cubing::alg::Alg;
+use cubing::alg::{Alg, Pause};
 use lazy_static::lazy_static;
 
 use crate::{
-    _internal::{IDFSearch, IndividualSearchOptions, PackedKPattern, PackedKPuzzle},
+    _internal::{
+        IDFSearch, IndividualSearchOptions, PackedKPattern, PackedKPuzzle, PackedKPuzzleOrbitInfo,
+    },
     scramble::{
-        puzzles::definitions::{cube4x4x4_packed_kpuzzle, cube4x4x4_phase1_target_pattern},
+        puzzles::definitions::{
+            cube4x4x4_packed_kpuzzle, cube4x4x4_phase1_target_pattern,
+            cube4x4x4_phase2_target_pattern,
+        },
         scramble_search::{basic_idfs, idfs_with_target_pattern},
     },
 };
@@ -20,25 +25,39 @@ pub struct Scramble4x4x4FourPhase {
 
     phase1_target_pattern: PackedKPattern,
     phase1_idfs: IDFSearch,
-    // phase2_idfs: IDFSearch,
+
+    phase2_center_target_pattern: PackedKPattern,
+    phase2_idfs: IDFSearch,
 }
 
 impl Default for Scramble4x4x4FourPhase {
     fn default() -> Self {
         let packed_kpuzzle = cube4x4x4_packed_kpuzzle();
 
-        // TODO: support normalizing orientation/ignoring orientation/24 targets, so that this checks for unoriented distance to solved.
-        let generators = generators_from_vec_str(vec![
+        let phase1_generators = generators_from_vec_str(vec![
             "Uw", "U", "Lw", "L", "Fw", "F", "Rw", "R", "Bw", "B", "Dw", "D",
         ]);
-        let filtering_idfs = basic_idfs(&packed_kpuzzle, generators.clone(), Some(32));
+        // TODO: support normalizing orientation/ignoring orientation/24 targets, so that this checks for unoriented distance to solved.
+        let filtering_idfs = basic_idfs(&packed_kpuzzle, phase1_generators.clone(), Some(32));
 
         let phase1_target_pattern = cube4x4x4_phase1_target_pattern();
         dbg!(&phase1_target_pattern);
         let phase1_idfs = idfs_with_target_pattern(
             &packed_kpuzzle,
-            generators.clone(),
+            phase1_generators.clone(),
             phase1_target_pattern.clone(),
+            None,
+        );
+
+        let phase2_generators = generators_from_vec_str(vec![
+            "Uw2", "U", "Lw", "L", "Fw2", "F", "Rw", "R", "Bw2", "B", "Dw2", "D",
+        ]);
+        let phase2_center_target_pattern = cube4x4x4_phase2_target_pattern();
+        dbg!(&phase2_center_target_pattern);
+        let phase2_idfs = idfs_with_target_pattern(
+            &packed_kpuzzle,
+            phase2_generators.clone(),
+            phase2_center_target_pattern.clone(),
             None,
         );
 
@@ -47,6 +66,8 @@ impl Default for Scramble4x4x4FourPhase {
             _filtering_idfs: filtering_idfs,
             phase1_target_pattern,
             phase1_idfs,
+            phase2_center_target_pattern,
+            phase2_idfs,
         }
     }
 }
@@ -56,10 +77,10 @@ pub fn random_4x4x4_pattern() -> PackedKPattern {
     let packed_kpuzzle = cube4x4x4_packed_kpuzzle();
     let mut scramble_pattern = packed_kpuzzle.default_pattern();
 
-    // let transformation = packed_kpuzzle.transformation_from_alg(&"F' R' B2 D L' B D L2 F L2 F2 B' L2 U2 F2 U2 F' R2 L2 D' L2 Fw2 Rw2 R F' Uw2 U2 Fw2 F Uw2 L U2 R2 D2 Uw U F R F' Rw' Fw B Uw' L' Fw2 F2".parse::<Alg>().unwrap()).unwrap();
-    let transformation = packed_kpuzzle
-        .transformation_from_alg(&"d' r2' f' u D2' b B' F2'".parse::<Alg>().unwrap())
-        .unwrap();
+    let transformation = packed_kpuzzle.transformation_from_alg(&"F' R' B2 D L' B D L2 F L2 F2 B' L2 U2 F2 U2 F' R2 L2 D' L2 Fw2 Rw2 R F' Uw2 U2 Fw2 F Uw2 L U2 R2 D2 Uw U F R F' Rw' Fw B Uw' L' Fw2 F2".parse::<Alg>().unwrap()).unwrap();
+    // let transformation = packed_kpuzzle
+    //     .transformation_from_alg(&"b2' l u2' r D f2' U B2' F'".parse::<Alg>().unwrap())
+    //     .unwrap();
     scramble_pattern = scramble_pattern.apply_transformation(&transformation);
 
     // for orbit_info in &packed_kpuzzle.data.orbit_iteration_info {
@@ -80,25 +101,16 @@ impl Scramble4x4x4FourPhase {
     ) -> Alg {
         dbg!("solve_4x4x4_pattern");
         let phase1_alg = {
-            let phase1_search_pattern = self.phase1_target_pattern.clone();
+            let mut phase1_search_pattern = self.phase1_target_pattern.clone();
             for orbit_info in &self.packed_kpuzzle.data.orbit_iteration_info {
                 for i in 0..orbit_info.num_pieces {
-                    let old_piece = pattern
-                        .packed_orbit_data
-                        .get_packed_piece_or_permutation(orbit_info, i);
-                    let old_piece_mapped = self
-                        .phase1_target_pattern
-                        .packed_orbit_data
-                        .get_packed_piece_or_permutation(orbit_info, old_piece as usize);
-                    phase1_search_pattern
-                        .packed_orbit_data
-                        .set_packed_piece_or_permutation(orbit_info, i, old_piece_mapped);
-                    let ori = pattern
-                        .packed_orbit_data
-                        .get_packed_orientation(orbit_info, i);
-                    phase1_search_pattern
-                        .packed_orbit_data
-                        .set_packed_orientation(orbit_info, i, ori);
+                    remap_piece_for_search_pattern(
+                        orbit_info,
+                        pattern,
+                        &self.phase1_target_pattern,
+                        &mut phase1_search_pattern,
+                        i,
+                    );
                     if orbit_info.name == "CORNERS".into() {
                         // TODO: handle this properly by taking into account orientation mod.
                         phase1_search_pattern
@@ -129,30 +141,58 @@ impl Scramble4x4x4FourPhase {
                 .unwrap()
         };
 
-        // let mut phase2_alg = {
-        //     let phase2_search_pattern = pattern.apply_transformation(
-        //         &self
-        //             .packed_kpuzzle
-        //             .transformation_from_alg(&phase1_alg)
-        //             .unwrap(),
-        //     );
-        //     self.phase2_idfs
-        //         .search(
-        //             &phase2_search_pattern,
-        //             IndividualSearchOptions {
-        //                 min_num_solutions: Some(1),
-        //                 min_depth: None,
-        //                 max_depth: None,
-        //                 disallowed_initial_quanta: None,
-        //                 disallowed_final_quanta,
-        //             },
-        //         )
-        //         .next()
-        //         .unwrap()
-        // };
+        let mut phase2_alg = {
+            // TODO: unify with phase 1 (almost identical code)
+            let mut phase2_search_pattern = self.phase2_center_target_pattern.clone();
+            for orbit_info in &self.packed_kpuzzle.data.orbit_iteration_info {
+                for i in 0..orbit_info.num_pieces {
+                    remap_piece_for_search_pattern(
+                        orbit_info,
+                        pattern,
+                        &self.phase2_center_target_pattern,
+                        &mut phase2_search_pattern,
+                        i,
+                    );
+                    if orbit_info.name == "CORNERS".into() {
+                        // TODO: handle this properly by taking into account orientation mod.
+                        phase2_search_pattern
+                            .packed_orbit_data
+                            .set_packed_orientation(orbit_info, i, 3);
+                    }
+                    if orbit_info.name == "EDGES".into() {
+                        // TODO: handle this properly by taking into account orientation mod.
+                        phase2_search_pattern
+                            .packed_orbit_data
+                            .set_packed_orientation(orbit_info, i, 2);
+                    }
+                }
+            }
+            let phase2_search_pattern = phase2_search_pattern.apply_transformation(
+                &self
+                    .packed_kpuzzle
+                    .transformation_from_alg(&phase1_alg)
+                    .unwrap(),
+            );
+            dbg!(&self.phase2_center_target_pattern);
+            self.phase2_idfs
+                .search(
+                    &phase2_search_pattern,
+                    IndividualSearchOptions {
+                        min_num_solutions: Some(1),
+                        min_depth: None,
+                        max_depth: None,
+                        disallowed_initial_quanta: None,
+                        disallowed_final_quanta: None,
+                    },
+                )
+                .next()
+                .unwrap()
+        };
 
-        let nodes = phase1_alg.nodes;
-        // nodes.append(&mut phase2_alg.nodes);
+        let mut nodes = phase1_alg.nodes;
+        nodes.push(cubing::alg::AlgNode::PauseNode(Pause {}));
+        nodes.append(&mut phase2_alg.nodes);
+        nodes.push(cubing::alg::AlgNode::PauseNode(Pause {}));
         Alg { nodes }
     }
 
@@ -183,6 +223,36 @@ impl Scramble4x4x4FourPhase {
             }
             return self.solve_4x4x4_pattern(&scramble_pattern);
         }
+    }
+}
+
+fn remap_piece_for_search_pattern(
+    orbit_info: &PackedKPuzzleOrbitInfo,
+    from_pattern: &PackedKPattern,
+    target_pattern: &PackedKPattern,
+    search_pattern: &mut PackedKPattern,
+    i: usize,
+) {
+    let old_piece = from_pattern
+        .packed_orbit_data
+        .get_packed_piece_or_permutation(orbit_info, i);
+    let old_piece_mapped = target_pattern
+        .packed_orbit_data
+        .get_packed_piece_or_permutation(orbit_info, old_piece as usize);
+    search_pattern
+        .packed_orbit_data
+        .set_packed_piece_or_permutation(orbit_info, i, old_piece_mapped);
+    let ori = from_pattern
+        .packed_orbit_data
+        .get_packed_orientation(orbit_info, i);
+    search_pattern
+        .packed_orbit_data
+        .set_packed_orientation(orbit_info, i, ori);
+    if orbit_info.name == "CORNERS".into() {
+        // TODO: handle this properly by taking into account orientation mod.
+        search_pattern
+            .packed_orbit_data
+            .set_packed_orientation(orbit_info, i, 3);
     }
 }
 

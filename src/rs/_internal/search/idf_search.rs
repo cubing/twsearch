@@ -75,7 +75,9 @@ impl Iterator for SearchSolutions {
         if self.done {
             None
         } else {
-            let received = match self.receiver.recv() {
+            let rec = self.receiver.recv();
+            println!("received?");
+            let received = match rec {
                 Ok(received) => received,
                 Err(_) => {
                     // TODO: this could be either a channel failure or no solutions found. We should find a way for the latter to avoid hitting this code path.
@@ -286,6 +288,8 @@ impl IDFSearch {
                         return SearchRecursionResult::ContinueSearchingDefault();
                     }
                 }
+
+                println!("send");
 
                 individual_search_data.num_solutions_sofar += 1;
                 individual_search_data

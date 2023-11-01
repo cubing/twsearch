@@ -106,7 +106,7 @@ impl Default for Scramble4x4x4FourPhase {
         let filtering_idfs = basic_idfs(&packed_kpuzzle, phase1_generators.clone(), Some(32));
 
         let phase1_target_pattern = cube4x4x4_phase1_target_pattern();
-        dbg!(&phase1_target_pattern);
+        // dbg!(&phase1_target_pattern);
         let phase1_idfs = idfs_with_target_pattern(
             &packed_kpuzzle,
             phase1_generators.clone(),
@@ -118,7 +118,7 @@ impl Default for Scramble4x4x4FourPhase {
             "Uw2", "U", "Lw", "L", "Fw2", "F", "Rw", "R", "Bw2", "B", "Dw2", "D",
         ]);
         let phase2_center_target_pattern = cube4x4x4_phase2_target_pattern();
-        dbg!(&phase2_center_target_pattern);
+        // dbg!(&phase2_center_target_pattern);
         let phase2_idfs = idfs_with_target_pattern(
             &packed_kpuzzle,
             phase2_generators.clone(),
@@ -340,7 +340,8 @@ impl Scramble4x4x4FourPhase {
 
     pub(crate) fn scramble_4x4x4(&mut self) -> Alg {
         loop {
-            let hardcoded_scramble_alg_for_testing ="F' R' B2 D L' B D L2 F L2 F2 B' L2 U2 F2 U2 F' R2 L2 D' L2 Fw2 Rw2 R F' Uw2 U2 Fw2 F Uw2 L U2 R2 D2 Uw U F R F' Rw' Fw B Uw' L' Fw2 F2".parse::<Alg>().unwrap();
+            // let hardcoded_scramble_alg_for_testing ="F' R' B2 D L' B D L2 F L2 F2 B' L2 U2 F2 U2 F' R2 L2 D' L2 Fw2 Rw2 R F' Uw2 U2 Fw2 F Uw2 L U2 R2 D2 Uw U F R F' Rw' Fw B Uw' L' Fw2 F2".parse::<Alg>().unwrap();
+            let hardcoded_scramble_alg_for_testing = "Uw".parse::<Alg>().unwrap();
             let scramble_pattern = random_4x4x4_pattern(Some(&hardcoded_scramble_alg_for_testing));
 
             if !self.is_valid_scramble_pattern(&scramble_pattern) {

@@ -183,7 +183,7 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
             .main_search_pattern
             .apply_transformation(&transformation);
         let edge_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[1];
-        assert!(edge_orbit_info.name == "EDGES".into());
+        assert!(edge_orbit_info.name == "WINGS".into());
 
         if basic_parity(pattern_with_alg_applied.packed_orbit_data.byte_slice())
             != BasicParity::Even
@@ -252,7 +252,7 @@ impl Scramble4x4x4FourPhase {
                             .packed_orbit_data
                             .set_packed_orientation(orbit_info, i, 3);
                     }
-                    if orbit_info.name == "EDGES".into() {
+                    if orbit_info.name == "WINGS".into() {
                         // TODO: handle this properly by taking into account orientation mod.
                         phase1_search_pattern
                             .packed_orbit_data
@@ -296,7 +296,7 @@ impl Scramble4x4x4FourPhase {
                             .packed_orbit_data
                             .set_packed_orientation(orbit_info, i, 3);
                     }
-                    if orbit_info.name == "EDGES".into() {
+                    if orbit_info.name == "WINGS".into() {
                         // TODO: handle this properly by taking into account orientation mod.
                         phase2_search_pattern
                             .packed_orbit_data

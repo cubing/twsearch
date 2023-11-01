@@ -23,40 +23,64 @@ use crate::{
 
 use super::super::scramble_search::generators_from_vec_str;
 
-// There are 12 indices `i` for which `EDGE_TO_HIGH[i] == i`. These indices are the high values.
-// The other 12 indices are low values, whose value maps to a unique high value.
-// Note that edges corresponding to high values are permuted exactly among high values (and low values among low values) by `<U, L, F2, R, B2, D>`.
-// http://cubezzz.dyndns.org/drupal/?q=node/view/73#comment-2588
-const EDGE_TO_HIGH: [usize; 24] = [
-    0,  // high
-    1,  // high
-    2,  // high
-    3,  // high
-    3,  // low
-    1,  // low
-    23, // low
-    17, // low
-    2,  // low
-    9,  // high
-    20, // low
-    11, // high
-    1,  // low
-    19, // low
-    21, // low
-    9,  // low
-    0,  // low
-    17, // high
-    22, // low
-    19, // high
-    20, // high
-    21, // high
-    22, // high
-    23, // high
+/**
+ * Each pair of edges ("wings") on a solved 4x4x4 has two position:
+ *
+ * - The "high" position — this includes UBl (the first piece in Speffz) and all the places that the UBl piece can be moved by <U, L, R, D>
+ * - The "low" position — the other position.
+ *
+ * Further:
+ *
+ * - A piece that starts in a high position is a high piece.
+ * - A piece that starts in a high position is a low piece.
+ *
+ * And:
+ *
+ * Each high-low pair is assigned an index, which is the position index of the high position/piece in Speffz.
+ *
+ * This encodes the convention established by: http://cubezzz.dyndns.org/drupal/?q=node/view/73#comment-2588
+ */
+#[derive(Copy, Clone, PartialEq)]
+struct EdgePairIndex(usize);
+const EDGE_TO_INDEX: [EdgePairIndex; 24] = [
+    EdgePairIndex(0),  // high
+    EdgePairIndex(1),  // high
+    EdgePairIndex(2),  // high
+    EdgePairIndex(3),  // high
+    EdgePairIndex(3),  // low
+    EdgePairIndex(1),  // low
+    EdgePairIndex(23), // low
+    EdgePairIndex(17), // low
+    EdgePairIndex(2),  // low
+    EdgePairIndex(9),  // high
+    EdgePairIndex(20), // low
+    EdgePairIndex(11), // high
+    EdgePairIndex(1),  // low
+    EdgePairIndex(19), // low
+    EdgePairIndex(21), // low
+    EdgePairIndex(9),  // low
+    EdgePairIndex(0),  // low
+    EdgePairIndex(17), // high
+    EdgePairIndex(22), // low
+    EdgePairIndex(19), // high
+    EdgePairIndex(20), // high
+    EdgePairIndex(21), // high
+    EdgePairIndex(22), // high
+    EdgePairIndex(23), // high
 ];
 
 // Checks if either a position or a piece is high (same code for both).
-fn is_high(position: usize) -> bool {
-    EDGE_TO_HIGH[position] == position
+fn is_high(position_or_piece: usize) -> bool {
+    EDGE_TO_INDEX[position_or_piece].0 == position_or_piece
+}
+
+#[derive(Clone, PartialEq)]
+enum Phase2EdgeOrientation {
+    Unknown,
+    // Either a high piece in a high position, or a low piece in a low position.
+    Oriented,
+    // Either a high piece in a low position, or a low piece in a high position.
+    Misoriented,
 }
 
 pub struct Scramble4x4x4FourPhase {
@@ -229,8 +253,9 @@ impl Scramble4x4x4FourPhase {
                 },
             );
             dbg!(&self.phase2_center_target_pattern);
-            'outer: loop {
+            'search_loop: loop {
                 let candidate_alg = search.next().unwrap();
+                dbg!(&candidate_alg);
                 let transformation = self
                     .packed_kpuzzle
                     .transformation_from_alg(&candidate_alg)
@@ -247,31 +272,34 @@ impl Scramble4x4x4FourPhase {
                 }
 
                 let mut edge_parity = 0;
+                // Indexed by the high piece of the pair (i.e. half of the entries will always be `Unknown`).
+                let mut known_pair_orientations = vec![Phase2EdgeOrientation::Unknown; 24];
                 for position in 0..23 {
                     let position_is_high = is_high(position);
-                    if position_is_high {
-                        continue;
-                    }
-                    let partner_position = EDGE_TO_HIGH[position];
 
                     let piece = pattern_with_alg_applied
                         .packed_orbit_data
                         .get_packed_piece_or_permutation(edge_orbit_info, position);
                     let piece_is_high = is_high(piece as usize);
 
-                    let partner_piece = pattern_with_alg_applied
-                        .packed_orbit_data
-                        .get_packed_piece_or_permutation(edge_orbit_info, partner_position);
-                    let partner_piece_is_high = is_high(partner_piece as usize);
-
-                    if piece_is_high == partner_piece_is_high {
-                        continue 'outer;
-                    }
-
-                    if position_is_high != piece_is_high {
+                    let pair_orientation = if piece_is_high == position_is_high {
+                        Phase2EdgeOrientation::Oriented
+                    } else {
                         edge_parity += 1;
+                        Phase2EdgeOrientation::Misoriented
+                    };
+
+                    let edge_pair_index = EDGE_TO_INDEX[piece as usize];
+                    match &known_pair_orientations[edge_pair_index.0] {
+                        Phase2EdgeOrientation::Unknown => {
+                            known_pair_orientations[edge_pair_index.0] = pair_orientation
+                        }
+                        known_pair_orientation => {
+                            if known_pair_orientation != &pair_orientation {
+                                continue 'search_loop;
+                            }
+                        }
                     }
-                    j
                 }
                 if edge_parity % 4 != 0 {
                     continue;

@@ -6,7 +6,8 @@ use url::Url;
 
 use crate::{
     _internal::{
-        IDFSearch, IndividualSearchOptions, PackedKPattern, PackedKPuzzle, PackedKPuzzleOrbitInfo,
+        AdditionalSolutionCondition, IDFSearch, IndividualSearchOptions, PackedKPattern,
+        PackedKPuzzle, PackedKPuzzleOrbitInfo,
     },
     scramble::{
         puzzles::definitions::{
@@ -163,6 +164,71 @@ pub fn random_4x4x4_pattern(hardcoded_scramble_alg_for_testing: Option<&Alg>) ->
     scramble_pattern
 }
 
+struct Phase2AdditionalSolutionCondition {
+    packed_kpuzzle: PackedKPuzzle, // we could theoretically get this from `main_search_pattern`, but this way is more clear.
+    main_search_pattern: PackedKPattern,
+}
+
+impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
+    fn should_accept_solution(
+        &self,
+        _candidate_pattern: &PackedKPattern,
+        candidate_alg: &Alg,
+    ) -> bool {
+        let transformation = self
+            .packed_kpuzzle
+            .transformation_from_alg(candidate_alg)
+            .expect("Internal error applying an alg from a search result.");
+        let pattern_with_alg_applied = self
+            .main_search_pattern
+            .apply_transformation(&transformation);
+        let edge_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[1];
+        assert!(edge_orbit_info.name == "EDGES".into());
+
+        if basic_parity(pattern_with_alg_applied.packed_orbit_data.byte_slice())
+            != BasicParity::Even
+        {
+            return false;
+        }
+
+        let mut edge_parity = 0;
+        // Indexed by the value stored in an `EdgePairIndex` (i.e. half of the entries will always be `Unknown`).
+        let mut known_pair_orientations = vec![Phase2EdgeOrientation::Unknown; 24];
+        for position in 0..23 {
+            let position_is_high = is_high(position);
+
+            let piece = pattern_with_alg_applied
+                .packed_orbit_data
+                .get_packed_piece_or_permutation(edge_orbit_info, position);
+            let piece_is_high = is_high(piece as usize);
+
+            let pair_orientation = if piece_is_high == position_is_high {
+                Phase2EdgeOrientation::Oriented
+            } else {
+                edge_parity += 1;
+                Phase2EdgeOrientation::Misoriented
+            };
+
+            let edge_pair_index: EdgePairIndex = EDGE_TO_INDEX[piece as usize];
+            match &known_pair_orientations[edge_pair_index.0] {
+                Phase2EdgeOrientation::Unknown => {
+                    known_pair_orientations[edge_pair_index.0] = pair_orientation
+                }
+                known_pair_orientation => {
+                    if known_pair_orientation != &pair_orientation {
+                        return false;
+                    }
+                }
+            }
+        }
+        if edge_parity % 4 != 0 {
+            return false;
+        }
+
+        true
+    }
+}
+
 impl Scramble4x4x4FourPhase {
     pub(crate) fn solve_4x4x4_pattern(
         &mut self,
@@ -244,72 +310,30 @@ impl Scramble4x4x4FourPhase {
                     .transformation_from_alg(&phase1_alg)
                     .unwrap(),
             );
-            let mut search = self.phase2_idfs.search(
-                &phase2_search_pattern,
-                IndividualSearchOptions {
-                    min_num_solutions: Some(1), // TODO
-                    min_depth: None,
-                    max_depth: None,
-                    disallowed_initial_quanta: None,
-                    disallowed_final_quanta: None,
-                },
-            );
-            dbg!(&phase2_search_pattern);
-            dbg!(&self.phase2_center_target_pattern);
-            dbg!(phase2_search_pattern == self.phase2_center_target_pattern);
-            'search_loop: loop {
-                let candidate_alg = search.next().unwrap();
-                let transformation = self
-                    .packed_kpuzzle
-                    .transformation_from_alg(&candidate_alg)
-                    .expect("Internal error applying an alg from a search result.");
-                let pattern_with_alg_applied =
-                    main_search_pattern.apply_transformation(&transformation);
-                let edge_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[1];
-                assert!(edge_orbit_info.name == "EDGES".into());
 
-                if basic_parity(pattern_with_alg_applied.packed_orbit_data.byte_slice())
-                    != BasicParity::Even
-                {
-                    continue;
-                }
+            let additional_solution_condition = Phase2AdditionalSolutionCondition {
+                packed_kpuzzle: self.packed_kpuzzle.clone(),
+                main_search_pattern: main_search_pattern.clone(),
+            };
 
-                let mut edge_parity = 0;
-                // Indexed by the high piece of the pair (i.e. half of the entries will always be `Unknown`).
-                let mut known_pair_orientations = vec![Phase2EdgeOrientation::Unknown; 24];
-                for position in 0..23 {
-                    let position_is_high = is_high(position);
-
-                    let piece = pattern_with_alg_applied
-                        .packed_orbit_data
-                        .get_packed_piece_or_permutation(edge_orbit_info, position);
-                    let piece_is_high = is_high(piece as usize);
-
-                    let pair_orientation = if piece_is_high == position_is_high {
-                        Phase2EdgeOrientation::Oriented
-                    } else {
-                        edge_parity += 1;
-                        Phase2EdgeOrientation::Misoriented
-                    };
-
-                    let edge_pair_index = EDGE_TO_INDEX[piece as usize];
-                    match &known_pair_orientations[edge_pair_index.0] {
-                        Phase2EdgeOrientation::Unknown => {
-                            known_pair_orientations[edge_pair_index.0] = pair_orientation
-                        }
-                        known_pair_orientation => {
-                            if known_pair_orientation != &pair_orientation {
-                                continue 'search_loop;
-                            }
-                        }
-                    }
-                }
-                if edge_parity % 4 != 0 {
-                    continue;
-                }
-
-                break candidate_alg;
-            }
+            self.phase2_idfs
+                .search_with_additional_check(
+                    &phase2_search_pattern,
+                    IndividualSearchOptions {
+                        min_num_solutions: Some(1), // TODO
+                        min_depth: None,
+                        max_depth: None,
+                        disallowed_initial_quanta: None,
+                        disallowed_final_quanta: None,
+                    },
+                    Some(Box::new(additional_solution_condition)),
+                )
+                .next()
+                .unwrap()
+            // dbg!(&phase2_search_pattern);
+            // dbg!(&self.phase2_center_target_pattern);
+            // dbg!(phase2_search_pattern == self.phase2_center_target_pattern);
+            // 'search_loop: loop {}
         };
 
         let mut nodes = phase1_alg.nodes;

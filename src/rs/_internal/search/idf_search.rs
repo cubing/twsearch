@@ -1,5 +1,5 @@
 use std::sync::{
-    mpsc::{sync_channel, Receiver, SyncSender},
+    mpsc::{channel, Receiver, Sender},
     Arc,
 };
 
@@ -56,8 +56,9 @@ pub struct SearchSolutions {
 }
 
 impl SearchSolutions {
-    pub fn construct() -> (SyncSender<Option<Alg>>, Self) {
-        let (sender, receiver) = sync_channel::<Option<Alg>>(0);
+    pub fn construct() -> (Sender<Option<Alg>>, Self) {
+        // TODO: use `SyncSender` once the main work in a separate task.
+        let (sender, receiver) = channel::<Option<Alg>>();
         (
             sender,
             Self {
@@ -76,7 +77,6 @@ impl Iterator for SearchSolutions {
             None
         } else {
             let rec = self.receiver.recv();
-            println!("received?");
             let received = match rec {
                 Ok(received) => received,
                 Err(_) => {
@@ -130,12 +130,20 @@ impl IndividualSearchOptions {
     }
 }
 
+pub(crate) trait AdditionalSolutionCondition {
+    fn should_accept_solution(
+        &self,
+        candidate_pattern: &PackedKPattern,
+        candidate_alg: &Alg,
+    ) -> bool;
+}
+
 struct IndividualSearchData {
     individual_search_options: IndividualSearchOptions,
     recursive_work_tracker: RecursiveWorkTracker,
     num_solutions_sofar: usize,
-    solution_sender: SyncSender<Option<Alg>>,
-    pub additional_check: Option<fn(&PackedKPattern, &Alg) -> bool>, // TODO: handle this with backpressure on the iterator instead.
+    solution_sender: Sender<Option<Alg>>,
+    pub additional_solution_condition: Option<Box<dyn AdditionalSolutionCondition>>, // TODO: handle this with backpressure on the iterator instead.
 }
 
 pub struct IDFSearchAPIData {
@@ -191,7 +199,7 @@ impl IDFSearch {
         &mut self,
         search_pattern: &PackedKPattern,
         mut individual_search_options: IndividualSearchOptions,
-        additional_check: Option<fn(&PackedKPattern, &Alg) -> bool>,
+        additional_solution_condition: Option<Box<dyn AdditionalSolutionCondition>>,
     ) -> SearchSolutions {
         // TODO: do validation more consistently.
         if let Some(min_depth) = individual_search_options.min_depth {
@@ -220,7 +228,7 @@ impl IDFSearch {
             ),
             num_solutions_sofar: 0,
             solution_sender,
-            additional_check,
+            additional_solution_condition,
         };
 
         let search_pattern = search_pattern.clone();
@@ -283,8 +291,11 @@ impl IDFSearch {
             }
             return if current_pattern == &self.api_data.target_pattern {
                 let alg = Alg::from(solution_moves);
-                if let Some(additional_check) = individual_search_data.additional_check {
-                    if !additional_check(current_pattern, &alg) {
+                if let Some(additional_solution_condition) =
+                    &individual_search_data.additional_solution_condition
+                {
+                    if !additional_solution_condition.should_accept_solution(current_pattern, &alg)
+                    {
                         return SearchRecursionResult::ContinueSearchingDefault();
                     }
                 }

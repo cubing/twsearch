@@ -2,6 +2,7 @@ use std::sync::Mutex;
 
 use cubing::alg::{Alg, Pause};
 use lazy_static::lazy_static;
+use url::Url;
 
 use crate::{
     _internal::{
@@ -11,6 +12,9 @@ use crate::{
         puzzles::definitions::{
             cube4x4x4_packed_kpuzzle, cube4x4x4_phase1_target_pattern,
             cube4x4x4_phase2_target_pattern,
+        },
+        randomize::{
+            randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint,
         },
         scramble_search::{basic_idfs, idfs_with_target_pattern},
     },
@@ -72,25 +76,29 @@ impl Default for Scramble4x4x4FourPhase {
     }
 }
 
-pub fn random_4x4x4_pattern() -> PackedKPattern {
+pub fn random_4x4x4_pattern(hardcoded_scramble_alg_for_testing: Option<&Alg>) -> PackedKPattern {
     dbg!("random_4x4x4_pattern");
     let packed_kpuzzle = cube4x4x4_packed_kpuzzle();
     let mut scramble_pattern = packed_kpuzzle.default_pattern();
 
-    let transformation = packed_kpuzzle.transformation_from_alg(&"F' R' B2 D L' B D L2 F L2 F2 B' L2 U2 F2 U2 F' R2 L2 D' L2 Fw2 Rw2 R F' Uw2 U2 Fw2 F Uw2 L U2 R2 D2 Uw U F R F' Rw' Fw B Uw' L' Fw2 F2".parse::<Alg>().unwrap()).unwrap();
-    // let transformation = packed_kpuzzle
-    //     .transformation_from_alg(&"b2' l u2' r D f2' U B2' F'".parse::<Alg>().unwrap())
-    //     .unwrap();
-    scramble_pattern = scramble_pattern.apply_transformation(&transformation);
-
-    // for orbit_info in &packed_kpuzzle.data.orbit_iteration_info {
-    //     randomize_orbit_naive(
-    //         &mut scramble_pattern,
-    //         orbit_info,
-    //         OrbitPermutationConstraint::AnyPermutation,
-    //         OrbitOrientationConstraint::OrientationsMustSumToZero,
-    //     );
-    // }
+    match hardcoded_scramble_alg_for_testing {
+        Some(hardcoded_scramble_alg_for_testing) => {
+            let transformation = packed_kpuzzle
+                .transformation_from_alg(hardcoded_scramble_alg_for_testing)
+                .unwrap();
+            scramble_pattern = scramble_pattern.apply_transformation(&transformation);
+        }
+        None => {
+            for orbit_info in &packed_kpuzzle.data.orbit_iteration_info {
+                randomize_orbit_naive(
+                    &mut scramble_pattern,
+                    orbit_info,
+                    OrbitPermutationConstraint::AnyPermutation,
+                    OrbitOrientationConstraint::OrientationsMustSumToZero,
+                );
+            }
+        }
+    }
     scramble_pattern
 }
 
@@ -217,11 +225,18 @@ impl Scramble4x4x4FourPhase {
 
     pub(crate) fn scramble_4x4x4(&mut self) -> Alg {
         loop {
-            let scramble_pattern = random_4x4x4_pattern();
+            let hardcoded_scramble_alg_for_testing ="F' R' B2 D L' B D L2 F L2 F2 B' L2 U2 F2 U2 F' R2 L2 D' L2 Fw2 Rw2 R F' Uw2 U2 Fw2 F Uw2 L U2 R2 D2 Uw U F R F' Rw' Fw B Uw' L' Fw2 F2".parse::<Alg>().unwrap();
+            let scramble_pattern = random_4x4x4_pattern(Some(&hardcoded_scramble_alg_for_testing));
+
             if !self.is_valid_scramble_pattern(&scramble_pattern) {
                 continue;
             }
-            return self.solve_4x4x4_pattern(&scramble_pattern);
+            let solution_alg = self.solve_4x4x4_pattern(&scramble_pattern);
+            println!(
+                "{}",
+                twizzle_link(&hardcoded_scramble_alg_for_testing, &solution_alg)
+            );
+            return solution_alg;
         }
     }
 }
@@ -264,4 +279,15 @@ lazy_static! {
 
 pub fn scramble_4x4x4() -> Alg {
     SCRAMBLE4X4X4_FOUR_PHASE.lock().unwrap().scramble_4x4x4()
+}
+
+// TODO: remove `url` crate when removing this.
+pub fn twizzle_link(scramble: &Alg, solution: &Alg) -> String {
+    let mut url = Url::parse("https://alpha.twizzle.net/edit/").unwrap();
+    url.query_pairs_mut()
+        .append_pair("setup-alg", &scramble.to_string());
+    url.query_pairs_mut()
+        .append_pair("alg", &solution.to_string());
+    url.query_pairs_mut().append_pair("puzzle", "4x4x4");
+    url.to_string()
 }

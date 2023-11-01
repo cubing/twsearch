@@ -1110,6 +1110,7 @@ dependencies = [
  "serde",
  "serde_json",
  "thousands",
+ "url",
 ]
 
 [[package]]

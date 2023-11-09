@@ -2,7 +2,7 @@
  *   For WASM use, as an initial test, we use global state to store
  *   our puzdef and pruning table, so our API is just strings everywhere.
  */
-#include "string.h"
+#include <cstring>
 #include <sstream>
 
 #include "../cmdlineops.h"

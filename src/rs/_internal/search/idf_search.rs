@@ -278,6 +278,7 @@ impl IDFSearch {
         individual_search_data
             .recursive_work_tracker
             .record_recursive_call();
+
         if remaining_depth == 0 {
             if let Some(previous_moves) = solution_moves.0 {
                 if is_move_disallowed(
@@ -323,7 +324,19 @@ impl IDFSearch {
             } else {
                 SearchRecursionResult::ContinueSearchingDefault()
             };
+        } else {
+            #[allow(clippy::collapsible_if)]
+            if individual_search_data
+                .additional_solution_condition
+                .is_some()
+            {
+                if current_pattern == &self.api_data.target_pattern {
+                    // No early solutions (avoid redudant searching):
+                    return SearchRecursionResult::ContinueSearchingDefault();
+                }
+            }
         }
+
         let prune_table_depth = self.prune_table.lookup(current_pattern);
         if prune_table_depth > remaining_depth + 1 {
             return SearchRecursionResult::ContinueSearchingExcludingCurrentMoveClass();

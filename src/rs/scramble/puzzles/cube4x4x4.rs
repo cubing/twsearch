@@ -175,24 +175,33 @@ pub fn random_4x4x4_pattern(hardcoded_scramble_alg_for_testing: Option<&Alg>) ->
 struct Phase2AdditionalSolutionCondition {
     packed_kpuzzle: PackedKPuzzle, // we could theoretically get this from `main_search_pattern`, but this way is more clear.
     phase2_search_full_pattern: PackedKPattern,
-    _debug_num_total_rejected: usize,        // TODO: remove
-    _debug_num_basic_parity_rejected: usize, // TODO: remove
+    _debug_num_checked: usize,                         // TODO: remove
+    _debug_num_centers_rejected: usize,                // TODO: remove
+    _debug_num_total_rejected: usize,                  // TODO: remove
+    _debug_num_basic_parity_rejected: usize,           // TODO: remove
     _debug_num_known_pair_orientation_rejected: usize, // TODO: remove
-    _debug_num_edge_parity_rejected: usize,  // TODO: remove
+    _debug_num_edge_parity_rejected: usize,            // TODO: remove
 }
 
 impl Phase2AdditionalSolutionCondition {
     fn log(&self) {
-        if self._debug_num_total_rejected % 100 != 0 {
+        if !self._debug_num_total_rejected.is_power_of_two() {
             return;
         }
         println!(
-            "{} total, {} basic parity, {} known pair orientation, {} edge parity",
+            "{} total phase 2 rejections ({} centers, {} basic parity, {} known pair orientation, {} edge parity)",
             self._debug_num_total_rejected,
+            self._debug_num_centers_rejected,
             self._debug_num_basic_parity_rejected,
             self._debug_num_known_pair_orientation_rejected,
             self._debug_num_edge_parity_rejected,
         );
+    }
+
+    fn debug_record_centers_rejection(&mut self) {
+        self._debug_num_total_rejected += 1;
+        self._debug_num_centers_rejected += 1;
+        self.log()
     }
 
     fn debug_record_basic_parity_rejection(&mut self) {
@@ -214,12 +223,91 @@ impl Phase2AdditionalSolutionCondition {
     }
 }
 
+// TODO: change the 4x4x4 Speffz def to have indistinguishable centers and get rid of this.
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum SideCenter {
+    L,
+    R,
+}
+
+const PHASE2_SOLVED_SIDE_CENTER_CASES: [[[SideCenter; 4]; 2]; 12] = [
+    // flat faces
+    [
+        [SideCenter::L, SideCenter::L, SideCenter::L, SideCenter::L],
+        [SideCenter::R, SideCenter::R, SideCenter::R, SideCenter::R],
+    ],
+    [
+        [SideCenter::R, SideCenter::R, SideCenter::R, SideCenter::R],
+        [SideCenter::L, SideCenter::L, SideCenter::L, SideCenter::L],
+    ],
+    // horizontal bars
+    [
+        [SideCenter::L, SideCenter::L, SideCenter::R, SideCenter::R],
+        [SideCenter::L, SideCenter::L, SideCenter::R, SideCenter::R],
+    ],
+    [
+        [SideCenter::R, SideCenter::R, SideCenter::L, SideCenter::L],
+        [SideCenter::R, SideCenter::R, SideCenter::L, SideCenter::L],
+    ],
+    [
+        [SideCenter::R, SideCenter::R, SideCenter::L, SideCenter::L],
+        [SideCenter::L, SideCenter::L, SideCenter::R, SideCenter::R],
+    ],
+    [
+        [SideCenter::L, SideCenter::L, SideCenter::R, SideCenter::R],
+        [SideCenter::R, SideCenter::R, SideCenter::L, SideCenter::L],
+    ],
+    // vertical bars
+    [
+        [SideCenter::L, SideCenter::R, SideCenter::R, SideCenter::L],
+        [SideCenter::L, SideCenter::R, SideCenter::R, SideCenter::L],
+    ],
+    [
+        [SideCenter::R, SideCenter::L, SideCenter::L, SideCenter::R],
+        [SideCenter::R, SideCenter::L, SideCenter::L, SideCenter::R],
+    ],
+    [
+        [SideCenter::L, SideCenter::R, SideCenter::R, SideCenter::L],
+        [SideCenter::R, SideCenter::L, SideCenter::L, SideCenter::R],
+    ],
+    [
+        [SideCenter::R, SideCenter::L, SideCenter::L, SideCenter::R],
+        [SideCenter::L, SideCenter::R, SideCenter::R, SideCenter::L],
+    ],
+    // checkerboards
+    [
+        [SideCenter::L, SideCenter::R, SideCenter::L, SideCenter::R],
+        [SideCenter::L, SideCenter::R, SideCenter::L, SideCenter::R],
+    ],
+    [
+        [SideCenter::R, SideCenter::L, SideCenter::R, SideCenter::L],
+        [SideCenter::R, SideCenter::L, SideCenter::R, SideCenter::L],
+    ],
+];
+
+fn is_solve_center_center_case(case: &[[SideCenter; 4]; 2]) -> bool {
+    for phase2_solved_side_center_case in PHASE2_SOLVED_SIDE_CENTER_CASES {
+        if &phase2_solved_side_center_case == case {
+            return true;
+        }
+    }
+    false
+}
+
 impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
     fn should_accept_solution(
         &mut self,
         _candidate_pattern: &PackedKPattern,
         candidate_alg: &Alg,
     ) -> bool {
+        // self._debug_num_checked += 1;
+        // if self._debug_num_checked.is_power_of_two() {
+        //     println!(
+        //         "Alg ({} checked): {}",
+        //         self._debug_num_checked, candidate_alg
+        //     )
+        // }
+
         // dbg!(&candidate_alg.to_string());
         let transformation = self
             .packed_kpuzzle
@@ -228,12 +316,36 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
         let pattern_with_alg_applied = self
             .phase2_search_full_pattern
             .apply_transformation(&transformation);
-        let edge_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[1];
-        assert!(edge_orbit_info.name == "WINGS".into());
+
+        /******** Centers ********/
+
+        // TODO: is it more efficient to check this later?
+
+        let centers_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[2];
+        assert!(centers_orbit_info.name == "CENTERS".into());
+
+        #[allow(non_snake_case)] // Speffz
+        let [E, F, G, H, M, N, O, P] = [4, 5, 6, 7, 12, 13, 14, 15].map(|idx| {
+            if pattern_with_alg_applied.get_piece_or_permutation(centers_orbit_info, idx) < 8 {
+                SideCenter::L
+            } else {
+                SideCenter::R
+            }
+        });
+        if !is_solve_center_center_case(&[[E, F, G, H], [M, N, O, P]]) {
+            self.debug_record_centers_rejection();
+            return false;
+        }
+
+        /******** Edges ********/
+
+        let wings_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[1];
+        assert!(wings_orbit_info.name == "WINGS".into());
 
         if basic_parity(
-            &pattern_with_alg_applied.packed_orbit_data.byte_slice()
-                [edge_orbit_info.pieces_or_pemutations_offset..edge_orbit_info.orientations_offset],
+            &pattern_with_alg_applied.packed_orbit_data.byte_slice()[wings_orbit_info
+                .pieces_or_pemutations_offset
+                ..wings_orbit_info.orientations_offset],
         ) != BasicParity::Even
         {
             // println!("false1: {}", candidate_alg);
@@ -250,7 +362,7 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
 
             let piece = pattern_with_alg_applied
                 .packed_orbit_data
-                .get_packed_piece_or_permutation(edge_orbit_info, position);
+                .get_packed_piece_or_permutation(wings_orbit_info, position);
             let piece_is_high = is_high(piece as usize);
 
             let pair_orientation = if piece_is_high == position_is_high {
@@ -390,6 +502,8 @@ impl Scramble4x4x4FourPhase {
             let additional_solution_condition = Phase2AdditionalSolutionCondition {
                 packed_kpuzzle: self.packed_kpuzzle.clone(),
                 phase2_search_full_pattern,
+                _debug_num_checked: 0,
+                _debug_num_centers_rejected: 0,
                 _debug_num_total_rejected: 0,
                 _debug_num_basic_parity_rejected: 0,
                 _debug_num_known_pair_orientation_rejected: 0,
@@ -453,6 +567,10 @@ impl Scramble4x4x4FourPhase {
             //     "Uw2 Fw2 U' L2 F2 L' Uw2 Fw2 U D' L' U2 R' Fw D' Rw2 F' L2 Uw' //Fw L U' R2 Uw Fw"
             //         .parse::<Alg>()
             //         .unwrap();
+            let hardcoded_scramble_alg_for_testing =
+                "Uw2 Fw2 U' L2 F2 L' Uw2 Fw2 U D' L' U2 R' Fw D' Rw2 F' L2 Uw' //Fw L U' R2 Uw Fw"
+                    .parse::<Alg>()
+                    .unwrap();
             let scramble_pattern = random_4x4x4_pattern(Some(&hardcoded_scramble_alg_for_testing));
 
             if !self.is_valid_scramble_pattern(&scramble_pattern) {

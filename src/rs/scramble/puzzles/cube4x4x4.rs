@@ -198,29 +198,29 @@ impl Phase2AdditionalSolutionCondition {
         );
     }
 
-    fn debug_record_centers_rejection(&mut self) {
-        self._debug_num_total_rejected += 1;
-        self._debug_num_centers_rejected += 1;
-        self.log()
-    }
+    // fn debug_record_centers_rejection(&mut self) {
+    //     self._debug_num_total_rejected += 1;
+    //     self._debug_num_centers_rejected += 1;
+    //     self.log()
+    // }
 
-    fn debug_record_basic_parity_rejection(&mut self) {
-        self._debug_num_total_rejected += 1;
-        self._debug_num_basic_parity_rejected += 1;
-        self.log()
-    }
+    // fn debug_record_basic_parity_rejection(&mut self) {
+    //     self._debug_num_total_rejected += 1;
+    //     self._debug_num_basic_parity_rejected += 1;
+    //     self.log()
+    // }
 
-    fn debug_record_known_pair_orientation_rejection(&mut self) {
-        self._debug_num_total_rejected += 1;
-        self._debug_num_known_pair_orientation_rejected += 1;
-        self.log()
-    }
+    // fn debug_record_known_pair_orientation_rejection(&mut self) {
+    //     self._debug_num_total_rejected += 1;
+    //     self._debug_num_known_pair_orientation_rejected += 1;
+    //     self.log()
+    // }
 
-    fn debug_record_edge_parity_rejection(&mut self) {
-        self._debug_num_total_rejected += 1;
-        self._debug_num_edge_parity_rejected += 1;
-        self.log()
-    }
+    // fn debug_record_edge_parity_rejection(&mut self) {
+    //     self._debug_num_total_rejected += 1;
+    //     self._debug_num_edge_parity_rejected += 1;
+    //     self.log()
+    // }
 }
 
 // TODO: change the 4x4x4 Speffz def to have indistinguishable centers and get rid of this.
@@ -300,6 +300,8 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
         _candidate_pattern: &PackedKPattern,
         candidate_alg: &Alg,
     ) -> bool {
+        let mut accept = true;
+
         // self._debug_num_checked += 1;
         // if self._debug_num_checked.is_power_of_two() {
         //     println!(
@@ -333,8 +335,10 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
             }
         });
         if !is_solve_center_center_case(&[[E, F, G, H], [M, N, O, P]]) {
-            self.debug_record_centers_rejection();
-            return false;
+            {
+                self._debug_num_centers_rejected += 1;
+            }
+            accept = false;
         }
 
         /******** Edges ********/
@@ -349,8 +353,10 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
         ) != BasicParity::Even
         {
             // println!("false1: {}", candidate_alg);
-            self.debug_record_basic_parity_rejection();
-            return false;
+            {
+                self._debug_num_basic_parity_rejected += 1;
+            }
+            accept = false;
         }
 
         let mut edge_parity = 0;
@@ -394,20 +400,29 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
                 known_pair_orientation => {
                     if known_pair_orientation != &pair_orientation {
                         // println!("false2 {:?}", known_pair_orientation);
-                        self.debug_record_known_pair_orientation_rejection();
-                        return false;
+                        {
+                            self._debug_num_known_pair_orientation_rejected += 1;
+                        }
+                        accept = false;
                     }
                 }
             }
         }
         if edge_parity % 4 != 0 {
             // println!("false3: {}, {}", candidate_alg, edge_parity);
-            self.debug_record_edge_parity_rejection();
-            return false;
+            {
+                self._debug_num_edge_parity_rejected += 1;
+            }
+            accept = false;
+        }
+
+        if !accept {
+            self._debug_num_total_rejected += 1;
+            self.log()
         }
 
         // println!("true: {}", candidate_alg);
-        true
+        accept
     }
 }
 
@@ -567,10 +582,6 @@ impl Scramble4x4x4FourPhase {
             //     "Uw2 Fw2 U' L2 F2 L' Uw2 Fw2 U D' L' U2 R' Fw D' Rw2 F' L2 Uw' //Fw L U' R2 Uw Fw"
             //         .parse::<Alg>()
             //         .unwrap();
-            let hardcoded_scramble_alg_for_testing =
-                "Uw2 Fw2 U' L2 F2 L' Uw2 Fw2 U D' L' U2 R' Fw D' Rw2 F' L2 Uw' //Fw L U' R2 Uw Fw"
-                    .parse::<Alg>()
-                    .unwrap();
             let scramble_pattern = random_4x4x4_pattern(Some(&hardcoded_scramble_alg_for_testing));
 
             if !self.is_valid_scramble_pattern(&scramble_pattern) {

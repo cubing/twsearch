@@ -255,6 +255,7 @@ impl IDFSearch {
                 &search_pattern,
                 CANONICAL_FSM_START_STATE,
                 remaining_depth,
+                false,
                 SolutionMoves(None),
             );
             individual_search_data
@@ -273,11 +274,15 @@ impl IDFSearch {
         current_pattern: &PackedKPattern,
         current_state: CanonicalFSMState,
         remaining_depth: usize,
+        last_pattern_is_maybe_unsolved: bool,
         solution_moves: SolutionMoves,
     ) -> SearchRecursionResult {
         individual_search_data
             .recursive_work_tracker
             .record_recursive_call();
+
+        // Confusing name, just means "position is solved, except with false negatives in some cases".
+        let mut pattern_is_maybe_unsolved = true;
 
         if remaining_depth == 0 {
             if let Some(previous_moves) = solution_moves.0 {
@@ -331,8 +336,13 @@ impl IDFSearch {
                 .is_some()
             {
                 if current_pattern == &self.api_data.target_pattern {
-                    // No early solutions (avoid redudant searching):
-                    return SearchRecursionResult::ContinueSearchingDefault();
+                    // println!("early solved!");
+                    if !last_pattern_is_maybe_unsolved {
+                        // println!("early double solved!");
+                        // return SearchRecursionResult::ContinueSearchingDefault();
+                    }
+
+                    pattern_is_maybe_unsolved = false;
                 }
             }
         }
@@ -375,6 +385,7 @@ impl IDFSearch {
                     &current_pattern.apply_transformation(&move_transformation_info.transformation),
                     next_state,
                     remaining_depth - 1,
+                    pattern_is_maybe_unsolved,
                     SolutionMoves(Some(&SolutionPreviousMoves {
                         latest_move: &move_transformation_info.r#move,
                         previous_moves: &solution_moves,

@@ -132,7 +132,7 @@ impl IndividualSearchOptions {
 
 pub(crate) trait AdditionalSolutionCondition {
     fn should_accept_solution(
-        &self,
+        &mut self, // TODO: un-mut?
         candidate_pattern: &PackedKPattern,
         candidate_alg: &Alg,
     ) -> bool;
@@ -292,7 +292,7 @@ impl IDFSearch {
             return if current_pattern == &self.api_data.target_pattern {
                 let alg = Alg::from(solution_moves);
                 if let Some(additional_solution_condition) =
-                    &individual_search_data.additional_solution_condition
+                    &mut individual_search_data.additional_solution_condition
                 {
                     if !additional_solution_condition.should_accept_solution(current_pattern, &alg)
                     {

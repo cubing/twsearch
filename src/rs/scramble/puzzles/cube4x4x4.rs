@@ -24,7 +24,7 @@ use crate::{
 
 use super::super::scramble_search::generators_from_vec_str;
 
-const NUM_4_X4X4_EDGES: usize = 24;
+const NUM_4X4X4_EDGES: usize = 24;
 
 /**
  * Each pair of edges ("wings") on a solved 4x4x4 has two position:
@@ -45,7 +45,7 @@ const NUM_4_X4X4_EDGES: usize = 24;
  */
 #[derive(Copy, Clone, PartialEq)]
 struct EdgePairIndex(usize);
-const EDGE_TO_INDEX: [EdgePairIndex; NUM_4_X4X4_EDGES] = [
+const EDGE_TO_INDEX: [EdgePairIndex; NUM_4X4X4_EDGES] = [
     // U
     EdgePairIndex(0), // high
     EdgePairIndex(1), // high
@@ -83,7 +83,7 @@ fn is_high(position_or_piece: usize) -> bool {
     EDGE_TO_INDEX[position_or_piece].0 == position_or_piece
 }
 
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Debug)]
 enum Phase2EdgeOrientation {
     Unknown,
     // Either a high piece in a high position, or a low piece in a low position.
@@ -174,36 +174,59 @@ pub fn random_4x4x4_pattern(hardcoded_scramble_alg_for_testing: Option<&Alg>) ->
 
 struct Phase2AdditionalSolutionCondition {
     packed_kpuzzle: PackedKPuzzle, // we could theoretically get this from `main_search_pattern`, but this way is more clear.
-    main_search_pattern: PackedKPattern,
+    phase2_search_full_pattern: PackedKPattern,
+    _debug_num_basic_parity_rejected: usize, // TODO: remove
+    _debug_num_known_pair_orientation_rejected: usize, // TODO: remove
+    _debug_num_edge_parity_rejected: usize,  // TODO: remove
+}
+
+impl Phase2AdditionalSolutionCondition {
+    fn debug_record_basic_parity_rejection(&mut self) {
+        self._debug_num_basic_parity_rejected += 1;
+        dbg!(&self._debug_num_basic_parity_rejected);
+    }
+    fn debug_record_known_pair_orientation_rejection(&mut self) {
+        self._debug_num_known_pair_orientation_rejected += 1;
+        dbg!(&self._debug_num_known_pair_orientation_rejected);
+    }
+    fn debug_record_edge_parity_rejection(&mut self) {
+        self._debug_num_edge_parity_rejected += 1;
+        dbg!(&self._debug_num_edge_parity_rejected);
+    }
 }
 
 impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
     fn should_accept_solution(
-        &self,
+        &mut self,
         _candidate_pattern: &PackedKPattern,
         candidate_alg: &Alg,
     ) -> bool {
+        // dbg!(&candidate_alg.to_string());
         let transformation = self
             .packed_kpuzzle
             .transformation_from_alg(candidate_alg)
             .expect("Internal error applying an alg from a search result.");
         let pattern_with_alg_applied = self
-            .main_search_pattern
+            .phase2_search_full_pattern
             .apply_transformation(&transformation);
         let edge_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[1];
         assert!(edge_orbit_info.name == "WINGS".into());
 
-        if basic_parity(pattern_with_alg_applied.packed_orbit_data.byte_slice())
-            != BasicParity::Even
+        if basic_parity(
+            &pattern_with_alg_applied.packed_orbit_data.byte_slice()
+                [edge_orbit_info.pieces_or_pemutations_offset..edge_orbit_info.orientations_offset],
+        ) != BasicParity::Even
         {
-            println!("false1");
+            // println!("false1: {}", candidate_alg);
+            self.debug_record_basic_parity_rejection();
             return false;
         }
 
         let mut edge_parity = 0;
         // Indexed by the value stored in an `EdgePairIndex` (i.e. half of the entries will always be `Unknown`).
-        let mut known_pair_orientations = vec![Phase2EdgeOrientation::Unknown; NUM_4_X4X4_EDGES];
+        let mut known_pair_orientations = vec![Phase2EdgeOrientation::Unknown; NUM_4X4X4_EDGES];
         for position in 0..23 {
+            // dbg!(position);
             let position_is_high = is_high(position);
 
             let piece = pattern_with_alg_applied
@@ -219,21 +242,40 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
             };
 
             let edge_pair_index: EdgePairIndex = EDGE_TO_INDEX[piece as usize];
+            // println!(
+            //     "comparin': {}, {}, {}, {}, {}, {}, {:?}",
+            //     candidate_alg,
+            //     position,
+            //     piece,
+            //     piece_is_high,
+            //     position_is_high,
+            //     edge_pair_index.0,
+            //     pair_orientation
+            // );
             match &known_pair_orientations[edge_pair_index.0] {
                 Phase2EdgeOrientation::Unknown => {
+                    // println!(
+                    //     "known_pair_orientations[{}] = {:?} ({}, {})",
+                    //     edge_pair_index.0, pair_orientation, piece_is_high, position_is_high
+                    // );
                     known_pair_orientations[edge_pair_index.0] = pair_orientation
                 }
                 known_pair_orientation => {
                     if known_pair_orientation != &pair_orientation {
+                        // println!("false2 {:?}", known_pair_orientation);
+                        self.debug_record_known_pair_orientation_rejection();
                         return false;
                     }
                 }
             }
         }
         if edge_parity % 4 != 0 {
+            // println!("false3: {}, {}", candidate_alg, edge_parity);
+            self.debug_record_edge_parity_rejection();
             return false;
         }
 
+        // println!("true: {}", candidate_alg);
         true
     }
 }
@@ -319,10 +361,19 @@ impl Scramble4x4x4FourPhase {
                     .transformation_from_alg(&phase1_alg)
                     .unwrap(),
             );
+            let phase2_search_full_pattern = main_search_pattern.apply_transformation(
+                &self
+                    .packed_kpuzzle
+                    .transformation_from_alg(&phase1_alg)
+                    .unwrap(),
+            );
 
             let additional_solution_condition = Phase2AdditionalSolutionCondition {
                 packed_kpuzzle: self.packed_kpuzzle.clone(),
-                main_search_pattern: main_search_pattern.clone(),
+                phase2_search_full_pattern,
+                _debug_num_basic_parity_rejected: 0,
+                _debug_num_known_pair_orientation_rejected: 0,
+                _debug_num_edge_parity_rejected: 0,
             };
 
             self.phase2_idfs
@@ -373,8 +424,15 @@ impl Scramble4x4x4FourPhase {
 
     pub(crate) fn scramble_4x4x4(&mut self) -> Alg {
         loop {
-            // let hardcoded_scramble_alg_for_testing ="F' R' B2 D L' B D L2 F L2 F2 B' L2 U2 F2 U2 F' R2 L2 D' L2 Fw2 Rw2 R F' Uw2 U2 Fw2 F Uw2 L U2 R2 D2 Uw U F R F' Rw' Fw B Uw' L' Fw2 F2".parse::<Alg>().unwrap();
-            let hardcoded_scramble_alg_for_testing = "Uw".parse::<Alg>().unwrap();
+            let hardcoded_scramble_alg_for_testing ="F' R' B2 D L' B D L2 F L2 F2 B' L2 U2 F2 U2 F' R2 L2 D' L2 Fw2 Rw2 R F' Uw2 U2 Fw2 F Uw2 L U2 R2 D2 Uw U F R F' Rw' Fw B Uw' L' Fw2 F2".parse::<Alg>().unwrap();
+            // let hardcoded_scramble_alg_for_testing =
+            //     "r U2 x r U2 r U2 r' U2 l U2 r' U2 r U2 r' U2 r'"
+            //         .parse::<Alg>()
+            //         .unwrap();
+            let hardcoded_scramble_alg_for_testing =
+                "Uw2 Fw2 U' L2 F2 L' Uw2 Fw2 U D' L' U2 R' Fw D' Rw2 F' L2 //Uw' Fw L U' R2 Uw Fw"
+                    .parse::<Alg>()
+                    .unwrap();
             let scramble_pattern = random_4x4x4_pattern(Some(&hardcoded_scramble_alg_for_testing));
 
             if !self.is_valid_scramble_pattern(&scramble_pattern) {

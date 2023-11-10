@@ -175,23 +175,42 @@ pub fn random_4x4x4_pattern(hardcoded_scramble_alg_for_testing: Option<&Alg>) ->
 struct Phase2AdditionalSolutionCondition {
     packed_kpuzzle: PackedKPuzzle, // we could theoretically get this from `main_search_pattern`, but this way is more clear.
     phase2_search_full_pattern: PackedKPattern,
+    _debug_num_total_rejected: usize,        // TODO: remove
     _debug_num_basic_parity_rejected: usize, // TODO: remove
     _debug_num_known_pair_orientation_rejected: usize, // TODO: remove
     _debug_num_edge_parity_rejected: usize,  // TODO: remove
 }
 
 impl Phase2AdditionalSolutionCondition {
+    fn log(&self) {
+        if self._debug_num_total_rejected % 100 != 0 {
+            return;
+        }
+        println!(
+            "{} total, {} basic parity, {} known pair orientation, {} edge parity",
+            self._debug_num_total_rejected,
+            self._debug_num_basic_parity_rejected,
+            self._debug_num_known_pair_orientation_rejected,
+            self._debug_num_edge_parity_rejected,
+        );
+    }
+
     fn debug_record_basic_parity_rejection(&mut self) {
+        self._debug_num_total_rejected += 1;
         self._debug_num_basic_parity_rejected += 1;
-        dbg!(&self._debug_num_basic_parity_rejected);
+        self.log()
     }
+
     fn debug_record_known_pair_orientation_rejection(&mut self) {
+        self._debug_num_total_rejected += 1;
         self._debug_num_known_pair_orientation_rejected += 1;
-        dbg!(&self._debug_num_known_pair_orientation_rejected);
+        self.log()
     }
+
     fn debug_record_edge_parity_rejection(&mut self) {
+        self._debug_num_total_rejected += 1;
         self._debug_num_edge_parity_rejected += 1;
-        dbg!(&self._debug_num_edge_parity_rejected);
+        self.log()
     }
 }
 
@@ -371,6 +390,7 @@ impl Scramble4x4x4FourPhase {
             let additional_solution_condition = Phase2AdditionalSolutionCondition {
                 packed_kpuzzle: self.packed_kpuzzle.clone(),
                 phase2_search_full_pattern,
+                _debug_num_total_rejected: 0,
                 _debug_num_basic_parity_rejected: 0,
                 _debug_num_known_pair_orientation_rejected: 0,
                 _debug_num_edge_parity_rejected: 0,
@@ -429,10 +449,10 @@ impl Scramble4x4x4FourPhase {
             //     "r U2 x r U2 r U2 r' U2 l U2 r' U2 r U2 r' U2 r'"
             //         .parse::<Alg>()
             //         .unwrap();
-            let hardcoded_scramble_alg_for_testing =
-                "Uw2 Fw2 U' L2 F2 L' Uw2 Fw2 U D' L' U2 R' Fw D' Rw2 F' L2 //Uw' Fw L U' R2 Uw Fw"
-                    .parse::<Alg>()
-                    .unwrap();
+            // let hardcoded_scramble_alg_for_testing =
+            //     "Uw2 Fw2 U' L2 F2 L' Uw2 Fw2 U D' L' U2 R' Fw D' Rw2 F' L2 Uw' //Fw L U' R2 Uw Fw"
+            //         .parse::<Alg>()
+            //         .unwrap();
             let scramble_pattern = random_4x4x4_pattern(Some(&hardcoded_scramble_alg_for_testing));
 
             if !self.is_valid_scramble_pattern(&scramble_pattern) {

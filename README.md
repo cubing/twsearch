@@ -41,6 +41,15 @@ If you're on macOS, you can also use [Homebrew](https://brew.sh/) to install the
 env HOMEBREW_NO_INSTALL_FROM_API=1 brew install --HEAD cubing/cubing/twsearch
 ```
 
+On Windows, you can use the GCC toolchain with glibc to build it.  We don't
+support MSVC as a standard build platform, but the following command with
+the 64-bit MSVC compiler will give an executable that works in single-threaded
+mode:
+
+```shell
+cl /o twsearch.exe /EHsc src\cpp\*.cpp src\cpp\cityhash\src\city.cc
+```
+
 Otherwise, you may find it easiest to work with the JSON-based web interface at <https://experiments.cubing.net/cubing.js/twsearch/text-ui.html>
 
 ### Usage

@@ -1,0 +1,7 @@
+# TODO: experiment with Swift/C++ interop and use a namespace.
+
+language = "C"
+include_guard = "TWSEARCH_FFI"
+
+cpp_compat = true
+

@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-extern char* ffi_random_scramble_for_event(char *event_id);
+extern const char* ffi_random_scramble_for_event(const char *event_id);
 
 int main() {
   puts("// 222");

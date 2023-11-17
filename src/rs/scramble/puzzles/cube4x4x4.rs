@@ -180,67 +180,62 @@ const EDGE_PARITY: usize = 2;
 const PHASE2PRUNE_SIZE: usize = C8_4D2 * C16_8 * EDGE_PARITY / 2;
 const INF: usize = 1000000000; // larger than any symcoord
 
-struct Phase2SymmCoords {
-    packed_kpuzzle: PackedKPuzzle,
-    pack84: [i32; 256],
-    pack168hi: [i32; 256],
-    pack168lo: [i32; 256],
-    c84move: [[usize; PHASE2_MOVECOUNT]; C8_4D2],
-    c168move: [[usize; PHASE2_MOVECOUNT]; C16_8],
-    epmove: [[usize; PHASE2_MOVECOUNT]; EDGE_PARITY],
-    phase2prune: [u8; PHASE2PRUNE_SIZE],
+#[derive(Clone, Copy, Debug)]
+enum CoordinateTable {
+    Coord84,
+    Coord168,
+    Coordep,
 }
 
-impl Phase2SymmCoords {
-    fn bitcount(mut bits: usize) -> i32 {
-        let mut r = 0;
-        while bits != 0 {
-            r += 1;
-            bits &= bits - 1;
-        }
-        return r;
-    }
-    fn init_choose_tables(mut self) {
-        let mut at = 0;
-        for i in 0..128 {
-            if Phase2SymmCoords::bitcount(i) == 4 {
-                self.pack84[i] = at;
-                self.pack84[255 - i] = at;
-                at += 1;
-            }
-        }
-        for i in 0..256 {
-            self.pack168hi[i] = -1;
-            self.pack168lo[i] = -1;
-        }
-        at = 0;
-        for i in 0..0x10000 {
-            if Phase2SymmCoords::bitcount(i) == 8 {
-                if self.pack168hi[i >> 8] < 0 {
-                    self.pack168hi[i >> 8] = at;
-                }
-                if self.pack168lo[i & 255] < 0 {
-                    self.pack168lo[i & 255] = at - self.pack168hi[i >> 8];
-                }
-                at += 1;
-            }
-        }
-    }
-    fn getcoord84(&self, pattern: &PackedKPattern) -> usize {
+trait Coord {
+    fn coordinate_for_pattern(&self, pattern: &PackedKPattern) -> usize;
+    fn main_table(&mut self) -> &mut [[usize; PHASE2_MOVECOUNT]];
+}
+
+struct Coord84 {
+    pack84: [i32; 256],
+    c84move: [[usize; PHASE2_MOVECOUNT]; C8_4D2],
+}
+
+impl Coord for Coord84 {
+    fn coordinate_for_pattern(&self, pattern: &PackedKPattern) -> usize {
         let mut bits = 0;
-        let centers_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[2];
+        // TODO: store this in the struct?
+        let centers_orbit_info = &pattern
+            .packed_orbit_data
+            .packed_kpuzzle
+            .data
+            .orbit_iteration_info[2];
         assert!(centers_orbit_info.name == "CENTERS".into());
         for idx in [4, 5, 6, 7, 12, 13, 14, 15] {
             bits *= 2;
-            if pattern.get_piece_or_permutation(centers_orbit_info, idx) < 8 {
+            if pattern.get_piece_or_permutation(&centers_orbit_info, idx) < 8 {
                 bits += 1
             }
         }
         return self.pack84[bits] as usize;
     }
-    fn getcoord168(&self, pattern: &PackedKPattern) -> usize {
+
+    fn main_table(&mut self) -> &mut [[usize; PHASE2_MOVECOUNT]] {
+        &mut self.c84move
+    }
+}
+
+struct Coord168 {
+    pack168hi: [i32; 256],
+    pack168lo: [i32; 256],
+    c168move: [[usize; PHASE2_MOVECOUNT]; C16_8],
+}
+
+impl Coord for Coord168 {
+    fn coordinate_for_pattern(&self, pattern: &PackedKPattern) -> usize {
         let mut bits = 0;
-        let centers_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[2];
+        // TODO: store this in the struct?
+        let centers_orbit_info = &pattern
+            .packed_orbit_data
+            .packed_kpuzzle
+            .data
+            .orbit_iteration_info[2];
         assert!(centers_orbit_info.name == "CENTERS".into());
         for idx in [0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23] {
             bits *= 2;
@@ -250,10 +245,26 @@ impl Phase2SymmCoords {
         }
         return (self.pack168hi[bits >> 8] + self.pack168lo[bits & 255]) as usize;
     }
-    fn getcoordep(&self, pattern: &PackedKPattern) -> usize {
+
+    fn main_table(&mut self) -> &mut [[usize; PHASE2_MOVECOUNT]] {
+        &mut self.c168move
+    }
+}
+
+struct CoordEP {
+    epmove: [[usize; PHASE2_MOVECOUNT]; EDGE_PARITY],
+}
+
+impl Coord for CoordEP {
+    fn coordinate_for_pattern(&self, pattern: &PackedKPattern) -> usize {
         let mut bits = 0;
         let mut r = 0;
-        let edges_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[1];
+        // TODO: store this in the struct?
+        let edges_orbit_info = &pattern
+            .packed_orbit_data
+            .packed_kpuzzle
+            .data
+            .orbit_iteration_info[1];
         assert!(edges_orbit_info.name == "EDGES".into());
         for idx in 0..24 {
             if ((bits >> idx) & 1) == 0 {
@@ -269,26 +280,80 @@ impl Phase2SymmCoords {
         }
         return (r & 1) as usize;
     }
-    fn fillmovetable(
-        &mut self,
-        indexfunc: impl Fn(&Self, &PackedKPattern) -> usize,
-        moves: &SearchGenerators,
-    ) {
-        let mut tab = self.c84move;
-        for i in 0..tab.len() {
-            tab[i][0] = INF;
+
+    fn main_table(&mut self) -> &mut [[usize; PHASE2_MOVECOUNT]] {
+        &mut self.epmove
+    }
+}
+
+struct Phase2SymmCoords {
+    packed_kpuzzle: PackedKPuzzle,
+    phase2prune: [u8; PHASE2PRUNE_SIZE],
+    coord_84: Coord84,
+    coord_168: Coord168,
+    coord_ep: CoordEP,
+}
+
+impl Phase2SymmCoords {
+    fn bitcount(mut bits: usize) -> i32 {
+        let mut r = 0;
+        while bits != 0 {
+            r += 1;
+            bits &= bits - 1;
+        }
+        return r;
+    }
+    fn init_choose_tables(mut self) {
+        let mut at = 0;
+        for i in 0..128 {
+            if Phase2SymmCoords::bitcount(i) == 4 {
+                self.coord_84.pack84[i] = at;
+                self.coord_84.pack84[255 - i] = at;
+                at += 1;
+            }
+        }
+        for i in 0..256 {
+            self.coord_168.pack168hi[i] = -1;
+            self.coord_168.pack168lo[i] = -1;
+        }
+        at = 0;
+        for i in 0..0x10000 {
+            if Phase2SymmCoords::bitcount(i) == 8 {
+                if self.coord_168.pack168hi[i >> 8] < 0 {
+                    self.coord_168.pack168hi[i >> 8] = at;
+                }
+                if self.coord_168.pack168lo[i & 255] < 0 {
+                    self.coord_168.pack168lo[i & 255] = at - self.coord_168.pack168hi[i >> 8];
+                }
+                at += 1;
+            }
+        }
+    }
+    fn fillmovetable(&mut self, coordinate_table: CoordinateTable, moves: &SearchGenerators) {
+        // TODO: double-check if there are any performance penalties for `dyn`.
+        let coord_field: &mut dyn Coord = match coordinate_table {
+            CoordinateTable::Coord84 => &mut self.coord_84,
+            CoordinateTable::Coord168 => &mut self.coord_168,
+            CoordinateTable::Coordep => &mut self.coord_ep,
+        };
+        {
+            let tab = coord_field.main_table();
+            for i in 0..tab.len() {
+                tab[i][0] = INF;
+            }
         }
         let mut q: Vec<PackedKPattern> = Vec::new();
         q.push(cube4x4x4_phase2_target_pattern().clone());
         let mut qget = 0;
         let mut qput = 1;
         while qget < qput {
-            let src = indexfunc(self, &q[qget]);
-            tab[src][0] = 0;
+            let src = coord_field.coordinate_for_pattern(&q[qget]);
+            coord_field.main_table()[src][0] = 0;
             let mut moveind = 0;
             for m in &moves.flat {
                 let dststate = q[qget].clone().apply_transformation(&m.transformation);
-                let dst = indexfunc(self, &dststate);
+                let dst = coord_field.coordinate_for_pattern(&dststate);
+                let tab = coord_field.main_table();
                 tab[src][moveind] = dst;
                 if tab[dst][0] == INF {
                     tab[dst][0] = 0;
@@ -299,6 +364,8 @@ impl Phase2SymmCoords {
             }
             qget += 1;
         }
+
+        let tab = coord_field.main_table();
         assert!(qget == tab.len());
         assert!(qput == tab.len());
     }
@@ -314,9 +381,9 @@ impl Phase2SymmCoords {
             false,
         ) {
             Result::Ok(moves) => {
-                self.fillmovetable(Self::getcoord84, &moves);
-                self.fillmovetable(Self::getcoord168, &moves);
-                self.fillmovetable(Self::getcoordep, &moves);
+                self.fillmovetable(CoordinateTable::Coord84, &moves);
+                self.fillmovetable(CoordinateTable::Coord168, &moves);
+                self.fillmovetable(CoordinateTable::Coordep, &moves);
             }
             _ => {
                 panic!();

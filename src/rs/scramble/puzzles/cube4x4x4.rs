@@ -6,9 +6,8 @@ use url::Url;
 
 use crate::{
     _internal::{
-        AdditionalSolutionCondition, IDFSearch, IndividualSearchOptions, PackedKPattern,
-        PackedKPuzzle, PackedKPuzzleOrbitInfo, SearchGenerators,
-        options::{MetricEnum,},
+        options::MetricEnum, AdditionalSolutionCondition, IDFSearch, IndividualSearchOptions,
+        PackedKPattern, PackedKPuzzle, PackedKPuzzleOrbitInfo, SearchGenerators,
     },
     scramble::{
         puzzles::definitions::{
@@ -126,9 +125,8 @@ impl Default for Scramble4x4x4FourPhase {
             None,
         );
 
-        let phase2_generators = generators_from_vec_str(vec![
-            "Uw2", "U", "L", "F", "Rw", "R", "B", "Dw2", "D",
-        ]);
+        let phase2_generators =
+            generators_from_vec_str(vec!["Uw2", "U", "L", "F", "Rw", "R", "B", "Dw2", "D"]);
         let phase2_center_target_pattern = cube4x4x4_phase2_target_pattern();
         // dbg!(&phase2_center_target_pattern);
         let phase2_idfs = idfs_with_target_pattern(
@@ -198,7 +196,7 @@ impl Phase2SymmCoords {
         let mut r = 0;
         while bits != 0 {
             r += 1;
-            bits &= bits-1;
+            bits &= bits - 1;
         }
         return r;
     }
@@ -207,7 +205,7 @@ impl Phase2SymmCoords {
         for i in 0..128 {
             if Phase2SymmCoords::bitcount(i) == 4 {
                 self.pack84[i] = at;
-                self.pack84[255-i] = at;
+                self.pack84[255 - i] = at;
                 at += 1;
             }
         }
@@ -218,11 +216,11 @@ impl Phase2SymmCoords {
         at = 0;
         for i in 0..0x10000 {
             if Phase2SymmCoords::bitcount(i) == 8 {
-                if self.pack168hi[i>>8] < 0 {
-                    self.pack168hi[i>>8] = at;
+                if self.pack168hi[i >> 8] < 0 {
+                    self.pack168hi[i >> 8] = at;
                 }
-                if self.pack168lo[i&255] < 0 {
-                    self.pack168lo[i&255] = at - self.pack168hi[i>>8];
+                if self.pack168lo[i & 255] < 0 {
+                    self.pack168lo[i & 255] = at - self.pack168hi[i >> 8];
                 }
                 at += 1;
             }
@@ -250,7 +248,7 @@ impl Phase2SymmCoords {
                 bits += 1
             }
         }
-        return (self.pack168hi[bits>>8]+self.pack168lo[bits&255]) as usize;
+        return (self.pack168hi[bits >> 8] + self.pack168lo[bits & 255]) as usize;
     }
     fn getcoordep(&self, pattern: &PackedKPattern) -> usize {
         let mut bits = 0;
@@ -263,7 +261,7 @@ impl Phase2SymmCoords {
                 let mut j: usize = idx;
                 while ((bits >> j) & 1) == 0 {
                     cyclen += 1;
-                    bits |= 1<<j;
+                    bits |= 1 << j;
                     j = pattern.get_piece_or_permutation(edges_orbit_info, j) as usize;
                 }
                 r += cyclen + 1;
@@ -271,7 +269,12 @@ impl Phase2SymmCoords {
         }
         return (r & 1) as usize;
     }
-    fn fillmovetable(&self, indexfunc: impl Fn(&PackedKPattern)->usize, tab: &mut [[usize; PHASE2_MOVECOUNT]], moves: &SearchGenerators) {
+    fn fillmovetable(
+        &self,
+        indexfunc: impl Fn(&PackedKPattern) -> usize,
+        tab: &mut [[usize; PHASE2_MOVECOUNT]],
+        moves: &SearchGenerators,
+    ) {
         for i in 0..tab.len() {
             tab[i][0] = INF;
         }
@@ -302,16 +305,22 @@ impl Phase2SymmCoords {
     fn init_move_tables(&mut self) {
         self.packed_kpuzzle = cube4x4x4_packed_kpuzzle();
         // TODO: deduplicate against earlier constant above
-        let phase2_generators = generators_from_vec_str(vec![
-            "Uw2", "U", "L", "F", "Rw", "R", "B", "Dw2", "D",
-        ]);
-        match SearchGenerators::try_new(&self.packed_kpuzzle, &phase2_generators, &MetricEnum::Hand, false) {
+        let phase2_generators =
+            generators_from_vec_str(vec!["Uw2", "U", "L", "F", "Rw", "R", "B", "Dw2", "D"]);
+        match SearchGenerators::try_new(
+            &self.packed_kpuzzle,
+            &phase2_generators,
+            &MetricEnum::Hand,
+            false,
+        ) {
             Result::Ok(moves) => {
                 self.fillmovetable(|pat| self.getcoord84(pat), &mut self.c84move, &moves);
                 self.fillmovetable(|pat| self.getcoord168(pat), &mut self.c168move, &moves);
                 self.fillmovetable(|pat| self.getcoordep(pat), &mut self.epmove, &moves);
             }
-            _ => { panic!(); }
+            _ => {
+                panic!();
+            }
         }
     }
 }
@@ -432,7 +441,7 @@ const PHASE2_SOLVED_SIDE_CENTER_CASES: [[[SideCenter; 4]; 2]; 12] = [
 fn is_solve_center_center_case(case: &[[SideCenter; 4]; 2]) -> bool {
     for phase2_solved_side_center_case in PHASE2_SOLVED_SIDE_CENTER_CASES {
         if &phase2_solved_side_center_case == case {
-            return true
+            return true;
         }
     }
     false

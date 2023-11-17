@@ -7,7 +7,8 @@ use url::Url;
 use crate::{
     _internal::{
         AdditionalSolutionCondition, IDFSearch, IndividualSearchOptions, PackedKPattern,
-        PackedKPuzzle, PackedKPuzzleOrbitInfo,
+        PackedKPuzzle, PackedKPuzzleOrbitInfo, SearchGenerators,
+        options::{MetricEnum,},
     },
     scramble::{
         puzzles::definitions::{
@@ -36,6 +37,8 @@ const NUM_4X4X4_EDGES: usize = 24;
  *
  * - A piece that starts in a high position is a high piece.
  * - A piece that starts in a high position is a low piece.
+ *
+ * These orbits are preserved by U, Uw2, D, Dw2, F, Fw2, B, Bw2, R2, Rw2, L2, and Lw2.
  *
  * And:
  *
@@ -124,7 +127,7 @@ impl Default for Scramble4x4x4FourPhase {
         );
 
         let phase2_generators = generators_from_vec_str(vec![
-            "Uw2", "U", "Lw", "L", "Fw2", "F", "Rw", "R", "Bw2", "B", "Dw2", "D",
+            "Uw2", "U", "L", "F", "Rw", "R", "B", "Dw2", "D",
         ]);
         let phase2_center_target_pattern = cube4x4x4_phase2_target_pattern();
         // dbg!(&phase2_center_target_pattern);
@@ -170,6 +173,147 @@ pub fn random_4x4x4_pattern(hardcoded_scramble_alg_for_testing: Option<&Alg>) ->
         }
     }
     scramble_pattern
+}
+
+const C8_4D2: usize = 35;
+const C16_8: usize = 12870;
+const PHASE2_MOVECOUNT: usize = 23;
+const EDGE_PARITY: usize = 2;
+const PHASE2PRUNE_SIZE: usize = C8_4D2 * C16_8 * EDGE_PARITY / 2;
+const INF: usize = 1000000000; // larger than any symcoord
+
+struct Phase2SymmCoords {
+    packed_kpuzzle: PackedKPuzzle,
+    pack84: [i32; 256],
+    pack168hi: [i32; 256],
+    pack168lo: [i32; 256],
+    c84move: [[usize; PHASE2_MOVECOUNT]; C8_4D2],
+    c168move: [[usize; PHASE2_MOVECOUNT]; C16_8],
+    epmove: [[usize; PHASE2_MOVECOUNT]; EDGE_PARITY],
+    phase2prune: [u8; PHASE2PRUNE_SIZE],
+}
+
+impl Phase2SymmCoords {
+    fn bitcount(mut bits: usize) -> i32 {
+        let mut r = 0;
+        while bits != 0 {
+            r += 1;
+            bits &= bits-1;
+        }
+        return r;
+    }
+    fn init_choose_tables(mut self) {
+        let mut at = 0;
+        for i in 0..128 {
+            if Phase2SymmCoords::bitcount(i) == 4 {
+                self.pack84[i] = at;
+                self.pack84[255-i] = at;
+                at += 1;
+            }
+        }
+        for i in 0..256 {
+            self.pack168hi[i] = -1;
+            self.pack168lo[i] = -1;
+        }
+        at = 0;
+        for i in 0..0x10000 {
+            if Phase2SymmCoords::bitcount(i) == 8 {
+                if self.pack168hi[i>>8] < 0 {
+                    self.pack168hi[i>>8] = at;
+                }
+                if self.pack168lo[i&255] < 0 {
+                    self.pack168lo[i&255] = at - self.pack168hi[i>>8];
+                }
+                at += 1;
+            }
+        }
+    }
+    fn getcoord84(self, pattern: &PackedKPattern) -> usize {
+        let mut bits = 0;
+        let centers_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[2];
+        assert!(centers_orbit_info.name == "CENTERS".into());
+        for idx in [4, 5, 6, 7, 12, 13, 14, 15] {
+            bits *= 2;
+            if pattern.get_piece_or_permutation(centers_orbit_info, idx) < 8 {
+                bits += 1
+            }
+        }
+        return self.pack84[bits] as usize;
+    }
+    fn getcoord168(self, pattern: &PackedKPattern) -> usize {
+        let mut bits = 0;
+        let centers_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[2];
+        assert!(centers_orbit_info.name == "CENTERS".into());
+        for idx in [0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23] {
+            bits *= 2;
+            if pattern.get_piece_or_permutation(centers_orbit_info, idx) < 8 {
+                bits += 1
+            }
+        }
+        return (self.pack168hi[bits>>8]+self.pack168lo[bits&255]) as usize;
+    }
+    fn getcoordep(self, pattern: &PackedKPattern) -> usize {
+        let mut bits = 0;
+        let mut r = 0;
+        let edges_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[1];
+        assert!(edges_orbit_info.name == "EDGES".into());
+        for idx in 0..24 {
+            if ((bits >> idx) & 1) == 0 {
+                let mut cyclen = 0;
+                let mut j: usize = idx;
+                while ((bits >> j) & 1) == 0 {
+                    cyclen += 1;
+                    bits |= 1<<j;
+                    j = pattern.get_piece_or_permutation(edges_orbit_info, j) as usize;
+                }
+                r += cyclen + 1;
+            }
+        }
+        return (r & 1) as usize;
+    }
+    fn fillmovetable(self, indexfunc: impl Fn(&PackedKPattern)->usize, tab: &mut [[usize; PHASE2_MOVECOUNT]], moves: &SearchGenerators) {
+        for i in 0..tab.len() {
+            tab[i][0] = INF;
+        }
+        let mut q: Vec<PackedKPattern> = Vec::new();
+        q.push(cube4x4x4_phase2_target_pattern().clone());
+        let mut qget = 0;
+        let mut qput = 1;
+        while qget < qput {
+            let src = indexfunc(&q[qget]);
+            tab[src][0] = 0;
+            let mut moveind = 0;
+            for m in &moves.flat {
+                let dststate = q[qget].clone().apply_transformation(&m.transformation);
+                let dst = indexfunc(&dststate);
+                tab[src][moveind] = dst;
+                if tab[dst][0] == INF {
+                    tab[dst][0] = 0;
+                    q.push(dststate.clone());
+                    qput += 1;
+                }
+                moveind += 1;
+            }
+            qget += 1;
+        }
+        assert!(qget == tab.len());
+        assert!(qput == tab.len());
+    }
+    fn init_move_tables(self) {
+        self.packed_kpuzzle = cube4x4x4_packed_kpuzzle();
+        // TODO: deduplicate against earlier constant above
+        let phase2_generators = generators_from_vec_str(vec![
+            "Uw2", "U", "L", "F", "Rw", "R", "B", "Dw2", "D",
+        ]);
+        match SearchGenerators::try_new(&self.packed_kpuzzle, &phase2_generators, &MetricEnum::Hand, false) {
+            Result::Ok(moves) => {
+                self.fillmovetable(|pat| self.getcoord84(pat), &mut self.c84move, &moves);
+                self.fillmovetable(|pat| self.getcoord168(pat), &mut self.c168move, &moves);
+                self.fillmovetable(|pat| self.getcoordep(pat), &mut self.epmove, &moves);
+            }
+            _ => { panic!(); }
+        }
+    }
 }
 
 struct Phase2AdditionalSolutionCondition {
@@ -288,7 +432,7 @@ const PHASE2_SOLVED_SIDE_CENTER_CASES: [[[SideCenter; 4]; 2]; 12] = [
 fn is_solve_center_center_case(case: &[[SideCenter; 4]; 2]) -> bool {
     for phase2_solved_side_center_case in PHASE2_SOLVED_SIDE_CENTER_CASES {
         if &phase2_solved_side_center_case == case {
-            return true;
+            return true
         }
     }
     false
@@ -362,6 +506,7 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
         let mut edge_parity = 0;
         // Indexed by the value stored in an `EdgePairIndex` (i.e. half of the entries will always be `Unknown`).
         let mut known_pair_orientations = vec![Phase2EdgeOrientation::Unknown; NUM_4X4X4_EDGES];
+        let mut known_pair_inc = 1;
         for position in 0..23 {
             // dbg!(position);
             let position_is_high = is_high(position);
@@ -401,7 +546,8 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
                     if known_pair_orientation != &pair_orientation {
                         // println!("false2 {:?}", known_pair_orientation);
                         {
-                            self._debug_num_known_pair_orientation_rejected += 1;
+                            self._debug_num_known_pair_orientation_rejected += known_pair_inc;
+                            known_pair_inc = 0;
                         }
                         accept = false;
                     }
@@ -587,6 +733,7 @@ impl Scramble4x4x4FourPhase {
             if !self.is_valid_scramble_pattern(&scramble_pattern) {
                 continue;
             }
+            dbg!(hardcoded_scramble_alg_for_testing.to_string());
             let solution_alg = self.solve_4x4x4_pattern(&scramble_pattern);
             println!(
                 "{}",

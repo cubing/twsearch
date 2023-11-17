@@ -228,7 +228,7 @@ impl Phase2SymmCoords {
             }
         }
     }
-    fn getcoord84(self, pattern: &PackedKPattern) -> usize {
+    fn getcoord84(&self, pattern: &PackedKPattern) -> usize {
         let mut bits = 0;
         let centers_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[2];
         assert!(centers_orbit_info.name == "CENTERS".into());
@@ -240,7 +240,7 @@ impl Phase2SymmCoords {
         }
         return self.pack84[bits] as usize;
     }
-    fn getcoord168(self, pattern: &PackedKPattern) -> usize {
+    fn getcoord168(&self, pattern: &PackedKPattern) -> usize {
         let mut bits = 0;
         let centers_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[2];
         assert!(centers_orbit_info.name == "CENTERS".into());
@@ -252,7 +252,7 @@ impl Phase2SymmCoords {
         }
         return (self.pack168hi[bits>>8]+self.pack168lo[bits&255]) as usize;
     }
-    fn getcoordep(self, pattern: &PackedKPattern) -> usize {
+    fn getcoordep(&self, pattern: &PackedKPattern) -> usize {
         let mut bits = 0;
         let mut r = 0;
         let edges_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[1];
@@ -271,7 +271,7 @@ impl Phase2SymmCoords {
         }
         return (r & 1) as usize;
     }
-    fn fillmovetable(self, indexfunc: impl Fn(&PackedKPattern)->usize, tab: &mut [[usize; PHASE2_MOVECOUNT]], moves: &SearchGenerators) {
+    fn fillmovetable(&self, indexfunc: impl Fn(&PackedKPattern)->usize, tab: &mut [[usize; PHASE2_MOVECOUNT]], moves: &SearchGenerators) {
         for i in 0..tab.len() {
             tab[i][0] = INF;
         }
@@ -299,7 +299,7 @@ impl Phase2SymmCoords {
         assert!(qget == tab.len());
         assert!(qput == tab.len());
     }
-    fn init_move_tables(self) {
+    fn init_move_tables(&mut self) {
         self.packed_kpuzzle = cube4x4x4_packed_kpuzzle();
         // TODO: deduplicate against earlier constant above
         let phase2_generators = generators_from_vec_str(vec![

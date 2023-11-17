@@ -270,11 +270,11 @@ impl Phase2SymmCoords {
         return (r & 1) as usize;
     }
     fn fillmovetable(
-        &self,
-        indexfunc: impl Fn(&PackedKPattern) -> usize,
-        tab: &mut [[usize; PHASE2_MOVECOUNT]],
+        &mut self,
+        indexfunc: impl Fn(&Self, &PackedKPattern) -> usize,
         moves: &SearchGenerators,
     ) {
+        let mut tab = self.c84move;
         for i in 0..tab.len() {
             tab[i][0] = INF;
         }
@@ -283,12 +283,12 @@ impl Phase2SymmCoords {
         let mut qget = 0;
         let mut qput = 1;
         while qget < qput {
-            let src = indexfunc(&q[qget]);
+            let src = indexfunc(self, &q[qget]);
             tab[src][0] = 0;
             let mut moveind = 0;
             for m in &moves.flat {
                 let dststate = q[qget].clone().apply_transformation(&m.transformation);
-                let dst = indexfunc(&dststate);
+                let dst = indexfunc(self, &dststate);
                 tab[src][moveind] = dst;
                 if tab[dst][0] == INF {
                     tab[dst][0] = 0;
@@ -314,9 +314,9 @@ impl Phase2SymmCoords {
             false,
         ) {
             Result::Ok(moves) => {
-                self.fillmovetable(|pat| self.getcoord84(pat), &mut self.c84move, &moves);
-                self.fillmovetable(|pat| self.getcoord168(pat), &mut self.c168move, &moves);
-                self.fillmovetable(|pat| self.getcoordep(pat), &mut self.epmove, &moves);
+                self.fillmovetable(Self::getcoord84, &moves);
+                self.fillmovetable(Self::getcoord168, &moves);
+                self.fillmovetable(Self::getcoordep, &moves);
             }
             _ => {
                 panic!();

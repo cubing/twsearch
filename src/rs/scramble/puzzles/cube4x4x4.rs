@@ -221,6 +221,15 @@ impl Coord for Coord84 {
     }
 }
 
+impl Coord84 {
+    fn new() -> Self {
+        return Self {
+            pack84: [0; 256],
+            c84move: [[0; PHASE2_MOVECOUNT]; C8_4D2],
+        }
+    }
+}
+
 struct Coord168 {
     pack168hi: [i32; 256],
     pack168lo: [i32; 256],
@@ -248,6 +257,16 @@ impl Coord for Coord168 {
 
     fn main_table(&mut self) -> &mut [[usize; PHASE2_MOVECOUNT]] {
         &mut self.c168move
+    }
+}
+
+impl Coord168 {
+    fn new() -> Self {
+        return Self {
+            pack168hi: [0; 256],
+            pack168lo: [0; 256],
+            c168move: [[0; PHASE2_MOVECOUNT]; C16_8],
+        }
     }
 }
 
@@ -286,6 +305,14 @@ impl Coord for CoordEP {
     }
 }
 
+impl CoordEP {
+    fn new() -> Self {
+        return Self {
+            epmove: [[0; PHASE2_MOVECOUNT]; EDGE_PARITY],
+        }
+    }
+}
+
 struct Phase2SymmCoords {
     packed_kpuzzle: PackedKPuzzle,
     phase2prune: [u8; PHASE2PRUNE_SIZE],
@@ -303,7 +330,7 @@ impl Phase2SymmCoords {
         }
         return r;
     }
-    fn init_choose_tables(mut self) {
+    fn init_choose_tables(&mut self) {
         let mut at = 0;
         for i in 0..128 {
             if Phase2SymmCoords::bitcount(i) == 4 {
@@ -389,6 +416,15 @@ impl Phase2SymmCoords {
                 panic!();
             }
         }
+    }
+    fn new(puz: PackedKPuzzle) -> Self {
+        return Self {
+            packed_kpuzzle: puz,
+            phase2prune: [255; PHASE2PRUNE_SIZE],
+            coord_84: Coord84::new(),
+            coord_168: Coord168::new(),
+            coord_ep: CoordEP::new(),
+        };
     }
 }
 
@@ -654,6 +690,9 @@ impl Scramble4x4x4FourPhase {
         main_search_pattern: &PackedKPattern, // TODO: avoid assuming a superpattern.
     ) -> Alg {
         dbg!("solve_4x4x4_pattern");
+        let mut x = Phase2SymmCoords::new(self.packed_kpuzzle);
+        x.init_choose_tables();
+        x.init_move_tables();
         let phase1_alg = {
             let mut phase1_search_pattern = self.phase1_target_pattern.clone();
             for orbit_info in &self.packed_kpuzzle.data.orbit_iteration_info {

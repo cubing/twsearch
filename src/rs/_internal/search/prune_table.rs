@@ -9,7 +9,7 @@ use crate::_internal::{
 
 use super::idf_search::IDFSearchAPIData;
 
-type PruneTableEntryType = u8;
+pub(crate) type PruneTableEntryType = u8;
 // 0 is uninitialized, all other values are stored as 1+depth.
 // This allows us to save initialization time by allowing table memory pages to start as "blank" (all 0).
 const UNINITIALIZED_DEPTH: PruneTableEntryType = 0;

@@ -1,16 +1,14 @@
 use std::sync::Mutex;
 
-use cubing::{
-    alg::{Alg, Pause},
-    kpuzzle::{KPattern, KPuzzleOrbitName},
-};
+use cubing::alg::{Alg, Pause};
 use lazy_static::lazy_static;
 use url::Url;
 
 use crate::{
     _internal::{
         options::MetricEnum, AdditionalSolutionCondition, IDFSearch, IndividualSearchOptions,
-        PackedKPattern, PackedKPuzzle, PackedKPuzzleOrbitInfo, SearchGenerators,
+        PackedKPattern, PackedKPuzzle, PackedKPuzzleOrbitInfo, PruneTableEntryType,
+        SearchGenerators,
     },
     scramble::{
         puzzles::definitions::{
@@ -155,14 +153,12 @@ fn pattern_to_phase2_pattern(pattern: &PackedKPattern) -> PackedKPattern {
 
 pub struct Scramble4x4x4FourPhase {
     packed_kpuzzle: PackedKPuzzle,
-    phase2_packed_kpuzzle: PackedKPuzzle,
 
     _filtering_idfs: IDFSearch,
 
     phase1_target_pattern: PackedKPattern,
     phase1_idfs: IDFSearch,
 
-    phase2_center_target_pattern: PackedKPattern,
     phase2_idfs: IDFSearch,
 }
 
@@ -199,11 +195,9 @@ impl Default for Scramble4x4x4FourPhase {
 
         Self {
             packed_kpuzzle,
-            phase2_packed_kpuzzle,
             _filtering_idfs: filtering_idfs,
             phase1_target_pattern,
             phase1_idfs,
-            phase2_center_target_pattern,
             phase2_idfs,
         }
     }
@@ -235,50 +229,53 @@ pub fn random_4x4x4_pattern(hardcoded_scramble_alg_for_testing: Option<&Alg>) ->
     scramble_pattern
 }
 
-const C8_4D2: usize = 35;
-const C16_8: usize = 12870;
-const PHASE2_MOVECOUNT: usize = 23;
-const EDGE_PARITY: usize = 2;
-const PHASE2PRUNE_SIZE: usize = C8_4D2 * C16_8 * EDGE_PARITY / 2;
-const INF: usize = 1000000000; // larger than any symcoord
+const NUM_COORDINATES_C8_4D2: usize = 35;
+const NUM_COORDINATES_C16_8: usize = 12870;
+const NUM_COORDINATES_EP: usize = 2;
+const PHASE2_PRUNE_TABLE_SIZE: usize =
+    NUM_COORDINATES_C8_4D2 * NUM_COORDINATES_C16_8 * NUM_COORDINATES_EP / 2;
+const PHASE2_MOVE_COUNT: usize = 23;
+const MOVE_TABLE_UNINITIALIZED_VALUE: Phase2Coordinate = Phase2Coordinate(usize::MAX); // larger than any symcoord
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct Phase2Coordinate(usize);
 
 #[derive(Clone, Copy, Debug)]
 enum CoordinateTable {
     Coord84,
     Coord168,
-    Coordep,
+    CoordEP,
 }
 
 trait Coord {
-    fn coordinate_for_pattern(&self, pattern: &PackedKPattern) -> usize;
-    fn main_table(&mut self) -> &mut [[usize; PHASE2_MOVECOUNT]];
+    fn coordinate_for_pattern(&self, pattern: &PackedKPattern) -> Phase2Coordinate;
+    fn move_table(&mut self) -> &mut [[Phase2Coordinate; PHASE2_MOVE_COUNT]];
 }
 
 struct Coord84 {
-    pack84: [i32; 256],
-    c84move: [[usize; PHASE2_MOVECOUNT]; C8_4D2],
+    pack84: [i32; 256], // TODO: should this be unsigned?
+    c84move: [[Phase2Coordinate; PHASE2_MOVE_COUNT]; NUM_COORDINATES_C8_4D2],
 }
 
+const L_AND_R_CENTER_INDICES: [usize; 8] = [4, 5, 6, 7, 12, 13, 14, 15];
+const L_CENTER_PIECE: u8 = 1;
+
 impl Coord for Coord84 {
-    fn coordinate_for_pattern(&self, pattern: &PackedKPattern) -> usize {
+    fn coordinate_for_pattern(&self, pattern: &PackedKPattern) -> Phase2Coordinate {
         let mut bits = 0;
         // TODO: store this in the struct?
-        let centers_orbit_info = &pattern
-            .packed_orbit_data
-            .packed_kpuzzle
-            .data
-            .orbit_iteration_info[2];
-        assert!(centers_orbit_info.name == "CENTERS".into());
-        for idx in [4, 5, 6, 7, 12, 13, 14, 15] {
+        let centers_orbit_info =
+            orbit_info(&pattern.packed_orbit_data.packed_kpuzzle, 2, "CENTERS");
+        for idx in L_AND_R_CENTER_INDICES {
             bits *= 2;
-            if pattern.get_piece_or_permutation(&centers_orbit_info, idx) == 1 {
+            if pattern.get_piece_or_permutation(centers_orbit_info, idx) == L_CENTER_PIECE {
                 bits += 1
             }
         }
-        self.pack84[bits] as usize
+        Phase2Coordinate(self.pack84[bits] as usize)
     }
 
-    fn main_table(&mut self) -> &mut [[usize; PHASE2_MOVECOUNT]] {
+    fn move_table(&mut self) -> &mut [[Phase2Coordinate; PHASE2_MOVE_COUNT]] {
         &mut self.c84move
     }
 }
@@ -287,7 +284,7 @@ impl Default for Coord84 {
     fn default() -> Self {
         Self {
             pack84: [0; 256],
-            c84move: [[0; PHASE2_MOVECOUNT]; C8_4D2],
+            c84move: [[Phase2Coordinate(0); PHASE2_MOVE_COUNT]; NUM_COORDINATES_C8_4D2],
         }
     }
 }
@@ -295,29 +292,25 @@ impl Default for Coord84 {
 struct Coord168 {
     pack168hi: [i32; 256],
     pack168lo: [i32; 256],
-    c168move: [[usize; PHASE2_MOVECOUNT]; C16_8],
+    c168move: [[Phase2Coordinate; PHASE2_MOVE_COUNT]; NUM_COORDINATES_C16_8],
 }
 
 impl Coord for Coord168 {
-    fn coordinate_for_pattern(&self, pattern: &PackedKPattern) -> usize {
+    fn coordinate_for_pattern(&self, pattern: &PackedKPattern) -> Phase2Coordinate {
         let mut bits = 0;
         // TODO: store this in the struct?
-        let centers_orbit_info = &pattern
-            .packed_orbit_data
-            .packed_kpuzzle
-            .data
-            .orbit_iteration_info[2];
-        assert!(centers_orbit_info.name == "CENTERS".into());
+        let centers_orbit_info =
+            orbit_info(&pattern.packed_orbit_data.packed_kpuzzle, 2, "CENTERS");
         for idx in [0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23] {
             bits *= 2;
             if pattern.get_piece_or_permutation(centers_orbit_info, idx) == 0 {
                 bits += 1
             }
         }
-        (self.pack168hi[bits >> 8] + self.pack168lo[bits & 255]) as usize
+        Phase2Coordinate((self.pack168hi[bits >> 8] + self.pack168lo[bits & 255]) as usize)
     }
 
-    fn main_table(&mut self) -> &mut [[usize; PHASE2_MOVECOUNT]] {
+    fn move_table(&mut self) -> &mut [[Phase2Coordinate; PHASE2_MOVE_COUNT]] {
         &mut self.c168move
     }
 }
@@ -327,17 +320,17 @@ impl Default for Coord168 {
         Self {
             pack168hi: [0; 256],
             pack168lo: [0; 256],
-            c168move: [[0; PHASE2_MOVECOUNT]; C16_8],
+            c168move: [[Phase2Coordinate(0); PHASE2_MOVE_COUNT]; NUM_COORDINATES_C16_8],
         }
     }
 }
 
 struct CoordEP {
-    epmove: [[usize; PHASE2_MOVECOUNT]; EDGE_PARITY],
+    ep_move: [[Phase2Coordinate; PHASE2_MOVE_COUNT]; NUM_COORDINATES_EP],
 }
 
 impl Coord for CoordEP {
-    fn coordinate_for_pattern(&self, pattern: &PackedKPattern) -> usize {
+    fn coordinate_for_pattern(&self, pattern: &PackedKPattern) -> Phase2Coordinate {
         let mut bits = 0;
         let mut r = 0;
         // TODO: store this in the struct?
@@ -354,43 +347,56 @@ impl Coord for CoordEP {
                 r += cyclen + 1;
             }
         }
-        return (r & 1) as usize;
+        Phase2Coordinate((r & 1) as usize)
     }
 
-    fn main_table(&mut self) -> &mut [[usize; PHASE2_MOVECOUNT]] {
-        &mut self.epmove
+    fn move_table(&mut self) -> &mut [[Phase2Coordinate; PHASE2_MOVE_COUNT]] {
+        &mut self.ep_move
     }
 }
 
 impl Default for CoordEP {
     fn default() -> Self {
         Self {
-            epmove: [[0; PHASE2_MOVECOUNT]; EDGE_PARITY],
+            ep_move: [[Phase2Coordinate(0); PHASE2_MOVE_COUNT]; NUM_COORDINATES_EP],
         }
     }
 }
 
-struct Phase2SymmCoords {
+fn bit_count(mut bits: usize) -> i32 {
+    let mut r = 0;
+    while bits != 0 {
+        r += 1;
+        bits &= bits - 1;
+    }
+    r
+}
+
+struct Phase2SymmetryTables {
     packed_kpuzzle: PackedKPuzzle,
-    phase2prune: [u8; PHASE2PRUNE_SIZE],
+    phase2_prune_table: [PruneTableEntryType; PHASE2_PRUNE_TABLE_SIZE],
     coord_84: Coord84,
     coord_168: Coord168,
     coord_ep: CoordEP,
 }
 
-impl Phase2SymmCoords {
-    fn bitcount(mut bits: usize) -> i32 {
-        let mut r = 0;
-        while bits != 0 {
-            r += 1;
-            bits &= bits - 1;
+const PRUNE_TABLE_UNINITIALIZED_VALUE: PruneTableEntryType = PruneTableEntryType::MAX;
+
+impl Phase2SymmetryTables {
+    fn new(packed_kpuzzle: PackedKPuzzle) -> Self {
+        Self {
+            packed_kpuzzle,
+            phase2_prune_table: [PRUNE_TABLE_UNINITIALIZED_VALUE; PHASE2_PRUNE_TABLE_SIZE],
+            coord_84: Coord84::default(),
+            coord_168: Coord168::default(),
+            coord_ep: CoordEP::default(),
         }
-        r
     }
+
     fn init_choose_tables(&mut self) {
         let mut at = 0;
         for i in 0..128 {
-            if Phase2SymmCoords::bitcount(i) == 4 {
+            if bit_count(i) == 4 {
                 self.coord_84.pack84[i] = at;
                 self.coord_84.pack84[255 - i] = at;
                 at += 1;
@@ -402,7 +408,7 @@ impl Phase2SymmCoords {
         }
         at = 0;
         for i in 0..0x10000 {
-            if Phase2SymmCoords::bitcount(i) == 8 {
+            if bit_count(i) == 8 {
                 if self.coord_168.pack168hi[i >> 8] < 0 {
                     self.coord_168.pack168hi[i >> 8] = at;
                 }
@@ -413,50 +419,52 @@ impl Phase2SymmCoords {
             }
         }
     }
-    fn fillmovetable(&mut self, coordinate_table: CoordinateTable, moves: &SearchGenerators) {
+
+    fn fill_move_table(&mut self, coordinate_table: CoordinateTable, moves: &SearchGenerators) {
         // TODO: double-check if there are any performance penalties for `dyn`.
         let coord_field: &mut dyn Coord = match coordinate_table {
             CoordinateTable::Coord84 => &mut self.coord_84,
             CoordinateTable::Coord168 => &mut self.coord_168,
-            CoordinateTable::Coordep => &mut self.coord_ep,
+            CoordinateTable::CoordEP => &mut self.coord_ep,
         };
         {
-            let tab = coord_field.main_table();
-            for i in 0..tab.len() {
-                tab[i][0] = INF;
+            for row in coord_field.move_table() {
+                row[0] = MOVE_TABLE_UNINITIALIZED_VALUE;
             }
         }
-        let mut q: Vec<PackedKPattern> = Vec::new();
-        q.push(match coordinate_table {
-            CoordinateTable::Coordep => self.packed_kpuzzle.default_pattern(),
+        let mut patterns: Vec<PackedKPattern> = Vec::new();
+        patterns.push(match coordinate_table {
+            CoordinateTable::CoordEP => self.packed_kpuzzle.default_pattern(),
             _ => cube4x4x4_phase2_target_pattern().clone(),
         });
-        let mut qget = 0;
-        let mut qput = 1;
-        while qget < qput {
-            let src = coord_field.coordinate_for_pattern(&q[qget]);
-            coord_field.main_table()[src][0] = 0;
-            let mut moveind = 0;
-            for m in &moves.flat {
-                let dststate = q[qget].clone().apply_transformation(&m.transformation);
-                let dst = coord_field.coordinate_for_pattern(&dststate);
-                let tab = coord_field.main_table();
-                tab[src][moveind] = dst;
-                if tab[dst][0] == INF {
-                    tab[dst][0] = 0;
-                    q.push(dststate.clone());
-                    qput += 1;
+        let mut patterns_read_idx = 0;
+        let mut patterns_write_idx = 1;
+        while patterns_read_idx < patterns_write_idx {
+            let source_coordinate =
+                coord_field.coordinate_for_pattern(&patterns[patterns_read_idx]);
+            coord_field.move_table()[source_coordinate.0][0] = Phase2Coordinate(0);
+            for (move_idx, m) in moves.flat.iter().enumerate() {
+                let new_pattern = patterns[patterns_read_idx]
+                    .clone()
+                    .apply_transformation(&m.transformation);
+                let destination_coordinate = coord_field.coordinate_for_pattern(&new_pattern);
+                let move_table = coord_field.move_table();
+                move_table[source_coordinate.0][move_idx] = destination_coordinate;
+                if move_table[destination_coordinate.0][0] == MOVE_TABLE_UNINITIALIZED_VALUE {
+                    move_table[destination_coordinate.0][0] = Phase2Coordinate(0);
+                    patterns.push(new_pattern.clone());
+                    patterns_write_idx += 1;
                 }
-                tab[src][moveind] = dst;
-                moveind += 1;
+                move_table[source_coordinate.0][move_idx] = destination_coordinate;
             }
-            qget += 1;
+            patterns_read_idx += 1;
         }
 
-        let tab = coord_field.main_table();
-        assert!(qget == tab.len());
-        assert!(qput == tab.len());
+        let tab = coord_field.move_table();
+        assert!(patterns_read_idx == tab.len());
+        assert!(patterns_write_idx == tab.len());
     }
+
     fn init_move_tables(&mut self) {
         self.packed_kpuzzle = cube4x4x4_packed_kpuzzle();
         // TODO: deduplicate against earlier constant above
@@ -469,22 +477,13 @@ impl Phase2SymmCoords {
             false,
         ) {
             Result::Ok(moves) => {
-                self.fillmovetable(CoordinateTable::Coord84, &moves);
-                self.fillmovetable(CoordinateTable::Coord168, &moves);
-                self.fillmovetable(CoordinateTable::Coordep, &moves);
+                self.fill_move_table(CoordinateTable::Coord84, &moves);
+                self.fill_move_table(CoordinateTable::Coord168, &moves);
+                self.fill_move_table(CoordinateTable::CoordEP, &moves);
             }
             _ => {
                 panic!();
             }
-        }
-    }
-    fn new(puz: PackedKPuzzle) -> Self {
-        Self {
-            packed_kpuzzle: puz,
-            phase2prune: [255; PHASE2PRUNE_SIZE],
-            coord_84: Coord84::default(),
-            coord_168: Coord168::default(),
-            coord_ep: CoordEP::default(),
         }
     }
 }
@@ -752,7 +751,7 @@ impl Scramble4x4x4FourPhase {
     ) -> Alg {
         dbg!("solve_4x4x4_pattern");
         dbg!(&main_search_pattern.packed_orbit_data);
-        let mut x = Phase2SymmCoords::new(self.packed_kpuzzle.clone());
+        let mut x = Phase2SymmetryTables::new(self.packed_kpuzzle.clone());
         x.init_choose_tables();
         x.init_move_tables();
         let phase1_alg = {
@@ -842,7 +841,7 @@ impl Scramble4x4x4FourPhase {
 
     pub(crate) fn scramble_4x4x4(&mut self) -> Alg {
         loop {
-            let hardcoded_scramble_alg_for_testing ="F' R' B2 D L' B D L2 F L2 F2 B' L2 U2 F2 U2 F' R2 L2 D' L2 Fw2 Rw2 R F' Uw2 U2 Fw2 F Uw2 L U2 R2 D2 Uw U F R F' Rw' Fw B Uw' L' Fw2 F2".parse::<Alg>().unwrap();
+            // let hardcoded_scramble_alg_for_testing ="F' R' B2 D L' B D L2 F L2 F2 B' L2 U2 F2 U2 F' R2 L2 D' L2 Fw2 Rw2 R F' Uw2 U2 Fw2 F Uw2 L U2 R2 D2 Uw U F R F' Rw' Fw B Uw' L' Fw2 F2".parse::<Alg>().unwrap();
             let hardcoded_scramble_alg_for_testing = "2R u".parse::<Alg>().unwrap();
             // let hardcoded_scramble_alg_for_testing =
             //     "r U2 x r U2 r U2 r' U2 l U2 r' U2 r U2 r' U2 r'"

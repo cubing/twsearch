@@ -393,6 +393,7 @@ impl Phase2SymmCoords {
         }
 
         let tab = coord_field.main_table();
+        dbg!("At ", qget, " ", qput, " ", tab.len());
         assert!(qget == tab.len());
         assert!(qput == tab.len());
     }
@@ -690,7 +691,7 @@ impl Scramble4x4x4FourPhase {
         main_search_pattern: &PackedKPattern, // TODO: avoid assuming a superpattern.
     ) -> Alg {
         dbg!("solve_4x4x4_pattern");
-        let mut x = Phase2SymmCoords::new(self.packed_kpuzzle);
+        let mut x = Phase2SymmCoords::new(self.packed_kpuzzle.clone());
         x.init_choose_tables();
         x.init_move_tables();
         let phase1_alg = {

@@ -209,11 +209,11 @@ impl Coord for Coord84 {
         assert!(centers_orbit_info.name == "CENTERS".into());
         for idx in [4, 5, 6, 7, 12, 13, 14, 15] {
             bits *= 2;
-            if pattern.get_piece_or_permutation(&centers_orbit_info, idx) < 8 {
+            if pattern.get_piece_or_permutation(centers_orbit_info, idx) < 8 {
                 bits += 1
             }
         }
-        return self.pack84[bits] as usize;
+        self.pack84[bits] as usize
     }
 
     fn main_table(&mut self) -> &mut [[usize; PHASE2_MOVECOUNT]] {
@@ -252,7 +252,7 @@ impl Coord for Coord168 {
                 bits += 1
             }
         }
-        return (self.pack168hi[bits >> 8] + self.pack168lo[bits & 255]) as usize;
+        (self.pack168hi[bits >> 8] + self.pack168lo[bits & 255]) as usize
     }
 
     fn main_table(&mut self) -> &mut [[usize; PHASE2_MOVECOUNT]] {
@@ -328,7 +328,7 @@ impl Phase2SymmCoords {
             r += 1;
             bits &= bits - 1;
         }
-        return r;
+        r
     }
     fn init_choose_tables(&mut self) {
         let mut at = 0;
@@ -419,13 +419,13 @@ impl Phase2SymmCoords {
         }
     }
     fn new(puz: PackedKPuzzle) -> Self {
-        return Self {
+        Self {
             packed_kpuzzle: puz,
             phase2prune: [255; PHASE2PRUNE_SIZE],
             coord_84: Coord84::default(),
             coord_168: Coord168::default(),
             coord_ep: CoordEP::default(),
-        };
+        }
     }
 }
 

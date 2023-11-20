@@ -34,7 +34,6 @@ fn main() {
         .flag("-DTWSEARCH_VERSION=v0.4.2-7-g4a9107fa")
         // .flag("-lpthread") # Unneeded?
         .flag("-DUSE_PTHREADS")
-        .flag("-DHAVE_FFSLL")
         .compile("twsearch-cpp-wrapper");
 
     println!("cargo:rerun-if-changed=antipode.cpp");

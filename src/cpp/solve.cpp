@@ -1,22 +1,27 @@
 #include "solve.h"
 #include "cmdlineops.h"
 #include <iostream>
-ull solutionsfound = 0;
-ull solutionsneeded = 1;
+ll solutionsfound = 0;
+ll solutionsneeded = 1;
 int noearlysolutions;
 int onlyimprovements;
 int phase2;
 int optmindepth;
-int randomstart;
 string lastsolution;
+int globalinputmovecount;
 int didprepass;
 int requesteduthreading = 4;
 int workinguthreading = 0;
 solveworker solveworkers[MAXTHREADS];
-int (*callback)(setval pos, const vector<int> &moves, int d, int id);
+int (*callback)(setval &pos, const vector<int> &moves, int d, int id);
 int (*flushback)(int d);
 static vector<vector<int>> randomized;
-void setsolvecallback(int (*f)(setval pos, const vector<int> &moves, int d,
+// TODO: these next two need to be put into a solve-specific object if we
+// ever want to support multiple concurrent solves (such as in a
+// multi-phase solver).
+static vector<ull> workchunks;
+static int workat;
+void setsolvecallback(int (*f)(setval &pos, const vector<int> &moves, int d,
                                int id),
                       int (*g)(int)) {
   callback = f;
@@ -263,9 +268,10 @@ int solve(const puzdef &pd, prunetable &pt, const setval p, generatingset *gs) {
       continue;
     hid = d;
     if (d - initd > 3)
-      makeworkchunks(pd, d, p, requesteduthreading);
+      workchunks = makeworkchunks(pd, d, p, requesteduthreading);
     else
-      makeworkchunks(pd, 0, p, requesteduthreading);
+      workchunks = makeworkchunks(pd, 0, p, requesteduthreading);
+    workat = 0;
     int wthreads = setupthreads(pd, pt);
     workinguthreading =
         min(requesteduthreading,
@@ -313,4 +319,14 @@ int solve(const puzdef &pd, prunetable &pt, const setval p, generatingset *gs) {
   if (!phase2 && callback == 0)
     cout << "No solution found in " << hid << endl << flush;
   return -1;
+}
+void solveit(const puzdef &pd, prunetable &pt, string scramblename, setval &p,
+             generatingset *gs) {
+  if (quiet == 0) {
+    if (scramblename.size())
+      cout << "Solving " << scramblename << endl << flush;
+    else
+      cout << "Solving" << endl << flush;
+  }
+  solve(pd, pt, p, gs);
 }

@@ -1,6 +1,7 @@
 #include "god.h"
 #include "antipode.h"
 #include "canon.h"
+#include "cmds.h"
 #include "index.h"
 #include "readksolve.h"
 #include "rotations.h"
@@ -13,6 +14,8 @@
  *   God's algorithm using two bits per state.
  */
 vector<ull> cnts, scnts;
+static vector<allocsetval> posns;
+static vector<int> movehist;
 void dotwobitgod(puzdef &pd) {
   ull nlongs = (pd.llstates + 31) >> 5;
   ull memneeded = nlongs * 8;
@@ -45,13 +48,7 @@ void dotwobitgod(puzdef &pd) {
         ull checkv = mem[bigi];
         checkv = (checkv & 0x5555555555555555LL) &
                  ((checkv >> 1) & 0x5555555555555555LL);
-#ifdef HAVE_FFSLL
         for (int smi = ffsll(checkv); checkv; smi = ffsll(checkv)) {
-#else
-        for (int smi = 1; checkv; smi++) {
-          if (0 == ((checkv >> (smi - 1)) & 1))
-            continue;
-#endif
           checkv -= 1LL << (smi - 1);
           denseunpack(pd, (bigi << 5) + (smi >> 1), p1);
           for (int i = 0; i < (int)pd.moves.size(); i++) {
@@ -77,13 +74,7 @@ void dotwobitgod(puzdef &pd) {
         ull checkv = mem[bigi] ^ xorv;
         checkv = (checkv & 0x5555555555555555LL) &
                  ((checkv >> 1) & 0x5555555555555555LL);
-#ifdef HAVE_FFSLL
         for (int smi = ffsll(checkv); checkv; smi = ffsll(checkv)) {
-#else
-        for (int smi = 1; checkv; smi++) {
-          if (0 == ((checkv >> (smi - 1)) & 1))
-            continue;
-#endif
           checkv -= 1LL << (smi - 1);
           denseunpack(pd, (bigi << 5) + (smi >> 1), p1);
           for (int i = 0; i < (int)pd.moves.size(); i++) {
@@ -197,16 +188,22 @@ void recur(puzdef &pd, int at, int back, int seek, int newv, ull sofar,
   } else {
     ull sz = sd.llperms;
     for (ull val = 0; val < sz; val++) {
-      if (sd.pparity)
-        indextoperm2(wmem, val, sd.size);
-      else
-        indextoperm(wmem, val, sd.size);
+      if (sd.uniq) {
+        if (sd.pparity)
+          indextoperm2(wmem, val, sd.size);
+        else
+          indextoperm(wmem, val, sd.size);
+      } else
+        indextomperm(wmem, val, sd.cnts);
       for (int m = 0; m < nmoves; m++) {
         sd.mulp(wmem, pd.moves[movemap[m]].pos.dat + sd.off, wmem2);
-        if (sd.pparity)
-          muld2[m] = permtoindex2(wmem2, sd.size) + sz * muld[m];
-        else
-          muld2[m] = permtoindex(wmem2, sd.size) + sz * muld[m];
+        if (sd.uniq) {
+          if (sd.pparity)
+            muld2[m] = permtoindex2(wmem2, sd.size) + sz * muld[m];
+          else
+            muld2[m] = permtoindex(wmem2, sd.size) + sz * muld[m];
+        } else
+          muld2[m] = mpermtoindex(wmem2, sd.size) + sz * muld[m];
       }
       recur(pd, at + 1, back, seek, newv, val + sofar * sz, muld2);
     }
@@ -226,10 +223,9 @@ void dotwobitgod2(puzdef &pd) {
   nmoves = movemap.size();
   for (int i = 0; i < (int)pd.setdefs.size(); i++) {
     setdef &sd = pd.setdefs[i];
-    if (!sd.uniq)
-      error("! we don't support dense packing of non-unique yet");
-    if (sd.llperms > 1)
-      parts.push_back(make_pair(sd.llperms, i * 2));
+    if (!sd.dense)
+      error("! we don't support dense packing of this puzzle yet");
+    parts.push_back(make_pair(sd.llperms, i * 2));
     if (sd.llords > 1)
       parts.push_back(make_pair(sd.llords, i * 2 + 1));
   }
@@ -301,15 +297,21 @@ void dotwobitgod2(puzdef &pd) {
         ull val = u % sz;
         u /= sz;
         for (int m = 0; m < nmoves; m++) {
-          if (sd.pparity)
-            indextoperm2(wmem, val, sd.size);
-          else
-            indextoperm(wmem, val, sd.size);
+          if (sd.uniq) {
+            if (sd.pparity)
+              indextoperm2(wmem, val, sd.size);
+            else
+              indextoperm(wmem, val, sd.size);
+          } else
+            indextomperm(wmem, val, sd.cnts);
           sd.mulp(wmem, pd.moves[movemap[m]].pos.dat + sd.off, wmem2);
-          if (sd.pparity)
-            ss[m] += mul * permtoindex2(wmem2, sd.size);
-          else
-            ss[m] += mul * permtoindex(wmem2, sd.size);
+          if (sd.uniq) {
+            if (sd.pparity)
+              ss[m] += mul * permtoindex2(wmem2, sd.size);
+            else
+              ss[m] += mul * permtoindex(wmem2, sd.size);
+          } else
+            ss[m] += mul * mpermtoindex(wmem2, sd.size);
         }
         mul *= sz;
       }
@@ -734,6 +736,8 @@ void doarraygod2(const puzdef &pd) {
   writer = mem;
   s_1 = mem;
   s_2 = mem;
+  movehist.clear();
+  posns.clear();
   for (int d = 0;; d++) {
     resetantipodes();
     while ((int)posns.size() <= d + 1) {
@@ -932,3 +936,37 @@ void doarraygodsymm(const puzdef &pd) {
     showantipodes(pd, s_1, writer);
   }
 }
+static int forcearray;
+static boolopt
+    force("-F",
+          "When running God's number searches, force the use of arrays and\n"
+          "sorting rather than canonical sequences or bit arrays.",
+          &forcearray);
+static struct godcmd : cmd {
+  godcmd()
+      : cmd("-g", "Calculate the number of positions at each depth, as far as "
+                  "memory\n"
+                  "allows.  Print antipodal positions.") {}
+  virtual void docommand(puzdef &pd) {
+    int statesfit2 = pd.logstates <= 50 && ((ll)(pd.llstates >> 2)) <= maxmem;
+    int statesfitsa =
+        forcearray ||
+        (pd.logstates <= 50 &&
+         ((ll)(pd.llstates * sizeof(loosetype) * looseper) <= maxmem));
+    if (!forcearray && statesfit2 && pd.canpackdense()) {
+      cout << "Using twobit arrays." << endl;
+      dotwobitgod2(pd);
+    } else if (statesfitsa) {
+      if (pd.rotgroup.size()) {
+        cout << "Using sorting bfs symm and arrays." << endl;
+        doarraygodsymm(pd);
+      } else {
+        cout << "Using sorting bfs and arrays." << endl;
+        doarraygod(pd);
+      }
+    } else {
+      cout << "Using canonical sequences and arrays." << endl;
+      doarraygod2(pd);
+    }
+  }
+} registermeg;

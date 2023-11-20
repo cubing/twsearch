@@ -2,16 +2,28 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+
 #ifdef _WIN64
 #include <intrin.h>
+#include <windows.h> // GetTickCount
 // Note:  this only works because twsearch never calls ffsll on a zero value
 inline int ffsll(unsigned long long v) {
   unsigned long r;
   _BitScanForward64(&r, v);
   return 1 + r;
 }
+inline void prefetch(void *p) { _mm_prefetch((const char *)p, _MM_HINT_T1); }
+inline int popcountll(long long v) { return __popcnt64(v); }
+inline unsigned long long bswap64(unsigned long long v) {
+  return _byteswap_uint64(v);
+}
 #else
 #include <strings.h> // for ffsll
+inline void prefetch(void *p) { __builtin_prefetch(p); }
+inline int popcountll(long long v) { return __builtin_popcount(v); }
+inline unsigned long long bswap64(unsigned long long v) {
+  return __builtin_bswap64(v);
+}
 #endif
 using namespace std;
 /*

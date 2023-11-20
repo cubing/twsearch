@@ -102,7 +102,7 @@ struct prunetable {
       return 2 - v + baseval;
   }
   ull prefetchindexed(ull h) const {
-    __builtin_prefetch(mem + (h >> 5));
+    prefetch(mem + (h >> 5));
     return h;
   }
   ull indexhash(ull lowb) const {
@@ -165,6 +165,8 @@ struct prunetable {
   ull codevals[544];
   decompinfo *dtabs[7];
   char justread;
+  vector<ull> workchunks;
+  int workat;
 };
 #define PRUNETABLE_H
 #endif

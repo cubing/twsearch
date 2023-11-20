@@ -9,13 +9,13 @@
  *   position (and the required code to distribute the work across
  *   multiple threads).
  */
-extern ull solutionsfound, solutionsneeded;
+extern ll solutionsfound, solutionsneeded;
 extern int noearlysolutions;
 extern int phase2;
 extern int optmindepth;
 extern int onlyimprovements;
-extern int randomstart;
 extern string lastsolution;
+extern int globalinputmovecount;
 struct solvestate {
   int st, mi;
   ull mask, skipbase;
@@ -48,9 +48,11 @@ struct solveworker {
 };
 extern solveworker solveworkers[MAXTHREADS];
 extern int maxdepth, didprepass;
-void setsolvecallback(int (*)(setval, const vector<int> &, int, int),
+void setsolvecallback(int (*)(setval &, const vector<int> &, int, int),
                       int (*)(int));
 int solve(const puzdef &pd, prunetable &pt, const setval p,
           generatingset *gs = 0);
+void solveit(const puzdef &pd, prunetable &pt, string scramblename, setval &p,
+             generatingset *gs = 0);
 #define SOLVE_H
 #endif

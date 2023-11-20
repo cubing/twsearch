@@ -1,3 +1,4 @@
+#ifdef HIGHLYEXPERIMENTAL
 #include "coset.h"
 #include "antipode.h"   // just for antipode count
 #include "cmdlineops.h" // for emitposition
@@ -56,10 +57,13 @@ ull getindex(setval pos) {
         perm[pn++] = pos.dat[off + j] - staticv[i];
         finalind *= pn;
       }
-    if (sd.pparity)
-      finalind = (finalind >> 1) + permtoindex2(perm, pn);
-    else
-      finalind += permtoindex(perm, pn);
+    if (sd.uniq) {
+      if (sd.pparity)
+        finalind = (finalind >> 1) + permtoindex2(perm, pn);
+      else
+        finalind += permtoindex(perm, pn);
+    } else
+      finalind += mpermtoindex(perm, pn);
   }
   return finalind;
 }
@@ -76,12 +80,15 @@ void setindex(ull ind, setval pos) {
         fact *= ++pn;
       else
         pos.dat[off + j] = 0;
-    if (sd.pparity) {
-      fact >>= 1;
-      indextoperm2(perm, ind % fact, pn);
-    } else {
-      indextoperm(perm, ind % fact, pn);
-    }
+    if (sd.uniq) {
+      if (sd.pparity) {
+        fact >>= 1;
+        indextoperm2(perm, ind % fact, pn);
+      } else {
+        indextoperm(perm, ind % fact, pn);
+      }
+    } else
+      error("! don't support duplicate pieces in coset yet");
     pn = 0;
     for (int j = 0; j < sd.size; j++)
       if (cosetmoving->dat[off + j])
@@ -89,7 +96,7 @@ void setindex(ull ind, setval pos) {
     ind /= fact;
   }
 }
-int cosetcallback(setval pos, const vector<int> &moves, int d, int id) {
+int cosetcallback(setval &pos, const vector<int> &moves, int d, int id) {
   puzdef &pd = *cosetpd;
   for (int i = 0; i < (int)pd.setdefs.size(); i++) {
     setdef &sd = pd.setdefs[i];
@@ -553,3 +560,4 @@ void runcoset(puzdef &pd) {
   for (int d = maxdepth + 1; solcnt < cosetsize; d++)
     prepass(d + 1);
 }
+#endif

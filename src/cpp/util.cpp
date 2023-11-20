@@ -3,11 +3,11 @@
 #include <cstdlib>
 #include <iostream>
 #include <random>
-#include <sys/time.h>
-#ifdef _WIN32
+#ifdef _WIN64
 #include <direct.h> // EEXIST
 #else
 #include <sys/stat.h> // EEXIST, mkdir
+#include <sys/time.h>
 #endif
 double start;
 int verbose;
@@ -15,9 +15,13 @@ ll maxmem;
 int quarter;
 int quiet;
 double walltime() {
+#ifdef _WIN64
+  return GetTickCount() / 1000.0;
+#else
   struct timeval tv;
   gettimeofday(&tv, 0);
   return tv.tv_sec + 0.000001 * tv.tv_usec;
+#endif
 }
 double duration() {
   double now = walltime();
@@ -43,8 +47,10 @@ void mysrand(int n) {
 }
 double myrand(int n) {
   // the following double is exact
-  static double mul = 1.0 / (rng->max() - rng->min() + 1.0);
-  return (int)(((*rng)() - rng->min()) * mul * n);
+  if (!rng)
+    mysrand(0);
+  static double mul = 1.0 / ((rng->max)() - (rng->min)() + 1.0);
+  return (int)(((*rng)() - (rng->min)()) * mul * n);
 }
 ull gcd(ull a, ull b) {
   if (a > b)

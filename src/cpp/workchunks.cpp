@@ -4,15 +4,13 @@
 #include "solve.h"
 #include "threads.h"
 #include <iostream>
-vector<ull> workchunks;
-vector<int> workstates;
-int workat;
+int randomstart;
 static vector<allocsetval> seen;
 static int lastsize;
-void makeworkchunks(const puzdef &pd, int d, setval symmreduce,
-                    int microthreadcount) {
-  workchunks.clear();
-  workstates.clear();
+vector<ull> makeworkchunks(const puzdef &pd, int d, setval symmreduce,
+                           int microthreadcount) {
+  vector<int> workstates;
+  vector<ull> workchunks;
   workchunks.push_back(1);
   workstates.push_back(0);
   if (d >= 3) {
@@ -103,4 +101,5 @@ void makeworkchunks(const puzdef &pd, int d, setval symmreduce,
       }
     }
   }
+  return workchunks;
 }

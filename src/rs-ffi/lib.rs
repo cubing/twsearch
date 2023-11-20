@@ -13,7 +13,9 @@ use twsearch::scramble::{random_scramble_for_event, Event};
 /// - A null pointer for *any* error.
 /// - A valid scramble (in the form of C string) otherwise.
 #[no_mangle]
-pub unsafe extern "C" fn ffi_random_scramble_for_event(event_raw_cstr: *mut c_char) -> *mut c_char {
+pub unsafe extern "C" fn ffi_random_scramble_for_event(
+    event_raw_cstr: *const c_char,
+) -> *const c_char {
     // TODO: we can't avoid leaking the return value, but we could give a function to free all past returned values.
     match ffi_random_scramble_for_event_internal(event_raw_cstr) {
         Ok(scramble_raw_cstr) => scramble_raw_cstr,
@@ -21,7 +23,9 @@ pub unsafe extern "C" fn ffi_random_scramble_for_event(event_raw_cstr: *mut c_ch
     }
 }
 
-fn ffi_random_scramble_for_event_internal(event_raw_cstr: *mut c_char) -> Result<*mut c_char, ()> {
+fn ffi_random_scramble_for_event_internal(
+    event_raw_cstr: *const c_char,
+) -> Result<*const c_char, ()> {
     let event_cstr = unsafe { CStr::from_ptr(event_raw_cstr) };
     let event_str = event_cstr.to_str().map_err(|_| ())?;
     let event = Event::try_from(event_str).map_err(|_| ())?;

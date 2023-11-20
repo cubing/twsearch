@@ -221,9 +221,9 @@ impl Coord for Coord84 {
     }
 }
 
-impl Coord84 {
-    fn new() -> Self {
-        return Self {
+impl Default for Coord84 {
+    fn default() -> Self {
+        Self {
             pack84: [0; 256],
             c84move: [[0; PHASE2_MOVECOUNT]; C8_4D2],
         }
@@ -260,9 +260,9 @@ impl Coord for Coord168 {
     }
 }
 
-impl Coord168 {
-    fn new() -> Self {
-        return Self {
+impl Default for Coord168 {
+    fn default() -> Self {
+        Self {
             pack168hi: [0; 256],
             pack168lo: [0; 256],
             c168move: [[0; PHASE2_MOVECOUNT]; C16_8],
@@ -305,9 +305,9 @@ impl Coord for CoordEP {
     }
 }
 
-impl CoordEP {
-    fn new() -> Self {
-        return Self {
+impl Default for CoordEP {
+    fn default() -> Self {
+        Self {
             epmove: [[0; PHASE2_MOVECOUNT]; EDGE_PARITY],
         }
     }
@@ -422,9 +422,9 @@ impl Phase2SymmCoords {
         return Self {
             packed_kpuzzle: puz,
             phase2prune: [255; PHASE2PRUNE_SIZE],
-            coord_84: Coord84::new(),
-            coord_168: Coord168::new(),
-            coord_ep: CoordEP::new(),
+            coord_84: Coord84::default(),
+            coord_168: Coord168::default(),
+            coord_ep: CoordEP::default(),
         };
     }
 }

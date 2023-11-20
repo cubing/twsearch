@@ -89,10 +89,19 @@ fn set_parity(permutation: &mut [u8], target_parity: BasicParity) {
     };
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Debug)]
 pub(crate) enum BasicParity {
     Even,
     Odd,
+}
+
+impl From<BasicParity> for u8 {
+    fn from(value: BasicParity) -> Self {
+        match value {
+            BasicParity::Even => 0,
+            BasicParity::Odd => 1,
+        }
+    }
 }
 
 impl BasicParity {

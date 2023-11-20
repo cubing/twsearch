@@ -1,6 +1,9 @@
 use std::sync::Mutex;
 
-use cubing::alg::{Alg, Pause};
+use cubing::{
+    alg::{Alg, Pause},
+    kpuzzle::{KPattern, KPuzzleOrbitName},
+};
 use lazy_static::lazy_static;
 use url::Url;
 
@@ -22,9 +25,22 @@ use crate::{
     },
 };
 
-use super::super::scramble_search::generators_from_vec_str;
+use super::{
+    super::scramble_search::generators_from_vec_str,
+    definitions::cube4x4x4_with_wing_parity_packed_kpuzzle,
+};
 
 const NUM_4X4X4_EDGES: usize = 24;
+
+fn orbit_info<'a>(
+    packed_kpuzzle: &'a PackedKPuzzle,
+    orbit_index: usize,
+    expected_orbit_name: &'a str,
+) -> &'a PackedKPuzzleOrbitInfo {
+    let orbit_info = &packed_kpuzzle.data.orbit_iteration_info[orbit_index];
+    assert_eq!(orbit_info.name.0, expected_orbit_name);
+    orbit_info
+}
 
 /**
  * Each pair of edges ("wings") on a solved 4x4x4 has two position:
@@ -94,8 +110,52 @@ enum Phase2EdgeOrientation {
     Misoriented,
 }
 
+fn calculate_wing_parity(pattern: &PackedKPattern) -> BasicParity {
+    let wings_orbit_info = orbit_info(&pattern.packed_orbit_data.packed_kpuzzle, 1, "WINGS");
+    let wing_parity = basic_parity(
+        &pattern.packed_orbit_data.byte_slice()
+            [wings_orbit_info.pieces_or_permutations_offset..wings_orbit_info.orientations_offset],
+    );
+    dbg!(&wing_parity);
+    wing_parity
+}
+
+fn set_wing_parity(pattern: &mut PackedKPattern, wing_parity: BasicParity) {
+    let kpuzzle_clone = pattern.packed_orbit_data.packed_kpuzzle.clone();
+    let wing_parity_orbit_info = orbit_info(&kpuzzle_clone, 3, "WING_PARITY");
+    pattern.packed_orbit_data.set_packed_piece_or_permutation(
+        wing_parity_orbit_info,
+        0,
+        wing_parity.into(),
+    );
+}
+
+fn pattern_to_phase2_pattern(pattern: &PackedKPattern) -> PackedKPattern {
+    let phase1_kpuzzle = cube4x4x4_packed_kpuzzle();
+    let phase2_kpuzzle = cube4x4x4_with_wing_parity_packed_kpuzzle();
+    let phase2_target_pattern = cube4x4x4_phase2_target_pattern();
+
+    let mut new_pattern = PackedKPattern::new(phase2_kpuzzle);
+    for orbit_info in &phase1_kpuzzle.data.orbit_iteration_info {
+        for i in 0..orbit_info.num_pieces {
+            remap_piece_for_phase1_or_phase2_search_pattern(
+                orbit_info,
+                pattern,
+                &phase2_target_pattern,
+                &mut new_pattern,
+                i,
+            );
+        }
+    }
+
+    let wing_parity = calculate_wing_parity(pattern);
+    set_wing_parity(&mut new_pattern, wing_parity);
+    new_pattern
+}
+
 pub struct Scramble4x4x4FourPhase {
     packed_kpuzzle: PackedKPuzzle,
+    phase2_packed_kpuzzle: PackedKPuzzle,
 
     _filtering_idfs: IDFSearch,
 
@@ -109,6 +169,7 @@ pub struct Scramble4x4x4FourPhase {
 impl Default for Scramble4x4x4FourPhase {
     fn default() -> Self {
         let packed_kpuzzle = cube4x4x4_packed_kpuzzle();
+        let phase2_packed_kpuzzle = cube4x4x4_with_wing_parity_packed_kpuzzle();
 
         let phase1_generators = generators_from_vec_str(vec![
             "Uw", "U", "Lw", "L", "Fw", "F", "Rw", "R", "Bw", "B", "Dw", "D",
@@ -130,7 +191,7 @@ impl Default for Scramble4x4x4FourPhase {
         let phase2_center_target_pattern = cube4x4x4_phase2_target_pattern();
         // dbg!(&phase2_center_target_pattern);
         let phase2_idfs = idfs_with_target_pattern(
-            &packed_kpuzzle,
+            &phase2_packed_kpuzzle,
             phase2_generators.clone(),
             phase2_center_target_pattern.clone(),
             None,
@@ -138,6 +199,7 @@ impl Default for Scramble4x4x4FourPhase {
 
         Self {
             packed_kpuzzle,
+            phase2_packed_kpuzzle,
             _filtering_idfs: filtering_idfs,
             phase1_target_pattern,
             phase1_idfs,
@@ -279,12 +341,7 @@ impl Coord for CoordEP {
         let mut bits = 0;
         let mut r = 0;
         // TODO: store this in the struct?
-        let edges_orbit_info = &pattern
-            .packed_orbit_data
-            .packed_kpuzzle
-            .data
-            .orbit_iteration_info[1];
-        assert!(edges_orbit_info.name == "WINGS".into());
+        let edges_orbit_info = orbit_info(&pattern.packed_orbit_data.packed_kpuzzle, 1, "WINGS");
         for idx in 0..24 {
             if ((bits >> idx) & 1) == 0 {
                 let mut cyclen = 0;
@@ -372,7 +429,7 @@ impl Phase2SymmCoords {
         let mut q: Vec<PackedKPattern> = Vec::new();
         q.push(match coordinate_table {
             CoordinateTable::Coordep => self.packed_kpuzzle.default_pattern(),
-            _ => cube4x4x4_phase2_target_pattern().clone()
+            _ => cube4x4x4_phase2_target_pattern().clone(),
         });
         let mut qget = 0;
         let mut qput = 1;
@@ -608,7 +665,7 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
 
         if basic_parity(
             &pattern_with_alg_applied.packed_orbit_data.byte_slice()[wings_orbit_info
-                .pieces_or_pemutations_offset
+                .pieces_or_permutations_offset
                 ..wings_orbit_info.orientations_offset],
         ) != BasicParity::Even
         {
@@ -694,6 +751,7 @@ impl Scramble4x4x4FourPhase {
         main_search_pattern: &PackedKPattern, // TODO: avoid assuming a superpattern.
     ) -> Alg {
         dbg!("solve_4x4x4_pattern");
+        dbg!(&main_search_pattern.packed_orbit_data);
         let mut x = Phase2SymmCoords::new(self.packed_kpuzzle.clone());
         x.init_choose_tables();
         x.init_move_tables();
@@ -701,25 +759,13 @@ impl Scramble4x4x4FourPhase {
             let mut phase1_search_pattern = self.phase1_target_pattern.clone();
             for orbit_info in &self.packed_kpuzzle.data.orbit_iteration_info {
                 for i in 0..orbit_info.num_pieces {
-                    remap_piece_for_search_pattern(
+                    remap_piece_for_phase1_or_phase2_search_pattern(
                         orbit_info,
                         main_search_pattern,
                         &self.phase1_target_pattern,
                         &mut phase1_search_pattern,
                         i,
                     );
-                    if orbit_info.name == "CORNERS".into() {
-                        // TODO: handle this properly by taking into account orientation mod.
-                        phase1_search_pattern
-                            .packed_orbit_data
-                            .set_packed_orientation(orbit_info, i, 3);
-                    }
-                    if orbit_info.name == "WINGS".into() {
-                        // TODO: handle this properly by taking into account orientation mod.
-                        phase1_search_pattern
-                            .packed_orbit_data
-                            .set_packed_orientation(orbit_info, i, 2);
-                    }
                 }
             }
 
@@ -742,42 +788,10 @@ impl Scramble4x4x4FourPhase {
 
         let mut phase2_alg = {
             // TODO: unify with phase 1 (almost identical code)
-            let mut phase2_search_pattern = self.phase2_center_target_pattern.clone();
-            for orbit_info in &self.packed_kpuzzle.data.orbit_iteration_info {
-                for i in 0..orbit_info.num_pieces {
-                    remap_piece_for_search_pattern(
-                        orbit_info,
-                        main_search_pattern,
-                        &self.phase2_center_target_pattern,
-                        &mut phase2_search_pattern,
-                        i,
-                    );
-                    if orbit_info.name == "CORNERS".into() {
-                        // TODO: handle this properly by taking into account orientation mod.
-                        phase2_search_pattern
-                            .packed_orbit_data
-                            .set_packed_orientation(orbit_info, i, 3);
-                    }
-                    if orbit_info.name == "WINGS".into() {
-                        // TODO: handle this properly by taking into account orientation mod.
-                        phase2_search_pattern
-                            .packed_orbit_data
-                            .set_packed_orientation(orbit_info, i, 2);
-                    }
-                }
-            }
-            let phase2_search_pattern = phase2_search_pattern.apply_transformation(
-                &self
-                    .packed_kpuzzle
-                    .transformation_from_alg(&phase1_alg)
-                    .unwrap(),
-            );
-            let phase2_search_full_pattern = main_search_pattern.apply_transformation(
-                &self
-                    .packed_kpuzzle
-                    .transformation_from_alg(&phase1_alg)
-                    .unwrap(),
-            );
+            let phase2_search_pattern = pattern_to_phase2_pattern(main_search_pattern);
+            let phase2_search_pattern = phase2_search_pattern.apply_alg(&phase1_alg).unwrap();
+
+            let phase2_search_full_pattern = main_search_pattern.apply_alg(&phase1_alg).unwrap();
 
             let additional_solution_condition = Phase2AdditionalSolutionCondition {
                 packed_kpuzzle: self.packed_kpuzzle.clone(),
@@ -793,21 +807,11 @@ impl Scramble4x4x4FourPhase {
             self.phase2_idfs
                 .search_with_additional_check(
                     &phase2_search_pattern,
-                    IndividualSearchOptions {
-                        min_num_solutions: Some(1), // TODO
-                        min_depth: None,
-                        max_depth: None,
-                        disallowed_initial_quanta: None,
-                        disallowed_final_quanta: None,
-                    },
+                    IndividualSearchOptions::default(),
                     Some(Box::new(additional_solution_condition)),
                 )
                 .next()
                 .unwrap()
-            // dbg!(&phase2_search_pattern);
-            // dbg!(&self.phase2_center_target_pattern);
-            // dbg!(phase2_search_pattern == self.phase2_center_target_pattern);
-            // 'search_loop: loop {}
         };
 
         let mut nodes = phase1_alg.nodes;
@@ -839,6 +843,7 @@ impl Scramble4x4x4FourPhase {
     pub(crate) fn scramble_4x4x4(&mut self) -> Alg {
         loop {
             let hardcoded_scramble_alg_for_testing ="F' R' B2 D L' B D L2 F L2 F2 B' L2 U2 F2 U2 F' R2 L2 D' L2 Fw2 Rw2 R F' Uw2 U2 Fw2 F Uw2 L U2 R2 D2 Uw U F R F' Rw' Fw B Uw' L' Fw2 F2".parse::<Alg>().unwrap();
+            let hardcoded_scramble_alg_for_testing = "2R u".parse::<Alg>().unwrap();
             // let hardcoded_scramble_alg_for_testing =
             //     "r U2 x r U2 r U2 r' U2 l U2 r' U2 r U2 r' U2 r'"
             //         .parse::<Alg>()
@@ -863,7 +868,7 @@ impl Scramble4x4x4FourPhase {
     }
 }
 
-fn remap_piece_for_search_pattern(
+fn remap_piece_for_phase1_or_phase2_search_pattern(
     orbit_info: &PackedKPuzzleOrbitInfo,
     from_pattern: &PackedKPattern,
     target_pattern: &PackedKPattern,

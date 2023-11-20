@@ -7,8 +7,8 @@ use super::{
     ConversionError, PackedKPuzzle, PackedKTransformation,
 };
 
-use cubing::kpuzzle::KPuzzle;
 use cubing::kpuzzle::{KPattern, KPatternData};
+use cubing::{alg::Alg, kpuzzle::KPuzzle};
 
 #[derive(Hash, PartialEq, Eq, Clone)]
 pub struct PackedKPattern {
@@ -145,6 +145,15 @@ impl PackedKPattern {
                 into_packed_kpattern.set_packed_orientation(orbit_info, i, new_packed_orientation);
             }
         }
+    }
+
+    /// Prefer `.apply_transformation(…)` when possible, to avoid unnecessary conversions.
+    pub fn apply_alg(&self, alg: &Alg) -> Result<PackedKPattern, ConversionError> {
+        let transformation = self
+            .packed_orbit_data
+            .packed_kpuzzle
+            .transformation_from_alg(alg)?;
+        Ok(self.apply_transformation(&transformation))
     }
 
     pub fn byte_slice(&self) -> &[u8] {

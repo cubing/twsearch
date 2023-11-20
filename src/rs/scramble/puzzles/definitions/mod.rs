@@ -75,6 +75,20 @@ pub(crate) fn cube4x4x4_phase1_target_pattern() -> PackedKPattern {
         .clone()
 }
 
+static CUBE4X4X4_WITH_WING_PARITY_KPUZZLE_CELL: OnceLock<PackedKPuzzle> = OnceLock::new();
+// TODO: Require the WASM caller to pass in the JSON, to save on build size.
+// TODO: Replace with non-super definition once we can handle that in the rest fo the code.
+pub(crate) fn cube4x4x4_with_wing_parity_packed_kpuzzle() -> PackedKPuzzle {
+    CUBE4X4X4_WITH_WING_PARITY_KPUZZLE_CELL
+        .get_or_init(|| {
+            let json_bytes = include_bytes!("4x4x4-Speffz-with-wing-parity.kpuzzle.json");
+            let def: KPuzzleDefinition = serde_json::from_slice(json_bytes).unwrap();
+            let kpuzzle: KPuzzle = def.try_into().unwrap();
+            PackedKPuzzle::try_from(kpuzzle).unwrap()
+        })
+        .clone()
+}
+
 static CUBE4X4X4_PHASE2_PATTERN_CELL: OnceLock<PackedKPattern> = OnceLock::new();
 // TODO: Require the WASM caller to pass in the JSON, to save on build size.
 // TODO: add a way to allow any of the 12 possibilities instead of requiring L and R to both be solved.
@@ -82,7 +96,7 @@ static CUBE4X4X4_PHASE2_PATTERN_CELL: OnceLock<PackedKPattern> = OnceLock::new()
 pub(crate) fn cube4x4x4_phase2_target_pattern() -> PackedKPattern {
     CUBE4X4X4_PHASE2_PATTERN_CELL
         .get_or_init(|| {
-            let packed_kpuzzle = cube4x4x4_packed_kpuzzle();
+            let packed_kpuzzle = cube4x4x4_with_wing_parity_packed_kpuzzle();
             PackedKPattern::try_from_json(
                 &packed_kpuzzle,
                 include_bytes!("4x4x4-Phase2.target.json"),

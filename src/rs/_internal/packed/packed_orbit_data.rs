@@ -96,6 +96,17 @@ impl PackedOrbitData {
         unsafe { std::slice::from_raw_parts(self.bytes, self.packed_kpuzzle.data.num_bytes) }
     }
 
+    pub fn orbit_byte_slice(&self, orbit_info: &PackedKPuzzleOrbitInfo) -> &[u8] {
+        // yiss ☺️
+        // https://stackoverflow.com/a/27150865
+        unsafe {
+            std::slice::from_raw_parts(
+                self.bytes.add(orbit_info.pieces_or_permutations_offset),
+                orbit_info.num_pieces * 2,
+            )
+        }
+    }
+
     pub fn hash(&self) -> u64 {
         let h = cityhasher::CityHasher::new();
         h.hash_one(self.byte_slice())

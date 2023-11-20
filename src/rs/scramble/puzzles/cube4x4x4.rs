@@ -209,7 +209,7 @@ impl Coord for Coord84 {
         assert!(centers_orbit_info.name == "CENTERS".into());
         for idx in [4, 5, 6, 7, 12, 13, 14, 15] {
             bits *= 2;
-            if pattern.get_piece_or_permutation(centers_orbit_info, idx) < 8 {
+            if pattern.get_piece_or_permutation(&centers_orbit_info, idx) == 1 {
                 bits += 1
             }
         }
@@ -248,7 +248,7 @@ impl Coord for Coord168 {
         assert!(centers_orbit_info.name == "CENTERS".into());
         for idx in [0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23] {
             bits *= 2;
-            if pattern.get_piece_or_permutation(centers_orbit_info, idx) < 8 {
+            if pattern.get_piece_or_permutation(centers_orbit_info, idx) == 0 {
                 bits += 1
             }
         }
@@ -284,7 +284,7 @@ impl Coord for CoordEP {
             .packed_kpuzzle
             .data
             .orbit_iteration_info[1];
-        assert!(edges_orbit_info.name == "EDGES".into());
+        assert!(edges_orbit_info.name == "WINGS".into());
         for idx in 0..24 {
             if ((bits >> idx) & 1) == 0 {
                 let mut cyclen = 0;
@@ -370,7 +370,10 @@ impl Phase2SymmCoords {
             }
         }
         let mut q: Vec<PackedKPattern> = Vec::new();
-        q.push(cube4x4x4_phase2_target_pattern().clone());
+        q.push(match coordinate_table {
+            CoordinateTable::Coordep => self.packed_kpuzzle.default_pattern(),
+            _ => cube4x4x4_phase2_target_pattern().clone()
+        });
         let mut qget = 0;
         let mut qput = 1;
         while qget < qput {
@@ -387,13 +390,13 @@ impl Phase2SymmCoords {
                     q.push(dststate.clone());
                     qput += 1;
                 }
+                tab[src][moveind] = dst;
                 moveind += 1;
             }
             qget += 1;
         }
 
         let tab = coord_field.main_table();
-        dbg!("At ", qget, " ", qput, " ", tab.len());
         assert!(qget == tab.len());
         assert!(qput == tab.len());
     }

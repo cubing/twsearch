@@ -88,6 +88,7 @@ impl Scramble4x4x4FourPhase {
         let mut x = Phase2SymmetryTables::new(self.packed_kpuzzle.clone());
         x.init_choose_tables();
         x.init_move_tables();
+        x.init_prune_table();
         let phase1_alg = {
             let mut phase1_search_pattern = self.phase1_target_pattern.clone();
             for orbit_info in &self.packed_kpuzzle.data.orbit_iteration_info {

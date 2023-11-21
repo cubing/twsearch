@@ -5,13 +5,13 @@ use crate::{
     scramble::puzzles::definitions::{cube4x4x4_packed_kpuzzle, cube4x4x4_phase2_target_pattern, cube4x4x4_with_wing_parity_packed_kpuzzle},
 };
 
-use super::{super::super::scramble_search::generators_from_vec_str, orbit_info::orbit_info};
+use super::{super::super::scramble_search::generators_from_vec_str, orbit_info::orbit_info, phase2::{PHASE2_SOLVED_SIDE_CENTER_CASES, SideCenter}};
 
 const NUM_COORDINATES_C8_4D2: usize = 35;
 const NUM_COORDINATES_C16_8: usize = 12870;
 const NUM_COORDINATES_EP: usize = 2;
 const PHASE2_PRUNE_TABLE_SIZE: usize =
-    NUM_COORDINATES_C8_4D2 * NUM_COORDINATES_C16_8 * NUM_COORDINATES_EP / 2;
+     NUM_COORDINATES_C8_4D2 * NUM_COORDINATES_C16_8 * NUM_COORDINATES_EP;
 const PHASE2_MOVE_COUNT: usize = 23;
 const MOVE_TABLE_UNINITIALIZED_VALUE: Phase2Coordinate = Phase2Coordinate(usize::MAX); // larger than any symcoord
 
@@ -284,4 +284,51 @@ impl Phase2SymmetryTables {
             }
         }
     }
+
+    fn packcoords(c84: Phase2Coordinate, c168: Phase2Coordinate, ep: Phase2Coordinate) -> usize {
+        return c84.0 + NUM_COORDINATES_C8_4D2 * (c168.0 + NUM_COORDINATES_C16_8 * ep.0);
+    }
+
+    pub(crate) fn init_prune_table(&mut self) {
+        for i in 0..self.phase2_prune_table.len() {
+            self.phase2_prune_table[i] = 255;
+        }
+        for sol in PHASE2_SOLVED_SIDE_CENTER_CASES {
+            let mut c84: Phase2Coordinate = Phase2Coordinate(0);
+            for i1 in sol {
+                for i2 in i1 {
+                    c84.0 *= 2;
+                    if i2 == SideCenter::L {
+                        c84.0 += 1;
+                    }
+                }
+            }
+            if c84.0 > 127 {
+                c84.0 = 255 - c84.0;
+            }
+            self.phase2_prune_table[Self::packcoords(c84, Phase2Coordinate(0), Phase2Coordinate(0))] = 0;
+        }
+        for d in 0..255 {
+            let mut written = 0;
+            for epsrc in 0..NUM_COORDINATES_EP {
+                for c168src in 0..NUM_COORDINATES_C16_8 {
+                    for c84src in 0..NUM_COORDINATES_C8_4D2 {
+                        if self.phase2_prune_table[Self::packcoords(Phase2Coordinate(c84src), Phase2Coordinate(c168src), Phase2Coordinate(epsrc))] == d {
+                            for m in 0..PHASE2_MOVE_COUNT {
+                                let dst = Self::packcoords(self.coord_84.c84move[c84src][m], self.coord_168.c168move[c168src][m], self.coord_ep.ep_move[epsrc][m]);
+                                if self.phase2_prune_table[dst] == 255 {
+                                    self.phase2_prune_table[dst] = d+1;
+                                    written += 1;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if written == 0 {
+                break;
+            }
+        }
+    }
+
 }

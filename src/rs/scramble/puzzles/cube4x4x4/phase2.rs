@@ -180,12 +180,12 @@ impl Phase2AdditionalSolutionCondition {
 
 // TODO: change the 4x4x4 Speffz def to have indistinguishable centers and get rid of this.
 #[derive(Debug, Clone, Copy, PartialEq)]
-enum SideCenter {
+pub(crate) enum SideCenter {
     L,
     R,
 }
 
-const PHASE2_SOLVED_SIDE_CENTER_CASES: [[[SideCenter; 4]; 2]; 12] = [
+pub(crate) const PHASE2_SOLVED_SIDE_CENTER_CASES: [[[SideCenter; 4]; 2]; 12] = [
     // flat faces
     [
         [SideCenter::L, SideCenter::L, SideCenter::L, SideCenter::L],

@@ -119,6 +119,10 @@ impl PackedKPattern {
         transformation: &PackedKTransformation,
         into_packed_kpattern: &mut PackedKPattern,
     ) {
+        if transformation.byte_slice().len() != into_packed_kpattern.byte_slice().len() {
+            panic!("Applying a transformation from one puzzle to a pattern from a different one transform {0} pattern {1} self {2}",
+                      transformation.byte_slice().len(), into_packed_kpattern.byte_slice().len(), self.byte_slice().len());
+        }
         for orbit_info in &self
             .packed_orbit_data
             .packed_kpuzzle

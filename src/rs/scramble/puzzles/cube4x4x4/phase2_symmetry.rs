@@ -1,8 +1,8 @@
 use crate::{
     _internal::{
-        options::MetricEnum, PackedKPattern, PackedKPuzzle, PruneTableEntryType, SearchGenerators,
+        options::MetricEnum, PackedKPattern, PackedKPuzzle, PruneTableEntryType, SearchGenerators, PackedKTransformation,
     },
-    scramble::puzzles::definitions::{cube4x4x4_packed_kpuzzle, cube4x4x4_phase2_target_pattern},
+    scramble::puzzles::definitions::{cube4x4x4_packed_kpuzzle, cube4x4x4_phase2_target_pattern, cube4x4x4_with_wing_parity_packed_kpuzzle},
 };
 
 use super::{super::super::scramble_search::generators_from_vec_str, orbit_info::orbit_info};
@@ -198,6 +198,26 @@ impl Phase2SymmetryTables {
         }
     }
 
+    #[allow(dead_code)]
+    fn showpattern(pat: PackedKPattern) {
+        let mut s = String::new();
+        let orbit_info = orbit_info(&pat.packed_orbit_data.packed_kpuzzle, 0, "CORNERS");
+        for i in 0..112 {
+            let c = pat.get_piece_or_permutation(orbit_info, i);
+            s.push_str(&String::from(c.to_string()))
+        }
+    }
+
+    #[allow(dead_code)]
+    fn showtransformation(pat: PackedKTransformation) {
+        let mut s = String::new();
+        let orbit_info = orbit_info(&pat.packed_orbit_data.packed_kpuzzle, 0, "CORNERS");
+        for i in 0..112 {
+            let c = pat.get_piece_or_permutation(orbit_info, i);
+            s.push_str(&String::from(c.to_string()))
+        }
+    }
+
     fn fill_move_table(&mut self, coordinate_table: CoordinateTable, moves: &SearchGenerators) {
         // TODO: double-check if there are any performance penalties for `dyn`.
         let coord_field: &mut dyn Coord = match coordinate_table {
@@ -212,7 +232,7 @@ impl Phase2SymmetryTables {
         }
         let mut patterns: Vec<PackedKPattern> = Vec::new();
         patterns.push(match coordinate_table {
-            CoordinateTable::CoordEP => self.packed_kpuzzle.default_pattern(),
+            CoordinateTable::CoordEP => cube4x4x4_with_wing_parity_packed_kpuzzle().default_pattern(),
             _ => cube4x4x4_phase2_target_pattern().clone(),
         });
         let mut patterns_read_idx = 0;
@@ -249,7 +269,7 @@ impl Phase2SymmetryTables {
         let phase2_generators =
             generators_from_vec_str(vec!["Uw2", "U", "L", "F", "Rw", "R", "B", "Dw2", "D"]);
         match SearchGenerators::try_new(
-            &self.packed_kpuzzle,
+            &cube4x4x4_with_wing_parity_packed_kpuzzle(),
             &phase2_generators,
             &MetricEnum::Hand,
             false,

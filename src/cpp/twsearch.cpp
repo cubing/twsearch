@@ -169,7 +169,11 @@ void processargs(int &argc, argvtype &argv, int includecmds) {
       }
     }
     if (!found) {
+#ifndef WASM
+#ifndef ASLIBRARY
       printhelp();
+#endif
+#endif
       error("! Argument not understood ", argv[0]);
     }
   }
@@ -471,7 +475,9 @@ int main(int argc, const char **argv) {
   }
 
   if (argc <= 1) {
+#ifndef WASM
     printhelp();
+#endif
     error("! please provide a twsearch file name on the command line");
   }
 

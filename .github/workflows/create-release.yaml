@@ -1,0 +1,56 @@
+name: GitHub Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        required: true
+        description: 'Release version'
+
+jobs:
+  build_and_publish:
+    name: Build xcframework
+    permissions:
+      contents: write
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - run: rustup toolchain install nightly --profile minimal
+      - run: rustup component add rust-src --toolchain nightly-x86_64-apple-darwin
+      - run: script/build-swift-package
+      - run: zip -r TWSearch.xcframework.zip TWSearch.xcframework
+      - name: Update Package.Swift
+        run: |
+            sed -e 's/@@VERSION@@/${{ github.event.inputs.version }}/' -e 's/@@CHECKSUM@@/'"$(shasum -a 256 TWSearch.xcframework.zip | cut -d' ' -f1)"'/' Package.swift.in > Package.swift
+            git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git config --local user.name "github-actions[bot]"
+            git add src/rs-swift/SwiftGenerated Package.swift
+            git commit -m "Update Swift files"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "TWSearch.xcframework.zip"
+          generateReleaseNotes: true
+          tag: ${{ github.event.inputs.version }}
+          commit: ${{ github.ref }}
+
+
+#      #  uses: actions/create-release@v1
+#      #  env:
+#      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#      #  with:
+#      #    tag_name: "${{ github.event.inputs.version }}"
+#      #    release_name: "TWSearch release ${{ github.event.inputs.version }}"
+#      #    body: ${{ env.RELEASE_BODY }}
+#      #    draft: false
+#          prerelease: false

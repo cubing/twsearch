@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+set -euxo pipefail
+
+ROOTDIR="$(realpath $(dirname "$0")/../)"
+
+#RUSTFLAGS="${RUSTFLAGS:-"-Clinker-plugin-lto -Clinker=${ROOTDIR}/script/clang-wrapper-apple.js -Copt-level=s -Ccodegen-units=1 -Cpanic=abort -Zlocation-detail=none"}"
+#RUSTFLAGS="${RUSTFLAGS:-"-Copt-level=s -Ccodegen-units=1 -Cpanic=abort -Zlocation-detail=none"}"
+RUSTFLAGS=""
+
+export RUSTFLAGS
+
+COMMONFLAGS="${COMMONFLAGS:-"+nightly"}"
+CARGOBUILDFLAGS="${CARGOBUILDFLAGS:-"--release -Z build-std=std,panic_abort"}"
+
+# All targets:
+# aarch64-apple-darwin aarch64-apple-ios aarch64-apple-ios-macabi aarch64-apple-ios-sim aarch64-apple-tvos aarch64-apple-watchos-sim arm64_32-apple-watchos armv7-apple-ios armv7k-apple-watchos armv7s-apple-ios x86_64-apple-darwin x86_64-apple-ios x86_64-apple-ios-macabi x86_64-apple-tvos x86_64-apple-watchos-sim x86_64h-apple-darwin
+
+# x86_64-apple-ios-sim is incorrectly named x86_64-apple-ios
+
+
+declare -a xcframework_args
+xcframework_args=()
+
+# Run the build script for Swift, there doesn't seem to be a standalone way.
+cargo $COMMONFLAGS check --package twsearch-swift
+
+INCLDIR="$(mktemp -d)"
+
+cat << EOF > "${INCLDIR}/module.modulemap"
+module _TWSearchSwiftBridge {
+    header "SwiftBridgeCore.h"
+    header "twsearch-swift.h"
+    export *
+}
+EOF
+
+cp "${ROOTDIR}/src/rs-swift/SwiftOrig/SwiftBridgeCore.h" "${ROOTDIR}/src/rs-swift/SwiftOrig/twsearch-swift/twsearch-swift.h" "$INCLDIR"
+
+mkdir -p "${ROOTDIR}/src/rs-swift/SwiftGenerated"
+
+for file in SwiftBridgeCore.swift twsearch-swift/twsearch-swift.swift; do
+	sed '1i\
+import _TWSearchSwiftBridge
+' "${ROOTDIR}/src/rs-swift/SwiftOrig/${file}" > "${ROOTDIR}/src/rs-swift/SwiftGenerated/$(basename "$file")"
+done
+
+for targets in "aarch64-apple-darwin x86_64-apple-darwin" "aarch64-apple-ios" "aarch64-apple-ios-sim x86_64-apple-ios"; do
+	declare -a thinlibs
+	thinlibs=()
+	for target in $targets; do
+		rustup $COMMONFLAGS target add "$target"
+		cargo $COMMONFLAGS build $CARGOBUILDFLAGS --package twsearch-swift --target "$target"
+
+		LIBRARY="${ROOTDIR}/target/${target}/release/libtwsearch_swift.a"
+
+		# HACK: xcodebuild is confused by the LTO, throw it a bone.
+		# echo 'void __dummy(){}' | clang -target "$target" -c -o dummy.o -x c -
+		# ar ras __.SYMDEF "$LIBRARY" dummy.o
+		thinlibs+=("$LIBRARY")
+
+	done
+	DIR="fat-${targets// /_}"
+	mkdir -p "$DIR"
+	FATLIB="${DIR}/libtwsearch_swift.a"
+	lipo -create -output "$FATLIB" "${thinlibs[@]}"
+	xcframework_args+=("-library" "$FATLIB" "-headers" "$INCLDIR")
+done
+
+rm -rf TWSearch.xcframework
+
+xcodebuild -create-xcframework \
+	"${xcframework_args[@]}" \
+	-output TWSearch.xcframework
+
+rm -rf "${INCLDIR}"

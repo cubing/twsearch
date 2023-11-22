@@ -1,0 +1,25 @@
+[package]
+name = "twsearch-swift"
+version.workspace = true
+license.workspace = true
+edition.workspace = true
+description = "Twizzle Search Swift — Swift bindings for twsearch"
+
+build = "build.rs"
+
+[lib]
+crate-type = ["staticlib"]
+
+[features]
+default = []
+
+[dependencies]
+twsearch = { path = "../rs", version = "0.6.5" }
+cubing = { version = "0.7.6" }
+swift-bridge = "0.1"
+
+[build-dependencies]
+swift-bridge-build = "0.1"
+
+[dev-dependencies]
+cubing = "0.7.3"

@@ -5,6 +5,7 @@ pub struct PuzzleError {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(C)]
 pub enum Puzzle {
     Cube3x3x3,
     Cube2x2x2,

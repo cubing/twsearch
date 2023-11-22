@@ -6,6 +6,7 @@ members = [
   "src/rs",
   "src/rs-ffi",
   "src/rs-wasm",
+  "src/rs-swift"
 ]
 default-members = [
   "src/rs"

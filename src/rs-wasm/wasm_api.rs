@@ -1,16 +1,14 @@
 use std::sync::Arc;
 
 use cubing::alg::Move;
-use cubing::kpuzzle::KPatternData;
+use cubing::kpuzzle::{KPatternData, PackedKPattern, PackedKPuzzle};
 use serde::{Deserialize, Serialize};
 use twsearch::_internal::options::{CustomGenerators, Generators, MetricEnum};
 use wasm_bindgen::prelude::*;
 
 use twsearch::scramble::{random_scramble_for_event, Event};
 
-use twsearch::_internal::{
-    IDFSearch, IndividualSearchOptions, PackedKPattern, PackedKPuzzle, SearchLogger,
-};
+use twsearch::_internal::{IDFSearch, IndividualSearchOptions, SearchLogger};
 
 pub fn internal_init() {
     console_error_panic_hook::set_once();
@@ -33,7 +31,7 @@ pub fn wasmTwsearch(
     search_pattern_json: String,
     options_json: String, // TODO
 ) -> Result<String, String> {
-    let packed_kpuzzle = PackedKPuzzle::try_from(kpuzzle_json.as_bytes());
+    let packed_kpuzzle = PackedKPuzzle::try_from_json(kpuzzle_json.as_bytes());
     let packed_kpuzzle = packed_kpuzzle.map_err(|e| e.to_string())?;
 
     let search_pattern =
@@ -54,7 +52,8 @@ pub fn wasmTwsearch(
 
     let target_pattern = match options.target_pattern {
         Some(target_pattern_data) => {
-            let target_pattern = PackedKPattern::from_data(&packed_kpuzzle, target_pattern_data);
+            let target_pattern =
+                PackedKPattern::try_from_data(&packed_kpuzzle, &target_pattern_data);
             target_pattern.map_err(|e| e.to_string())?
         }
         None => packed_kpuzzle.default_pattern(),

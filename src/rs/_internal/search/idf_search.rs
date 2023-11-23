@@ -3,13 +3,16 @@ use std::sync::{
     Arc,
 };
 
-use cubing::alg::{Alg, AlgNode, Move, QuantumMove};
+use cubing::{
+    alg::{Alg, AlgNode, Move, QuantumMove},
+    kpuzzle::{PackedKPattern, PackedKPuzzle},
+};
 use serde::{Deserialize, Serialize};
 
 use crate::_internal::{
     cli::options::{Generators, MetricEnum},
-    CanonicalFSM, CanonicalFSMState, MoveClassIndex, PackedKPattern, PackedKPuzzle, PruneTable,
-    PuzzleError, RecursiveWorkTracker, SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
+    CanonicalFSM, CanonicalFSMState, MoveClassIndex, PruneTable, PuzzleError, RecursiveWorkTracker,
+    SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
 const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase

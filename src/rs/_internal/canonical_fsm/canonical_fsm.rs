@@ -3,7 +3,9 @@ use std::{
     ops::{AddAssign, BitAndAssign},
 };
 
-use crate::_internal::{PackedKTransformation, PuzzleError, SearchGenerators};
+use cubing::kpuzzle::PackedKTransformation;
+
+use crate::_internal::{PuzzleError, SearchGenerators};
 
 const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
 

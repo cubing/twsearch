@@ -1,11 +1,14 @@
 use std::sync::Arc;
 
-use cubing::alg::{Alg, Move};
+use cubing::{
+    alg::{Alg, Move},
+    kpuzzle::{PackedKPattern, PackedKPuzzle},
+};
 
 use crate::_internal::{
     options::{CustomGenerators, VerbosityLevel},
     options::{Generators, MetricEnum},
-    IDFSearch, IndividualSearchOptions, PackedKPattern, PackedKPuzzle, SearchLogger,
+    IDFSearch, IndividualSearchOptions, SearchLogger,
 };
 
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {

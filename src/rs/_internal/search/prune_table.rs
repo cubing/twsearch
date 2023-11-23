@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
+use cubing::kpuzzle::PackedKPattern;
 use thousands::Separable;
 
 use crate::_internal::{
-    CanonicalFSMState, MoveClassIndex, PackedKPattern, RecursiveWorkTracker, SearchLogger,
+    CanonicalFSMState, MoveClassIndex, RecursiveWorkTracker, SearchLogger,
     CANONICAL_FSM_START_STATE,
 };
 

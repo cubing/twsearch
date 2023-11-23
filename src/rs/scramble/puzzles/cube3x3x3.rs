@@ -1,10 +1,13 @@
 use std::sync::Mutex;
 
-use cubing::alg::{Alg, AlgNode, Move, QuantumMove};
+use cubing::{
+    alg::{Alg, AlgNode, Move, QuantumMove},
+    kpuzzle::{PackedKPattern, PackedKPuzzle},
+};
 use lazy_static::lazy_static;
 
 use crate::{
-    _internal::{IDFSearch, IndividualSearchOptions, PackedKPattern, PackedKPuzzle},
+    _internal::{IDFSearch, IndividualSearchOptions},
     scramble::{
         randomize::{basic_parity, BasicParity},
         scramble_search::{basic_idfs, idfs_with_target_pattern},
@@ -112,25 +115,20 @@ impl Scramble3x3x3TwoPhase {
         };
 
         let phase1_alg = {
-            let phase1_search_pattern = self.phase1_target_pattern.clone();
+            let mut phase1_search_pattern = self.phase1_target_pattern.clone();
             for orbit_info in &self.packed_kpuzzle.data.orbit_iteration_info {
                 for i in 0..orbit_info.num_pieces {
-                    let old_piece = pattern
-                        .packed_orbit_data
-                        .get_packed_piece_or_permutation(orbit_info, i);
+                    let old_piece = pattern.get_piece(orbit_info, i);
                     let old_piece_mapped = self
                         .phase1_target_pattern
-                        .packed_orbit_data
-                        .get_packed_piece_or_permutation(orbit_info, old_piece as usize);
-                    phase1_search_pattern
-                        .packed_orbit_data
-                        .set_packed_piece_or_permutation(orbit_info, i, old_piece_mapped);
-                    let ori = pattern
-                        .packed_orbit_data
-                        .get_packed_orientation(orbit_info, i);
-                    phase1_search_pattern
-                        .packed_orbit_data
-                        .set_packed_orientation(orbit_info, i, ori);
+                        .get_piece(orbit_info, old_piece as usize);
+                    phase1_search_pattern.set_piece(orbit_info, i, old_piece_mapped);
+                    let orientation_with_mod = pattern.get_orientation_with_mod(orbit_info, i);
+                    phase1_search_pattern.set_orientation_with_mod(
+                        orbit_info,
+                        i,
+                        orientation_with_mod,
+                    );
                 }
             }
 

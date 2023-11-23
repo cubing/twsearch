@@ -10,14 +10,14 @@ use std::{
 use commands::{benchmark, canonical_algs};
 use cubing::{
     alg::Alg,
-    kpuzzle::{KPattern, KPatternData, KPuzzle, KPuzzleDefinition},
+    kpuzzle::{KPatternData, KPuzzleDefinition, PackedKPattern, PackedKPuzzle},
 };
 use serve::serve;
 use twsearch::_internal::{
     cli::options::{get_options, CliCommand, GodsAlgorithmArgs, SearchCommandArgs},
     options::VerbosityLevel,
     read_to_json, ArgumentError, CommandError, GodsAlgorithmSearch, IDFSearch,
-    IndividualSearchOptions, PackedKPattern, PackedKPuzzle, SearchLogger,
+    IndividualSearchOptions, SearchLogger,
 };
 
 fn main() -> Result<(), CommandError> {
@@ -44,7 +44,7 @@ fn common(
 ) -> Result<(PackedKPuzzle, Option<PackedKPattern>), CommandError> {
     let def: Result<KPuzzleDefinition, ArgumentError> = read_to_json(def_file);
     let def = def?;
-    let kpuzzle = KPuzzle::try_from(def).map_err(|e| ArgumentError {
+    let kpuzzle = PackedKPuzzle::try_from(def).map_err(|e| ArgumentError {
         description: format!("Invalid definition: {}", e),
     })?;
     let packed_kpuzzle: PackedKPuzzle =
@@ -55,18 +55,16 @@ fn common(
     let start_or_target_pattern: Option<PackedKPattern> = match start_or_target_pattern_file {
         Some(start_pattern_file) => {
             let kpattern_data: KPatternData = read_to_json(start_pattern_file)?;
-            let kpattern = KPattern {
-                kpuzzle: kpuzzle.clone(),
-                kpattern_data: Arc::new(kpattern_data),
-            };
-            Some(match packed_kpuzzle.try_pack_pattern(kpattern) {
-                Ok(start_or_target_pattern) => start_or_target_pattern,
-                Err(e) => {
-                    return Err(CommandError::ArgumentError(ArgumentError {
-                        description: e.to_string(),
-                    }))
-                }
-            })
+            Some(
+                match PackedKPattern::try_from_data(&kpuzzle, &kpattern_data) {
+                    Ok(start_or_target_pattern) => start_or_target_pattern,
+                    Err(e) => {
+                        return Err(CommandError::ArgumentError(ArgumentError {
+                            description: e.to_string(),
+                        }))
+                    }
+                },
+            )
         }
         None => None,
     };
@@ -120,12 +118,7 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
                     exit(1);
                 }
             };
-            // TODO: add a way for `PackedKPuzzle` to construct a PackedKPattern from serialized data directly.
-            let unpacked_kpattern = KPattern {
-                kpuzzle: packed_kpuzzle.data.kpuzzle.clone(),
-                kpattern_data: Arc::new(kpattern_data),
-            };
-            match packed_kpuzzle.try_pack_pattern(unpacked_kpattern) {
+            match PackedKPattern::try_from_data(&packed_kpuzzle, &kpattern_data) {
                 Ok(scramble_pattern) => scramble_pattern,
                 Err(e) => {
                     return Err(CommandError::ArgumentError(ArgumentError {
@@ -143,22 +136,13 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
                 }
             };
             // TODO: add a way for `PackedKPuzzle` to construct a PackedKTransformation from serialized data directly.
-            let unpacked_transformation =
-                match packed_kpuzzle.data.kpuzzle.transformation_from_alg(&alg) {
-                    Ok(unpacked_transformation) => unpacked_transformation,
-                    Err(e) => {
-                        eprintln!("Could apply scramble alg: {:?}", e);
-                        exit(1);
-                    }
-                };
-            let packed_transformation =
-                match packed_kpuzzle.pack_transformation(&unpacked_transformation) {
-                    Ok(packed_transformation) => packed_transformation,
-                    Err(e) => {
-                        eprintln!("Could not pack transformation: {:?}", e);
-                        exit(1);
-                    }
-                };
+            let packed_transformation = match packed_kpuzzle.transformation_from_alg(&alg) {
+                Ok(unpacked_transformation) => unpacked_transformation,
+                Err(e) => {
+                    eprintln!("Could apply scramble alg: {:?}", e);
+                    exit(1);
+                }
+            };
             target_pattern.apply_transformation(&packed_transformation)
         }
         (Some(_), Some(_)) => {

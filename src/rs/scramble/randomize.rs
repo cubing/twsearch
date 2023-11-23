@@ -1,6 +1,5 @@
+use cubing::kpuzzle::{OrientationWithMod, PackedKPattern, PackedKPuzzleOrbitInfo};
 use rand::{seq::SliceRandom, thread_rng, Rng};
-
-use crate::_internal::{PackedKPattern, PackedKPuzzleOrbitInfo};
 
 pub(crate) enum OrbitPermutationConstraint {
     AnyPermutation,
@@ -47,9 +46,7 @@ pub(crate) fn randomize_orbit_naive(
 
     let mut total_orientation = 0;
     for (i, p) in piece_order.iter().enumerate() {
-        pattern
-            .packed_orbit_data
-            .set_packed_piece_or_permutation(orbit_info, i, *p);
+        pattern.set_piece(orbit_info, i, *p);
         let orientation = match (i == orbit_info.num_pieces - 1, &orientation_constraints) {
             (true, OrbitOrientationConstraint::OrientationsMustSumToZero) => {
                 subtract_u8_mod(0, total_orientation, orbit_info.num_orientations)
@@ -65,9 +62,14 @@ pub(crate) fn randomize_orbit_naive(
             }
         };
 
-        pattern
-            .packed_orbit_data
-            .set_packed_orientation(orbit_info, i, orientation);
+        pattern.set_orientation_with_mod(
+            orbit_info,
+            i,
+            &OrientationWithMod {
+                orientation: orientation as usize,
+                orientation_mod: 0, // TODO
+            },
+        );
     }
     piece_order
 }

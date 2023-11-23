@@ -1,12 +1,12 @@
 use std::{collections::HashMap, mem, vec};
 
+use cubing::kpuzzle::{PackedKPattern, PackedKPuzzle};
 use thousands::Separable;
 
 use crate::_internal::{
     cli::options::{Generators, MetricEnum},
     gods_algorithm::factor_number::factor_number,
-    CanonicalFSM, CanonicalFSMState, PackedKPattern, PackedKPuzzle, PuzzleError, SearchGenerators,
-    CANONICAL_FSM_START_STATE,
+    CanonicalFSM, CanonicalFSMState, PuzzleError, SearchGenerators, CANONICAL_FSM_START_STATE,
 };
 
 type SearchDepth = usize;

@@ -1,10 +1,13 @@
 use std::sync::OnceLock;
 
-use cubing::alg::{Alg, AlgNode, Move};
+use cubing::{
+    alg::{Alg, AlgNode, Move},
+    kpuzzle::PackedKPuzzle,
+};
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
 use crate::_internal::{
-    options::CustomGenerators, CanonicalFSM, MoveClassIndex, PackedKPuzzle, SearchGenerators,
+    options::CustomGenerators, CanonicalFSM, MoveClassIndex, SearchGenerators,
     CANONICAL_FSM_START_STATE,
 };
 

@@ -1,11 +1,14 @@
 use std::collections::HashMap;
 
-use cubing::alg::{Move, QuantumMove};
+use cubing::{
+    alg::{Move, QuantumMove},
+    kpuzzle::{PackedKPuzzle, PackedKTransformation, PackedKTransformationBuffer},
+};
 use rand::{seq::SliceRandom, thread_rng};
 
 use crate::_internal::{
     cli::options::{Generators, MetricEnum},
-    PackedKPuzzle, PackedKTransformation, PackedKTransformationBuffer, PuzzleError,
+    PuzzleError,
 };
 
 #[derive(Clone, Debug)]
@@ -54,18 +57,13 @@ impl SearchGenerators {
         metric: &MetricEnum,
         random_start: bool,
     ) -> Result<SearchGenerators, PuzzleError> {
-        let identity_transformation =
-            packed_kpuzzle
-                .identity_transformation()
-                .map_err(|e| PuzzleError {
-                    description: e.to_string(), // TODO
-                })?;
+        let identity_transformation = packed_kpuzzle.identity_transformation();
 
         let mut seen_quantum_moves = HashMap::<QuantumMove, Move>::new();
 
         let moves: Vec<&Move> = match generators {
             Generators::Default => {
-                let def = packed_kpuzzle.data.kpuzzle.definition();
+                let def = packed_kpuzzle.definition();
                 let moves = def.moves.keys();
                 if let Some(derived_moves) = &def.derived_moves {
                     moves.chain(derived_moves.keys()).collect()

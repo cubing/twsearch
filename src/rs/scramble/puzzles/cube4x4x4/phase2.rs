@@ -1,9 +1,10 @@
-use cubing::alg::Alg;
+use cubing::{
+    alg::Alg,
+    kpuzzle::{KPattern, KPuzzle, KPuzzleOrbitInfo, OrientationWithMod},
+};
 
 use crate::{
-    _internal::{
-        AdditionalSolutionCondition, PackedKPattern, PackedKPuzzle, PackedKPuzzleOrbitInfo,
-    },
+    _internal::AdditionalSolutionCondition,
     scramble::{
         puzzles::{
             cube4x4x4::orbit_info::orbit_info,
@@ -85,8 +86,8 @@ enum Phase2EdgeOrientation {
     Misoriented,
 }
 
-fn calculate_wing_parity(pattern: &PackedKPattern) -> BasicParity {
-    let wings_orbit_info = orbit_info(&pattern.packed_orbit_data.packed_kpuzzle, 1, "WINGS");
+fn calculate_wing_parity(pattern: &KPattern) -> BasicParity {
+    let wings_orbit_info = orbit_info(&pattern.packed_orbit_data.kpuzzle, 1, "WINGS");
     let wing_parity = basic_parity(
         &pattern.packed_orbit_data.byte_slice()
             [wings_orbit_info.pieces_or_permutations_offset..wings_orbit_info.orientations_offset],
@@ -95,22 +96,25 @@ fn calculate_wing_parity(pattern: &PackedKPattern) -> BasicParity {
     wing_parity
 }
 
-fn set_wing_parity(pattern: &mut PackedKPattern, wing_parity: BasicParity) {
-    let kpuzzle_clone = pattern.packed_orbit_data.packed_kpuzzle.clone();
+fn set_wing_parity(pattern: &mut KPattern, wing_parity: BasicParity) {
+    let kpuzzle_clone = pattern.packed_orbit_data.kpuzzle.clone();
     let wing_parity_orbit_info = orbit_info(&kpuzzle_clone, 3, "WING_PARITY");
-    pattern.packed_orbit_data.set_packed_piece_or_permutation(
+    pattern.set_orientation_with_mod(
         wing_parity_orbit_info,
         0,
-        wing_parity.into(),
+        &OrientationWithMod {
+            orientation: wing_parity.into(),
+            orientation_mod: 0,
+        },
     );
 }
 
-pub(crate) fn pattern_to_phase2_pattern(pattern: &PackedKPattern) -> PackedKPattern {
+pub(crate) fn pattern_to_phase2_pattern(pattern: &KPattern) -> KPattern {
     let phase1_kpuzzle = cube4x4x4_packed_kpuzzle();
     let phase2_kpuzzle = cube4x4x4_with_wing_parity_packed_kpuzzle();
     let phase2_target_pattern = cube4x4x4_phase2_target_pattern();
 
-    let mut new_pattern = PackedKPattern::new(phase2_kpuzzle);
+    let mut new_pattern = phase2_kpuzzle.default_pattern();
     for orbit_info in &phase1_kpuzzle.data.orbit_iteration_info {
         for i in 0..orbit_info.num_pieces {
             remap_piece_for_phase1_or_phase2_search_pattern(
@@ -128,8 +132,8 @@ pub(crate) fn pattern_to_phase2_pattern(pattern: &PackedKPattern) -> PackedKPatt
     new_pattern
 }
 pub(crate) struct Phase2AdditionalSolutionCondition {
-    pub(crate) packed_kpuzzle: PackedKPuzzle, // we could theoretically get this from `main_search_pattern`, but this way is more clear.
-    pub(crate) phase2_search_full_pattern: PackedKPattern,
+    pub(crate) kpuzzle: KPuzzle, // we could theoretically get this from `main_search_pattern`, but this way is more clear.
+    pub(crate) phase2_search_full_pattern: KPattern,
     pub(crate) _debug_num_checked: usize, // TODO: remove
     pub(crate) _debug_num_centers_rejected: usize, // TODO: remove
     pub(crate) _debug_num_total_rejected: usize, // TODO: remove
@@ -252,7 +256,7 @@ fn is_solve_center_center_case(case: &[[SideCenter; 4]; 2]) -> bool {
 impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
     fn should_accept_solution(
         &mut self,
-        _candidate_pattern: &PackedKPattern,
+        _candidate_pattern: &KPattern,
         candidate_alg: &Alg,
     ) -> bool {
         let mut accept = true;
@@ -267,7 +271,7 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
 
         // dbg!(&candidate_alg.to_string());
         let transformation = self
-            .packed_kpuzzle
+            .kpuzzle
             .transformation_from_alg(candidate_alg)
             .expect("Internal error applying an alg from a search result.");
         let pattern_with_alg_applied = self
@@ -278,12 +282,12 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
 
         // TODO: is it more efficient to check this later?
 
-        let centers_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[2];
+        let centers_orbit_info = &self.kpuzzle.data.orbit_iteration_info[2];
         assert!(centers_orbit_info.name == "CENTERS".into());
 
         #[allow(non_snake_case)] // Speffz
         let [E, F, G, H, M, N, O, P] = [4, 5, 6, 7, 12, 13, 14, 15].map(|idx| {
-            if pattern_with_alg_applied.get_piece_or_permutation(centers_orbit_info, idx) < 8 {
+            if pattern_with_alg_applied.get_piece(centers_orbit_info, idx) < 8 {
                 SideCenter::L
             } else {
                 SideCenter::R
@@ -298,7 +302,7 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
 
         /******** Edges ********/
 
-        let wings_orbit_info = &self.packed_kpuzzle.data.orbit_iteration_info[1];
+        let wings_orbit_info = &self.kpuzzle.data.orbit_iteration_info[1];
         assert!(wings_orbit_info.name == "WINGS".into());
 
         if basic_parity(
@@ -322,9 +326,7 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
             // dbg!(position);
             let position_is_high = is_high(position);
 
-            let piece = pattern_with_alg_applied
-                .packed_orbit_data
-                .get_packed_piece_or_permutation(wings_orbit_info, position);
+            let piece = pattern_with_alg_applied.get_piece(wings_orbit_info, position);
             let piece_is_high = is_high(piece as usize);
 
             let pair_orientation = if piece_is_high == position_is_high {
@@ -384,31 +386,26 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
 }
 
 pub(crate) fn remap_piece_for_phase1_or_phase2_search_pattern(
-    orbit_info: &PackedKPuzzleOrbitInfo,
-    from_pattern: &PackedKPattern,
-    target_pattern: &PackedKPattern,
-    search_pattern: &mut PackedKPattern,
+    orbit_info: &KPuzzleOrbitInfo,
+    from_pattern: &KPattern,
+    target_pattern: &KPattern,
+    search_pattern: &mut KPattern,
     i: usize,
 ) {
-    let old_piece = from_pattern
-        .packed_orbit_data
-        .get_packed_piece_or_permutation(orbit_info, i);
-    let old_piece_mapped = target_pattern
-        .packed_orbit_data
-        .get_packed_piece_or_permutation(orbit_info, old_piece as usize);
-    search_pattern
-        .packed_orbit_data
-        .set_packed_piece_or_permutation(orbit_info, i, old_piece_mapped);
-    let ori = from_pattern
-        .packed_orbit_data
-        .get_packed_orientation(orbit_info, i);
-    search_pattern
-        .packed_orbit_data
-        .set_packed_orientation(orbit_info, i, ori);
+    let old_piece = from_pattern.get_piece(orbit_info, i);
+    let old_piece_mapped = target_pattern.get_piece(orbit_info, old_piece as usize);
+    search_pattern.set_piece(orbit_info, i, old_piece_mapped);
+    let orientation_with_mod = from_pattern.get_orientation_with_mod(orbit_info, i);
+    search_pattern.set_orientation_with_mod(orbit_info, i, orientation_with_mod);
     if orbit_info.name == "CORNERS".into() {
         // TODO: handle this properly by taking into account orientation mod.
-        search_pattern
-            .packed_orbit_data
-            .set_packed_orientation(orbit_info, i, 3);
+        search_pattern.set_orientation_with_mod(
+            orbit_info,
+            i,
+            &OrientationWithMod {
+                orientation: 0,
+                orientation_mod: 1,
+            },
+        );
     }
 }

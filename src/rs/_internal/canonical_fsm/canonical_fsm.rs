@@ -3,7 +3,9 @@ use std::{
     ops::{AddAssign, BitAndAssign},
 };
 
-use crate::_internal::{PackedKTransformation, PuzzleError, SearchGenerators};
+use cubing::kpuzzle::KTransformation;
+
+use crate::_internal::{PuzzleError, SearchGenerators};
 
 const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
 
@@ -20,7 +22,7 @@ impl BitAndAssign for MoveClassMask {
     }
 }
 
-fn do_transformations_commute(t1: &PackedKTransformation, t2: &PackedKTransformation) -> bool {
+fn do_transformations_commute(t1: &KTransformation, t2: &KTransformation) -> bool {
     t1.apply_transformation(t2) == t2.apply_transformation(t1)
 }
 

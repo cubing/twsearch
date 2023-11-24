@@ -3,13 +3,16 @@ use std::sync::{
     Arc,
 };
 
-use cubing::alg::{Alg, AlgNode, Move, QuantumMove};
+use cubing::{
+    alg::{Alg, AlgNode, Move, QuantumMove},
+    kpuzzle::{KPattern, KPuzzle},
+};
 use serde::{Deserialize, Serialize};
 
 use crate::_internal::{
     cli::options::{Generators, MetricEnum},
-    CanonicalFSM, CanonicalFSMState, MoveClassIndex, PackedKPattern, PackedKPuzzle, PruneTable,
-    PuzzleError, RecursiveWorkTracker, SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
+    CanonicalFSM, CanonicalFSMState, MoveClassIndex, PruneTable, PuzzleError, RecursiveWorkTracker,
+    SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
 const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase
@@ -133,7 +136,7 @@ impl IndividualSearchOptions {
 pub(crate) trait AdditionalSolutionCondition {
     fn should_accept_solution(
         &mut self, // TODO: un-mut?
-        candidate_pattern: &PackedKPattern,
+        candidate_pattern: &KPattern,
         candidate_alg: &Alg,
     ) -> bool;
 }
@@ -149,8 +152,8 @@ struct IndividualSearchData {
 pub struct IDFSearchAPIData {
     pub search_generators: SearchGenerators,
     pub canonical_fsm: CanonicalFSM,
-    pub packed_kpuzzle: PackedKPuzzle,
-    pub target_pattern: PackedKPattern,
+    pub kpuzzle: KPuzzle,
+    pub target_pattern: KPattern,
     pub search_logger: Arc<SearchLogger>,
 }
 
@@ -161,8 +164,8 @@ pub struct IDFSearch {
 
 impl IDFSearch {
     pub fn try_new(
-        packed_kpuzzle: PackedKPuzzle,
-        target_pattern: PackedKPattern,
+        kpuzzle: KPuzzle,
+        target_pattern: KPattern,
         generators: Generators,
         search_logger: Arc<SearchLogger>,
         metric: &MetricEnum,
@@ -170,12 +173,12 @@ impl IDFSearch {
         min_prune_table_size: Option<usize>,
     ) -> Result<Self, PuzzleError> {
         let search_generators =
-            SearchGenerators::try_new(&packed_kpuzzle, &generators, metric, random_start)?;
+            SearchGenerators::try_new(&kpuzzle, &generators, metric, random_start)?;
         let canonical_fsm = CanonicalFSM::try_new(search_generators.clone())?; // TODO: avoid a clone
         let api_data = Arc::new(IDFSearchAPIData {
             search_generators,
             canonical_fsm,
-            packed_kpuzzle,
+            kpuzzle,
             target_pattern,
             search_logger: search_logger.clone(),
         });
@@ -189,7 +192,7 @@ impl IDFSearch {
 
     pub fn search(
         &mut self,
-        search_pattern: &PackedKPattern,
+        search_pattern: &KPattern,
         individual_search_options: IndividualSearchOptions,
     ) -> SearchSolutions {
         self.search_with_additional_check(search_pattern, individual_search_options, None)
@@ -197,7 +200,7 @@ impl IDFSearch {
 
     pub(crate) fn search_with_additional_check(
         &mut self,
-        search_pattern: &PackedKPattern,
+        search_pattern: &KPattern,
         mut individual_search_options: IndividualSearchOptions,
         additional_solution_condition: Option<Box<dyn AdditionalSolutionCondition>>,
     ) -> SearchSolutions {
@@ -271,7 +274,7 @@ impl IDFSearch {
     fn recurse(
         &self,
         individual_search_data: &mut IndividualSearchData,
-        current_pattern: &PackedKPattern,
+        current_pattern: &KPattern,
         current_state: CanonicalFSMState,
         remaining_depth: usize,
         last_pattern_is_maybe_unsolved: bool,

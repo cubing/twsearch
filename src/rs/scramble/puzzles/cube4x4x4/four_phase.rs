@@ -1,9 +1,12 @@
-use cubing::alg::{Alg, Pause};
+use cubing::{
+    alg::{Alg, Pause},
+    kpuzzle::{KPattern, KPuzzle},
+};
 
 use url::Url;
 
 use crate::{
-    _internal::{IDFSearch, IndividualSearchOptions, PackedKPattern, PackedKPuzzle},
+    _internal::{IDFSearch, IndividualSearchOptions},
     scramble::{
         puzzles::{
             cube4x4x4::{
@@ -29,11 +32,11 @@ use super::{
 };
 
 pub(crate) struct Scramble4x4x4FourPhase {
-    packed_kpuzzle: PackedKPuzzle,
+    packed_kpuzzle: KPuzzle,
 
     _filtering_idfs: IDFSearch,
 
-    phase1_target_pattern: PackedKPattern,
+    phase1_target_pattern: KPattern,
     phase1_idfs: IDFSearch,
 
     phase2_idfs: IDFSearch,
@@ -83,7 +86,7 @@ impl Default for Scramble4x4x4FourPhase {
 impl Scramble4x4x4FourPhase {
     pub(crate) fn solve_4x4x4_pattern(
         &mut self,
-        main_search_pattern: &PackedKPattern, // TODO: avoid assuming a superpattern.
+        main_search_pattern: &KPattern, // TODO: avoid assuming a superpattern.
     ) -> Alg {
         let mut x = Phase2SymmetryTables::new(self.packed_kpuzzle.clone());
         x.init_choose_tables();
@@ -128,7 +131,7 @@ impl Scramble4x4x4FourPhase {
             let phase2_search_full_pattern = main_search_pattern.apply_alg(&phase1_alg).unwrap();
 
             let additional_solution_condition = Phase2AdditionalSolutionCondition {
-                packed_kpuzzle: self.packed_kpuzzle.clone(),
+                kpuzzle: self.packed_kpuzzle.clone(),
                 phase2_search_full_pattern,
                 _debug_num_checked: 0,
                 _debug_num_centers_rejected: 0,
@@ -156,7 +159,7 @@ impl Scramble4x4x4FourPhase {
     }
 
     // TODO: rely on the main search to find patterns at a low depth?
-    pub fn is_valid_scramble_pattern(&mut self, _pattern: &PackedKPattern) -> bool {
+    pub fn is_valid_scramble_pattern(&mut self, _pattern: &KPattern) -> bool {
         eprintln!("WARNING: FILTERING DISABLED FOR TESTING"); // TODO
         true
         // self.filtering_idfs

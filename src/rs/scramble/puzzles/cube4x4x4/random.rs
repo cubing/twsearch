@@ -1,16 +1,11 @@
-use cubing::alg::Alg;
+use cubing::{alg::Alg, kpuzzle::KPattern};
 
-use crate::{
-    _internal::PackedKPattern,
-    scramble::{
-        puzzles::definitions::cube4x4x4_packed_kpuzzle,
-        randomize::{
-            randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint,
-        },
-    },
+use crate::scramble::{
+    puzzles::definitions::cube4x4x4_packed_kpuzzle,
+    randomize::{randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint},
 };
 
-pub fn random_4x4x4_pattern(hardcoded_scramble_alg_for_testing: Option<&Alg>) -> PackedKPattern {
+pub fn random_4x4x4_pattern(hardcoded_scramble_alg_for_testing: Option<&Alg>) -> KPattern {
     dbg!("random_4x4x4_pattern");
     let packed_kpuzzle = cube4x4x4_packed_kpuzzle();
     let mut scramble_pattern = packed_kpuzzle.default_pattern();

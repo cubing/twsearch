@@ -46,6 +46,7 @@ pub(crate) fn randomize_orbit_naive(
 
     let mut total_orientation = 0;
     for (i, p) in piece_order.iter().enumerate() {
+        let i: u8 = i as u8;
         pattern.set_piece(orbit_info, i, *p);
         let orientation = match (i == orbit_info.num_pieces - 1, &orientation_constraints) {
             (true, OrbitOrientationConstraint::OrientationsMustSumToZero) => {
@@ -66,7 +67,7 @@ pub(crate) fn randomize_orbit_naive(
             orbit_info,
             i,
             &OrientationWithMod {
-                orientation: orientation as usize,
+                orientation,
                 orientation_mod: 0, // TODO
             },
         );
@@ -97,7 +98,7 @@ pub(crate) enum BasicParity {
     Odd,
 }
 
-impl From<BasicParity> for usize {
+impl From<BasicParity> for u8 {
     fn from(value: BasicParity) -> Self {
         match value {
             BasicParity::Even => 0,

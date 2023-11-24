@@ -42,7 +42,7 @@ struct Coord84 {
     c84move: [[Phase2Coordinate; PHASE2_MOVE_COUNT]; NUM_COORDINATES_C8_4D2],
 }
 
-const L_AND_R_CENTER_INDICES: [usize; 8] = [4, 5, 6, 7, 12, 13, 14, 15];
+const L_AND_R_CENTER_INDICES: [u8; 8] = [4, 5, 6, 7, 12, 13, 14, 15];
 const L_CENTER_PIECE: u8 = 1;
 
 impl Coord for Coord84 {
@@ -118,14 +118,14 @@ impl Coord for CoordEP {
         let mut r = 0;
         // TODO: store this in the struct?
         let edges_orbit_info = orbit_info(&pattern.packed_orbit_data.kpuzzle, 1, "WINGS");
-        for idx in 0..24 {
+        for idx in 0..24u8 {
             if ((bits >> idx) & 1) == 0 {
                 let mut cyclen = 0;
-                let mut j: usize = idx;
+                let mut j: u8 = idx;
                 while ((bits >> j) & 1) == 0 {
                     cyclen += 1;
                     bits |= 1 << j;
-                    j = pattern.get_piece(edges_orbit_info, j) as usize;
+                    j = pattern.get_piece(edges_orbit_info, j);
                 }
                 r += cyclen + 1;
             }
@@ -204,7 +204,7 @@ impl Phase2SymmetryTables {
     }
 
     #[allow(dead_code)]
-    fn showpattern(pat: KPattern) {
+    fn show_pattern(pat: KPattern) {
         let mut s = String::new();
         let orbit_info = orbit_info(&pat.packed_orbit_data.kpuzzle, 0, "CORNERS");
         for i in 0..112 {
@@ -214,7 +214,7 @@ impl Phase2SymmetryTables {
     }
 
     #[allow(dead_code)]
-    fn showtransformation(pat: KTransformation) {
+    fn show_transformation(pat: KTransformation) {
         let mut s = String::new();
         let orbit_info = orbit_info(&pat.packed_orbit_data.kpuzzle, 0, "CORNERS");
         for i in 0..112 {
@@ -292,7 +292,7 @@ impl Phase2SymmetryTables {
         }
     }
 
-    fn packcoords(c84: Phase2Coordinate, c168: Phase2Coordinate, ep: Phase2Coordinate) -> usize {
+    fn pack_coords(c84: Phase2Coordinate, c168: Phase2Coordinate, ep: Phase2Coordinate) -> usize {
         c84.0 + NUM_COORDINATES_C8_4D2 * (c168.0 + NUM_COORDINATES_C16_8 * ep.0)
     }
 
@@ -314,21 +314,21 @@ impl Phase2SymmetryTables {
                 c84.0 = 255 - c84.0;
             }
             self.phase2_prune_table
-                [Self::packcoords(c84, Phase2Coordinate(0), Phase2Coordinate(0))] = 0;
+                [Self::pack_coords(c84, Phase2Coordinate(0), Phase2Coordinate(0))] = 0;
         }
         for d in 0..255 {
             let mut written = 0;
             for epsrc in 0..NUM_COORDINATES_EP {
                 for c168src in 0..NUM_COORDINATES_C16_8 {
                     for c84src in 0..NUM_COORDINATES_C8_4D2 {
-                        if self.phase2_prune_table[Self::packcoords(
+                        if self.phase2_prune_table[Self::pack_coords(
                             Phase2Coordinate(c84src),
                             Phase2Coordinate(c168src),
                             Phase2Coordinate(epsrc),
                         )] == d
                         {
                             for m in 0..PHASE2_MOVE_COUNT {
-                                let dst = Self::packcoords(
+                                let dst = Self::pack_coords(
                                     self.coord_84.c84move[c84src][m],
                                     self.coord_168.c168move[c168src][m],
                                     self.coord_ep.ep_move[epsrc][m],

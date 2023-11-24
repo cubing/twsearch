@@ -38,7 +38,7 @@ const NUM_4X4X4_EDGES: usize = 24;
  * This encodes the convention established by: http://cubezzz.dyndns.org/drupal/?q=node/view/73#comment-2588
  */
 #[derive(Copy, Clone, PartialEq)]
-struct EdgePairIndex(usize);
+struct EdgePairIndex(u8);
 const EDGE_TO_INDEX: [EdgePairIndex; NUM_4X4X4_EDGES] = [
     // U
     EdgePairIndex(0), // high
@@ -73,8 +73,8 @@ const EDGE_TO_INDEX: [EdgePairIndex; NUM_4X4X4_EDGES] = [
 ];
 
 // Checks if either a position or a piece is high (same code for both).
-fn is_high(position_or_piece: usize) -> bool {
-    EDGE_TO_INDEX[position_or_piece].0 == position_or_piece
+fn is_high(position_or_piece: u8) -> bool {
+    EDGE_TO_INDEX[position_or_piece as usize].0 == position_or_piece
 }
 
 #[derive(Clone, PartialEq, Debug)]
@@ -322,12 +322,12 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
         // Indexed by the value stored in an `EdgePairIndex` (i.e. half of the entries will always be `Unknown`).
         let mut known_pair_orientations = vec![Phase2EdgeOrientation::Unknown; NUM_4X4X4_EDGES];
         let mut known_pair_inc = 1;
-        for position in 0..23 {
+        for position in 0..24u8 {
             // dbg!(position);
             let position_is_high = is_high(position);
 
             let piece = pattern_with_alg_applied.get_piece(wings_orbit_info, position);
-            let piece_is_high = is_high(piece as usize);
+            let piece_is_high = is_high(piece);
 
             let pair_orientation = if piece_is_high == position_is_high {
                 Phase2EdgeOrientation::Oriented
@@ -347,13 +347,13 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
             //     edge_pair_index.0,
             //     pair_orientation
             // );
-            match &known_pair_orientations[edge_pair_index.0] {
+            match &known_pair_orientations[edge_pair_index.0 as usize] {
                 Phase2EdgeOrientation::Unknown => {
                     // println!(
                     //     "known_pair_orientations[{}] = {:?} ({}, {})",
                     //     edge_pair_index.0, pair_orientation, piece_is_high, position_is_high
                     // );
-                    known_pair_orientations[edge_pair_index.0] = pair_orientation
+                    known_pair_orientations[edge_pair_index.0 as usize] = pair_orientation
                 }
                 known_pair_orientation => {
                     if known_pair_orientation != &pair_orientation {
@@ -390,10 +390,10 @@ pub(crate) fn remap_piece_for_phase1_or_phase2_search_pattern(
     from_pattern: &KPattern,
     target_pattern: &KPattern,
     search_pattern: &mut KPattern,
-    i: usize,
+    i: u8,
 ) {
     let old_piece = from_pattern.get_piece(orbit_info, i);
-    let old_piece_mapped = target_pattern.get_piece(orbit_info, old_piece as usize);
+    let old_piece_mapped = target_pattern.get_piece(orbit_info, old_piece);
     search_pattern.set_piece(orbit_info, i, old_piece_mapped);
     let orientation_with_mod = from_pattern.get_orientation_with_mod(orbit_info, i);
     search_pattern.set_orientation_with_mod(orbit_info, i, orientation_with_mod);

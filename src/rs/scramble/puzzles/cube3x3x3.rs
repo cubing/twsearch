@@ -119,9 +119,8 @@ impl Scramble3x3x3TwoPhase {
             for orbit_info in &self.kpuzzle.data.orbit_iteration_info {
                 for i in 0..orbit_info.num_pieces {
                     let old_piece = pattern.get_piece(orbit_info, i);
-                    let old_piece_mapped = self
-                        .phase1_target_pattern
-                        .get_piece(orbit_info, old_piece as usize);
+                    let old_piece_mapped =
+                        self.phase1_target_pattern.get_piece(orbit_info, old_piece);
                     phase1_search_pattern.set_piece(orbit_info, i, old_piece_mapped);
                     let orientation_with_mod = pattern.get_orientation_with_mod(orbit_info, i);
                     phase1_search_pattern.set_orientation_with_mod(

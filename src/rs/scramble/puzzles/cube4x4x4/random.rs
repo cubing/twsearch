@@ -18,7 +18,7 @@ pub fn random_4x4x4_pattern(hardcoded_scramble_alg_for_testing: Option<&Alg>) ->
             scramble_pattern = scramble_pattern.apply_transformation(&transformation);
         }
         None => {
-            for orbit_info in &packed_kpuzzle.data.orbit_iteration_info {
+            for orbit_info in &packed_kpuzzle.data.ordered_orbit_info {
                 randomize_orbit_naive(
                     &mut scramble_pattern,
                     orbit_info,

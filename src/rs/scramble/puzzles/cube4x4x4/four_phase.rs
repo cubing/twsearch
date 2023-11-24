@@ -94,7 +94,7 @@ impl Scramble4x4x4FourPhase {
         x.init_prune_table();
         let phase1_alg = {
             let mut phase1_search_pattern = self.phase1_target_pattern.clone();
-            for orbit_info in &self.packed_kpuzzle.data.orbit_iteration_info {
+            for orbit_info in self.packed_kpuzzle.orbit_info_iter() {
                 for i in 0..orbit_info.num_pieces {
                     remap_piece_for_phase1_or_phase2_search_pattern(
                         orbit_info,

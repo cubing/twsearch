@@ -28,7 +28,7 @@ pub(crate) fn randomize_orbit_naive(
     orientation_constraints: OrbitOrientationConstraint,
 ) -> Vec<u8> {
     let mut rng = thread_rng();
-    let mut piece_order: Vec<u8> = (0..(orbit_info.num_pieces as u8)).collect();
+    let mut piece_order: Vec<u8> = (0..orbit_info.num_pieces).collect();
     match permutation_constraints {
         OrbitPermutationConstraint::AnyPermutation => {
             piece_order.shuffle(&mut rng);

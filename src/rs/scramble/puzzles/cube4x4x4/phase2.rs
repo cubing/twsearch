@@ -87,17 +87,18 @@ enum Phase2EdgeOrientation {
 }
 
 fn calculate_wing_parity(pattern: &KPattern) -> BasicParity {
-    let wings_orbit_info = orbit_info(&pattern.packed_orbit_data.kpuzzle, 1, "WINGS");
+    let wings_orbit_info = orbit_info(pattern.kpuzzle(), 1, "WINGS");
     let wing_parity = basic_parity(
-        &pattern.packed_orbit_data.byte_slice()
-            [wings_orbit_info.pieces_or_permutations_offset..wings_orbit_info.orientations_offset],
+        &unsafe {
+            pattern.packed_orbit_data().byte_slice() /* TODO */
+        }[wings_orbit_info.pieces_or_permutations_offset..wings_orbit_info.orientations_offset],
     );
     dbg!(&wing_parity);
     wing_parity
 }
 
 fn set_wing_parity(pattern: &mut KPattern, wing_parity: BasicParity) {
-    let kpuzzle_clone = pattern.packed_orbit_data.kpuzzle.clone();
+    let kpuzzle_clone = pattern.kpuzzle().clone();
     let wing_parity_orbit_info = orbit_info(&kpuzzle_clone, 3, "WING_PARITY");
     pattern.set_orientation_with_mod(
         wing_parity_orbit_info,
@@ -115,7 +116,7 @@ pub(crate) fn pattern_to_phase2_pattern(pattern: &KPattern) -> KPattern {
     let phase2_target_pattern = cube4x4x4_phase2_target_pattern();
 
     let mut new_pattern = phase2_kpuzzle.default_pattern();
-    for orbit_info in &phase1_kpuzzle.data.orbit_iteration_info {
+    for orbit_info in phase1_kpuzzle.orbit_info_iter() {
         for i in 0..orbit_info.num_pieces {
             remap_piece_for_phase1_or_phase2_search_pattern(
                 orbit_info,
@@ -282,7 +283,7 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
 
         // TODO: is it more efficient to check this later?
 
-        let centers_orbit_info = &self.kpuzzle.data.orbit_iteration_info[2];
+        let centers_orbit_info = &self.kpuzzle.data.ordered_orbit_info[2];
         assert!(centers_orbit_info.name == "CENTERS".into());
 
         #[allow(non_snake_case)] // Speffz
@@ -302,13 +303,13 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
 
         /******** Edges ********/
 
-        let wings_orbit_info = &self.kpuzzle.data.orbit_iteration_info[1];
+        let wings_orbit_info = &self.kpuzzle.data.ordered_orbit_info[1];
         assert!(wings_orbit_info.name == "WINGS".into());
 
         if basic_parity(
-            &pattern_with_alg_applied.packed_orbit_data.byte_slice()[wings_orbit_info
-                .pieces_or_permutations_offset
-                ..wings_orbit_info.orientations_offset],
+            &unsafe {
+                pattern_with_alg_applied.packed_orbit_data().byte_slice() /* TODO */
+            }[wings_orbit_info.pieces_or_permutations_offset..wings_orbit_info.orientations_offset],
         ) != BasicParity::Even
         {
             // println!("false1: {}", candidate_alg);

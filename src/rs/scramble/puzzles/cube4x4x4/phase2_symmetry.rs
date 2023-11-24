@@ -49,7 +49,7 @@ impl Coord for Coord84 {
     fn coordinate_for_pattern(&self, pattern: &KPattern) -> Phase2Coordinate {
         let mut bits = 0;
         // TODO: store this in the struct?
-        let centers_orbit_info = orbit_info(&pattern.packed_orbit_data.kpuzzle, 2, "CENTERS");
+        let centers_orbit_info = orbit_info(pattern.kpuzzle(), 2, "CENTERS");
         for idx in L_AND_R_CENTER_INDICES {
             bits *= 2;
             if pattern.get_piece(centers_orbit_info, idx) == L_CENTER_PIECE {
@@ -83,7 +83,7 @@ impl Coord for Coord168 {
     fn coordinate_for_pattern(&self, pattern: &KPattern) -> Phase2Coordinate {
         let mut bits = 0;
         // TODO: store this in the struct?
-        let centers_orbit_info = orbit_info(&pattern.packed_orbit_data.kpuzzle, 2, "CENTERS");
+        let centers_orbit_info = orbit_info(pattern.kpuzzle(), 2, "CENTERS");
         for idx in [0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23] {
             bits *= 2;
             if pattern.get_piece(centers_orbit_info, idx) == 0 {
@@ -117,7 +117,7 @@ impl Coord for CoordEP {
         let mut bits = 0;
         let mut r = 0;
         // TODO: store this in the struct?
-        let edges_orbit_info = orbit_info(&pattern.packed_orbit_data.kpuzzle, 1, "WINGS");
+        let edges_orbit_info = orbit_info(pattern.kpuzzle(), 1, "WINGS");
         for idx in 0..24u8 {
             if ((bits >> idx) & 1) == 0 {
                 let mut cyclen = 0;
@@ -203,24 +203,16 @@ impl Phase2SymmetryTables {
         }
     }
 
+    // TODO: Remove
     #[allow(dead_code)]
-    fn show_pattern(pat: KPattern) {
-        let mut s = String::new();
-        let orbit_info = orbit_info(&pat.packed_orbit_data.kpuzzle, 0, "CORNERS");
-        for i in 0..112 {
-            let c = pat.get_piece(orbit_info, i);
-            s.push_str(&c.to_string())
-        }
+    fn show_pattern(pattern: &KPattern) {
+        dbg!(pattern.to_data());
     }
 
+    // TODO: Remove
     #[allow(dead_code)]
-    fn show_transformation(pat: KTransformation) {
-        let mut s = String::new();
-        let orbit_info = orbit_info(&pat.packed_orbit_data.kpuzzle, 0, "CORNERS");
-        for i in 0..112 {
-            let c = pat.get_permutation_idx(orbit_info, i);
-            s.push_str(&c.to_string())
-        }
+    fn show_transformation(transformation: &KTransformation) {
+        dbg!(transformation.to_data());
     }
 
     fn fill_move_table(&mut self, coordinate_table: CoordinateTable, moves: &SearchGenerators) {

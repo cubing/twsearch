@@ -324,10 +324,13 @@ dependencies = [
 
 [[package]]
 name = "cubing"
-version = "0.10.1"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ac5df8597574fd4980c65285000f3d66bedc8bc36c6f7bf986e7f99d0f4b2847"
 dependencies = [
  "cityhasher",
  "derive_more",
+ "more-asserts",
  "nom",
  "serde",
  "serde_json",
@@ -649,6 +652,12 @@ name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
+
+[[package]]
+name = "more-asserts"
+version = "0.3.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1fafa6961cabd9c63bcd77a45d7e3b7f3b552b70417831fb0f56db717e72407e"
 
 [[package]]
 name = "multipart"

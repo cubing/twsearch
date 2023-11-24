@@ -1,9 +1,8 @@
-use cubing::kpuzzle::{KPuzzle, KPuzzleDefinition};
+use cubing::kpuzzle::{KPatternBuffer, KPuzzle, KPuzzleDefinition, KTransformation};
 use instant::Instant;
 use rand::seq::SliceRandom;
 use twsearch::_internal::{
-    cli::options::BenchmarkArgs, read_to_json, CommandError, PackedKPatternBuffer, PackedKPuzzle,
-    PackedKTransformation, SearchGenerators,
+    cli::options::BenchmarkArgs, read_to_json, CommandError, SearchGenerators,
 };
 
 const NUM_RANDOM_MOVES: usize = 65536;
@@ -13,10 +12,9 @@ pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
     let def: KPuzzleDefinition =
         read_to_json(&benchmark_args.input_args.def_file).expect("Invalid definition"); // TODO: automatic error conversion.
     let kpuzzle = KPuzzle::try_new(def).expect("Invalid definition"); // TODO: automatic error conversion.
-    let packed_kpuzzle = PackedKPuzzle::try_from(kpuzzle).expect("Invalid definition"); // TODO: automatic error conversion.
 
     let search_generators = SearchGenerators::try_new(
-        &packed_kpuzzle,
+        &kpuzzle,
         &benchmark_args.generator_args.parse(),
         &benchmark_args.metric_args.metric,
         false,
@@ -24,7 +22,7 @@ pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
     .expect("Could not get search move cache"); // TODO: automatic error conversion.
 
     let mut rng = rand::thread_rng();
-    let random_move_list: Vec<&PackedKTransformation> = (0..NUM_RANDOM_MOVES)
+    let random_move_list: Vec<&KTransformation> = (0..NUM_RANDOM_MOVES)
         .map(|_| {
             &search_generators
                 .flat
@@ -34,7 +32,7 @@ pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
         })
         .collect();
 
-    let mut pattern_buffer = PackedKPatternBuffer::from(packed_kpuzzle.default_pattern());
+    let mut pattern_buffer = KPatternBuffer::from(kpuzzle.default_pattern());
     for _ in 0..3 {
         let start_time = Instant::now();
         for i in 0..NUM_TEST_TRANSFORMATIONS {

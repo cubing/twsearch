@@ -17,7 +17,7 @@ use twsearch::_internal::{
     cli::options::{get_options, CliCommand, GodsAlgorithmArgs, SearchCommandArgs},
     options::VerbosityLevel,
     read_to_json, ArgumentError, CommandError, GodsAlgorithmSearch, IDFSearch,
-    IndividualSearchOptions, PackedKPattern, PackedKPuzzle, SearchLogger,
+    IndividualSearchOptions, SearchLogger,
 };
 
 fn main() -> Result<(), CommandError> {
@@ -41,25 +41,17 @@ fn main() -> Result<(), CommandError> {
 fn common(
     def_file: &Path,
     start_or_target_pattern_file: &Option<PathBuf>,
-) -> Result<(PackedKPuzzle, Option<PackedKPattern>), CommandError> {
+) -> Result<(KPuzzle, Option<KPattern>), CommandError> {
     let def: Result<KPuzzleDefinition, ArgumentError> = read_to_json(def_file);
     let def = def?;
     let kpuzzle = KPuzzle::try_from(def).map_err(|e| ArgumentError {
         description: format!("Invalid definition: {}", e),
     })?;
-    let packed_kpuzzle: PackedKPuzzle =
-        PackedKPuzzle::try_from(kpuzzle.clone()).map_err(|e| ArgumentError {
-            description: format!("Invalid definition: {}", e),
-        })?;
 
-    let start_or_target_pattern: Option<PackedKPattern> = match start_or_target_pattern_file {
+    let start_or_target_pattern: Option<KPattern> = match start_or_target_pattern_file {
         Some(start_pattern_file) => {
             let kpattern_data: KPatternData = read_to_json(start_pattern_file)?;
-            let kpattern = KPattern {
-                kpuzzle: kpuzzle.clone(),
-                kpattern_data: Arc::new(kpattern_data),
-            };
-            Some(match packed_kpuzzle.try_pack_pattern(kpattern) {
+            Some(match KPattern::try_from_data(&kpuzzle, &kpattern_data) {
                 Ok(start_or_target_pattern) => start_or_target_pattern,
                 Err(e) => {
                     return Err(CommandError::ArgumentError(ArgumentError {
@@ -71,16 +63,16 @@ fn common(
         None => None,
     };
 
-    Ok((packed_kpuzzle, start_or_target_pattern))
+    Ok((kpuzzle, start_or_target_pattern))
 }
 
 fn gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), CommandError> {
-    let (packed_kpuzzle, start_pattern) = common(
+    let (kpuzzle, start_pattern) = common(
         &gods_algorithm_args.input_args.def_file,
         &gods_algorithm_args.start_pattern_args.start_pattern,
     )?;
     let mut gods_algorithm_table = GodsAlgorithmSearch::try_new(
-        packed_kpuzzle,
+        kpuzzle,
         start_pattern,
         &gods_algorithm_args.generator_args.parse(),
         &gods_algorithm_args.metric_args.metric,
@@ -90,7 +82,7 @@ fn gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), CommandE
 }
 
 fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
-    let (packed_kpuzzle, target_pattern) = common(
+    let (kpuzzle, target_pattern) = common(
         &search_command_args
             .input_def_and_optional_scramble_file_args
             .def_file_wrapper_args
@@ -99,8 +91,8 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
             .input_def_and_optional_scramble_file_args
             .experimental_target_pattern,
     )?;
-    let target_pattern = target_pattern.unwrap_or_else(|| packed_kpuzzle.default_pattern());
-    let scramble_pattern: PackedKPattern = match (
+    let target_pattern = target_pattern.unwrap_or_else(|| kpuzzle.default_pattern());
+    let scramble_pattern: KPattern = match (
         &search_command_args
             .input_def_and_optional_scramble_file_args
             .scramble_alg,
@@ -120,12 +112,7 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
                     exit(1);
                 }
             };
-            // TODO: add a way for `PackedKPuzzle` to construct a PackedKPattern from serialized data directly.
-            let unpacked_kpattern = KPattern {
-                kpuzzle: packed_kpuzzle.data.kpuzzle.clone(),
-                kpattern_data: Arc::new(kpattern_data),
-            };
-            match packed_kpuzzle.try_pack_pattern(unpacked_kpattern) {
+            match KPattern::try_from_data(&kpuzzle, &kpattern_data) {
                 Ok(scramble_pattern) => scramble_pattern,
                 Err(e) => {
                     return Err(CommandError::ArgumentError(ArgumentError {
@@ -142,24 +129,15 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
                     exit(1)
                 }
             };
-            // TODO: add a way for `PackedKPuzzle` to construct a PackedKTransformation from serialized data directly.
-            let unpacked_transformation =
-                match packed_kpuzzle.data.kpuzzle.transformation_from_alg(&alg) {
-                    Ok(unpacked_transformation) => unpacked_transformation,
-                    Err(e) => {
-                        eprintln!("Could apply scramble alg: {:?}", e);
-                        exit(1);
-                    }
-                };
-            let packed_transformation =
-                match packed_kpuzzle.pack_transformation(&unpacked_transformation) {
-                    Ok(packed_transformation) => packed_transformation,
-                    Err(e) => {
-                        eprintln!("Could not pack transformation: {:?}", e);
-                        exit(1);
-                    }
-                };
-            target_pattern.apply_transformation(&packed_transformation)
+            // TODO: add a way for `KPuzzle` to construct a KTransformation from serialized data directly.
+            let transformation = match kpuzzle.transformation_from_alg(&alg) {
+                Ok(transformation) => transformation,
+                Err(e) => {
+                    eprintln!("Could apply scramble alg: {:?}", e);
+                    exit(1);
+                }
+            };
+            target_pattern.apply_transformation(&transformation)
         }
         (Some(_), Some(_)) => {
             eprintln!("Error: specified both a scramble alg and a scramble file, exiting.");
@@ -168,7 +146,7 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
     };
 
     let mut idf_search = IDFSearch::try_new(
-        packed_kpuzzle,
+        kpuzzle,
         target_pattern,
         search_command_args.generator_args.parse(),
         Arc::new(SearchLogger {

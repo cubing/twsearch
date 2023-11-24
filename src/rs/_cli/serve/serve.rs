@@ -18,7 +18,6 @@ use twsearch::_internal::cli::options::CustomGenerators;
 use twsearch::_internal::CommandError;
 use twsearch::_internal::IDFSearch;
 use twsearch::_internal::IndividualSearchOptions;
-use twsearch::_internal::PackedKPuzzle;
 
 use twsearch::_internal::cli::options::ServeArgsForIndividualSearch;
 use twsearch::_internal::cli::options::ServeClientArgs;
@@ -64,21 +63,12 @@ fn solve_pattern(
         Ok(kpuzzle) => kpuzzle.clone(),
         Err(e) => return Response::text(e.description).with_status_code(400),
     };
-    let packed_kpuzzle = match PackedKPuzzle::try_from(kpuzzle.clone()) {
-        Ok(packed_kpuzzle) => packed_kpuzzle,
-        Err(e) => return Response::text(e.description).with_status_code(400),
-    };
     let target_pattern = match kpattern_solve.start_pattern {
-        Some(kpattern_data) => {
-            match packed_kpuzzle.try_pack_pattern(KPattern {
-                kpuzzle: kpuzzle.clone(),
-                kpattern_data: Arc::new(kpattern_data),
-            }) {
-                Ok(target_pattern) => target_pattern,
-                Err(e) => return Response::text(e.to_string()).with_status_code(400),
-            }
-        }
-        None => packed_kpuzzle.default_pattern(),
+        Some(kpattern_data) => match KPattern::try_from_data(&kpuzzle, &kpattern_data) {
+            Ok(target_pattern) => target_pattern,
+            Err(e) => return Response::text(e.to_string()).with_status_code(400),
+        },
+        None => kpuzzle.default_pattern(),
     };
     let search_logger = Arc::new(SearchLogger {
         verbosity: args_for_individual_search
@@ -93,15 +83,12 @@ fn solve_pattern(
     };
     let move_list =
         move_subset.unwrap_or_else(|| kpuzzle.definition().moves.keys().cloned().collect());
-    let search_pattern = match packed_kpuzzle.try_pack_pattern(KPattern {
-        kpuzzle,
-        kpattern_data: Arc::new(kpattern_solve.pattern),
-    }) {
+    let search_pattern = match KPattern::try_from_data(&kpuzzle, &kpattern_solve.pattern) {
         Ok(search_pattern) => search_pattern,
         Err(e) => return Response::text(e.to_string()).with_status_code(400),
     };
     let mut search = match IDFSearch::try_new(
-        packed_kpuzzle,
+        kpuzzle,
         target_pattern,
         Generators::Custom(CustomGenerators {
             moves: move_list.clone(),

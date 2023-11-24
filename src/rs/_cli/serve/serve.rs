@@ -78,7 +78,7 @@ fn solve_pattern(
             .unwrap_or_default(),
     });
     let move_subset = match args_for_individual_search.client_args {
-        Some(client_args) => client_args.move_subset.as_ref().cloned(),
+        Some(client_args) => client_args.generator_moves.as_ref().cloned(),
         None => None,
     };
     let move_list =

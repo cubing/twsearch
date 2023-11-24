@@ -442,5 +442,5 @@ pub struct ServeClientArgs {
     pub max_depth: Option<usize>,
     pub start_prune_depth: Option<usize>,
     pub quantum_metric: Option<bool>, // TODO: enum
-    pub move_subset: Option<Vec<Move>>,
+    pub generator_moves: Option<Vec<Move>>,
 }

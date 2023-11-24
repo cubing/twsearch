@@ -1,4 +1,4 @@
-use cubing::kpuzzle::{OrientationWithMod, PackedKPattern, PackedKPuzzleOrbitInfo};
+use cubing::kpuzzle::{KPattern, KPuzzleOrbitInfo, OrientationWithMod};
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
 pub(crate) enum OrbitPermutationConstraint {
@@ -22,8 +22,8 @@ pub(crate) enum OrbitOrientationConstraint {
 // Applies a random orientation to each piece (ensuring the total is 0).
 // Returns the piece order
 pub(crate) fn randomize_orbit_naive(
-    pattern: &mut PackedKPattern,
-    orbit_info: &PackedKPuzzleOrbitInfo,
+    pattern: &mut KPattern,
+    orbit_info: &KPuzzleOrbitInfo,
     permutation_constraints: OrbitPermutationConstraint,
     orientation_constraints: OrbitOrientationConstraint,
 ) -> Vec<u8> {

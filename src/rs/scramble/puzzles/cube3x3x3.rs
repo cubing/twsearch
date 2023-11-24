@@ -2,7 +2,7 @@ use std::sync::Mutex;
 
 use cubing::{
     alg::{Alg, AlgNode, Move, QuantumMove},
-    kpuzzle::{PackedKPattern, PackedKPuzzle},
+    kpuzzle::{KPattern, KPuzzle},
 };
 use lazy_static::lazy_static;
 
@@ -19,16 +19,16 @@ use super::{
         randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
     super::scramble_search::generators_from_vec_str,
-    definitions::{cube3x3x3_centerless_packed_kpuzzle, cube3x3x3_g1_target_pattern},
+    definitions::{cube3x3x3_centerless_kpuzzle, cube3x3x3_g1_target_pattern},
     static_move_list::{add_random_suffixes_from, static_parsed_list, static_parsed_opt_list},
 };
 
 pub struct Scramble3x3x3TwoPhase {
-    packed_kpuzzle: PackedKPuzzle,
+    kpuzzle: KPuzzle,
 
     filtering_idfs: IDFSearch,
 
-    phase1_target_pattern: PackedKPattern,
+    phase1_target_pattern: KPattern,
     phase1_idfs: IDFSearch,
 
     phase2_idfs: IDFSearch,
@@ -36,13 +36,13 @@ pub struct Scramble3x3x3TwoPhase {
 
 impl Default for Scramble3x3x3TwoPhase {
     fn default() -> Self {
-        let packed_kpuzzle = cube3x3x3_centerless_packed_kpuzzle();
+        let kpuzzle = cube3x3x3_centerless_kpuzzle();
         let generators = generators_from_vec_str(vec!["U", "L", "F", "R", "B", "D"]);
-        let filtering_idfs = basic_idfs(&packed_kpuzzle, generators.clone(), Some(32));
+        let filtering_idfs = basic_idfs(&kpuzzle, generators.clone(), Some(32));
 
         let phase1_target_pattern = cube3x3x3_g1_target_pattern();
         let phase1_idfs = idfs_with_target_pattern(
-            &packed_kpuzzle,
+            &kpuzzle,
             generators.clone(),
             phase1_target_pattern.clone(),
             Some(1 << 24),
@@ -50,14 +50,14 @@ impl Default for Scramble3x3x3TwoPhase {
 
         let phase2_generators = generators_from_vec_str(vec!["U", "L2", "F2", "R2", "B2", "D"]);
         let phase2_idfs = idfs_with_target_pattern(
-            &packed_kpuzzle,
+            &kpuzzle,
             phase2_generators.clone(),
-            packed_kpuzzle.default_pattern(),
+            kpuzzle.default_pattern(),
             Some(1 << 24),
         );
 
         Self {
-            packed_kpuzzle,
+            kpuzzle,
             filtering_idfs,
 
             phase1_target_pattern,
@@ -68,10 +68,10 @@ impl Default for Scramble3x3x3TwoPhase {
     }
 }
 
-pub fn random_3x3x3_pattern() -> PackedKPattern {
-    let packed_kpuzzle = cube3x3x3_centerless_packed_kpuzzle();
-    let mut scramble_pattern = packed_kpuzzle.default_pattern();
-    let orbit_info = &packed_kpuzzle.data.orbit_iteration_info[0];
+pub fn random_3x3x3_pattern() -> KPattern {
+    let kpuzzle = cube3x3x3_centerless_kpuzzle();
+    let mut scramble_pattern = kpuzzle.default_pattern();
+    let orbit_info = &kpuzzle.data.orbit_iteration_info[0];
     assert_eq!(orbit_info.name.0, "EDGES");
     let edge_order = randomize_orbit_naive(
         &mut scramble_pattern,
@@ -80,7 +80,7 @@ pub fn random_3x3x3_pattern() -> PackedKPattern {
         OrbitOrientationConstraint::OrientationsMustSumToZero,
     );
     let each_orbit_parity = basic_parity(&edge_order);
-    let orbit_info = &packed_kpuzzle.data.orbit_iteration_info[1];
+    let orbit_info = &kpuzzle.data.orbit_iteration_info[1];
     assert_eq!(orbit_info.name.0, "CORNERS");
     randomize_orbit_naive(
         &mut scramble_pattern,
@@ -102,7 +102,7 @@ pub(crate) enum PrefixOrSuffixConstraints {
 impl Scramble3x3x3TwoPhase {
     pub(crate) fn solve_3x3x3_pattern(
         &mut self,
-        pattern: &PackedKPattern,
+        pattern: &KPattern,
         constraints: PrefixOrSuffixConstraints,
     ) -> Alg {
         // TODO: once perf is good enough, use `F`` as "required first move" and `R'` as "required last move" in the search (overlapping with the affixes).
@@ -116,7 +116,7 @@ impl Scramble3x3x3TwoPhase {
 
         let phase1_alg = {
             let mut phase1_search_pattern = self.phase1_target_pattern.clone();
-            for orbit_info in &self.packed_kpuzzle.data.orbit_iteration_info {
+            for orbit_info in &self.kpuzzle.data.orbit_iteration_info {
                 for i in 0..orbit_info.num_pieces {
                     let old_piece = pattern.get_piece(orbit_info, i);
                     let old_piece_mapped = self
@@ -148,12 +148,8 @@ impl Scramble3x3x3TwoPhase {
         };
 
         let mut phase2_alg = {
-            let phase2_search_pattern = pattern.apply_transformation(
-                &self
-                    .packed_kpuzzle
-                    .transformation_from_alg(&phase1_alg)
-                    .unwrap(),
-            );
+            let phase2_search_pattern = pattern
+                .apply_transformation(&self.kpuzzle.transformation_from_alg(&phase1_alg).unwrap());
             self.phase2_idfs
                 .search(
                     &phase2_search_pattern,
@@ -175,7 +171,7 @@ impl Scramble3x3x3TwoPhase {
     }
 
     // TODO: rely on the main search to find patterns at a low depth?
-    pub fn is_valid_scramble_pattern(&mut self, pattern: &PackedKPattern) -> bool {
+    pub fn is_valid_scramble_pattern(&mut self, pattern: &KPattern) -> bool {
         self.filtering_idfs
             .search(
                 pattern,

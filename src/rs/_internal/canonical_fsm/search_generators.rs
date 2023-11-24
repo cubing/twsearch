@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use cubing::{
     alg::{Move, QuantumMove},
-    kpuzzle::{PackedKPuzzle, PackedKTransformation, PackedKTransformationBuffer},
+    kpuzzle::{KPuzzle, KTransformation, KTransformationBuffer},
 };
 use rand::{seq::SliceRandom, thread_rng};
 
@@ -17,9 +17,9 @@ pub struct MoveTransformationInfo {
     pub r#move: Move,
     // move_class: MoveClass, // TODO: do we need this?
     // pub metric_turns: i32,
-    pub transformation: PackedKTransformation,
+    pub transformation: KTransformation,
     #[allow(dead_code)] // TODO
-    pub inverse_transformation: PackedKTransformation,
+    pub inverse_transformation: KTransformation,
 }
 
 pub type MoveTransformationMultiples = Vec<MoveTransformationInfo>;
@@ -32,11 +32,11 @@ pub struct SearchGenerators {
 }
 
 fn transformation_order(
-    identity_transformation: &PackedKTransformation,
-    transformation: &PackedKTransformation,
+    identity_transformation: &KTransformation,
+    transformation: &KTransformation,
 ) -> i32 {
     let mut order: i32 = 1;
-    let mut current_transformation = PackedKTransformationBuffer::from(transformation.clone());
+    let mut current_transformation = KTransformationBuffer::from(transformation.clone());
     while &current_transformation.current != identity_transformation {
         current_transformation.apply_transformation(transformation);
         order += 1;
@@ -52,18 +52,18 @@ fn canonicalize_center_amount(order: i32, amount: i32) -> i32 {
 
 impl SearchGenerators {
     pub fn try_new(
-        packed_kpuzzle: &PackedKPuzzle,
+        kpuzzle: &KPuzzle,
         generators: &Generators,
         metric: &MetricEnum,
         random_start: bool,
     ) -> Result<SearchGenerators, PuzzleError> {
-        let identity_transformation = packed_kpuzzle.identity_transformation();
+        let identity_transformation = kpuzzle.identity_transformation();
 
         let mut seen_quantum_moves = HashMap::<QuantumMove, Move>::new();
 
         let moves: Vec<&Move> = match generators {
             Generators::Default => {
-                let def = packed_kpuzzle.definition();
+                let def = kpuzzle.definition();
                 let moves = def.moves.keys();
                 if let Some(derived_moves) = &def.derived_moves {
                     moves.chain(derived_moves.keys()).collect()
@@ -97,7 +97,7 @@ impl SearchGenerators {
                 quantum: r#move.quantum.clone(),
                 amount: 1,
             };
-            let move_quantum_transformation = packed_kpuzzle
+            let move_quantum_transformation = kpuzzle
                 .transformation_from_move(&move_quantum)
                 .map_err(|e| PuzzleError {
                     description: e.to_string(), // TODO
@@ -107,13 +107,13 @@ impl SearchGenerators {
 
             let mut multiples = MoveTransformationMultiples::default(); // TODO: use order to set capacity.
             let move_transformation =
-                packed_kpuzzle
+                kpuzzle
                     .transformation_from_move(r#move)
                     .map_err(|e| PuzzleError {
                         description: e.to_string(), // TODO
                     })?;
             let mut move_multiple_transformation =
-                PackedKTransformationBuffer::from(move_transformation.clone());
+                KTransformationBuffer::from(move_transformation.clone());
 
             match metric {
                 MetricEnum::Hand => {

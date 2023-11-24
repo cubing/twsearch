@@ -1,6 +1,6 @@
 use std::{collections::HashMap, mem, vec};
 
-use cubing::kpuzzle::{PackedKPattern, PackedKPuzzle};
+use cubing::kpuzzle::{KPattern, KPuzzle};
 use thousands::Separable;
 
 use crate::_internal::{
@@ -17,7 +17,7 @@ use super::bulk_queue::BulkQueue;
 
 pub struct GodsAlgorithmTable {
     completed: bool, // "completed" instead of "complete" to make an unambiguous adjective
-    pattern_to_depth: HashMap<PackedKPattern, /* depth */ SearchDepth>,
+    pattern_to_depth: HashMap<KPattern, /* depth */ SearchDepth>,
 }
 
 impl GodsAlgorithmTable {
@@ -37,13 +37,13 @@ impl Default for GodsAlgorithmTable {
 
 struct QueueItem {
     canonical_fsm_state: CanonicalFSMState,
-    pattern: PackedKPattern,
+    pattern: KPattern,
 }
 
 pub struct GodsAlgorithmSearch {
     // params
-    packed_kpuzzle: PackedKPuzzle,
-    start_pattern: Option<PackedKPattern>,
+    kpuzzle: KPuzzle,
+    start_pattern: Option<KPattern>,
     search_moves: SearchGenerators,
 
     // state
@@ -62,17 +62,16 @@ macro_rules! format_num {
 
 impl GodsAlgorithmSearch {
     pub fn try_new(
-        packed_kpuzzle: PackedKPuzzle,
-        start_pattern: Option<PackedKPattern>,
+        kpuzzle: KPuzzle,
+        start_pattern: Option<KPattern>,
         generators: &Generators,
         quantum_metric: &MetricEnum,
     ) -> Result<Self, PuzzleError> {
         let depth_to_patterns = vec![];
-        let search_moves =
-            SearchGenerators::try_new(&packed_kpuzzle, generators, quantum_metric, false)?;
+        let search_moves = SearchGenerators::try_new(&kpuzzle, generators, quantum_metric, false)?;
         let canonical_fsm = CanonicalFSM::try_new(search_moves.clone())?;
         Ok(Self {
-            packed_kpuzzle,
+            kpuzzle,
             start_pattern,
             search_moves,
             canonical_fsm,
@@ -88,7 +87,7 @@ impl GodsAlgorithmSearch {
     pub fn fill(&mut self) {
         let start_pattern = match &self.start_pattern {
             Some(start_pattern) => start_pattern.clone(),
-            None => self.packed_kpuzzle.default_pattern(),
+            None => self.kpuzzle.default_pattern(),
         };
         self.table.pattern_to_depth.insert(start_pattern.clone(), 0);
         let start_item = QueueItem {

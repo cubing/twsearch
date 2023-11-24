@@ -324,19 +324,9 @@ dependencies = [
 
 [[package]]
 name = "cubing"
-version = "0.7.6"
+version = "0.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0a00af8e9098140694e1822e121c87889790a3a78e2e381983a19d100aad4d98"
-dependencies = [
- "derive_more",
- "nom",
- "serde",
- "serde_json",
-]
-
-[[package]]
-name = "cubing"
-version = "0.9.0"
+checksum = "5e3c144e8f09fa0cd897131d3bf20c90d8ffa06169bddadc7333c09cf619b32d"
 dependencies = [
  "cityhasher",
  "derive_more",
@@ -1111,7 +1101,7 @@ dependencies = [
  "cityhasher",
  "clap",
  "clap_complete",
- "cubing 0.9.0",
+ "cubing",
  "derive_more",
  "indicatif",
  "instant",
@@ -1129,7 +1119,7 @@ version = "0.0.0"
 dependencies = [
  "clap",
  "clap_complete",
- "cubing 0.7.6",
+ "cubing",
  "cxx",
  "cxx-build",
  "lazy_static",
@@ -1147,7 +1137,7 @@ dependencies = [
 name = "twsearch-ffi"
 version = "0.6.5"
 dependencies = [
- "cubing 0.7.6",
+ "cubing",
  "libloading",
  "test-cdylib",
  "twsearch",
@@ -1158,7 +1148,7 @@ name = "twsearch-wasm"
 version = "0.6.5"
 dependencies = [
  "console_error_panic_hook",
- "cubing 0.9.0",
+ "cubing",
  "getrandom",
  "serde",
  "serde_json",

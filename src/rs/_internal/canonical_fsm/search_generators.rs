@@ -37,7 +37,7 @@ fn transformation_order(
 ) -> i32 {
     let mut order: i32 = 1;
     let mut current_transformation = KTransformationBuffer::from(transformation.clone());
-    while &current_transformation.current != identity_transformation {
+    while current_transformation.current() != identity_transformation {
         current_transformation.apply_transformation(transformation);
         order += 1;
     }
@@ -118,14 +118,14 @@ impl SearchGenerators {
             match metric {
                 MetricEnum::Hand => {
                     let mut amount: i32 = r#move.amount;
-                    while move_multiple_transformation.current != identity_transformation {
+                    while move_multiple_transformation.current() != &identity_transformation {
                         let mut move_multiple = r#move.clone();
                         move_multiple.amount = canonicalize_center_amount(order, amount);
                         let info = MoveTransformationInfo {
                             r#move: move_multiple,
                             // metric_turns: 1, // TODO
-                            transformation: move_multiple_transformation.current.clone(),
-                            inverse_transformation: move_multiple_transformation.current.invert(),
+                            transformation: move_multiple_transformation.current().clone(),
+                            inverse_transformation: move_multiple_transformation.current().invert(),
                         };
                         multiples.push(info.clone());
                         flat.push(info);
@@ -138,8 +138,8 @@ impl SearchGenerators {
                     let info = MoveTransformationInfo {
                         r#move: r#move.clone(),
                         // metric_turns: 1, // TODO
-                        transformation: move_multiple_transformation.current.clone(),
-                        inverse_transformation: move_multiple_transformation.current.invert(),
+                        transformation: move_multiple_transformation.current().clone(),
+                        inverse_transformation: move_multiple_transformation.current().invert(),
                     };
                     let is_self_inverse = info.transformation == info.inverse_transformation;
                     multiples.push(info.clone());
@@ -148,8 +148,8 @@ impl SearchGenerators {
                         let info = MoveTransformationInfo {
                             r#move: r#move.invert(),
                             // metric_turns: 1, // TODO
-                            transformation: move_multiple_transformation.current.invert(),
-                            inverse_transformation: move_multiple_transformation.current.clone(),
+                            transformation: move_multiple_transformation.current().invert(),
+                            inverse_transformation: move_multiple_transformation.current().clone(),
                         };
                         multiples.push(info.clone());
                         flat.push(info);

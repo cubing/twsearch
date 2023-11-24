@@ -209,7 +209,7 @@ impl Phase2SymmetryTables {
         let orbit_info = orbit_info(&pat.packed_orbit_data.kpuzzle, 0, "CORNERS");
         for i in 0..112 {
             let c = pat.get_piece(orbit_info, i);
-            s.push_str(&String::from(c.to_string()))
+            s.push_str(&c.to_string())
         }
     }
 
@@ -219,7 +219,7 @@ impl Phase2SymmetryTables {
         let orbit_info = orbit_info(&pat.packed_orbit_data.kpuzzle, 0, "CORNERS");
         for i in 0..112 {
             let c = pat.get_permutation_idx(orbit_info, i);
-            s.push_str(&String::from(c.to_string()))
+            s.push_str(&c.to_string())
         }
     }
 
@@ -293,7 +293,7 @@ impl Phase2SymmetryTables {
     }
 
     fn packcoords(c84: Phase2Coordinate, c168: Phase2Coordinate, ep: Phase2Coordinate) -> usize {
-        return c84.0 + NUM_COORDINATES_C8_4D2 * (c168.0 + NUM_COORDINATES_C16_8 * ep.0);
+        c84.0 + NUM_COORDINATES_C8_4D2 * (c168.0 + NUM_COORDINATES_C16_8 * ep.0)
     }
 
     pub(crate) fn init_prune_table(&mut self) {

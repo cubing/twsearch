@@ -16,6 +16,6 @@ path = "./lib.rs"
 crate-type = ["cdylib"]
 
 [dev-dependencies]
-cubing = "0.10.1"
+cubing = "0.11.0"
 libloading = "0.8.1"
 test-cdylib = "1.1.0"

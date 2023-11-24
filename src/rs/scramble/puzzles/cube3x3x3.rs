@@ -71,7 +71,7 @@ impl Default for Scramble3x3x3TwoPhase {
 pub fn random_3x3x3_pattern() -> KPattern {
     let kpuzzle = cube3x3x3_centerless_kpuzzle();
     let mut scramble_pattern = kpuzzle.default_pattern();
-    let orbit_info = &kpuzzle.data.orbit_iteration_info[0];
+    let orbit_info = &kpuzzle.data.ordered_orbit_info[0];
     assert_eq!(orbit_info.name.0, "EDGES");
     let edge_order = randomize_orbit_naive(
         &mut scramble_pattern,
@@ -80,7 +80,7 @@ pub fn random_3x3x3_pattern() -> KPattern {
         OrbitOrientationConstraint::OrientationsMustSumToZero,
     );
     let each_orbit_parity = basic_parity(&edge_order);
-    let orbit_info = &kpuzzle.data.orbit_iteration_info[1];
+    let orbit_info = &kpuzzle.data.ordered_orbit_info[1];
     assert_eq!(orbit_info.name.0, "CORNERS");
     randomize_orbit_naive(
         &mut scramble_pattern,
@@ -116,12 +116,11 @@ impl Scramble3x3x3TwoPhase {
 
         let phase1_alg = {
             let mut phase1_search_pattern = self.phase1_target_pattern.clone();
-            for orbit_info in &self.kpuzzle.data.orbit_iteration_info {
+            for orbit_info in self.kpuzzle.orbit_info_iter() {
                 for i in 0..orbit_info.num_pieces {
                     let old_piece = pattern.get_piece(orbit_info, i);
-                    let old_piece_mapped = self
-                        .phase1_target_pattern
-                        .get_piece(orbit_info, old_piece as usize);
+                    let old_piece_mapped =
+                        self.phase1_target_pattern.get_piece(orbit_info, old_piece);
                     phase1_search_pattern.set_piece(orbit_info, i, old_piece_mapped);
                     let orientation_with_mod = pattern.get_orientation_with_mod(orbit_info, i);
                     phase1_search_pattern.set_orientation_with_mod(

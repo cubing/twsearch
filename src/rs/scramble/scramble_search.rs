@@ -59,11 +59,7 @@ pub(crate) fn filtered_search(
     min_optimal_moves: Option<usize>,
     min_scramble_moves: Option<usize>,
 ) -> Option<Alg> {
-    let mut idfs = basic_idfs(
-        &scramble_pattern.packed_orbit_data.kpuzzle,
-        generators,
-        None,
-    );
+    let mut idfs = basic_idfs(scramble_pattern.kpuzzle(), generators, None);
     if idfs
         .search(
             scramble_pattern,

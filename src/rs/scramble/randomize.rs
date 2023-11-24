@@ -28,7 +28,7 @@ pub(crate) fn randomize_orbit_naive(
     orientation_constraints: OrbitOrientationConstraint,
 ) -> Vec<u8> {
     let mut rng = thread_rng();
-    let mut piece_order: Vec<u8> = (0..(orbit_info.num_pieces as u8)).collect();
+    let mut piece_order: Vec<u8> = (0..orbit_info.num_pieces).collect();
     match permutation_constraints {
         OrbitPermutationConstraint::AnyPermutation => {
             piece_order.shuffle(&mut rng);
@@ -46,6 +46,7 @@ pub(crate) fn randomize_orbit_naive(
 
     let mut total_orientation = 0;
     for (i, p) in piece_order.iter().enumerate() {
+        let i = i as u8;
         pattern.set_piece(orbit_info, i, *p);
         let orientation = match (i == orbit_info.num_pieces - 1, &orientation_constraints) {
             (true, OrbitOrientationConstraint::OrientationsMustSumToZero) => {
@@ -66,7 +67,7 @@ pub(crate) fn randomize_orbit_naive(
             orbit_info,
             i,
             &OrientationWithMod {
-                orientation: orientation as usize,
+                orientation,
                 orientation_mod: 0, // TODO
             },
         );

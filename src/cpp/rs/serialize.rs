@@ -74,15 +74,19 @@ fn serialize_move_transformation(kpuzzle: &KPuzzle, r#move: &Move, t: &KTransfor
     ));
     // outputLines.push(`MoveTransformation ${sanitize(name)}`);
     // TODO: use `orbit_ordering` if available? (TODO)
-    for orbit_info in &kpuzzle.data.orbit_iteration_info {
+    for orbit_info in kpuzzle.orbit_info_iter() {
         builder.push(&sanitize(&orbit_info.name.to_string()));
         builder.push_vec(
-            &t.packed_orbit_data.byte_slice()[orbit_info.pieces_or_permutations_offset
-                ..(orbit_info.pieces_or_permutations_offset + orbit_info.num_pieces)],
+            &unsafe {
+                t.packed_orbit_data().byte_slice() /* TODO */
+            }[orbit_info.pieces_or_permutations_offset
+                ..(orbit_info.pieces_or_permutations_offset + (orbit_info.num_pieces as usize))],
         );
         builder.push_vec(
-            &t.packed_orbit_data.byte_slice()[orbit_info.orientations_offset
-                ..(orbit_info.orientations_offset + orbit_info.num_pieces)],
+            &unsafe {
+                t.packed_orbit_data().byte_slice() /* TODO */
+            }[orbit_info.orientations_offset
+                ..(orbit_info.orientations_offset + (orbit_info.num_pieces as usize))],
         );
     }
     builder.push(END);

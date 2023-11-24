@@ -31,6 +31,8 @@ pub fn wasmTwsearch(
     search_pattern_json: String,
     options_json: String, // TODO
 ) -> Result<String, String> {
+    internal_init();
+
     let kpuzzle = KPuzzle::try_from_json(kpuzzle_json.as_bytes());
     let kpuzzle = kpuzzle.map_err(|e| e.to_string())?;
 

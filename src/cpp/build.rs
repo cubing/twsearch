@@ -29,6 +29,7 @@ fn main() {
         .file("ordertree.cpp")
         .file("unrotate.cpp")
         .file("shorten.cpp")
+        .file("cmds.cpp")
         .flag("-std=c++17")
         .flag("-DASLIBRARY")
         .flag("-DTWSEARCH_VERSION=v0.4.2-7-g4a9107fa")
@@ -65,4 +66,5 @@ fn main() {
     println!("cargo:rerun-if-changed=ordertree.cpp");
     println!("cargo:rerun-if-changed=unrotate.cpp");
     println!("cargo:rerun-if-changed=shorten.cpp");
+    println!("cargo:rerun-if-changed=cmds.cpp");
 }

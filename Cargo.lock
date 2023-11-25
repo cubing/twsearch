@@ -324,14 +324,15 @@ dependencies = [
 
 [[package]]
 name = "cubing"
-version = "0.11.0"
+version = "0.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ac5df8597574fd4980c65285000f3d66bedc8bc36c6f7bf986e7f99d0f4b2847"
+checksum = "62629c63b1ccfca69e5613a86e1ae56a88dbe6cb3f564586f00ed2c7ac5ffa97"
 dependencies = [
  "cityhasher",
  "derive_more",
  "more-asserts",
  "nom",
+ "paste",
  "serde",
  "serde_json",
 ]
@@ -726,6 +727,12 @@ name = "once_cell"
 version = "1.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "dd8b5dd2ae5ed71462c540258bedcb51965123ad7e7ccf4b9a8cafaa4a63576d"
+
+[[package]]
+name = "paste"
+version = "1.0.14"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "de3145af08024dea9fa9914f381a17b8fc6034dfb00f3a84013f7ff43f29ed4c"
 
 [[package]]
 name = "percent-encoding"

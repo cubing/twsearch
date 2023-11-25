@@ -17,4 +17,4 @@ license = "MPL-2.0"
 edition = "2021"
 
 [workspace.dependencies]
-cubing = "0.11.0"
+cubing = { version = "0.11.1" }

@@ -13,6 +13,8 @@ use super::{
     phase2::{SideCenter, PHASE2_SOLVED_SIDE_CENTER_CASES},
 };
 
+const PHASE1_PRUNE_TABLE_SIZE: usize = 735471; // this is 24 choose 8
+const PHASE1_MOVE_COUNT: usize = 12; // TODO 
 const NUM_COORDINATES_C8_4D2: usize = 35;
 const NUM_COORDINATES_C16_8: usize = 12870;
 const NUM_COORDINATES_EP: usize = 2;
@@ -152,6 +154,15 @@ fn bit_count(mut bits: usize) -> i32 {
         bits &= bits - 1;
     }
     r
+}
+
+pub(crate) struct Phase1CoordinateTables {
+    kpuzzle: KPuzzle,
+    phase1_prune_table: [PruneTableEntryType; PHASE1_PRUNE_TABLE_SIZE],
+    pack248hi: [u32; 4096],
+    pack248lo: [u32; 4096],
+    movelo: [[u32; PHASE1_MOVE_COUNT]; 4096],
+    movehi: [[u32; PHASE1_MOVE_COUNT]; 4096],
 }
 
 pub(crate) struct Phase2SymmetryTables {

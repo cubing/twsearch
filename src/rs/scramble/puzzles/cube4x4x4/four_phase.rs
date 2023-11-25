@@ -18,18 +18,15 @@ use crate::{
                 random::random_4x4x4_pattern,
             },
             definitions::{
-                cube4x4x4_packed_kpuzzle, cube4x4x4_phase1_target_pattern,
-                cube4x4x4_phase2_target_pattern,
+                cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern,
+                cube4x4x4_phase2_target_kpattern, cube4x4x4_with_wing_parity_kpuzzle,
             },
         },
         scramble_search::{basic_idfs, idfs_with_target_pattern},
     },
 };
 
-use super::{
-    super::super::scramble_search::generators_from_vec_str,
-    super::definitions::cube4x4x4_with_wing_parity_packed_kpuzzle,
-};
+use super::super::super::scramble_search::generators_from_vec_str;
 
 pub(crate) struct Scramble4x4x4FourPhase {
     packed_kpuzzle: KPuzzle,
@@ -44,8 +41,8 @@ pub(crate) struct Scramble4x4x4FourPhase {
 
 impl Default for Scramble4x4x4FourPhase {
     fn default() -> Self {
-        let packed_kpuzzle = cube4x4x4_packed_kpuzzle();
-        let phase2_packed_kpuzzle = cube4x4x4_with_wing_parity_packed_kpuzzle();
+        let packed_kpuzzle = cube4x4x4_kpuzzle().clone();
+        let phase2_packed_kpuzzle = cube4x4x4_with_wing_parity_kpuzzle();
 
         let phase1_generators = generators_from_vec_str(vec![
             "Uw", "U", "Lw", "L", "Fw", "F", "Rw", "R", "Bw", "B", "Dw", "D",
@@ -53,7 +50,7 @@ impl Default for Scramble4x4x4FourPhase {
         // TODO: support normalizing orientation/ignoring orientation/24 targets, so that this checks for unoriented distance to solved.
         let filtering_idfs = basic_idfs(&packed_kpuzzle, phase1_generators.clone(), Some(32));
 
-        let phase1_target_pattern = cube4x4x4_phase1_target_pattern();
+        let phase1_target_pattern = cube4x4x4_phase1_target_kpattern().clone();
         // dbg!(&phase1_target_pattern);
         let phase1_idfs = idfs_with_target_pattern(
             &packed_kpuzzle,
@@ -64,10 +61,10 @@ impl Default for Scramble4x4x4FourPhase {
 
         let phase2_generators =
             generators_from_vec_str(vec!["Uw2", "U", "L", "F", "Rw", "R", "B", "Dw2", "D"]);
-        let phase2_center_target_pattern = cube4x4x4_phase2_target_pattern();
+        let phase2_center_target_pattern = cube4x4x4_phase2_target_kpattern();
         // dbg!(&phase2_center_target_pattern);
         let phase2_idfs = idfs_with_target_pattern(
-            &phase2_packed_kpuzzle,
+            phase2_packed_kpuzzle,
             phase2_generators.clone(),
             phase2_center_target_pattern.clone(),
             None,

@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: make
       - run: ./build/bin/twsearch -g samples/main/2x2x2.tws
       - run: make test-cpp-cli
@@ -16,7 +16,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: make
       - uses: actions/upload-artifact@v3
         with:
@@ -31,7 +31,7 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: 19
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: wasmerio/setup-wasmer@v2
         continue-on-error: true
         id: wasmer
@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
       - uses: oven-sh/setup-bun@v1
         with:
@@ -61,7 +61,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
       - uses: oven-sh/setup-bun@v1
         with:
@@ -75,7 +75,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
       - uses: oven-sh/setup-bun@v1
         with:
@@ -94,7 +94,7 @@ jobs:
       - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
       - uses: jetli/wasm-pack-action@v0.4.0
         with:
@@ -107,6 +107,6 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - run: make build-rust
       - run: make benchmark-rust

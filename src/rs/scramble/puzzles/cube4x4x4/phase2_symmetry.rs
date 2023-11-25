@@ -1,8 +1,7 @@
 use crate::{
     _internal::{options::MetricEnum, PruneTableEntryType, SearchGenerators},
     scramble::puzzles::definitions::{
-        cube4x4x4_packed_kpuzzle, cube4x4x4_phase2_target_pattern,
-        cube4x4x4_with_wing_parity_packed_kpuzzle,
+        cube4x4x4_kpuzzle, cube4x4x4_phase2_target_kpattern, cube4x4x4_with_wing_parity_kpuzzle,
     },
 };
 
@@ -229,10 +228,8 @@ impl Phase2SymmetryTables {
         }
         let mut patterns: Vec<KPattern> = Vec::new();
         patterns.push(match coordinate_table {
-            CoordinateTable::CoordEP => {
-                cube4x4x4_with_wing_parity_packed_kpuzzle().default_pattern()
-            }
-            _ => cube4x4x4_phase2_target_pattern().clone(),
+            CoordinateTable::CoordEP => cube4x4x4_with_wing_parity_kpuzzle().default_pattern(),
+            _ => cube4x4x4_phase2_target_kpattern().clone(),
         });
         let mut patterns_read_idx = 0;
         let mut patterns_write_idx = 1;
@@ -263,12 +260,12 @@ impl Phase2SymmetryTables {
     }
 
     pub(crate) fn init_move_tables(&mut self) {
-        self.packed_kpuzzle = cube4x4x4_packed_kpuzzle();
+        self.packed_kpuzzle = cube4x4x4_kpuzzle().clone();
         // TODO: deduplicate against earlier constant above
         let phase2_generators =
             generators_from_vec_str(vec!["Uw2", "U", "L", "F", "Rw", "R", "B", "Dw2", "D"]);
         match SearchGenerators::try_new(
-            &cube4x4x4_with_wing_parity_packed_kpuzzle(),
+            cube4x4x4_with_wing_parity_kpuzzle(),
             &phase2_generators,
             &MetricEnum::Hand,
             false,

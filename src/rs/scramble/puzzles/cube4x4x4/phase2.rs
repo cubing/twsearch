@@ -8,13 +8,14 @@ use crate::{
     scramble::{
         puzzles::{
             cube4x4x4::orbit_info::orbit_info,
-            definitions::{cube4x4x4_packed_kpuzzle, cube4x4x4_phase2_target_pattern},
+            definitions::{
+                cube4x4x4_kpuzzle, cube4x4x4_phase2_target_kpattern,
+                cube4x4x4_with_wing_parity_kpuzzle,
+            },
         },
         randomize::{basic_parity, BasicParity},
     },
 };
-
-use super::super::definitions::cube4x4x4_with_wing_parity_packed_kpuzzle;
 
 const NUM_4X4X4_EDGES: usize = 24;
 
@@ -111,9 +112,9 @@ fn set_wing_parity(pattern: &mut KPattern, wing_parity: BasicParity) {
 }
 
 pub(crate) fn pattern_to_phase2_pattern(pattern: &KPattern) -> KPattern {
-    let phase1_kpuzzle = cube4x4x4_packed_kpuzzle();
-    let phase2_kpuzzle = cube4x4x4_with_wing_parity_packed_kpuzzle();
-    let phase2_target_pattern = cube4x4x4_phase2_target_pattern();
+    let phase1_kpuzzle = cube4x4x4_kpuzzle();
+    let phase2_kpuzzle = cube4x4x4_with_wing_parity_kpuzzle();
+    let phase2_target_pattern = cube4x4x4_phase2_target_kpattern();
 
     let mut new_pattern = phase2_kpuzzle.default_pattern();
     for orbit_info in phase1_kpuzzle.orbit_info_iter() {
@@ -121,7 +122,7 @@ pub(crate) fn pattern_to_phase2_pattern(pattern: &KPattern) -> KPattern {
             remap_piece_for_phase1_or_phase2_search_pattern(
                 orbit_info,
                 pattern,
-                &phase2_target_pattern,
+                phase2_target_pattern,
                 &mut new_pattern,
                 i,
             );

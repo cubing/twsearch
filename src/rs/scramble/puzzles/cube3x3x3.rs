@@ -19,7 +19,7 @@ use super::{
         randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
     super::scramble_search::generators_from_vec_str,
-    definitions::{cube3x3x3_centerless_kpuzzle, cube3x3x3_g1_target_pattern},
+    definitions::{cube3x3x3_centerless_g1_target_kpattern, cube3x3x3_centerless_kpuzzle},
     static_move_list::{add_random_suffixes_from, static_parsed_list, static_parsed_opt_list},
 };
 
@@ -36,11 +36,11 @@ pub struct Scramble3x3x3TwoPhase {
 
 impl Default for Scramble3x3x3TwoPhase {
     fn default() -> Self {
-        let kpuzzle = cube3x3x3_centerless_kpuzzle();
+        let kpuzzle = cube3x3x3_centerless_kpuzzle().clone();
         let generators = generators_from_vec_str(vec!["U", "L", "F", "R", "B", "D"]);
         let filtering_idfs = basic_idfs(&kpuzzle, generators.clone(), Some(32));
 
-        let phase1_target_pattern = cube3x3x3_g1_target_pattern();
+        let phase1_target_pattern = cube3x3x3_centerless_g1_target_kpattern().clone();
         let phase1_idfs = idfs_with_target_pattern(
             &kpuzzle,
             generators.clone(),

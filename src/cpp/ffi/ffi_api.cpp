@@ -58,7 +58,7 @@ void ffi_api_set_arg(string s) {
     argv[3] = 0;
     argc = 3;
   }
-  processargs(argc, argv, 0);
+  processargs(argc, argv, 1);
   if (argc != 1)
     error("! error processing argument");
 }

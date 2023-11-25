@@ -12,6 +12,7 @@
 #include "readksolve.h"
 #include "rotations.h"
 #include "solve.h"
+#include "test.h"
 #include "threads.h"
 #include "util.h"
 #include "workchunks.h"
@@ -149,6 +150,15 @@ static llopt solcountopt("-c", "num  Number of solutions to generate.",
  *   Can be called multiple times at the start.
  */
 void processargs(int &argc, argvtype &argv, int includecmds) {
+// If we are compiling the Rust bridge, we want to support the benchmark
+// command, which requires the test.cpp compilation unit; to ensure this is
+// part of the executable we need to reference it here.  But we don't
+// bring it into the WASM.
+#ifdef ASLIBRARY
+#ifndef WASM
+  ensure_test_is_linked();
+#endif
+#endif
   while (argc > 1 && argv[1][0] == '-') {
     argc--;
     argv++;

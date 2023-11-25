@@ -1,28 +1,35 @@
 fn main() {
-    cxx_build::bridge("./rs/main.rs")
-        .file("antipode.cpp")
-        .file("calcsymm.cpp")
-        .file("canon.cpp")
-        .file("cmdlineops.cpp")
-        .file("filtermoves.cpp")
-        .file("generatingset.cpp")
-        .file("god.cpp")
-        .file("index.cpp")
-        .file("parsemoves.cpp")
-        .file("prunetable.cpp")
-        .file("puzdef.cpp")
-        .file("readksolve.cpp")
-        .file("ffi/ffi_api.cpp")
-        .file("ffi/rust_api.cpp")
-        .file("solve.cpp")
-        .file("test.cpp")
-        .file("threads.cpp")
-        .file("twsearch.cpp")
-        .file("util.cpp")
-        .file("workchunks.cpp")
-        .file("rotations.cpp")
-        .file("cityhash/src/city.cc")
-        .file("cmds.cpp")
+    let cpp_files = [
+        "antipode.cpp",
+        "calcsymm.cpp",
+        "canon.cpp",
+        "cityhash/src/city.cc",
+        "cmdlineops.cpp",
+        "cmds.cpp",
+        "ffi/ffi_api.cpp",
+        "ffi/rust_api.cpp",
+        "filtermoves.cpp",
+        "generatingset.cpp",
+        "god.cpp",
+        "index.cpp",
+        "parsemoves.cpp",
+        "prunetable.cpp",
+        "puzdef.cpp",
+        "readksolve.cpp",
+        "rotations.cpp",
+        "solve.cpp",
+        "test.cpp",
+        "threads.cpp",
+        "twsearch.cpp",
+        "util.cpp",
+        "workchunks.cpp",
+    ];
+
+    let mut build = cxx_build::bridge("./rs/main.rs");
+    for cpp_file in cpp_files {
+        build.file(cpp_file);
+    }
+    build
         .flag("-std=c++17")
         .flag("-DASLIBRARY")
         .flag("-DTWSEARCH_VERSION=v0.4.2-7-g4a9107fa")
@@ -30,27 +37,7 @@ fn main() {
         .flag("-DUSE_PTHREADS")
         .compile("twsearch-cpp-wrapper");
 
-    println!("cargo:rerun-if-changed=antipode.cpp");
-    println!("cargo:rerun-if-changed=calcsymm.cpp");
-    println!("cargo:rerun-if-changed=canon.cpp");
-    println!("cargo:rerun-if-changed=cmdlineops.cpp");
-    println!("cargo:rerun-if-changed=filtermoves.cpp");
-    println!("cargo:rerun-if-changed=generatingset.cpp");
-    println!("cargo:rerun-if-changed=god.cpp");
-    println!("cargo:rerun-if-changed=index.cpp");
-    println!("cargo:rerun-if-changed=parsemoves.cpp");
-    println!("cargo:rerun-if-changed=prunetable.cpp");
-    println!("cargo:rerun-if-changed=puzdef.cpp");
-    println!("cargo:rerun-if-changed=readksolve.cpp");
-    println!("cargo:rerun-if-changed=ffi/ffi_api.cpp");
-    println!("cargo:rerun-if-changed=ffi/rust_api.cpp");
-    println!("cargo:rerun-if-changed=solve.cpp");
-    println!("cargo:rerun-if-changed=test.cpp");
-    println!("cargo:rerun-if-changed=threads.cpp");
-    println!("cargo:rerun-if-changed=twsearch.cpp");
-    println!("cargo:rerun-if-changed=util.cpp");
-    println!("cargo:rerun-if-changed=workchunks.cpp");
-    println!("cargo:rerun-if-changed=rotations.cpp");
-    println!("cargo:rerun-if-changed=cityhash/src/city.cc");
-    println!("cargo:rerun-if-changed=cmds.cpp");
+    for cpp_file in cpp_files {
+        println!("cargo:rerun-if-changed={}", cpp_file);
+    }
 }

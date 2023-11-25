@@ -14,7 +14,7 @@ use super::{
 };
 
 const PHASE1_PRUNE_TABLE_SIZE: usize = 735471; // this is 24 choose 8
-const PHASE1_MOVE_COUNT: usize = 12; // TODO 
+const PHASE1_MOVE_COUNT: usize = 33; 
 const NUM_COORDINATES_C8_4D2: usize = 35;
 const NUM_COORDINATES_C16_8: usize = 12870;
 const NUM_COORDINATES_EP: usize = 2;
@@ -25,6 +25,42 @@ const MOVE_TABLE_UNINITIALIZED_VALUE: Phase2Coordinate = Phase2Coordinate(usize:
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct Phase2Coordinate(usize);
+
+pub(crate) struct Phase1CoordinateTables {
+    kpuzzle: KPuzzle,
+    phase1_prune_table: [PruneTableEntryType; PHASE1_PRUNE_TABLE_SIZE],
+    pack248hi: [i32; 4096],
+    pack248lo: [i32; 4096],
+    movelo: [[u32; PHASE1_MOVE_COUNT]; 4096],
+    movehi: [[u32; PHASE1_MOVE_COUNT]; 4096],
+}
+
+impl Phase1CoordinateTables {
+    fn initpack248(&mut self) {
+        self.pack248hi = [-1; 4096];
+        self.pack248lo = [-1; 4096];
+        let mut i: usize = 255 ;
+        let mut at = 0;
+        while i < 0x1000000 {
+           let b = bit_count(i) ;
+           if b == 8 {
+              if self.pack248hi[i >> 12] < 0 {
+                self.pack248hi[i >> 12] = at;
+              }
+              if self.pack248lo[i & 0xfff] < 0 {
+                self.pack248lo[i & 0xfff] = at - self.pack248hi[i >> 12];
+              }
+              at += 1;
+           }
+           // we increment i this way so we don't spin 2^24 times
+           if b >= 8 {
+              i += i & ((! i) + 1) ; // want i & -i but can't - to a usize
+           } else {
+              i += (!i) & (i + 1) ;
+           }
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug)]
 enum CoordinateTable {
@@ -154,15 +190,6 @@ fn bit_count(mut bits: usize) -> i32 {
         bits &= bits - 1;
     }
     r
-}
-
-pub(crate) struct Phase1CoordinateTables {
-    kpuzzle: KPuzzle,
-    phase1_prune_table: [PruneTableEntryType; PHASE1_PRUNE_TABLE_SIZE],
-    pack248hi: [u32; 4096],
-    pack248lo: [u32; 4096],
-    movelo: [[u32; PHASE1_MOVE_COUNT]; 4096],
-    movehi: [[u32; PHASE1_MOVE_COUNT]; 4096],
 }
 
 pub(crate) struct Phase2SymmetryTables {

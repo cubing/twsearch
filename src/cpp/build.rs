@@ -22,8 +22,6 @@ fn main() {
         .file("workchunks.cpp")
         .file("rotations.cpp")
         .file("cityhash/src/city.cc")
-        .file("unrotate.cpp")
-        .file("shorten.cpp")
         .file("cmds.cpp")
         .flag("-std=c++17")
         .flag("-DASLIBRARY")
@@ -37,7 +35,6 @@ fn main() {
     println!("cargo:rerun-if-changed=canon.cpp");
     println!("cargo:rerun-if-changed=cmdlineops.cpp");
     println!("cargo:rerun-if-changed=filtermoves.cpp");
-    println!("cargo:rerun-if-changed=findalgo.cpp");
     println!("cargo:rerun-if-changed=generatingset.cpp");
     println!("cargo:rerun-if-changed=god.cpp");
     println!("cargo:rerun-if-changed=index.cpp");
@@ -54,12 +51,6 @@ fn main() {
     println!("cargo:rerun-if-changed=util.cpp");
     println!("cargo:rerun-if-changed=workchunks.cpp");
     println!("cargo:rerun-if-changed=rotations.cpp");
-    println!("cargo:rerun-if-changed=orderedgs.cpp");
     println!("cargo:rerun-if-changed=cityhash/src/city.cc");
-    println!("cargo:rerun-if-changed=coset.cpp");
-    println!("cargo:rerun-if-changed=descsets.cpp");
-    println!("cargo:rerun-if-changed=ordertree.cpp");
-    println!("cargo:rerun-if-changed=unrotate.cpp");
-    println!("cargo:rerun-if-changed=shorten.cpp");
     println!("cargo:rerun-if-changed=cmds.cpp");
 }

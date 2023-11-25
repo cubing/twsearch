@@ -155,7 +155,7 @@ fn bit_count(mut bits: usize) -> i32 {
 }
 
 pub(crate) struct Phase2SymmetryTables {
-    packed_kpuzzle: KPuzzle,
+    kpuzzle: KPuzzle,
     phase2_prune_table: [PruneTableEntryType; PHASE2_PRUNE_TABLE_SIZE],
     coord_84: Coord84,
     coord_168: Coord168,
@@ -165,9 +165,9 @@ pub(crate) struct Phase2SymmetryTables {
 const PRUNE_TABLE_UNINITIALIZED_VALUE: PruneTableEntryType = PruneTableEntryType::MAX;
 
 impl Phase2SymmetryTables {
-    pub(crate) fn new(packed_kpuzzle: KPuzzle) -> Self {
+    pub(crate) fn new(kpuzzle: KPuzzle) -> Self {
         Self {
-            packed_kpuzzle,
+            kpuzzle,
             phase2_prune_table: [PRUNE_TABLE_UNINITIALIZED_VALUE; PHASE2_PRUNE_TABLE_SIZE],
             coord_84: Coord84::default(),
             coord_168: Coord168::default(),
@@ -260,7 +260,7 @@ impl Phase2SymmetryTables {
     }
 
     pub(crate) fn init_move_tables(&mut self) {
-        self.packed_kpuzzle = cube4x4x4_kpuzzle().clone();
+        self.kpuzzle = cube4x4x4_kpuzzle().clone();
         // TODO: deduplicate against earlier constant above
         let phase2_generators =
             generators_from_vec_str(vec!["Uw2", "U", "L", "F", "Rw", "R", "B", "Dw2", "D"]);

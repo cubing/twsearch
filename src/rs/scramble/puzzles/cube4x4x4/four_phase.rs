@@ -29,7 +29,7 @@ use crate::{
 use super::super::super::scramble_search::generators_from_vec_str;
 
 pub(crate) struct Scramble4x4x4FourPhase {
-    packed_kpuzzle: KPuzzle,
+    kpuzzle: KPuzzle,
 
     _filtering_idfs: IDFSearch,
 
@@ -41,19 +41,19 @@ pub(crate) struct Scramble4x4x4FourPhase {
 
 impl Default for Scramble4x4x4FourPhase {
     fn default() -> Self {
-        let packed_kpuzzle = cube4x4x4_kpuzzle().clone();
-        let phase2_packed_kpuzzle = cube4x4x4_with_wing_parity_kpuzzle();
+        let kpuzzle = cube4x4x4_kpuzzle().clone();
+        let phase2_kpuzzle = cube4x4x4_with_wing_parity_kpuzzle();
 
         let phase1_generators = generators_from_vec_str(vec![
             "Uw", "U", "Lw", "L", "Fw", "F", "Rw", "R", "Bw", "B", "Dw", "D",
         ]);
         // TODO: support normalizing orientation/ignoring orientation/24 targets, so that this checks for unoriented distance to solved.
-        let filtering_idfs = basic_idfs(&packed_kpuzzle, phase1_generators.clone(), Some(32));
+        let filtering_idfs = basic_idfs(&kpuzzle, phase1_generators.clone(), Some(32));
 
         let phase1_target_pattern = cube4x4x4_phase1_target_kpattern().clone();
         // dbg!(&phase1_target_pattern);
         let phase1_idfs = idfs_with_target_pattern(
-            &packed_kpuzzle,
+            &kpuzzle,
             phase1_generators.clone(),
             phase1_target_pattern.clone(),
             None,
@@ -64,14 +64,14 @@ impl Default for Scramble4x4x4FourPhase {
         let phase2_center_target_pattern = cube4x4x4_phase2_target_kpattern();
         // dbg!(&phase2_center_target_pattern);
         let phase2_idfs = idfs_with_target_pattern(
-            phase2_packed_kpuzzle,
+            phase2_kpuzzle,
             phase2_generators.clone(),
             phase2_center_target_pattern.clone(),
             None,
         );
 
         Self {
-            packed_kpuzzle,
+            kpuzzle,
             _filtering_idfs: filtering_idfs,
             phase1_target_pattern,
             phase1_idfs,
@@ -85,13 +85,13 @@ impl Scramble4x4x4FourPhase {
         &mut self,
         main_search_pattern: &KPattern, // TODO: avoid assuming a superpattern.
     ) -> Alg {
-        let mut x = Phase2SymmetryTables::new(self.packed_kpuzzle.clone());
+        let mut x = Phase2SymmetryTables::new(self.kpuzzle.clone());
         x.init_choose_tables();
         x.init_move_tables();
         x.init_prune_table();
         let phase1_alg = {
             let mut phase1_search_pattern = self.phase1_target_pattern.clone();
-            for orbit_info in self.packed_kpuzzle.orbit_info_iter() {
+            for orbit_info in self.kpuzzle.orbit_info_iter() {
                 for i in 0..orbit_info.num_pieces {
                     remap_piece_for_phase1_or_phase2_search_pattern(
                         orbit_info,
@@ -128,7 +128,7 @@ impl Scramble4x4x4FourPhase {
             let phase2_search_full_pattern = main_search_pattern.apply_alg(&phase1_alg).unwrap();
 
             let additional_solution_condition = Phase2AdditionalSolutionCondition {
-                kpuzzle: self.packed_kpuzzle.clone(),
+                kpuzzle: self.kpuzzle.clone(),
                 phase2_search_full_pattern,
                 _debug_num_checked: 0,
                 _debug_num_centers_rejected: 0,

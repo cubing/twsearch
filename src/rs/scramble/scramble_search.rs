@@ -30,7 +30,7 @@ pub(crate) fn idfs_with_target_pattern(
     generators: Generators,
     target_pattern: KPattern,
     min_size: Option<usize>,
-) -> IDFSearch {
+) -> IDFSearch<KPuzzle> {
     IDFSearch::try_new(
         kpuzzle.clone(),
         target_pattern,
@@ -49,7 +49,7 @@ pub(crate) fn basic_idfs(
     kpuzzle: &KPuzzle,
     generators: Generators,
     min_size: Option<usize>,
-) -> IDFSearch {
+) -> IDFSearch<KPuzzle> {
     idfs_with_target_pattern(kpuzzle, generators, kpuzzle.default_pattern(), min_size)
 }
 

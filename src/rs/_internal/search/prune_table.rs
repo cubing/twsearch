@@ -8,7 +8,7 @@ use crate::_internal::{
     CANONICAL_FSM_START_STATE,
 };
 
-use super::idf_search::IDFSearchAPIData;
+use super::{idf_search::IDFSearchAPIData, GenericPuzzle};
 
 pub(crate) type PruneTableEntryType = u8;
 // 0 is uninitialized, all other values are stored as 1+depth.
@@ -18,8 +18,8 @@ const MAX_PRUNE_TABLE_DEPTH: PruneTableEntryType = PruneTableEntryType::MAX - 1;
 
 const DEFAULT_MIN_PRUNE_TABLE_SIZE: usize = 1 << 20;
 
-struct PruneTableImmutableData {
-    search_api_data: Arc<IDFSearchAPIData>,
+struct PruneTableImmutableData<TPuzzle: GenericPuzzle> {
+    search_api_data: Arc<IDFSearchAPIData<TPuzzle>>,
 }
 struct PruneTableMutableData {
     min_size: usize,               // power of 2
@@ -55,14 +55,14 @@ impl PruneTableMutableData {
     }
 }
 
-pub struct PruneTable {
-    immutable: PruneTableImmutableData,
+pub struct PruneTable<TPuzzle: GenericPuzzle> {
+    immutable: PruneTableImmutableData<TPuzzle>,
     mutable: PruneTableMutableData,
 }
 
-impl PruneTable {
+impl<TPuzzle: GenericPuzzle> PruneTable<TPuzzle> {
     pub fn new(
-        search_api_data: Arc<IDFSearchAPIData>,
+        search_api_data: Arc<IDFSearchAPIData<TPuzzle>>,
         search_logger: Arc<SearchLogger>,
         min_size: Option<usize>,
     ) -> Self {
@@ -148,7 +148,7 @@ impl PruneTable {
     // TODO: dedup with IDFSearch?
     // TODO: Store a reference to `search_api_data` so that you can't accidentally pass in the wrong `search_api_data`?
     fn recurse(
-        immutable_data: &PruneTableImmutableData,
+        immutable_data: &PruneTableImmutableData<TPuzzle>,
         mutable_data: &mut PruneTableMutableData,
         current_pattern: &KPattern,
         current_state: CanonicalFSMState,

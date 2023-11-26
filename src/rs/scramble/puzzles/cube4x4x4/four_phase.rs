@@ -31,12 +31,12 @@ use super::super::super::scramble_search::generators_from_vec_str;
 pub(crate) struct Scramble4x4x4FourPhase {
     kpuzzle: KPuzzle,
 
-    _filtering_idfs: IDFSearch,
+    _filtering_idfs: IDFSearch<KPuzzle>,
 
     phase1_target_pattern: KPattern,
-    phase1_idfs: IDFSearch,
+    phase1_idfs: IDFSearch<KPuzzle>,
 
-    phase2_idfs: IDFSearch,
+    phase2_idfs: IDFSearch<KPuzzle>,
 }
 
 impl Default for Scramble4x4x4FourPhase {
@@ -128,7 +128,7 @@ impl Scramble4x4x4FourPhase {
             let phase2_search_full_pattern = main_search_pattern.apply_alg(&phase1_alg).unwrap();
 
             let additional_solution_condition = Phase2AdditionalSolutionCondition {
-                kpuzzle: self.kpuzzle.clone(),
+                puzzle: self.kpuzzle.clone(),
                 phase2_search_full_pattern,
                 _debug_num_checked: 0,
                 _debug_num_centers_rejected: 0,

@@ -4,7 +4,7 @@ use cubing::{
 };
 
 use crate::{
-    _internal::AdditionalSolutionCondition,
+    _internal::{AdditionalSolutionCondition, GenericPuzzle},
     scramble::{
         puzzles::{
             cube4x4x4::orbit_info::orbit_info,
@@ -133,9 +133,9 @@ pub(crate) fn pattern_to_phase2_pattern(pattern: &KPattern) -> KPattern {
     set_wing_parity(&mut new_pattern, wing_parity);
     new_pattern
 }
-pub(crate) struct Phase2AdditionalSolutionCondition {
-    pub(crate) kpuzzle: KPuzzle, // we could theoretically get this from `main_search_pattern`, but this way is more clear.
-    pub(crate) phase2_search_full_pattern: KPattern,
+pub(crate) struct Phase2AdditionalSolutionCondition<TPuzzle: GenericPuzzle> {
+    pub(crate) puzzle: TPuzzle, // we could theoretically get this from `main_search_pattern`, but this way is more clear.
+    pub(crate) phase2_search_full_pattern: TPuzzle::Pattern,
     pub(crate) _debug_num_checked: usize, // TODO: remove
     pub(crate) _debug_num_centers_rejected: usize, // TODO: remove
     pub(crate) _debug_num_total_rejected: usize, // TODO: remove
@@ -144,7 +144,7 @@ pub(crate) struct Phase2AdditionalSolutionCondition {
     pub(crate) _debug_num_edge_parity_rejected: usize, // TODO: remove
 }
 
-impl Phase2AdditionalSolutionCondition {
+impl<TPuzzle: GenericPuzzle> Phase2AdditionalSolutionCondition<TPuzzle> {
     fn log(&self) {
         if !self._debug_num_total_rejected.is_power_of_two() {
             return;
@@ -255,10 +255,12 @@ fn is_solve_center_center_case(case: &[[SideCenter; 4]; 2]) -> bool {
     false
 }
 
-impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
+impl<TPuzzle: GenericPuzzle> AdditionalSolutionCondition<TPuzzle>
+    for Phase2AdditionalSolutionCondition<TPuzzle>
+{
     fn should_accept_solution(
         &mut self,
-        _candidate_pattern: &KPattern,
+        _candidate_pattern: &TPuzzle::Pattern,
         candidate_alg: &Alg,
     ) -> bool {
         let mut accept = true;
@@ -273,18 +275,19 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
 
         // dbg!(&candidate_alg.to_string());
         let transformation = self
-            .kpuzzle
-            .transformation_from_alg(candidate_alg)
+            .puzzle
+            .puzzle_transformation_from_alg(candidate_alg)
             .expect("Internal error applying an alg from a search result.");
-        let pattern_with_alg_applied = self
-            .phase2_search_full_pattern
-            .apply_transformation(&transformation);
+        let pattern_with_alg_applied = TPuzzle::pattern_apply_transformation(
+            &self.phase2_search_full_pattern,
+            &transformation,
+        );
 
         /******** Centers ********/
 
         // TODO: is it more efficient to check this later?
 
-        let centers_orbit_info = &self.kpuzzle.data.ordered_orbit_info[2];
+        let centers_orbit_info = &self.puzzle.data.ordered_orbit_info[2];
         assert!(centers_orbit_info.name == "CENTERS".into());
 
         #[allow(non_snake_case)] // Speffz
@@ -304,7 +307,7 @@ impl AdditionalSolutionCondition for Phase2AdditionalSolutionCondition {
 
         /******** Edges ********/
 
-        let wings_orbit_info = &self.kpuzzle.data.ordered_orbit_info[1];
+        let wings_orbit_info = &self.puzzle.data.ordered_orbit_info[1];
         assert!(wings_orbit_info.name == "WINGS".into());
 
         if basic_parity(

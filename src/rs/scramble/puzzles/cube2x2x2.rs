@@ -20,7 +20,7 @@ pub fn scramble_2x2x2() -> Alg {
         );
         let generators = generators_from_vec_str(vec!["U", "L", "F", "R"]);
         if let Some(scramble) =
-            filtered_search::<KPuzzle>(&scramble_pattern, generators, Some(4), Some(11))
+            filtered_search::<KPuzzle>(kpuzzle, &scramble_pattern, generators, Some(4), Some(11))
         {
             return scramble;
         }

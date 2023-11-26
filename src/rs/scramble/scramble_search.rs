@@ -56,12 +56,13 @@ pub(crate) fn basic_idfs<TPuzzle: GenericPuzzle>(
 }
 
 pub(crate) fn filtered_search<TPuzzle: GenericPuzzle>(
+    puzzle: &TPuzzle,
     scramble_pattern: &TPuzzle::Pattern,
     generators: Generators,
     min_optimal_moves: Option<usize>,
     min_scramble_moves: Option<usize>,
 ) -> Option<Alg> {
-    let mut idfs = basic_idfs(TPuzzle::pattern_puzzle(scramble_pattern), generators, None);
+    let mut idfs = basic_idfs(puzzle, generators, None);
     if idfs
         .search(
             scramble_pattern,

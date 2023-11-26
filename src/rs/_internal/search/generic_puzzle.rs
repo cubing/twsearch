@@ -24,7 +24,7 @@ pub trait GenericPuzzle: Clone + Debug {
     fn puzzle_definition_moves(&self) -> Vec<&Move>;
 
     // Functions "defined on the pattern".
-    fn transformation_puzzle(transformation: &Self::Transformation) -> &Self;
+    // fn transformation_puzzle(transformation: &Self::Transformation) -> &Self; // TODO: add an additional trait for this.
     fn transformation_invert(transformation: &Self::Transformation) -> Self::Transformation;
     fn transformation_apply_transformation(
         transformation: &Self::Transformation,
@@ -39,7 +39,7 @@ pub trait GenericPuzzle: Clone + Debug {
     // TODO: efficient `order` function?
 
     // Functions "defined on the transformation".
-    fn pattern_puzzle(pattern: &Self::Pattern) -> &Self;
+    // fn pattern_puzzle(pattern: &Self::Pattern) -> &Self; // TODO: add an additional trait for this.
     fn pattern_apply_transformation(
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
@@ -88,10 +88,6 @@ impl GenericPuzzle for KPuzzle {
         }
     }
 
-    fn transformation_puzzle(transformation: &Self::Transformation) -> &Self {
-        transformation.kpuzzle()
-    }
-
     fn transformation_invert(transformation: &Self::Transformation) -> Self::Transformation {
         transformation.invert()
     }
@@ -113,10 +109,6 @@ impl GenericPuzzle for KPuzzle {
 
     fn transformation_hash_u64(transformation: &Self::Transformation) -> u64 {
         transformation.hash()
-    }
-
-    fn pattern_puzzle(pattern: &Self::Pattern) -> &Self {
-        pattern.kpuzzle()
     }
 
     fn pattern_apply_transformation(

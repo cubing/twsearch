@@ -3,10 +3,7 @@ use std::sync::{
     Arc,
 };
 
-use cubing::{
-    alg::{Alg, AlgNode, Move, QuantumMove},
-    kpuzzle::{KPattern, KPuzzle},
-};
+use cubing::alg::{Alg, AlgNode, Move, QuantumMove};
 use serde::{Deserialize, Serialize};
 
 use crate::_internal::{
@@ -14,6 +11,8 @@ use crate::_internal::{
     CanonicalFSM, CanonicalFSMState, MoveClassIndex, PruneTable, PuzzleError, RecursiveWorkTracker,
     SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
+
+use super::GenericPuzzle;
 
 const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase
 
@@ -133,39 +132,39 @@ impl IndividualSearchOptions {
     }
 }
 
-pub(crate) trait AdditionalSolutionCondition {
+pub(crate) trait AdditionalSolutionCondition<TPuzzle: GenericPuzzle> {
     fn should_accept_solution(
         &mut self, // TODO: un-mut?
-        candidate_pattern: &KPattern,
+        candidate_pattern: &TPuzzle::Pattern,
         candidate_alg: &Alg,
     ) -> bool;
 }
 
-struct IndividualSearchData {
+struct IndividualSearchData<TPuzzle: GenericPuzzle> {
     individual_search_options: IndividualSearchOptions,
     recursive_work_tracker: RecursiveWorkTracker,
     num_solutions_sofar: usize,
     solution_sender: Sender<Option<Alg>>,
-    pub additional_solution_condition: Option<Box<dyn AdditionalSolutionCondition>>, // TODO: handle this with backpressure on the iterator instead.
+    pub additional_solution_condition: Option<Box<dyn AdditionalSolutionCondition<TPuzzle>>>, // TODO: handle this with backpressure on the iterator instead.
 }
 
-pub struct IDFSearchAPIData {
-    pub search_generators: SearchGenerators,
-    pub canonical_fsm: CanonicalFSM,
-    pub kpuzzle: KPuzzle,
-    pub target_pattern: KPattern,
+pub struct IDFSearchAPIData<TPuzzle: GenericPuzzle> {
+    pub search_generators: SearchGenerators<TPuzzle>, // TODO: pass generic constraints down here.
+    pub canonical_fsm: CanonicalFSM<TPuzzle>,
+    pub kpuzzle: TPuzzle,
+    pub target_pattern: TPuzzle::Pattern,
     pub search_logger: Arc<SearchLogger>,
 }
 
-pub struct IDFSearch {
-    api_data: Arc<IDFSearchAPIData>,
-    prune_table: PruneTable,
+pub struct IDFSearch<TPuzzle: GenericPuzzle> {
+    api_data: Arc<IDFSearchAPIData<TPuzzle>>,
+    prune_table: PruneTable<TPuzzle>,
 }
 
-impl IDFSearch {
+impl<TPuzzle: GenericPuzzle> IDFSearch<TPuzzle> {
     pub fn try_new(
-        kpuzzle: KPuzzle,
-        target_pattern: KPattern,
+        tpuzzle: TPuzzle,
+        target_pattern: TPuzzle::Pattern,
         generators: Generators,
         search_logger: Arc<SearchLogger>,
         metric: &MetricEnum,
@@ -173,12 +172,12 @@ impl IDFSearch {
         min_prune_table_size: Option<usize>,
     ) -> Result<Self, PuzzleError> {
         let search_generators =
-            SearchGenerators::try_new(&kpuzzle, &generators, metric, random_start)?;
+            SearchGenerators::<TPuzzle>::try_new(&tpuzzle, &generators, metric, random_start)?;
         let canonical_fsm = CanonicalFSM::try_new(search_generators.clone())?; // TODO: avoid a clone
-        let api_data = Arc::new(IDFSearchAPIData {
+        let api_data: Arc<IDFSearchAPIData<TPuzzle>> = Arc::new(IDFSearchAPIData {
             search_generators,
             canonical_fsm,
-            kpuzzle,
+            kpuzzle: tpuzzle,
             target_pattern,
             search_logger: search_logger.clone(),
         });
@@ -192,7 +191,7 @@ impl IDFSearch {
 
     pub fn search(
         &mut self,
-        search_pattern: &KPattern,
+        search_pattern: &TPuzzle::Pattern,
         individual_search_options: IndividualSearchOptions,
     ) -> SearchSolutions {
         self.search_with_additional_check(search_pattern, individual_search_options, None)
@@ -200,9 +199,9 @@ impl IDFSearch {
 
     pub(crate) fn search_with_additional_check(
         &mut self,
-        search_pattern: &KPattern,
+        search_pattern: &TPuzzle::Pattern,
         mut individual_search_options: IndividualSearchOptions,
-        additional_solution_condition: Option<Box<dyn AdditionalSolutionCondition>>,
+        additional_solution_condition: Option<Box<dyn AdditionalSolutionCondition<TPuzzle>>>,
     ) -> SearchSolutions {
         // TODO: do validation more consistently.
         if let Some(min_depth) = individual_search_options.min_depth {
@@ -273,8 +272,8 @@ impl IDFSearch {
 
     fn recurse(
         &self,
-        individual_search_data: &mut IndividualSearchData,
-        current_pattern: &KPattern,
+        individual_search_data: &mut IndividualSearchData<TPuzzle>,
+        current_pattern: &TPuzzle::Pattern,
         current_state: CanonicalFSMState,
         remaining_depth: usize,
         last_pattern_is_maybe_unsolved: bool,
@@ -385,7 +384,10 @@ impl IDFSearch {
                 }
                 match self.recurse(
                     individual_search_data,
-                    &current_pattern.apply_transformation(&move_transformation_info.transformation),
+                    &TPuzzle::pattern_apply_transformation(
+                        current_pattern,
+                        &move_transformation_info.transformation,
+                    ),
                     next_state,
                     remaining_depth - 1,
                     pattern_is_maybe_unsolved,

@@ -14,7 +14,7 @@ use super::{
 };
 
 const PHASE1_PRUNE_TABLE_SIZE: usize = 735471; // this is 24 choose 8
-const PHASE1_MOVE_COUNT: usize = 33; 
+const PHASE1_MOVE_COUNT: usize = 33;
 const NUM_COORDINATES_C8_4D2: usize = 35;
 const NUM_COORDINATES_C16_8: usize = 12870;
 const NUM_COORDINATES_EP: usize = 2;
@@ -39,25 +39,25 @@ impl Phase1CoordinateTables {
     fn initpack248(&mut self) {
         self.pack248hi = [-1; 4096];
         self.pack248lo = [-1; 4096];
-        let mut i: usize = 255 ;
+        let mut i: usize = 255;
         let mut at = 0;
         while i < 0x1000000 {
-           let b = bit_count(i) ;
-           if b == 8 {
-              if self.pack248hi[i >> 12] < 0 {
-                self.pack248hi[i >> 12] = at;
-              }
-              if self.pack248lo[i & 0xfff] < 0 {
-                self.pack248lo[i & 0xfff] = at - self.pack248hi[i >> 12];
-              }
-              at += 1;
-           }
-           // we increment i this way so we don't spin 2^24 times
-           if b >= 8 {
-              i += i & ((! i) + 1) ; // want i & -i but can't - to a usize
-           } else {
-              i += (!i) & (i + 1) ;
-           }
+            let b = bit_count(i);
+            if b == 8 {
+                if self.pack248hi[i >> 12] < 0 {
+                    self.pack248hi[i >> 12] = at;
+                }
+                if self.pack248lo[i & 0xfff] < 0 {
+                    self.pack248lo[i & 0xfff] = at - self.pack248hi[i >> 12];
+                }
+                at += 1;
+            }
+            // we increment i this way so we don't spin 2^24 times
+            if b >= 8 {
+                i += i & ((!i) + 1); // want i & -i but can't - to a usize
+            } else {
+                i += (!i) & (i + 1);
+            }
         }
     }
 }
@@ -252,7 +252,11 @@ impl Phase2SymmetryTables {
         dbg!(transformation.to_data());
     }
 
-    fn fill_move_table(&mut self, coordinate_table: CoordinateTable, moves: &SearchGenerators) {
+    fn fill_move_table(
+        &mut self,
+        coordinate_table: CoordinateTable,
+        moves: &SearchGenerators<KPuzzle>,
+    ) {
         // TODO: double-check if there are any performance penalties for `dyn`.
         let coord_field: &mut dyn Coord = match coordinate_table {
             CoordinateTable::Coord84 => &mut self.coord_84,

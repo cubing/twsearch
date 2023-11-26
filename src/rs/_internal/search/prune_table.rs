@@ -1,6 +1,5 @@
-use std::sync::Arc;
+use std::{marker::PhantomData, sync::Arc};
 
-use cubing::kpuzzle::KPattern;
 use thousands::Separable;
 
 use crate::_internal::{
@@ -8,7 +7,7 @@ use crate::_internal::{
     CANONICAL_FSM_START_STATE,
 };
 
-use super::idf_search::IDFSearchAPIData;
+use super::{idf_search::IDFSearchAPIData, GenericPuzzle};
 
 pub(crate) type PruneTableEntryType = u8;
 // 0 is uninitialized, all other values are stored as 1+depth.
@@ -18,10 +17,10 @@ const MAX_PRUNE_TABLE_DEPTH: PruneTableEntryType = PruneTableEntryType::MAX - 1;
 
 const DEFAULT_MIN_PRUNE_TABLE_SIZE: usize = 1 << 20;
 
-struct PruneTableImmutableData {
-    search_api_data: Arc<IDFSearchAPIData>,
+struct PruneTableImmutableData<TPuzzle: GenericPuzzle> {
+    search_api_data: Arc<IDFSearchAPIData<TPuzzle>>,
 }
-struct PruneTableMutableData {
+struct PruneTableMutableData<TPuzzle: GenericPuzzle> {
     min_size: usize,               // power of 2
     prune_table_size: usize,       // power of 2
     prune_table_index_mask: usize, // prune_table_size - 1
@@ -29,15 +28,17 @@ struct PruneTableMutableData {
     pattern_hash_to_depth: Vec<PruneTableEntryType>,
     recursive_work_tracker: RecursiveWorkTracker,
     search_logger: Arc<SearchLogger>,
+    _marker: PhantomData<TPuzzle>, // https://doc.rust-lang.org/nomicon/phantom-data.html
 }
 
-impl PruneTableMutableData {
-    fn hash_pattern(&self, pattern: &KPattern) -> usize {
-        (pattern.hash() as usize) & self.prune_table_index_mask // TODO: use modulo when the size is not a power of 2.
+impl<TPuzzle: GenericPuzzle> PruneTableMutableData<TPuzzle> {
+    fn hash_pattern(&self, pattern: &TPuzzle::Pattern) -> usize {
+        (TPuzzle::pattern_hash_u64(pattern) as usize) & self.prune_table_index_mask
+        // TODO: use modulo when the size is not a power of 2.
     }
 
     // Returns a heurstic depth for the given pattern.
-    pub fn lookup(&self, pattern: &KPattern) -> usize {
+    pub fn lookup(&self, pattern: &TPuzzle::Pattern) -> usize {
         let pattern_hash = self.hash_pattern(pattern);
         let table_value = self.pattern_hash_to_depth[pattern_hash];
         if table_value == UNINITIALIZED_DEPTH {
@@ -47,7 +48,7 @@ impl PruneTableMutableData {
         }
     }
 
-    pub fn set_if_uninitialized(&mut self, pattern: &KPattern, depth: u8) {
+    pub fn set_if_uninitialized(&mut self, pattern: &TPuzzle::Pattern, depth: u8) {
         let pattern_hash = self.hash_pattern(pattern);
         if self.pattern_hash_to_depth[pattern_hash] == UNINITIALIZED_DEPTH {
             self.pattern_hash_to_depth[pattern_hash] = depth + 1
@@ -55,14 +56,14 @@ impl PruneTableMutableData {
     }
 }
 
-pub struct PruneTable {
-    immutable: PruneTableImmutableData,
-    mutable: PruneTableMutableData,
+pub struct PruneTable<TPuzzle: GenericPuzzle> {
+    immutable: PruneTableImmutableData<TPuzzle>,
+    mutable: PruneTableMutableData<TPuzzle>,
 }
 
-impl PruneTable {
+impl<TPuzzle: GenericPuzzle> PruneTable<TPuzzle> {
     pub fn new(
-        search_api_data: Arc<IDFSearchAPIData>,
+        search_api_data: Arc<IDFSearchAPIData<TPuzzle>>,
         search_logger: Arc<SearchLogger>,
         min_size: Option<usize>,
     ) -> Self {
@@ -83,6 +84,7 @@ impl PruneTable {
                     search_logger.clone(),
                 ),
                 search_logger,
+                _marker: PhantomData,
             },
         };
         prune_table.extend_for_search_depth(0, 1);
@@ -148,9 +150,9 @@ impl PruneTable {
     // TODO: dedup with IDFSearch?
     // TODO: Store a reference to `search_api_data` so that you can't accidentally pass in the wrong `search_api_data`?
     fn recurse(
-        immutable_data: &PruneTableImmutableData,
-        mutable_data: &mut PruneTableMutableData,
-        current_pattern: &KPattern,
+        immutable_data: &PruneTableImmutableData<TPuzzle>,
+        mutable_data: &mut PruneTableMutableData<TPuzzle>,
+        current_pattern: &TPuzzle::Pattern,
         current_state: CanonicalFSMState,
         remaining_depth: PruneTableEntryType,
     ) {
@@ -181,7 +183,10 @@ impl PruneTable {
                 Self::recurse(
                     immutable_data,
                     mutable_data,
-                    &current_pattern.apply_transformation(&move_transformation_info.transformation),
+                    &TPuzzle::pattern_apply_transformation(
+                        current_pattern,
+                        &move_transformation_info.transformation,
+                    ),
                     next_state,
                     remaining_depth - 1,
                 )
@@ -190,7 +195,7 @@ impl PruneTable {
     }
 
     // Returns a heurstic depth for the given pattern.
-    pub fn lookup(&self, pattern: &KPattern) -> usize {
+    pub fn lookup(&self, pattern: &TPuzzle::Pattern) -> usize {
         self.mutable.lookup(pattern)
     }
 }

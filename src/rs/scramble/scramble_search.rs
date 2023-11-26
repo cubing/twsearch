@@ -1,14 +1,11 @@
 use std::sync::Arc;
 
-use cubing::{
-    alg::{Alg, Move},
-    kpuzzle::{KPattern, KPuzzle},
-};
+use cubing::alg::{Alg, Move};
 
 use crate::_internal::{
     options::{CustomGenerators, VerbosityLevel},
     options::{Generators, MetricEnum},
-    IDFSearch, IndividualSearchOptions, SearchLogger,
+    GenericPuzzle, IDFSearch, IndividualSearchOptions, SearchLogger,
 };
 
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
@@ -25,12 +22,12 @@ pub fn generators_from_vec_str(move_str_list: Vec<&str>) -> Generators {
     })
 }
 
-pub(crate) fn idfs_with_target_pattern(
-    kpuzzle: &KPuzzle,
+pub(crate) fn idfs_with_target_pattern<TPuzzle: GenericPuzzle>(
+    kpuzzle: &TPuzzle,
     generators: Generators,
-    target_pattern: KPattern,
+    target_pattern: TPuzzle::Pattern,
     min_size: Option<usize>,
-) -> IDFSearch<KPuzzle> {
+) -> IDFSearch<TPuzzle> {
     IDFSearch::try_new(
         kpuzzle.clone(),
         target_pattern,
@@ -45,21 +42,26 @@ pub(crate) fn idfs_with_target_pattern(
     .unwrap()
 }
 
-pub(crate) fn basic_idfs(
-    kpuzzle: &KPuzzle,
+pub(crate) fn basic_idfs<TPuzzle: GenericPuzzle>(
+    puzzle: &TPuzzle,
     generators: Generators,
     min_size: Option<usize>,
-) -> IDFSearch<KPuzzle> {
-    idfs_with_target_pattern(kpuzzle, generators, kpuzzle.default_pattern(), min_size)
+) -> IDFSearch<TPuzzle> {
+    idfs_with_target_pattern(
+        puzzle,
+        generators,
+        puzzle.puzzle_default_pattern(),
+        min_size,
+    )
 }
 
-pub(crate) fn filtered_search(
-    scramble_pattern: &KPattern,
+pub(crate) fn filtered_search<TPuzzle: GenericPuzzle>(
+    scramble_pattern: &TPuzzle::Pattern,
     generators: Generators,
     min_optimal_moves: Option<usize>,
     min_scramble_moves: Option<usize>,
 ) -> Option<Alg> {
-    let mut idfs = basic_idfs(scramble_pattern.kpuzzle(), generators, None);
+    let mut idfs = basic_idfs(TPuzzle::pattern_puzzle(scramble_pattern), generators, None);
     if idfs
         .search(
             scramble_pattern,

@@ -255,12 +255,10 @@ fn is_solve_center_center_case(case: &[[SideCenter; 4]; 2]) -> bool {
     false
 }
 
-impl<TPuzzle: GenericPuzzle> AdditionalSolutionCondition<TPuzzle>
-    for Phase2AdditionalSolutionCondition<TPuzzle>
-{
+impl AdditionalSolutionCondition<KPuzzle> for Phase2AdditionalSolutionCondition<KPuzzle> {
     fn should_accept_solution(
         &mut self,
-        _candidate_pattern: &TPuzzle::Pattern,
+        _candidate_pattern: &KPattern,
         candidate_alg: &Alg,
     ) -> bool {
         let mut accept = true;
@@ -278,10 +276,9 @@ impl<TPuzzle: GenericPuzzle> AdditionalSolutionCondition<TPuzzle>
             .puzzle
             .puzzle_transformation_from_alg(candidate_alg)
             .expect("Internal error applying an alg from a search result.");
-        let pattern_with_alg_applied = TPuzzle::pattern_apply_transformation(
-            &self.phase2_search_full_pattern,
-            &transformation,
-        );
+        let pattern_with_alg_applied = &self
+            .phase2_search_full_pattern
+            .apply_transformation(&transformation);
 
         /******** Centers ********/
 

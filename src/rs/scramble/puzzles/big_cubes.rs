@@ -21,8 +21,8 @@ const NUM_6X6X6_RANDOM_MOVES: usize = 80;
 const NUM_7X7X7_RANDOM_MOVES: usize = 100;
 
 struct ScrambleInfo {
-    generators: SearchGenerators,
-    canonical_fsm: CanonicalFSM,
+    generators: SearchGenerators<KPuzzle>,
+    canonical_fsm: CanonicalFSM<KPuzzle>,
 }
 
 impl ScrambleInfo {

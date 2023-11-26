@@ -44,10 +44,10 @@ pub struct GodsAlgorithmSearch {
     // params
     kpuzzle: KPuzzle,
     start_pattern: Option<KPattern>,
-    search_moves: SearchGenerators,
+    search_moves: SearchGenerators<KPuzzle>,
 
     // state
-    canonical_fsm: CanonicalFSM,
+    canonical_fsm: CanonicalFSM<KPuzzle>,
     table: GodsAlgorithmTable,
     bulk_queues: Vec<BulkQueue<QueueItem>>, // TODO: `HashMap` instead of `Vec` for the other layer for sparse rep?
 

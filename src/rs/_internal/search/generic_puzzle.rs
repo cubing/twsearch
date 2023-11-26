@@ -1,14 +1,16 @@
+use std::fmt::Debug;
+
 use cubing::{
     alg::{Alg, Move},
     kpuzzle::{InvalidAlgError, KPattern, KPuzzle, KTransformation},
 };
 
-pub trait GenericPuzzle {
-    // Define generic types here which methods will be able to utilize.
-    type Pattern: Eq;
-    type Transformation;
-    // type Transformation;
+// TODO: split this into 3 related traits.
+pub trait GenericPuzzle: Clone + Debug {
+    type Pattern: Eq + Clone + Debug;
+    type Transformation: Eq + Clone + Debug;
 
+    // Functions "defined on the puzzle".
     fn puzzle_default_pattern(&self) -> Self::Pattern;
     fn puzzle_transformation_from_alg(
         &self,
@@ -18,22 +20,36 @@ pub trait GenericPuzzle {
         &self,
         r#move: &Move,
     ) -> Result<Self::Transformation, InvalidAlgError>;
-    fn puzzle_identity_transformation(&self, r#move: &Move) -> Self::Transformation; // TODO: also define this on `KPuzzle` itself.
+    fn puzzle_identity_transformation(&self) -> Self::Transformation; // TODO: also define this on `KPuzzle` itself.
+    fn puzzle_definition_moves(&self) -> Vec<&Move>;
 
-    fn transformation_kpuzzle(transformation: &Self::Transformation) -> &Self;
+    // Functions "defined on the pattern".
+    fn transformation_puzzle(transformation: &Self::Transformation) -> &Self;
     fn transformation_invert(transformation: &Self::Transformation) -> Self::Transformation;
     fn transformation_apply_transformation(
         transformation: &Self::Transformation,
         transformation_to_apply: &Self::Transformation,
     ) -> Self::Transformation;
+    fn transformation_apply_transformation_into(
+        transformation: &Self::Transformation,
+        transformation_to_apply: &Self::Transformation,
+        into_transformation: &mut Self::Transformation,
+    );
+    fn transformation_hash_u64(transformation: &Self::Transformation) -> u64;
+    // TODO: efficient `order` function?
 
-    fn pattern_kpuzzle(pattern: &Self::Pattern) -> &Self;
+    // Functions "defined on the transformation".
+    fn pattern_puzzle(pattern: &Self::Pattern) -> &Self;
     fn pattern_apply_transformation(
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
     ) -> Self::Pattern;
-
-    fn TODO_get_kpuzzle(&self) -> &KPuzzle;
+    fn pattern_apply_transformation_into(
+        pattern: &Self::Pattern,
+        transformation_to_apply: &Self::Transformation,
+        into_pattern: &mut Self::Pattern,
+    );
+    fn pattern_hash_u64(pattern: &Self::Pattern) -> u64;
 }
 
 impl GenericPuzzle for KPuzzle {
@@ -58,11 +74,21 @@ impl GenericPuzzle for KPuzzle {
         self.transformation_from_move(r#move)
     }
 
-    fn puzzle_identity_transformation(&self, r#move: &Move) -> Self::Transformation {
+    fn puzzle_identity_transformation(&self) -> Self::Transformation {
         self.identity_transformation()
     }
 
-    fn transformation_kpuzzle(transformation: &Self::Transformation) -> &Self {
+    fn puzzle_definition_moves(&self) -> Vec<&Move> {
+        let def = self.definition();
+        let moves = def.moves.keys();
+        if let Some(derived_moves) = &def.derived_moves {
+            moves.chain(derived_moves.keys()).collect()
+        } else {
+            moves.collect()
+        }
+    }
+
+    fn transformation_puzzle(transformation: &Self::Transformation) -> &Self {
         transformation.kpuzzle()
     }
 
@@ -77,7 +103,19 @@ impl GenericPuzzle for KPuzzle {
         transformation.apply_transformation(transformation_to_apply)
     }
 
-    fn pattern_kpuzzle(pattern: &Self::Pattern) -> &Self {
+    fn transformation_apply_transformation_into(
+        transformation: &Self::Transformation,
+        transformation_to_apply: &Self::Transformation,
+        into_transformation: &mut Self::Transformation,
+    ) {
+        transformation.apply_transformation_into(transformation_to_apply, into_transformation);
+    }
+
+    fn transformation_hash_u64(transformation: &Self::Transformation) -> u64 {
+        transformation.hash()
+    }
+
+    fn pattern_puzzle(pattern: &Self::Pattern) -> &Self {
         pattern.kpuzzle()
     }
 
@@ -88,8 +126,15 @@ impl GenericPuzzle for KPuzzle {
         pattern.apply_transformation(transformation_to_apply)
     }
 
-    #[allow(non_snake_case)]
-    fn TODO_get_kpuzzle(&self) -> &KPuzzle {
-        return self;
+    fn pattern_apply_transformation_into(
+        pattern: &Self::Pattern,
+        transformation_to_apply: &Self::Transformation,
+        into_pattern: &mut Self::Pattern,
+    ) {
+        pattern.apply_transformation_into(transformation_to_apply, into_pattern);
+    }
+
+    fn pattern_hash_u64(pattern: &Self::Pattern) -> u64 {
+        pattern.hash()
     }
 }

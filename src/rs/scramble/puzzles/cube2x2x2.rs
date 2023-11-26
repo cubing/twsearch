@@ -1,4 +1,4 @@
-use cubing::{alg::Alg, puzzles::cube2x2x2_kpuzzle};
+use cubing::{alg::Alg, kpuzzle::KPuzzle, puzzles::cube2x2x2_kpuzzle};
 
 use super::{
     super::randomize::{
@@ -19,7 +19,9 @@ pub fn scramble_2x2x2() -> Alg {
             OrbitOrientationConstraint::OrientationsMustSumToZero,
         );
         let generators = generators_from_vec_str(vec!["U", "L", "F", "R"]);
-        if let Some(scramble) = filtered_search(&scramble_pattern, generators, Some(4), Some(11)) {
+        if let Some(scramble) =
+            filtered_search::<KPuzzle>(&scramble_pattern, generators, Some(4), Some(11))
+        {
             return scramble;
         }
     }

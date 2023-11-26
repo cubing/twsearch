@@ -1,11 +1,10 @@
 use std::{
     collections::HashMap,
+    marker::PhantomData,
     ops::{AddAssign, BitAndAssign},
 };
 
-use cubing::kpuzzle::KTransformation;
-
-use crate::_internal::{PuzzleError, SearchGenerators};
+use crate::_internal::{GenericPuzzle, PuzzleError, SearchGenerators};
 
 const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
 
@@ -22,8 +21,12 @@ impl BitAndAssign for MoveClassMask {
     }
 }
 
-fn do_transformations_commute(t1: &KTransformation, t2: &KTransformation) -> bool {
-    t1.apply_transformation(t2) == t2.apply_transformation(t1)
+fn do_transformations_commute<TPuzzle: GenericPuzzle>(
+    t1: &TPuzzle::Transformation,
+    t2: &TPuzzle::Transformation,
+) -> bool {
+    TPuzzle::transformation_apply_transformation(t1, t2)
+        == TPuzzle::transformation_apply_transformation(t2, t1)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
@@ -79,7 +82,7 @@ impl StateToMask {
 }
 
 #[derive(Debug)]
-pub struct CanonicalFSM {
+pub struct CanonicalFSM<TPuzzle: GenericPuzzle> {
     // disallowed_move_classes, indexed by state ordinal, holds the set of move classes that should
     // not be made from this state.
     // disallowed_move_classes: StateToMask,
@@ -87,11 +90,15 @@ pub struct CanonicalFSM {
     pub(crate) next_state_lookup: Vec<Vec<CanonicalFSMState>>,
     // commutes: Vec<MoveClassMask>,
     pub(crate) move_class_indices: Vec<MoveClassIndex>,
+
+    _marker: PhantomData<TPuzzle>,
 }
 
-impl CanonicalFSM {
+impl<TPuzzle: GenericPuzzle> CanonicalFSM<TPuzzle> {
     // TODO: Return a more specific error.
-    pub fn try_new(generators: SearchGenerators) -> Result<CanonicalFSM, PuzzleError> {
+    pub fn try_new(
+        generators: SearchGenerators<TPuzzle>,
+    ) -> Result<CanonicalFSM<TPuzzle>, PuzzleError> {
         let num_move_classes = generators.grouped.len();
         if num_move_classes > MAX_NUM_MOVE_CLASSES {
             return Err(PuzzleError {
@@ -112,7 +119,7 @@ impl CanonicalFSM {
         // - T-perm and `(R2 U2)3` commute.
         for i in 0..num_move_classes {
             for j in 0..num_move_classes {
-                if !do_transformations_commute(
+                if !do_transformations_commute::<TPuzzle>(
                     &generators.grouped[i][0].transformation,
                     &generators.grouped[j][0].transformation,
                 ) {
@@ -199,6 +206,8 @@ impl CanonicalFSM {
             next_state_lookup,
             // commutes,
             move_class_indices,
+
+            _marker: PhantomData,
         })
     }
 

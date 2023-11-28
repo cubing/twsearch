@@ -16,10 +16,10 @@ use super::{
 const PHASE1_PRUNE_TABLE_SIZE: usize = 735471; // this is 24 choose 8
 const PHASE1_MOVE_COUNT: usize = 33;
 const NUM_COORDINATES_C8_4D2: usize = 35;
-const NUM_COORDINATES_C16_8: usize = 12870;
+const NUM_COORDINATES_C16_8D2: usize = 6435;
 const NUM_COORDINATES_EP: usize = 2;
 const PHASE2_PRUNE_TABLE_SIZE: usize =
-    NUM_COORDINATES_C8_4D2 * NUM_COORDINATES_C16_8 * NUM_COORDINATES_EP;
+    NUM_COORDINATES_C8_4D2 * NUM_COORDINATES_C16_8D2 * NUM_COORDINATES_EP;
 const PHASE2_MOVE_COUNT: usize = 23;
 const MOVE_TABLE_UNINITIALIZED_VALUE: Phase2Coordinate = Phase2Coordinate(usize::MAX); // larger than any symcoord
 
@@ -111,9 +111,9 @@ impl Default for Coord84 {
 }
 
 struct Coord168 {
-    pack168hi: [i32; 256],
+    pack168hi: [i32; 128],
     pack168lo: [i32; 256],
-    c168move: [[Phase2Coordinate; PHASE2_MOVE_COUNT]; NUM_COORDINATES_C16_8],
+    c168move: [[Phase2Coordinate; PHASE2_MOVE_COUNT]; NUM_COORDINATES_C16_8D2],
 }
 
 impl Coord for Coord168 {
@@ -127,6 +127,9 @@ impl Coord for Coord168 {
                 bits += 1
             }
         }
+        if bits >= 32768 {
+            bits = 65535 - bits;
+        }
         Phase2Coordinate((self.pack168hi[bits >> 8] + self.pack168lo[bits & 255]) as usize)
     }
 
@@ -138,9 +141,9 @@ impl Coord for Coord168 {
 impl Default for Coord168 {
     fn default() -> Self {
         Self {
-            pack168hi: [0; 256],
-            pack168lo: [0; 256],
-            c168move: [[Phase2Coordinate(0); PHASE2_MOVE_COUNT]; NUM_COORDINATES_C16_8],
+            pack168hi: [-1; 128],
+            pack168lo: [-1; 256],
+            c168move: [[Phase2Coordinate(0); PHASE2_MOVE_COUNT]; NUM_COORDINATES_C16_8D2],
         }
     }
 }
@@ -222,12 +225,8 @@ impl Phase2SymmetryTables {
                 at += 1;
             }
         }
-        for i in 0..256 {
-            self.coord_168.pack168hi[i] = -1;
-            self.coord_168.pack168lo[i] = -1;
-        }
         at = 0;
-        for i in 0..0x10000 {
+        for i in 0..0x8000 {
             if bit_count(i) == 8 {
                 if self.coord_168.pack168hi[i >> 8] < 0 {
                     self.coord_168.pack168hi[i >> 8] = at;
@@ -324,7 +323,7 @@ impl Phase2SymmetryTables {
     }
 
     fn pack_coords(c84: Phase2Coordinate, c168: Phase2Coordinate, ep: Phase2Coordinate) -> usize {
-        c84.0 + NUM_COORDINATES_C8_4D2 * (c168.0 + NUM_COORDINATES_C16_8 * ep.0)
+        c84.0 + NUM_COORDINATES_C8_4D2 * (c168.0 + NUM_COORDINATES_C16_8D2 * ep.0)
     }
 
     pub(crate) fn init_prune_table(&mut self) {
@@ -350,7 +349,7 @@ impl Phase2SymmetryTables {
         for d in 0..255 {
             let mut written = 0;
             for epsrc in 0..NUM_COORDINATES_EP {
-                for c168src in 0..NUM_COORDINATES_C16_8 {
+                for c168src in 0..NUM_COORDINATES_C16_8D2 {
                     for c84src in 0..NUM_COORDINATES_C8_4D2 {
                         if self.phase2_prune_table[Self::pack_coords(
                             Phase2Coordinate(c84src),

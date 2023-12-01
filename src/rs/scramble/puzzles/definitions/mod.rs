@@ -1,4 +1,4 @@
-use cubing::{kpattern_from_json_file, kpuzzle_from_json_file};
+use cubing::kpuzzle::{kpattern_from_json_file, kpuzzle_from_json_file};
 
 kpuzzle_from_json_file!(pub(crate), cube3x3x3_centerless, "3x3x3-centerless.kpuzzle.json");
 kpattern_from_json_file!(pub(crate), cube3x3x3_centerless_g1_target, "3x3x3-G1-centerless.target-pattern.json", cube3x3x3_centerless_kpuzzle());

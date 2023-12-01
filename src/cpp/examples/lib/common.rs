@@ -22,7 +22,7 @@ pub fn run_tests(test_fn: fn() -> Result<(), ()>) {
 /********/
 
 static BIN_PATH_CPP: &str = "./build/bin/twsearch";
-static BIN_PATH_RUST: &str = "cargo";
+static BIN_PATH_RUST: &str = "./target/release/twsearch-cpp-wrapper";
 
 #[allow(dead_code)] // Workaround for how we are hacking together our tests.
 pub enum CliCommand {
@@ -41,11 +41,6 @@ impl CliCommand {
         match self {
             CliCommand::Cpp() => &[],
             CliCommand::Rust() => &[
-                "run",
-                "--package",
-                "twsearch-cpp-wrapper",
-                "--quiet", // Suppress deprecation warnings for transitive dependencies (`buf_redux`, `multipart`): https://github.com/tomaka/rouille/issues/271
-                "--",
                 "search",
                 "--debug-print-serialized-json",
                 "--num-threads",

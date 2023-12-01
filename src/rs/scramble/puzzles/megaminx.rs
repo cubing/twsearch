@@ -1,4 +1,4 @@
-use cubing::alg::{Alg, AlgNode, Move, Newline};
+use cubing::alg::{parse_move, Alg, AlgNode, Move, Newline};
 use rand::{thread_rng, Rng};
 
 const NUM_LINES: usize = 7;
@@ -8,9 +8,9 @@ pub fn scramble_megaminx() -> Alg {
     let mut rng = thread_rng();
     let mut alg_nodes = Vec::<AlgNode>::new();
 
-    let r_array: [Move; 2] = ["R++".parse().unwrap(), "R--".parse().unwrap()];
-    let d_array: [Move; 2] = ["D++".parse().unwrap(), "D--".parse().unwrap()];
-    let u_array: [Move; 2] = ["U".parse().unwrap(), "U'".parse().unwrap()];
+    let r_array: [Move; 2] = [parse_move!("R++"), parse_move!("R--")];
+    let d_array: [Move; 2] = [parse_move!("D++"), parse_move!("D--")];
+    let u_array: [Move; 2] = [parse_move!("U"), parse_move!("U'")];
 
     for _ in 0..NUM_LINES {
         let mut random_choice: usize = 0;

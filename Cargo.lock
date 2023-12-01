@@ -324,9 +324,19 @@ dependencies = [
 
 [[package]]
 name = "cubing"
-version = "0.11.1"
+version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62629c63b1ccfca69e5613a86e1ae56a88dbe6cb3f564586f00ed2c7ac5ffa97"
+checksum = "bf4f9105254075eed50320297e8825bcd59f099d10d3ba94c5d6a25aed806165"
+dependencies = [
+ "cubing_core",
+ "cubing_macros",
+]
+
+[[package]]
+name = "cubing_core"
+version = "0.12.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47d5f5416de5536496a17c6f4534211b2216f80f4bc2b0bad2cbebd2ed8b4ad1"
 dependencies = [
  "cityhasher",
  "derive_more",
@@ -335,6 +345,17 @@ dependencies = [
  "paste",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "cubing_macros"
+version = "0.12.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "042c264864650e52d7eb7bee6a2106a48a8c26b46fbb075ff03973bcffe4bb38"
+dependencies = [
+ "cubing_core",
+ "litrs",
+ "quote",
 ]
 
 [[package]]
@@ -619,6 +640,15 @@ name = "linux-raw-sys"
 version = "0.4.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3852614a3bd9ca9804678ba6be5e3b8ce76dfc902cae004e3e0c44051b6e88db"
+
+[[package]]
+name = "litrs"
+version = "0.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b4ce301924b7887e9d637144fdade93f9dfff9b60981d4ac161db09720d39aa5"
+dependencies = [
+ "proc-macro2",
+]
 
 [[package]]
 name = "log"

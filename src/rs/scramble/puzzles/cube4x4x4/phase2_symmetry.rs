@@ -205,6 +205,13 @@ pub(crate) struct Phase2SymmetryTables {
 
 const PRUNE_TABLE_UNINITIALIZED_VALUE: PruneTableEntryType = PruneTableEntryType::MAX;
 
+pub(crate) struct Phase2CoordSet {
+    c84: Phase2Coordinate, c168: Phase2Coordinate, ep: Phase2Coordinate,
+}
+
+pub(crate) const Phase2SolvedState: Phase2CoordSet =
+       Phase2CoordSet {c84: Phase2Coordinate(0), c168: Phase2Coordinate(0), ep: Phase2Coordinate(0)};
+
 impl Phase2SymmetryTables {
     pub(crate) fn new(kpuzzle: KPuzzle) -> Self {
         Self {

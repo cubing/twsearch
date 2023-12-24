@@ -26,7 +26,7 @@ pub trait GenericPuzzleCore: Clone + Debug {
     fn pattern_hash_u64(pattern: &Self::Pattern) -> u64;
 }
 
-pub trait GenericPuzzle: Clone + Debug + GenericPuzzleCore {
+pub trait GenericPuzzle: GenericPuzzleCore {
     // Functions "defined on the puzzle".
     fn puzzle_default_pattern(&self) -> Self::Pattern;
 

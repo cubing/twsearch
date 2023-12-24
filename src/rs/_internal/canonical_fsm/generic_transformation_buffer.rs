@@ -1,4 +1,4 @@
-use crate::_internal::{GenericPuzzleCore, GenericPuzzle};
+use crate::_internal::{GenericPuzzle, GenericPuzzleCore};
 
 // TOOD: make this work for patterns using a shared implementation.
 pub struct GenericTransformationBuffer<TPuzzle: GenericPuzzleCore> {

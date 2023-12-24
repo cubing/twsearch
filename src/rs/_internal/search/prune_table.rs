@@ -40,7 +40,7 @@ impl<TPuzzle: GenericPuzzleCore> PruneTableMutableData<TPuzzle> {
     // Returns a heurstic depth for the given pattern.
     pub fn lookup(&self, pattern: &TPuzzle::Pattern) -> usize {
         let pattern_hash = self.hash_pattern(pattern);
-        let table_value = self.pattern_hash_to_depth[pattern_hash]; 
+        let table_value = self.pattern_hash_to_depth[pattern_hash];
         if table_value == UNINITIALIZED_DEPTH {
             (self.current_pruning_depth as usize) + 1
         } else {

@@ -5,7 +5,7 @@ use rand::{seq::SliceRandom, thread_rng};
 
 use crate::_internal::{
     cli::options::{Generators, MetricEnum},
-    GenericPuzzleCore, PuzzleError, GenericPuzzle,
+    GenericPuzzle, GenericPuzzleCore, PuzzleError,
 };
 
 use super::GenericTransformationBuffer;

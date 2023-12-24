@@ -1,7 +1,8 @@
 use std::fmt::Debug;
 
 use cubing::{
-    alg::{Alg, Move}, kpuzzle::InvalidAlgError,
+    alg::{Alg, Move},
+    kpuzzle::InvalidAlgError,
 };
 
 // TODO: split this into 3 related traits.
@@ -15,11 +16,6 @@ pub trait GenericPuzzleCore: Clone + Debug {
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
     ) -> Self::Pattern;
-    fn pattern_apply_transformation_into(
-        pattern: &Self::Pattern,
-        transformation_to_apply: &Self::Transformation,
-        into_pattern: &mut Self::Pattern,
-    );
 
     // Functions "defined on the pattern".
     // fn pattern_puzzle(pattern: &Self::Pattern) -> &Self; // TODO: add an additional trait for this.
@@ -56,4 +52,11 @@ pub trait GenericPuzzle: GenericPuzzleCore {
     );
     fn transformation_hash_u64(transformation: &Self::Transformation) -> u64;
     // TODO: efficient `order` function?
+
+    // Functions "defined on the pattern".
+    fn pattern_apply_transformation_into(
+        pattern: &Self::Pattern,
+        transformation_to_apply: &Self::Transformation,
+        into_pattern: &mut Self::Pattern,
+    );
 }

@@ -4,7 +4,7 @@ use std::{
     ops::{AddAssign, BitAndAssign},
 };
 
-use crate::_internal::{GenericPuzzleCore, PuzzleError, SearchGenerators, GenericPuzzle};
+use crate::_internal::{GenericPuzzle, GenericPuzzleCore, PuzzleError, SearchGenerators};
 
 const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
 
@@ -91,17 +91,19 @@ impl<TPuzzle: GenericPuzzle> CanonicalFSM<TPuzzle> {
     pub fn try_new(
         generators: SearchGenerators<TPuzzle>,
     ) -> Result<CanonicalFSM<TPuzzle>, PuzzleError> {
-        let do_transformations_commute: fn (&TPuzzle::Transformation, &TPuzzle::Transformation) -> bool = |t1, t2| SearchGenerators::<TPuzzle>::do_transformations_commute(t1, t2);
+        let do_transformations_commute: fn(
+            &TPuzzle::Transformation,
+            &TPuzzle::Transformation,
+        ) -> bool = |t1, t2| SearchGenerators::<TPuzzle>::do_transformations_commute(t1, t2);
         Self::try_new_with_do_transformations_commute(generators, do_transformations_commute)
     }
-
 }
 
 impl<TPuzzle: GenericPuzzleCore> CanonicalFSM<TPuzzle> {
     // TODO: Return a more specific error.
     pub fn try_new_with_do_transformations_commute(
         generators: SearchGenerators<TPuzzle>,
-        do_transformations_commute: fn (&TPuzzle::Transformation, &TPuzzle::Transformation) -> bool,
+        do_transformations_commute: fn(&TPuzzle::Transformation, &TPuzzle::Transformation) -> bool,
     ) -> Result<CanonicalFSM<TPuzzle>, PuzzleError> {
         let num_move_classes = generators.grouped.len();
         if num_move_classes > MAX_NUM_MOVE_CLASSES {

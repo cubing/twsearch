@@ -12,7 +12,7 @@ use crate::_internal::{
     SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
-use super::{GenericPuzzleCore, GenericPuzzle};
+use super::{GenericPuzzle, GenericPuzzleCore};
 
 const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase
 
@@ -171,12 +171,18 @@ impl<TPuzzle: GenericPuzzle> IDFSearch<TPuzzle> {
         random_start: bool,
         min_prune_table_size: Option<usize>,
     ) -> Result<Self, PuzzleError> {
-
         let search_generators =
             SearchGenerators::<TPuzzle>::try_new(&tpuzzle, &generators, metric, random_start)?;
-            
+
         let canonical_fsm = CanonicalFSM::try_new(search_generators.clone())?; // TODO: avoid a clone
-        Self::try_new_core(tpuzzle, target_pattern, search_logger, min_prune_table_size, search_generators, canonical_fsm)
+        Self::try_new_core(
+            tpuzzle,
+            target_pattern,
+            search_logger,
+            min_prune_table_size,
+            search_generators,
+            canonical_fsm,
+        )
     }
 }
 

@@ -13,3 +13,5 @@ pub use search_logger::*;
 
 mod generic_puzzle;
 pub(crate) use generic_puzzle::*;
+
+mod generic_puzzle_for_kpuzzle;

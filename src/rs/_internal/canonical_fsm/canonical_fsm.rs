@@ -4,7 +4,7 @@ use std::{
     ops::{AddAssign, BitAndAssign},
 };
 
-use crate::_internal::{GenericPuzzle, PuzzleError, SearchGenerators};
+use crate::_internal::{GenericPuzzleCore, PuzzleError, SearchGenerators, GenericPuzzle};
 
 const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
 
@@ -19,14 +19,6 @@ impl BitAndAssign for MoveClassMask {
     fn bitand_assign(&mut self, rhs: Self) {
         self.0 = self.0 & rhs.0
     }
-}
-
-fn do_transformations_commute<TPuzzle: GenericPuzzle>(
-    t1: &TPuzzle::Transformation,
-    t2: &TPuzzle::Transformation,
-) -> bool {
-    TPuzzle::transformation_apply_transformation(t1, t2)
-        == TPuzzle::transformation_apply_transformation(t2, t1)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
@@ -82,7 +74,7 @@ impl StateToMask {
 }
 
 #[derive(Debug)]
-pub struct CanonicalFSM<TPuzzle: GenericPuzzle> {
+pub struct CanonicalFSM<TPuzzle: GenericPuzzleCore> {
     // disallowed_move_classes, indexed by state ordinal, holds the set of move classes that should
     // not be made from this state.
     // disallowed_move_classes: StateToMask,
@@ -98,6 +90,18 @@ impl<TPuzzle: GenericPuzzle> CanonicalFSM<TPuzzle> {
     // TODO: Return a more specific error.
     pub fn try_new(
         generators: SearchGenerators<TPuzzle>,
+    ) -> Result<CanonicalFSM<TPuzzle>, PuzzleError> {
+        let do_transformations_commute: fn (&TPuzzle::Transformation, &TPuzzle::Transformation) -> bool = |t1, t2| SearchGenerators::<TPuzzle>::do_transformations_commute(t1, t2);
+        Self::try_new_with_do_transformations_commute(generators, do_transformations_commute)
+    }
+
+}
+
+impl<TPuzzle: GenericPuzzleCore> CanonicalFSM<TPuzzle> {
+    // TODO: Return a more specific error.
+    pub fn try_new_with_do_transformations_commute(
+        generators: SearchGenerators<TPuzzle>,
+        do_transformations_commute: fn (&TPuzzle::Transformation, &TPuzzle::Transformation) -> bool,
     ) -> Result<CanonicalFSM<TPuzzle>, PuzzleError> {
         let num_move_classes = generators.grouped.len();
         if num_move_classes > MAX_NUM_MOVE_CLASSES {
@@ -119,7 +123,7 @@ impl<TPuzzle: GenericPuzzle> CanonicalFSM<TPuzzle> {
         // - T-perm and `(R2 U2)3` commute.
         for i in 0..num_move_classes {
             for j in 0..num_move_classes {
-                if !do_transformations_commute::<TPuzzle>(
+                if !do_transformations_commute(
                     &generators.grouped[i][0].transformation,
                     &generators.grouped[j][0].transformation,
                 ) {

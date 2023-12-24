@@ -5,13 +5,13 @@ use rand::{seq::SliceRandom, thread_rng};
 
 use crate::_internal::{
     cli::options::{Generators, MetricEnum},
-    GenericPuzzle, PuzzleError,
+    GenericPuzzleCore, PuzzleError, GenericPuzzle,
 };
 
 use super::GenericTransformationBuffer;
 
 #[derive(Clone, Debug)]
-pub struct MoveTransformationInfo<TPuzzle: GenericPuzzle> {
+pub struct MoveTransformationInfo<TPuzzle: GenericPuzzleCore> {
     #[allow(dead_code)] // TODO
     pub r#move: Move,
     // move_class: MoveClass, // TODO: do we need this?
@@ -24,7 +24,7 @@ pub struct MoveTransformationInfo<TPuzzle: GenericPuzzle> {
 pub type MoveTransformationMultiples<TPuzzle> = Vec<MoveTransformationInfo<TPuzzle>>;
 
 #[derive(Clone, Debug)]
-pub struct SearchGenerators<TPuzzle: GenericPuzzle> {
+pub struct SearchGenerators<TPuzzle: GenericPuzzleCore> {
     // TODO: figure out the most reusable abstraction
     pub grouped: Vec<MoveTransformationMultiples<TPuzzle>>,
     pub flat: Vec<MoveTransformationInfo<TPuzzle>>, // TODO: avoid duplicate data
@@ -167,5 +167,13 @@ impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
         }
 
         Ok(Self { grouped, flat })
+    }
+
+    pub fn do_transformations_commute(
+        t1: &TPuzzle::Transformation,
+        t2: &TPuzzle::Transformation,
+    ) -> bool {
+        TPuzzle::transformation_apply_transformation(t1, t2)
+            == TPuzzle::transformation_apply_transformation(t2, t1)
     }
 }

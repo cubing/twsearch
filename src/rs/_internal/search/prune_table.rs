@@ -7,7 +7,7 @@ use crate::_internal::{
     CANONICAL_FSM_START_STATE,
 };
 
-use super::{idf_search::IDFSearchAPIData, GenericPuzzle};
+use super::{idf_search::IDFSearchAPIData, GenericPuzzleCore};
 
 pub(crate) type PruneTableEntryType = u8;
 // 0 is uninitialized, all other values are stored as 1+depth.
@@ -17,10 +17,10 @@ const MAX_PRUNE_TABLE_DEPTH: PruneTableEntryType = PruneTableEntryType::MAX - 1;
 
 const DEFAULT_MIN_PRUNE_TABLE_SIZE: usize = 1 << 20;
 
-struct PruneTableImmutableData<TPuzzle: GenericPuzzle> {
+struct PruneTableImmutableData<TPuzzle: GenericPuzzleCore> {
     search_api_data: Arc<IDFSearchAPIData<TPuzzle>>,
 }
-struct PruneTableMutableData<TPuzzle: GenericPuzzle> {
+struct PruneTableMutableData<TPuzzle: GenericPuzzleCore> {
     min_size: usize,               // power of 2
     prune_table_size: usize,       // power of 2
     prune_table_index_mask: usize, // prune_table_size - 1
@@ -31,7 +31,7 @@ struct PruneTableMutableData<TPuzzle: GenericPuzzle> {
     _marker: PhantomData<TPuzzle>, // https://doc.rust-lang.org/nomicon/phantom-data.html
 }
 
-impl<TPuzzle: GenericPuzzle> PruneTableMutableData<TPuzzle> {
+impl<TPuzzle: GenericPuzzleCore> PruneTableMutableData<TPuzzle> {
     fn hash_pattern(&self, pattern: &TPuzzle::Pattern) -> usize {
         (TPuzzle::pattern_hash_u64(pattern) as usize) & self.prune_table_index_mask
         // TODO: use modulo when the size is not a power of 2.
@@ -40,7 +40,7 @@ impl<TPuzzle: GenericPuzzle> PruneTableMutableData<TPuzzle> {
     // Returns a heurstic depth for the given pattern.
     pub fn lookup(&self, pattern: &TPuzzle::Pattern) -> usize {
         let pattern_hash = self.hash_pattern(pattern);
-        let table_value = self.pattern_hash_to_depth[pattern_hash];
+        let table_value = self.pattern_hash_to_depth[pattern_hash]; 
         if table_value == UNINITIALIZED_DEPTH {
             (self.current_pruning_depth as usize) + 1
         } else {
@@ -56,12 +56,12 @@ impl<TPuzzle: GenericPuzzle> PruneTableMutableData<TPuzzle> {
     }
 }
 
-pub struct PruneTable<TPuzzle: GenericPuzzle> {
+pub struct PruneTable<TPuzzle: GenericPuzzleCore> {
     immutable: PruneTableImmutableData<TPuzzle>,
     mutable: PruneTableMutableData<TPuzzle>,
 }
 
-impl<TPuzzle: GenericPuzzle> PruneTable<TPuzzle> {
+impl<TPuzzle: GenericPuzzleCore> PruneTable<TPuzzle> {
     pub fn new(
         search_api_data: Arc<IDFSearchAPIData<TPuzzle>>,
         search_logger: Arc<SearchLogger>,

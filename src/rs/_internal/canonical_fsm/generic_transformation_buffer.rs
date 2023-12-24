@@ -1,7 +1,7 @@
-use crate::_internal::GenericPuzzle;
+use crate::_internal::{GenericPuzzleCore, GenericPuzzle};
 
 // TOOD: make this work for patterns using a shared implementation.
-pub struct GenericTransformationBuffer<TPuzzle: GenericPuzzle> {
+pub struct GenericTransformationBuffer<TPuzzle: GenericPuzzleCore> {
     a: TPuzzle::Transformation,
     b: TPuzzle::Transformation,
     // In some rough benchmarks, using a boolean to track the current pattern was just a tad faster than using `std::mem::swap(…)`.

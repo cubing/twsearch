@@ -95,14 +95,3 @@ impl GenericPuzzle for KPuzzle {
         pattern.apply_transformation_into(transformation_to_apply, into_pattern);
     }
 }
-
-/*
-impl GenericPuzzle for Phase2SymmetryTables {
-  type Pattern = Phase2CoordinateSet;
-  type Transformation = usize;
-  fn puzzle_default_pattern(&self) -> Self::Pattern {
-      Phase2SolvedState
-  }
-
-}
-*/

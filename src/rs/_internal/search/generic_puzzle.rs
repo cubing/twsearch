@@ -25,8 +25,6 @@ pub trait GenericPuzzleCore: Clone + Debug {
 pub trait GenericPuzzle: GenericPuzzleCore {
     // Functions "defined on the puzzle".
     fn puzzle_default_pattern(&self) -> Self::Pattern;
-
-    // Functions "defined on the puzzle".
     fn puzzle_transformation_from_alg(
         &self,
         alg: &Alg,

@@ -1,12 +1,12 @@
 use std::{collections::HashMap, mem, vec};
 
-use cubing::kpuzzle::{KPattern, KPuzzle};
+use cubing::kpuzzle::{KPattern, KPuzzle, KTransformation};
 use thousands::Separable;
 
 use crate::_internal::{
     cli::options::{Generators, MetricEnum},
     gods_algorithm::factor_number::factor_number,
-    CanonicalFSM, CanonicalFSMState, PuzzleError, SearchGenerators, CANONICAL_FSM_START_STATE,
+    CanonicalFSM, CanonicalFSMState, PuzzleError, SearchGenerators, CANONICAL_FSM_START_STATE, PopulatedInverseInfo,
 };
 
 type SearchDepth = usize;
@@ -44,7 +44,7 @@ pub struct GodsAlgorithmSearch {
     // params
     kpuzzle: KPuzzle,
     start_pattern: Option<KPattern>,
-    search_moves: SearchGenerators<KPuzzle>,
+    search_moves: SearchGenerators<KPuzzle, PopulatedInverseInfo<KPuzzle>>,
 
     // state
     canonical_fsm: CanonicalFSM<KPuzzle>,
@@ -68,7 +68,7 @@ impl GodsAlgorithmSearch {
         quantum_metric: &MetricEnum,
     ) -> Result<Self, PuzzleError> {
         let depth_to_patterns = vec![];
-        let search_moves = SearchGenerators::try_new(&kpuzzle, generators, quantum_metric, false)?;
+        let search_moves = SearchGenerators::try_new(&kpuzzle, generators, quantum_metric, false, KTransformation::invert)?;
         let canonical_fsm = CanonicalFSM::try_new(search_moves.clone())?;
         Ok(Self {
             kpuzzle,

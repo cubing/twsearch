@@ -10,24 +10,33 @@ use crate::_internal::{
 
 use super::GenericTransformationBuffer;
 
+
 #[derive(Clone, Debug)]
-pub struct MoveTransformationInfo<TPuzzle: GenericPuzzleCore> {
+pub struct BlankInverseInfo{}
+
+#[derive(Clone, Debug)]
+pub struct PopulatedInverseInfo<TPuzzle: GenericPuzzleCore>  {
+    pub inverse_transformation: TPuzzle::Transformation,
+}
+
+
+#[derive(Clone, Debug)]
+pub struct MoveTransformationInfo<TPuzzle: GenericPuzzleCore, InverseInfo: Clone> {
     #[allow(dead_code)] // TODO
     pub r#move: Move,
     // move_class: MoveClass, // TODO: do we need this?
     // pub metric_turns: i32,
     pub transformation: TPuzzle::Transformation,
-    #[allow(dead_code)] // TODO
-    pub inverse_transformation: TPuzzle::Transformation,
+    pub inverse_info: InverseInfo
 }
 
-pub type MoveTransformationMultiples<TPuzzle> = Vec<MoveTransformationInfo<TPuzzle>>;
+pub type MoveTransformationMultiples<TPuzzle, InverseInfo> = Vec<MoveTransformationInfo<TPuzzle, InverseInfo>>;
 
 #[derive(Clone, Debug)]
-pub struct SearchGenerators<TPuzzle: GenericPuzzleCore> {
+pub struct SearchGenerators<TPuzzle: GenericPuzzleCore, InverseInfo: Clone = BlankInverseInfo> {
     // TODO: figure out the most reusable abstraction
-    pub grouped: Vec<MoveTransformationMultiples<TPuzzle>>,
-    pub flat: Vec<MoveTransformationInfo<TPuzzle>>, // TODO: avoid duplicate data
+    pub grouped: Vec<MoveTransformationMultiples<TPuzzle, InverseInfo>>,
+    pub flat: Vec<MoveTransformationInfo<TPuzzle, InverseInfo>>, // TODO: avoid duplicate data
 }
 
 fn naïve_transformation_order<TPuzzle: GenericPuzzle>(
@@ -50,13 +59,14 @@ fn canonicalize_center_amount(order: i32, amount: i32) -> i32 {
     (amount + offset).rem_euclid(order) - offset
 }
 
-impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
+impl<TPuzzle: GenericPuzzle, InverseInfo: Clone> SearchGenerators<TPuzzle, InverseInfo> {
     pub fn try_new(
         kpuzzle: &TPuzzle,
         generators: &Generators,
         metric: &MetricEnum,
         random_start: bool,
-    ) -> Result<SearchGenerators<TPuzzle>, PuzzleError> {
+        inverse_info: fn (transformation: TPuzzle::Transformation) -> InverseInfo,
+    ) -> Result<SearchGenerators<TPuzzle, InverseInfo>, PuzzleError> {
         let identity_transformation = TPuzzle::puzzle_identity_transformation(kpuzzle);
 
         let mut seen_quantum_moves = HashMap::<QuantumMove, Move>::new();
@@ -72,8 +82,8 @@ impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
         };
 
         // TODO: actually calculate GCDs
-        let mut grouped = Vec::<MoveTransformationMultiples<TPuzzle>>::default();
-        let mut flat = Vec::<MoveTransformationInfo<TPuzzle>>::default();
+        let mut grouped = Vec::<MoveTransformationMultiples<TPuzzle, InverseInfo>>::default();
+        let mut flat = Vec::<MoveTransformationInfo<TPuzzle, InverseInfo>>::default();
         for r#move in moves {
             if let Some(existing) = seen_quantum_moves.get(&r#move.quantum) {
                 // TODO: deduplicate by quantum move.
@@ -117,11 +127,11 @@ impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
                         let transformation: &TPuzzle::Transformation =
                             move_multiple_transformation.current();
                         let transformation = transformation.clone();
-                        let info = MoveTransformationInfo::<TPuzzle> {
+                        let info = MoveTransformationInfo::<TPuzzle, InverseInfo> {
                             r#move: move_multiple,
                             // metric_turns: 1, // TODO
-                            inverse_transformation: TPuzzle::transformation_invert(&transformation),
                             transformation,
+                            inverse_info: inverse_info(transformation)
                         };
                         multiples.push(info.clone());
                         flat.push(info);
@@ -137,8 +147,8 @@ impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
                     let info = MoveTransformationInfo {
                         r#move: r#move.clone(),
                         // metric_turns: 1, // TODO
-                        inverse_transformation: TPuzzle::transformation_invert(&transformation),
                         transformation,
+                        inverse_info: inverse_info(transformation)
                     };
                     let is_self_inverse = info.transformation == info.inverse_transformation;
                     multiples.push(info.clone());
@@ -150,8 +160,8 @@ impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
                         let info = MoveTransformationInfo {
                             r#move: r#move.invert(),
                             // metric_turns: 1, // TODO
-                            inverse_transformation: TPuzzle::transformation_invert(&transformation),
                             transformation,
+                            inverse_info: inverse_info(transformation),
                         };
                         multiples.push(info.clone());
                         flat.push(info);

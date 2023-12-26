@@ -8,15 +8,15 @@ use super::{
         randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
     super::scramble_search::{filtered_search, generators_from_vec_str},
-    definitions::tetraminx_packed_kpuzzle,
+    definitions::tetraminx_kpuzzle,
 };
 
 pub fn scramble_pyraminx() -> Alg {
-    let packed_kpuzzle = tetraminx_packed_kpuzzle();
+    let kpuzzle = tetraminx_kpuzzle();
     loop {
-        let mut scramble_pattern = packed_kpuzzle.default_pattern();
+        let mut scramble_pattern = kpuzzle.default_pattern();
 
-        let orbit_info = &packed_kpuzzle.data.orbit_iteration_info[0];
+        let orbit_info = &kpuzzle.data.ordered_orbit_info[0];
         assert_eq!(orbit_info.name.0, "EDGES");
         randomize_orbit_naive(
             &mut scramble_pattern,
@@ -25,7 +25,7 @@ pub fn scramble_pyraminx() -> Alg {
             OrbitOrientationConstraint::OrientationsMustSumToZero,
         );
 
-        let orbit_info = &packed_kpuzzle.data.orbit_iteration_info[1];
+        let orbit_info = &kpuzzle.data.ordered_orbit_info[1];
         assert_eq!(orbit_info.name.0, "CORNERS");
         randomize_orbit_naive(
             &mut scramble_pattern,

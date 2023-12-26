@@ -127,12 +127,12 @@ struct puzdef {
   ull checksum;
   ull optionssum;
   vector<illegal_t> illegal;
-  char haveillegal, wildo, dense, uniq;
+  char haveillegal, wildo, dense, uniq, caninvert;
   int comparepos(const setval a, const setval b) const {
     return memcmp(a.dat, b.dat, totsize);
   }
   int canpackdense() const { return dense; }
-  int invertible() const { return uniq; }
+  int invertible() const { return caninvert; }
   void assignpos(setval a, const setval b) const {
     memcpy(a.dat, b.dat, totsize);
   }
@@ -143,6 +143,7 @@ struct puzdef {
   int numwrong(const setval a, const setval b, ull mask = -1) const;
   int permwrong(const setval a, const setval b, ull mask = -1) const;
   vector<int> cyccnts(const setval a, ull sets = -1) const;
+  vector<pair<int, int>> cyccnts2(const setval a, ull sets = -1) const;
   static ll order(const vector<int> cc);
   vector<allocsetval> stacksetvals;
   void mul(const setval a, const setval b, setval c) const {

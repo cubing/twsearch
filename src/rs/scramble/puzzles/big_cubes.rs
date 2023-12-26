@@ -1,15 +1,18 @@
 use std::sync::OnceLock;
 
-use cubing::alg::{Alg, AlgNode, Move};
+use cubing::{
+    alg::{Alg, AlgNode, Move},
+    kpuzzle::KPuzzle,
+};
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
 use crate::_internal::{
-    options::CustomGenerators, CanonicalFSM, MoveClassIndex, PackedKPuzzle, SearchGenerators,
+    options::CustomGenerators, CanonicalFSM, MoveClassIndex, SearchGenerators,
     CANONICAL_FSM_START_STATE,
 };
 
 use super::{
-    definitions::{cube5x5x5_packed_kpuzzle, cube6x6x6_packed_kpuzzle, cube7x7x7_packed_kpuzzle},
+    definitions::{cube5x5x5_kpuzzle, cube6x6x6_kpuzzle, cube7x7x7_kpuzzle},
     static_move_list::{add_random_suffixes_from, static_parsed_list, static_parsed_opt_list},
 };
 
@@ -23,9 +26,9 @@ struct ScrambleInfo {
 }
 
 impl ScrambleInfo {
-    pub fn new(packed_kpuzzle: &PackedKPuzzle, moves: Vec<Move>) -> Self {
+    pub fn new(kpuzzle: &KPuzzle, moves: Vec<Move>) -> Self {
         let generators = SearchGenerators::try_new(
-            packed_kpuzzle,
+            kpuzzle,
             &crate::_internal::options::Generators::Custom(CustomGenerators {
                 moves,
                 algs: vec![],
@@ -46,7 +49,7 @@ static CUBE5X5X5_SCRAMBLE_INFO_CELL: OnceLock<ScrambleInfo> = OnceLock::new();
 pub fn scramble_5x5x5() -> Alg {
     let scramble_info = CUBE5X5X5_SCRAMBLE_INFO_CELL.get_or_init(|| {
         ScrambleInfo::new(
-            &cube5x5x5_packed_kpuzzle(),
+            cube5x5x5_kpuzzle(),
             static_parsed_list(&[
                 "U", "Uw", //
                 "L", "Lw", //
@@ -70,7 +73,7 @@ static CUBE6X6X6_SCRAMBLE_INFO_CELL: OnceLock<ScrambleInfo> = OnceLock::new();
 pub fn scramble_6x6x6() -> Alg {
     let scramble_info = CUBE6X6X6_SCRAMBLE_INFO_CELL.get_or_init(|| {
         ScrambleInfo::new(
-            &cube6x6x6_packed_kpuzzle(),
+            cube6x6x6_kpuzzle(),
             static_parsed_list(&[
                 "U", "Uw", "3Uw", //
                 "L", "Lw", // Avoid adjacent moves that combine into a cube rotation.
@@ -88,7 +91,7 @@ static CUBE7X7X7_SCRAMBLE_INFO_CELL: OnceLock<ScrambleInfo> = OnceLock::new();
 pub fn scramble_7x7x7() -> Alg {
     let scramble_info = CUBE7X7X7_SCRAMBLE_INFO_CELL.get_or_init(|| {
         ScrambleInfo::new(
-            &cube7x7x7_packed_kpuzzle(),
+            cube7x7x7_kpuzzle(),
             static_parsed_list(&[
                 "U", "Uw", "3Uw", //
                 "L", "Lw", "3Lw", //

@@ -1,10 +1,12 @@
 extern crate cubing;
 
+use std::fmt::Display;
+
 use cubing::{
     alg::Move,
     kpuzzle::{
         InvalidDefinitionError, KPatternData, KPuzzle, KPuzzleDefinition, KPuzzleOrbitName,
-        KTransformationData,
+        KTransformation, KTransformationData,
     },
 };
 
@@ -44,8 +46,8 @@ impl LiteStringBuilder {
         self.s.push_str(line)
     }
 
-    pub fn push_vec(&mut self, vec: &[usize]) {
-        self.push(&serialize_usize_vec(vec))
+    pub fn push_vec<T: Display>(&mut self, vec: &[T]) {
+        self.push(&serialize_vec(vec))
     }
 
     pub fn push_str_vec(&mut self, vec: &[String]) {
@@ -57,14 +59,42 @@ impl LiteStringBuilder {
     }
 }
 
-fn serialize_usize_vec(vec: &[usize]) -> String {
+fn serialize_vec<T: Display>(vec: &[T]) -> String {
     vec.iter()
         .map(|v| v.to_string())
         .collect::<Vec<String>>()
         .join(" ")
 }
 
-fn serialize_move_transformation(
+fn serialize_move_transformation(kpuzzle: &KPuzzle, r#move: &Move, t: &KTransformation) -> String {
+    let mut builder = LiteStringBuilder::new();
+    builder.push(&format!(
+        "MoveTransformation {}",
+        sanitize(&r#move.to_string())
+    ));
+    // outputLines.push(`MoveTransformation ${sanitize(name)}`);
+    // TODO: use `orbit_ordering` if available? (TODO)
+    for orbit_info in kpuzzle.orbit_info_iter() {
+        builder.push(&sanitize(&orbit_info.name.to_string()));
+        builder.push_vec(
+            &unsafe {
+                t.packed_orbit_data().byte_slice() /* TODO */
+            }[orbit_info.pieces_or_permutations_offset
+                ..(orbit_info.pieces_or_permutations_offset + (orbit_info.num_pieces as usize))],
+        );
+        builder.push_vec(
+            &unsafe {
+                t.packed_orbit_data().byte_slice() /* TODO */
+            }[orbit_info.orientations_offset
+                ..(orbit_info.orientations_offset + (orbit_info.num_pieces as usize))],
+        );
+    }
+    builder.push(END);
+    builder.push(BLANK_LINE);
+    builder.build()
+}
+
+fn serialize_move_transformation_from_data(
     kpuzzle: &KPuzzle,
     r#move: &Move,
     t: &KTransformationData,
@@ -196,7 +226,7 @@ pub fn serialize_kpuzzle_definition(
 
     for (move_name, move_def) in &def.moves {
         if include(options, move_name) {
-            builder.push(&serialize_move_transformation(
+            builder.push(&serialize_move_transformation_from_data(
                 &kpuzzle, move_name, move_def,
             ))
         }
@@ -219,7 +249,7 @@ pub fn serialize_kpuzzle_definition(
                 builder.push(&serialize_move_transformation(
                     &kpuzzle,
                     move_name,
-                    &transformation.ktransformation_data,
+                    &transformation,
                 ))
             }
         }

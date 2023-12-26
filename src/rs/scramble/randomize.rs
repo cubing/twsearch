@@ -1,6 +1,5 @@
+use cubing::kpuzzle::{KPattern, KPuzzleOrbitInfo, OrientationWithMod};
 use rand::{seq::SliceRandom, thread_rng, Rng};
-
-use crate::_internal::{PackedKPattern, PackedKPuzzleOrbitInfo};
 
 pub(crate) enum OrbitPermutationConstraint {
     AnyPermutation,
@@ -23,13 +22,13 @@ pub(crate) enum OrbitOrientationConstraint {
 // Applies a random orientation to each piece (ensuring the total is 0).
 // Returns the piece order
 pub(crate) fn randomize_orbit_naive(
-    pattern: &mut PackedKPattern,
-    orbit_info: &PackedKPuzzleOrbitInfo,
+    pattern: &mut KPattern,
+    orbit_info: &KPuzzleOrbitInfo,
     permutation_constraints: OrbitPermutationConstraint,
     orientation_constraints: OrbitOrientationConstraint,
 ) -> Vec<u8> {
     let mut rng = thread_rng();
-    let mut piece_order: Vec<u8> = (0..(orbit_info.num_pieces as u8)).collect();
+    let mut piece_order: Vec<u8> = (0..orbit_info.num_pieces).collect();
     match permutation_constraints {
         OrbitPermutationConstraint::AnyPermutation => {
             piece_order.shuffle(&mut rng);
@@ -47,9 +46,8 @@ pub(crate) fn randomize_orbit_naive(
 
     let mut total_orientation = 0;
     for (i, p) in piece_order.iter().enumerate() {
-        pattern
-            .packed_orbit_data
-            .set_packed_piece_or_permutation(orbit_info, i, *p);
+        let i = i as u8;
+        pattern.set_piece(orbit_info, i, *p);
         let orientation = match (i == orbit_info.num_pieces - 1, &orientation_constraints) {
             (true, OrbitOrientationConstraint::OrientationsMustSumToZero) => {
                 subtract_u8_mod(0, total_orientation, orbit_info.num_orientations)
@@ -65,9 +63,14 @@ pub(crate) fn randomize_orbit_naive(
             }
         };
 
-        pattern
-            .packed_orbit_data
-            .set_packed_orientation(orbit_info, i, orientation);
+        pattern.set_orientation_with_mod(
+            orbit_info,
+            i,
+            &OrientationWithMod {
+                orientation,
+                orientation_mod: 0, // TODO
+            },
+        );
     }
     piece_order
 }

@@ -1,11 +1,14 @@
 use std::sync::Arc;
 
-use cubing::alg::{Alg, Move};
+use cubing::{
+    alg::{Alg, Move},
+    kpuzzle::{KPattern, KPuzzle},
+};
 
 use crate::_internal::{
     options::{CustomGenerators, VerbosityLevel},
     options::{Generators, MetricEnum},
-    IDFSearch, IndividualSearchOptions, PackedKPattern, PackedKPuzzle, SearchLogger,
+    IDFSearch, IndividualSearchOptions, SearchLogger,
 };
 
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
@@ -23,13 +26,13 @@ pub fn generators_from_vec_str(move_str_list: Vec<&str>) -> Generators {
 }
 
 pub(crate) fn idfs_with_target_pattern(
-    packed_kpuzzle: &PackedKPuzzle,
+    kpuzzle: &KPuzzle,
     generators: Generators,
-    target_pattern: PackedKPattern,
+    target_pattern: KPattern,
     min_size: Option<usize>,
 ) -> IDFSearch {
     IDFSearch::try_new(
-        packed_kpuzzle.clone(),
+        kpuzzle.clone(),
         target_pattern,
         generators,
         Arc::new(SearchLogger {
@@ -43,29 +46,20 @@ pub(crate) fn idfs_with_target_pattern(
 }
 
 pub(crate) fn basic_idfs(
-    packed_kpuzzle: &PackedKPuzzle,
+    kpuzzle: &KPuzzle,
     generators: Generators,
     min_size: Option<usize>,
 ) -> IDFSearch {
-    idfs_with_target_pattern(
-        packed_kpuzzle,
-        generators,
-        packed_kpuzzle.default_pattern(),
-        min_size,
-    )
+    idfs_with_target_pattern(kpuzzle, generators, kpuzzle.default_pattern(), min_size)
 }
 
 pub(crate) fn filtered_search(
-    scramble_pattern: &PackedKPattern,
+    scramble_pattern: &KPattern,
     generators: Generators,
     min_optimal_moves: Option<usize>,
     min_scramble_moves: Option<usize>,
 ) -> Option<Alg> {
-    let mut idfs = basic_idfs(
-        &scramble_pattern.packed_orbit_data.packed_kpuzzle,
-        generators,
-        None,
-    );
+    let mut idfs = basic_idfs(scramble_pattern.kpuzzle(), generators, None);
     if idfs
         .search(
             scramble_pattern,

@@ -1,9 +1,10 @@
 use std::sync::Arc;
 
+use cubing::kpuzzle::KPattern;
 use thousands::Separable;
 
 use crate::_internal::{
-    CanonicalFSMState, MoveClassIndex, PackedKPattern, RecursiveWorkTracker, SearchLogger,
+    CanonicalFSMState, MoveClassIndex, RecursiveWorkTracker, SearchLogger,
     CANONICAL_FSM_START_STATE,
 };
 
@@ -31,12 +32,12 @@ struct PruneTableMutableData {
 }
 
 impl PruneTableMutableData {
-    fn hash_pattern(&self, pattern: &PackedKPattern) -> usize {
+    fn hash_pattern(&self, pattern: &KPattern) -> usize {
         (pattern.hash() as usize) & self.prune_table_index_mask // TODO: use modulo when the size is not a power of 2.
     }
 
     // Returns a heurstic depth for the given pattern.
-    pub fn lookup(&self, pattern: &PackedKPattern) -> usize {
+    pub fn lookup(&self, pattern: &KPattern) -> usize {
         let pattern_hash = self.hash_pattern(pattern);
         let table_value = self.pattern_hash_to_depth[pattern_hash];
         if table_value == UNINITIALIZED_DEPTH {
@@ -46,7 +47,7 @@ impl PruneTableMutableData {
         }
     }
 
-    pub fn set_if_uninitialized(&mut self, pattern: &PackedKPattern, depth: u8) {
+    pub fn set_if_uninitialized(&mut self, pattern: &KPattern, depth: u8) {
         let pattern_hash = self.hash_pattern(pattern);
         if self.pattern_hash_to_depth[pattern_hash] == UNINITIALIZED_DEPTH {
             self.pattern_hash_to_depth[pattern_hash] = depth + 1
@@ -149,7 +150,7 @@ impl PruneTable {
     fn recurse(
         immutable_data: &PruneTableImmutableData,
         mutable_data: &mut PruneTableMutableData,
-        current_pattern: &PackedKPattern,
+        current_pattern: &KPattern,
         current_state: CanonicalFSMState,
         remaining_depth: PruneTableEntryType,
     ) {
@@ -189,7 +190,7 @@ impl PruneTable {
     }
 
     // Returns a heurstic depth for the given pattern.
-    pub fn lookup(&self, pattern: &PackedKPattern) -> usize {
+    pub fn lookup(&self, pattern: &KPattern) -> usize {
         self.mutable.lookup(pattern)
     }
 }

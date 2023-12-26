@@ -16,3 +16,6 @@ default-members = [
 version = "0.6.5"
 license = "MPL-2.0"
 edition = "2021"
+
+[workspace.dependencies]
+cubing = { version = "0.12.3" }

@@ -1,9 +1,6 @@
 pub mod cli;
 pub use cli::*;
 
-mod packed;
-pub use packed::*;
-
 mod canonical_fsm;
 pub use canonical_fsm::*;
 

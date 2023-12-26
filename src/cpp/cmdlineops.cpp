@@ -6,9 +6,7 @@
 #include "prunetable.h"
 #include "readksolve.h"
 #include "rotations.h"
-#include "shorten.h"
 #include "solve.h"
-#include "unrotate.h"
 #include <iostream>
 ll proclim = 1'000'000'000'000'000'000LL;
 struct proclimcmd : cmd {
@@ -210,47 +208,6 @@ static struct mergecmd : cmd {
             "reorders moves so the end result is a canonical sequence.") {}
   virtual void docommand(puzdef &pd) { processlines3(pd, mergeit); };
 } registermerge;
-void shortenit(const puzdef &pd, vector<int> &movelist, const char *) {
-  if (movelist.size() == 0) {
-    cout << " ";
-  } else {
-    auto res = shorten(pd, movelist);
-    for (auto mvind : res)
-      if (mvind < (int)pd.moves.size())
-        cout << " " << pd.moves[mvind].name;
-      else
-        cout << " " << pd.rotations[mvind - pd.moves.size()].name;
-  }
-  cout << endl;
-}
-static struct shortencmd : cmd {
-  shortencmd()
-      : cmd("--shortenseqs",
-            "Read a set of move sequences on standard input and attempt\n"
-            "to shorten each by optimally solving increasingly longer "
-            "subsequences.") {}
-  virtual void docommand(puzdef &pd) { processlines3(pd, shortenit); };
-} registershorten;
-void unrotateit(const puzdef &pd, vector<int> &movelist, const char *) {
-  if (movelist.size() == 0) {
-    cout << " ";
-  } else {
-    auto res = unrotate(pd, movelist);
-    for (auto mvind : res)
-      if (mvind < (int)pd.moves.size())
-        cout << " " << pd.moves[mvind].name;
-      else
-        cout << " " << pd.rotations[mvind - pd.moves.size()].name;
-  }
-  cout << endl;
-}
-static struct unrotatecmd : cmd {
-  unrotatecmd()
-      : cmd("--unrotateseqs",
-            "Read a set of move sequences on standard input and attempt\n"
-            "to move all rotations to the end of the sequence.") {}
-  virtual void docommand(puzdef &pd) { processlines4(pd, unrotateit); };
-} registerunrotate;
 void symsit(const puzdef &pd, setval p, const char *s) {
   stacksetval p2(pd);
   int symval = slowmodm(pd, p, p2);
@@ -290,6 +247,38 @@ static struct ordercmd : cmd {
             "order of each.") {}
   virtual void docommand(puzdef &pd) { processlines2(pd, orderit); };
 } registerorder;
+void conjugit(const puzdef &pd, setval p, const char *s) {
+  stacksetval p2(pd), p3(pd);
+  pd.assignpos(p2, pd.id);
+  pd.mul(p2, p, p3);
+  for (int i = 0; i < (int)pd.setdefs.size(); i++) {
+    vector<pair<int, int>> cc = pd.cyccnts2(p3, 1LL << i);
+    sort(cc.begin(), cc.end());
+    if (i != 0)
+      cout << ",";
+    cout << "[";
+    const char *sep = "";
+    for (int j = 0; j < (int)cc.size(); j++) {
+      if (cc[j].first == 1 && cc[j].second == 0)
+        continue;
+      cout << sep;
+      sep = ",";
+      if (cc[j].second == 0)
+        cout << cc[j].first;
+      else
+        cout << cc[j].first << ":" << cc[j].second;
+    }
+    cout << "]";
+  }
+  cout << " " << s << endl;
+}
+static struct conjugcmd : cmd {
+  conjugcmd()
+      : cmd("--showconjugacy",
+            "Read a set of move sequences on standard input and show the\n"
+            "conjugacy class of each.") {}
+  virtual void docommand(puzdef &pd) { processlines2(pd, conjugit); };
+} registerconjug;
 void emitcompact(int v) {
   if (v < 10)
     cout << v;

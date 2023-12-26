@@ -242,7 +242,7 @@ impl SetCppArgs for ServeClientArgs {
         set_optional_arg("--maxdepth", &self.max_depth);
         set_optional_arg("--startprunedepth", &self.start_prune_depth);
         set_optional_arg("-q", &self.quantum_metric);
-        if let Some(move_subset) = &self.move_subset {
+        if let Some(move_subset) = &self.generator_moves {
             set_moves_arg(move_subset);
         }
     }

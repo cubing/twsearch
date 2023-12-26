@@ -20,6 +20,7 @@ static vector<vector<int>> randomized;
 // ever want to support multiple concurrent solves (such as in a
 // multi-phase solver).
 static vector<ull> workchunks;
+vector<workerparam> workerparams;
 static int workat;
 void setsolvecallback(int (*f)(setval &pos, const vector<int> &moves, int d,
                                int id),
@@ -36,9 +37,12 @@ void microthread::init(const puzdef &pd, int d_, int tid_, const setval p_) {
   if (looktmp) {
     delete[] looktmp->dat;
     delete looktmp;
+    delete[] invtmp->dat;
+    delete invtmp;
     looktmp = 0;
   }
   looktmp = new allocsetval(pd, pd.solved);
+  invtmp = new allocsetval(pd, pd.solved);
   // make the position table big to minimize false sharing.
   while (posns.size() <= 100 || (int)posns.size() <= d_ + 10) {
     posns.push_back(allocsetval(pd, pd.solved));
@@ -50,6 +54,7 @@ void microthread::init(const puzdef &pd, int d_, int tid_, const setval p_) {
 }
 void solveworker::init(int d_, int tid_, const setval p_) {
   lookups = 0;
+  extraprobes = 0;
   checkincrement = 10000 + myrand(10000);
   checktarget = lookups + checkincrement;
   d = d_;
@@ -107,6 +112,7 @@ int solveworker::solveiter(const puzdef &pd, prunetable &pt, const setval p) {
     if (uthr[uid].getwork(pd, pt)) {
       active++;
       lookups++;
+      extraprobes += uthr[uid].invflag;
     }
   }
   while (active) {
@@ -119,6 +125,7 @@ int solveworker::solveiter(const puzdef &pd, prunetable &pt, const setval p) {
     if (v == 0) {
       if (uthr[uid].getwork(pd, pt)) {
         lookups++;
+        extraprobes += uthr[uid].invflag;
         v = 3;
       } else {
         active--;
@@ -139,11 +146,15 @@ int solveworker::solveiter(const puzdef &pd, prunetable &pt, const setval p) {
     }
     uthr[uid].innersetup(pt);
     lookups++;
+    extraprobes += uthr[uid].invflag;
   }
   return 0;
 }
 void microthread::innersetup(prunetable &pt) {
-  h = pt.prefetchindexed(pt.gethashforlookup(posns[sp], looktmp));
+  if (invflag)
+    h = pt.prefetchindexed(pt.gethashforlookup(*invtmp, looktmp));
+  else
+    h = pt.prefetchindexed(pt.gethashforlookup(posns[sp], looktmp));
 }
 int microthread::innerfetch(const puzdef &pd, prunetable &pt) {
   int v = pt.lookuphindexed(h);
@@ -159,6 +170,10 @@ int microthread::innerfetch(const puzdef &pd, prunetable &pt) {
     v = 0;
   } else if (togo == 0) {
     v = possibsolution(pd);
+  } else if (pd.invertible() && v < 2 + pt.baseval && invflag == 0) {
+    invflag = 1;
+    pd.inv(posns[sp], *invtmp);
+    return 3;
   } else {
     mask = canonmask[st];
     skipbase = 0;
@@ -209,6 +224,7 @@ downstack:
   togo--;
   sp++;
   st = canonnext[st][mv.cs];
+  invflag = 0;
   return 3;
 }
 int microthread::solvestart(const puzdef &pd, prunetable &pt, int w) {
@@ -217,6 +233,7 @@ int microthread::solvestart(const puzdef &pd, prunetable &pt, int w) {
   sp = 0;
   st = 0;
   togo = d;
+  invflag = 0;
   while (initmoves > 1) {
     int mv = initmoves % nmoves;
     pd.mul(posns[sp], pd.moves[mv].pos, posns[sp + 1]);
@@ -244,12 +261,12 @@ int solve(const puzdef &pd, prunetable &pt, const setval p, generatingset *gs) {
   stacksetval looktmp(pd);
   double starttime = walltime();
   ull totlookups = 0;
+  ull totextra = 0;
   int initd = pt.lookup(p, &looktmp);
   solutionsfound = 0;
   int hid = 0;
   randomized.clear();
   for (int d = initd; d <= maxdepth; d++) {
-    ll olookups = pt.lookupcnt;
     if (randomstart) {
       while ((int)randomized.size() <= d) {
         randomized.push_back({});
@@ -272,7 +289,7 @@ int solve(const puzdef &pd, prunetable &pt, const setval p, generatingset *gs) {
     else
       workchunks = makeworkchunks(pd, 0, p, requesteduthreading);
     workat = 0;
-    int wthreads = setupthreads(pd, pt);
+    int wthreads = setupthreads(pd, pt, workchunks, workerparams);
     workinguthreading =
         min(requesteduthreading,
             (int)(workchunks.size() + numthreads - 1) / numthreads);
@@ -289,26 +306,42 @@ int solve(const puzdef &pd, prunetable &pt, const setval p, generatingset *gs) {
 #endif
     for (int i = 0; i < wthreads; i++) {
       totlookups += solveworkers[i].lookups;
+      totextra += solveworkers[i].extraprobes;
       pt.addlookups(solveworkers[i].lookups);
     }
     if (solutionsfound >= solutionsneeded) {
       duration();
       double actualtime = start - starttime;
-      cout << "Found " << solutionsfound << " solution"
-           << (solutionsfound != 1 ? "s" : "") << " max depth " << d
-           << " lookups " << totlookups << " in " << actualtime << " rate "
-           << (totlookups / actualtime / 1e6) << endl
-           << flush;
+      if (totextra == 0) {
+        cout << "Found " << solutionsfound << " solution"
+             << (solutionsfound != 1 ? "s" : "") << " max depth " << d
+             << " lookups " << totlookups << " in " << actualtime << " rate "
+             << (totlookups / actualtime / 1e6) << endl
+             << flush;
+      } else {
+        cout << "Found " << solutionsfound << " solution"
+             << (solutionsfound != 1 ? "s" : "") << " max depth " << d
+             << " probes " << totlookups << " nodes " << totlookups - totextra
+             << " in " << actualtime << " rate "
+             << (totlookups / actualtime / 1e6) << endl
+             << flush;
+      }
       return d;
     }
     double dur = duration();
-    ll lookups = pt.lookupcnt - olookups;
-    double rate = lookups / dur / 1e6;
+    double rate = (totlookups - totextra) / dur / 1e6;
     if (verbose) {
-      if (verbose > 1 || dur > 1)
-        cout << "Depth " << d << " in " << dur << " lookups " << lookups
-             << " rate " << rate << endl
-             << flush;
+      if (verbose > 1 || dur > 1) {
+        if (totextra == 0) {
+          cout << "Depth " << d << " in " << dur << " lookups " << totlookups
+               << " rate " << rate << endl
+               << flush;
+        } else {
+          cout << "Depth " << d << " in " << dur << " probes " << totlookups
+               << " nodes " << totlookups - totextra << " rate " << rate << endl
+               << flush;
+        }
+      }
     }
     if (flushback)
       if (flushback(d))

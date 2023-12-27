@@ -60,7 +60,7 @@ for targets in "aarch64-apple-darwin x86_64-apple-darwin" "aarch64-apple-ios" "a
 		thinlibs+=("$LIBRARY")
 
 	done
-	DIR="fat-${targets// /_}"
+	DIR="./.temp/swift/fat-${targets// /_}"
 	mkdir -p "$DIR"
 	FATLIB="${DIR}/libtwsearch_swift.a"
 	lipo -create -output "$FATLIB" "${thinlibs[@]}"
@@ -69,8 +69,9 @@ done
 
 rm -rf TWSearch.xcframework
 
+mkdir -p ./dist/swift
 xcodebuild -create-xcframework \
 	"${xcframework_args[@]}" \
-	-output TWSearch.xcframework
+	-output ./dist/swift/TWSearch.xcframework
 
 rm -rf "${INCLDIR}"

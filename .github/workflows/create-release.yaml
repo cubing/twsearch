@@ -22,10 +22,10 @@ jobs:
       - run: rustup toolchain install nightly --profile minimal
       - run: rustup component add rust-src --toolchain nightly-x86_64-apple-darwin
       - run: script/build-swift-package
-      - run: zip -r TWSearch.xcframework.zip TWSearch.xcframework
+      - run: zip -r TwSearch.xcframework.zip TwSearch.xcframework
       - name: Update Package.Swift
         run: |
-            sed -e 's/@@VERSION@@/${{ github.event.inputs.version }}/' -e 's/@@CHECKSUM@@/'"$(shasum -a 256 TWSearch.xcframework.zip | cut -d' ' -f1)"'/' Package.swift.in > Package.swift
+            sed -e 's/@@VERSION@@/${{ github.event.inputs.version }}/' -e 's/@@CHECKSUM@@/'"$(shasum -a 256 TwSearch.xcframework.zip | cut -d' ' -f1)"'/' Package.swift.in > Package.swift
             git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git config --local user.name "github-actions[bot]"
             git add src/rs-swift/SwiftGenerated Package.swift
@@ -39,7 +39,7 @@ jobs:
 
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "TWSearch.xcframework.zip"
+          artifacts: "TwSearch.xcframework.zip"
           generateReleaseNotes: true
           tag: ${{ github.event.inputs.version }}
           commit: ${{ github.ref }}
@@ -50,7 +50,7 @@ jobs:
 #      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 #      #  with:
 #      #    tag_name: "${{ github.event.inputs.version }}"
-#      #    release_name: "TWSearch release ${{ github.event.inputs.version }}"
+#      #    release_name: "TwSearch release ${{ github.event.inputs.version }}"
 #      #    body: ${{ env.RELEASE_BODY }}
 #      #    draft: false
 #          prerelease: false

@@ -28,7 +28,7 @@ cargo $COMMONFLAGS check --package twsearch-swift
 INCLDIR="$(mktemp -d)"
 
 cat << EOF > "${INCLDIR}/module.modulemap"
-module _TWSearchSwiftBridge {
+module _TwSearchSwiftBridge {
     header "SwiftBridgeCore.h"
     header "twsearch-swift.h"
     export *
@@ -41,7 +41,7 @@ mkdir -p "${ROOTDIR}/src/rs-swift/SwiftGenerated"
 
 for file in SwiftBridgeCore.swift twsearch-swift/twsearch-swift.swift; do
 	sed '1i\
-import _TWSearchSwiftBridge
+import _TwSearchSwiftBridge
 ' "${ROOTDIR}/src/rs-swift/SwiftOrig/${file}" > "${ROOTDIR}/src/rs-swift/SwiftGenerated/$(basename "$file")"
 done
 
@@ -67,11 +67,11 @@ for targets in "aarch64-apple-darwin x86_64-apple-darwin" "aarch64-apple-ios" "a
 	xcframework_args+=("-library" "$FATLIB" "-headers" "$INCLDIR")
 done
 
-rm -rf TWSearch.xcframework
+rm -rf TwSearch.xcframework
 
 mkdir -p ./dist/swift
 xcodebuild -create-xcframework \
 	"${xcframework_args[@]}" \
-	-output ./dist/swift/TWSearch.xcframework
+	-output ./dist/swift/TwSearch.xcframework
 
 rm -rf "${INCLDIR}"

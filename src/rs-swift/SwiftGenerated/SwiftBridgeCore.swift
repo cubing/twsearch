@@ -1,4 +1,4 @@
-import _TWSearchSwiftBridge
+import _TwSearchSwiftBridge
 import Foundation
 
 extension RustString {

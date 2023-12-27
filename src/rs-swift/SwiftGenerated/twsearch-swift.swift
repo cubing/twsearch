@@ -1,4 +1,4 @@
-import _TWSearchSwiftBridge
+import _TwSearchSwiftBridge
 public func randomScrambleFor(_ event: Event) -> Optional<Alg> {
     { let val = __swift_bridge__$random_scramble_for_event_swift({event.isOwned = false; return event.ptr;}()); if val != nil { return Alg(ptr: val!) } else { return nil } }()
 }

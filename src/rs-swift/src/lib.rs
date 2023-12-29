@@ -1,6 +1,6 @@
-use twsearch::scramble::{random_scramble_for_event, Event};
 use cubing::alg::Alg;
 use twsearch::_internal::PuzzleError;
+use twsearch::scramble::{random_scramble_for_event, Event};
 
 #[swift_bridge::bridge]
 mod ffi {
@@ -12,8 +12,8 @@ mod ffi {
         type PuzzleError;
 
         //fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError>;
-	#[swift_bridge(swift_name = "randomScrambleFor")] 
-	fn random_scramble_for_event_swift(event: Event) -> Option<Alg>;
+        #[swift_bridge(swift_name = "randomScrambleFor")]
+        fn random_scramble_for_event_swift(event: Event) -> Option<Alg>;
 
         //#[swift_bridge(init)]
         //fn new(config: AppConfig) -> RustApp;
@@ -23,5 +23,5 @@ mod ffi {
 }
 
 fn random_scramble_for_event_swift(event: Event) -> Option<Alg> {
-    return random_scramble_for_event(event).ok();
+    random_scramble_for_event(event).ok()
 }

@@ -18,3 +18,6 @@ edition = "2021"
 
 [workspace.dependencies]
 cubing = { version = "0.12.3" }
+
+[workspace.metadata.bin]
+cbindgen = { version = "0.26.0" }

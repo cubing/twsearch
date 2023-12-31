@@ -80,6 +80,7 @@ jobs:
       - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
+      - run: cargo install cargo-run-bin
       - run: make build-rust-ffi
       - run: make test-rust-ffi
 

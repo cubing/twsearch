@@ -6,7 +6,7 @@ all: build/bin/twsearch build/esm build-rust
 
 .PHONY: setup
 setup: node_modules
-	cargo install --no-confirm cargo-run-bin
+	cargo install cargo-run-bin
 
 .PHONY: test
 test: \

@@ -21,3 +21,4 @@ cubing = { version = "0.12.3" }
 
 [workspace.metadata.bin]
 cbindgen = { version = "0.26.0" }
+cargo-binstall = { version = "1.4.4" }

@@ -1,3 +1,5 @@
+mod events;
+
 use std::{
     ffi::{c_char, CStr, CString},
     ptr::null_mut,

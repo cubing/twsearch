@@ -32,7 +32,7 @@ jobs:
         with:
           node-version: 19
       - uses: actions/checkout@v4
-      - uses: wasmerio/setup-wasmer@v2
+      - uses: wasmerio/setup-wasmer@v3
         continue-on-error: true
         id: wasmer
       # Fallback workaround for https://github.com/wasmerio/wasmer/issues/4183
@@ -80,6 +80,8 @@ jobs:
       - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
+      - uses: cargo-bins/cargo-binstall@v1.4.9
+      - run: cargo binstall --no-confirm cargo-run-bin
       - run: make build-rust-ffi
       - run: make test-rust-ffi
 
@@ -87,6 +89,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - uses: actions/checkout@v4
       - name: Use `node` v19
         uses: actions/setup-node@v3
         with:
@@ -94,11 +97,9 @@ jobs:
       - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
-      - uses: actions/checkout@v4
       - uses: Swatinem/rust-cache@v2
-      - uses: jetli/wasm-pack-action@v0.4.0
-        with:
-          version: "latest"
+      - uses: cargo-bins/cargo-binstall@v1.4.9
+      - run: cargo binstall --no-confirm cargo-run-bin
       - run: npm install
       - run: make build-rust-wasm
       - run: make test-rust-wasm

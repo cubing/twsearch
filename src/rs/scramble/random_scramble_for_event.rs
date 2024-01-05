@@ -5,6 +5,7 @@ use crate::_internal::PuzzleError;
 use super::{
     puzzles::{
         big_cubes::{scramble_5x5x5, scramble_5x5x5_bld, scramble_6x6x6, scramble_7x7x7},
+        clock::scramble_clock,
         cube2x2x2::scramble_2x2x2,
         cube3x3x3::{scramble_3x3x3, scramble_3x3x3_bld, scramble_3x3x3_fmc},
         megaminx::scramble_megaminx,
@@ -27,7 +28,7 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
         Event::Cube3x3x3Blindfolded => Ok(scramble_3x3x3_bld()),
         Event::Cube3x3x3FewestMoves => Ok(scramble_3x3x3_fmc()),
         Event::Cube3x3x3OneHanded => Ok(scramble_3x3x3()),
-        Event::ClockSpeedsolving => err,
+        Event::ClockSpeedsolving => Ok(scramble_clock()),
         Event::MegaminxSpeedsolving => Ok(scramble_megaminx()),
         Event::PyraminxSpeedsolving => Ok(scramble_pyraminx()),
         Event::SkewbSpeedsolving => err,

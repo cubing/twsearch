@@ -17,7 +17,7 @@ license = "MPL-2.0"
 edition = "2021"
 
 [workspace.dependencies]
-cubing = { version = "0.12.3" }
+cubing = { path = "../cubing.rs/cubing", version = "0.13.0" }
 
 [workspace.metadata.bin]
 cbindgen = { version = "0.26.0" }

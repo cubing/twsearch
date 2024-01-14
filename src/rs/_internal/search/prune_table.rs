@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{hash::BuildHasher, sync::Arc};
 
 use cubing::kpuzzle::KPattern;
 use thousands::Separable;
@@ -33,7 +33,9 @@ struct PruneTableMutableData {
 
 impl PruneTableMutableData {
     fn hash_pattern(&self, pattern: &KPattern) -> usize {
-        (pattern.hash() as usize) & self.prune_table_index_mask // TODO: use modulo when the size is not a power of 2.
+        let h = cityhasher::CityHasher::new();
+        (h.hash_one(unsafe { pattern.byte_slice() }) as usize) & self.prune_table_index_mask
+        // TODO: use modulo when the size is not a power of 2.
     }
 
     // Returns a heurstic depth for the given pattern.

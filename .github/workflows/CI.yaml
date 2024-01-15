@@ -81,7 +81,7 @@ jobs:
         with:
           bun-version: latest
       - uses: cargo-bins/cargo-binstall@v1.4.9
-      - run: cargo binstall --no-confirm cargo-run-bin
+      - run: cargo install cargo-run-bin
       - run: make build-rust-ffi
       - run: make test-rust-ffi
 
@@ -99,7 +99,7 @@ jobs:
           bun-version: latest
       - uses: Swatinem/rust-cache@v2
       - uses: cargo-bins/cargo-binstall@v1.4.9
-      - run: cargo binstall --no-confirm cargo-run-bin
+      - run: cargo install cargo-run-bin
       - run: npm install
       - run: make build-rust-wasm
       - run: make test-rust-wasm

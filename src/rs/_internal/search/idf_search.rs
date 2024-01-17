@@ -171,8 +171,12 @@ impl<TPuzzle: GenericPuzzle> IDFSearch<TPuzzle> {
         random_start: bool,
         min_prune_table_size: Option<usize>,
     ) -> Result<Self, PuzzleError> {
-        let search_generators =
-            SearchGenerators::<TPuzzle>::try_new(&tpuzzle, &generators, metric, random_start)?;
+        let search_generators = SearchGenerators::<TPuzzle>::try_new(
+            &tpuzzle,
+            &generators,
+            metric,
+            random_start,
+        )?;
 
         let canonical_fsm = CanonicalFSM::try_new(search_generators.clone())?; // TODO: avoid a clone
         Self::try_new_core(

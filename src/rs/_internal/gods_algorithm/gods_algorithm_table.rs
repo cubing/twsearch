@@ -1,12 +1,12 @@
 use std::{collections::HashMap, mem, vec};
 
-use cubing::kpuzzle::{KPattern, KPuzzle, KTransformation};
+use cubing::kpuzzle::{KPattern, KPuzzle};
 use thousands::Separable;
 
 use crate::_internal::{
     cli::options::{Generators, MetricEnum},
     gods_algorithm::factor_number::factor_number,
-    CanonicalFSM, CanonicalFSMState, PuzzleError, SearchGenerators, CANONICAL_FSM_START_STATE, PopulatedInverseInfo,
+    CanonicalFSM, CanonicalFSMState, PuzzleError, SearchGenerators, CANONICAL_FSM_START_STATE,
 };
 
 type SearchDepth = usize;
@@ -44,7 +44,7 @@ pub struct GodsAlgorithmSearch {
     // params
     kpuzzle: KPuzzle,
     start_pattern: Option<KPattern>,
-    search_moves: SearchGenerators<KPuzzle, PopulatedInverseInfo<KPuzzle>>,
+    search_moves: SearchGenerators<KPuzzle>,
 
     // state
     canonical_fsm: CanonicalFSM<KPuzzle>,
@@ -68,7 +68,8 @@ impl GodsAlgorithmSearch {
         quantum_metric: &MetricEnum,
     ) -> Result<Self, PuzzleError> {
         let depth_to_patterns = vec![];
-        let search_moves = SearchGenerators::try_new(&kpuzzle, generators, quantum_metric, false, KTransformation::invert)?;
+        let search_moves =
+            SearchGenerators::try_new(&kpuzzle, generators, quantum_metric, false)?;
         let canonical_fsm = CanonicalFSM::try_new(search_moves.clone())?;
         Ok(Self {
             kpuzzle,
@@ -140,9 +141,9 @@ impl GodsAlgorithmSearch {
                     };
                     for move_info in moves_in_class {
                         num_tested_at_current_depth += 1;
-                        let new_pattern = queue_item
-                            .pattern
-                            .apply_transformation(&move_info.inverse_transformation);
+                        let new_pattern = queue_item.pattern.apply_transformation(
+                            todo!(), // &move_info.inverse_transformation
+                        );
                         if self.table.pattern_to_depth.get(&new_pattern).is_some() {
                             continue;
                         }

@@ -184,6 +184,7 @@ impl<TPuzzle: GenericPuzzleCore> PruneTable<TPuzzle> {
                     immutable_data,
                     mutable_data,
                     &TPuzzle::pattern_apply_transformation(
+                        &immutable_data.search_api_data.tpuzzle,
                         current_pattern,
                         &move_transformation_info.transformation,
                     ),

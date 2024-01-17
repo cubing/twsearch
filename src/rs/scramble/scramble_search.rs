@@ -23,13 +23,13 @@ pub fn generators_from_vec_str(move_str_list: Vec<&str>) -> Generators {
 }
 
 pub(crate) fn idfs_with_target_pattern<TPuzzle: GenericPuzzle>(
-    kpuzzle: &TPuzzle,
+    tpuzzle: &TPuzzle,
     generators: Generators,
     target_pattern: TPuzzle::Pattern,
     min_size: Option<usize>,
 ) -> IDFSearch<TPuzzle> {
     IDFSearch::try_new(
-        kpuzzle.clone(),
+        tpuzzle.clone(),
         target_pattern,
         generators,
         Arc::new(SearchLogger {

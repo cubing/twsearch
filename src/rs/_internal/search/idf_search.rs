@@ -151,7 +151,7 @@ struct IndividualSearchData<TPuzzle: GenericPuzzleCore> {
 pub struct IDFSearchAPIData<TPuzzle: GenericPuzzleCore> {
     pub search_generators: SearchGenerators<TPuzzle>, // TODO: pass generic constraints down here.
     pub canonical_fsm: CanonicalFSM<TPuzzle>,
-    pub kpuzzle: TPuzzle,
+    pub tpuzzle: TPuzzle,
     pub target_pattern: TPuzzle::Pattern,
     pub search_logger: Arc<SearchLogger>,
 }
@@ -171,12 +171,8 @@ impl<TPuzzle: GenericPuzzle> IDFSearch<TPuzzle> {
         random_start: bool,
         min_prune_table_size: Option<usize>,
     ) -> Result<Self, PuzzleError> {
-        let search_generators = SearchGenerators::<TPuzzle>::try_new(
-            &tpuzzle,
-            &generators,
-            metric,
-            random_start,
-        )?;
+        let search_generators =
+            SearchGenerators::<TPuzzle>::try_new(&tpuzzle, &generators, metric, random_start)?;
 
         let canonical_fsm = CanonicalFSM::try_new(search_generators.clone())?; // TODO: avoid a clone
         Self::try_new_core(
@@ -202,7 +198,7 @@ impl<TPuzzle: GenericPuzzleCore> IDFSearch<TPuzzle> {
         let api_data: Arc<IDFSearchAPIData<TPuzzle>> = Arc::new(IDFSearchAPIData {
             search_generators,
             canonical_fsm,
-            kpuzzle: tpuzzle,
+            tpuzzle,
             target_pattern,
             search_logger: search_logger.clone(),
         });
@@ -410,6 +406,7 @@ impl<TPuzzle: GenericPuzzleCore> IDFSearch<TPuzzle> {
                 match self.recurse(
                     individual_search_data,
                     &TPuzzle::pattern_apply_transformation(
+                        &self.api_data.tpuzzle,
                         current_pattern,
                         &move_transformation_info.transformation,
                     ),

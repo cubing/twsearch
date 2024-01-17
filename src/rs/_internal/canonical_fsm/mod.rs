@@ -7,6 +7,3 @@ pub use search_generators::*;
 
 mod generic_transformation_buffer;
 pub(crate) use generic_transformation_buffer::*;
-
-mod generic_pattern_buffer;
-pub(crate) use generic_pattern_buffer::*;

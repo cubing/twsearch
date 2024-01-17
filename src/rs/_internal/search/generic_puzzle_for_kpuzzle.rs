@@ -14,6 +14,7 @@ impl GenericPuzzleCore for KPuzzle {
     }
 
     fn pattern_apply_transformation(
+        &self, // TODO
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
     ) -> Self::Pattern {
@@ -28,6 +29,7 @@ impl GenericPuzzleCore for KPuzzle {
     }
 
     fn pattern_apply_transformation_into(
+        &self, // TODO
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
         into_pattern: &mut Self::Pattern,

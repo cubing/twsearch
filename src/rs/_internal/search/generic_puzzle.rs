@@ -6,7 +6,7 @@ use cubing::{
 };
 
 // TODO: split this into 3 related traits.
-pub trait GenericPuzzleCore: Clone + Debug {
+pub trait GenericPuzzleCore: Debug {
     type Pattern: Eq + Clone + Debug;
     /// This is a proper "transformation" (such as a permutation) in the general
     /// case, but for `GenericPuzzleCore` it can be anything that is applied to a
@@ -30,10 +30,16 @@ pub trait GenericPuzzleCore: Clone + Debug {
     /********* Functions "defined on the pattern". ********/
 
     fn pattern_apply_transformation(
+        // TODO: this is a hack to allow `Phase2Puzzle` to access its tables, ideally we would avoid this.
+        // Then again, this might turn out to be necessary for similar high-performance implementations.
+        &self,
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
     ) -> Self::Pattern;
     fn pattern_apply_transformation_into(
+        // TODO: this is a hack to allow `Phase2Puzzle` to access its tables, ideally we would avoid this.
+        // Then again, this might turn out to be necessary for similar high-performance implementations.
+        &self,
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
         into_pattern: &mut Self::Pattern,
@@ -43,7 +49,7 @@ pub trait GenericPuzzleCore: Clone + Debug {
     fn pattern_hash_u64(pattern: &Self::Pattern) -> u64;
 }
 
-pub trait GenericPuzzle: GenericPuzzleCore {
+pub trait GenericPuzzle: GenericPuzzleCore + Clone {
     /********* Functions "defined on the puzzle". ********/
 
     fn puzzle_transformation_from_alg(

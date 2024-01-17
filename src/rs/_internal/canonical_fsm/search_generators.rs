@@ -10,24 +10,31 @@ use crate::_internal::{
 
 use super::GenericTransformationBuffer;
 
+#[derive(Clone, Debug)]
+pub struct BlankInverseInfo {}
 
 #[derive(Clone, Debug)]
-pub struct BlankInverseInfo{}
-
-#[derive(Clone, Debug)]
-pub struct PopulatedInverseInfo<TPuzzle: GenericPuzzleCore>  {
+pub struct PopulatedInverseInfo<TPuzzle: GenericPuzzleCore> {
     pub inverse_transformation: TPuzzle::Transformation,
 }
 
-
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct MoveTransformationInfo<TPuzzle: GenericPuzzleCore> {
-    #[allow(dead_code)] // TODO
     pub r#move: Move,
     // move_class: MoveClass, // TODO: do we need this?
     // pub metric_turns: i32,
     pub transformation: TPuzzle::Transformation,
     // pub inverse_info: InverseInfo
+}
+
+// TODO: Why doesn't this work if derive `Clone` instead?
+impl<TPuzzle: GenericPuzzleCore> Clone for MoveTransformationInfo<TPuzzle> {
+    fn clone(&self) -> Self {
+        Self {
+            r#move: self.r#move.clone(),
+            transformation: self.transformation.clone(),
+        }
+    }
 }
 
 pub type MoveTransformationMultiples<TPuzzle> = Vec<MoveTransformationInfo<TPuzzle>>;
@@ -37,6 +44,21 @@ pub struct SearchGenerators<TPuzzle: GenericPuzzleCore> {
     // TODO: figure out the most reusable abstraction
     pub grouped: Vec<MoveTransformationMultiples<TPuzzle>>,
     pub flat: Vec<MoveTransformationInfo<TPuzzle>>, // TODO: avoid duplicate data
+}
+
+impl<TPuzzle: GenericPuzzleCore> SearchGenerators<TPuzzle> {
+    pub fn from_grouped(
+        grouped: Vec<MoveTransformationMultiples<TPuzzle>>,
+        random_start: bool,
+    ) -> Self {
+        // let grouped_clone = grouped.iter().map(|group| group.map(|multiples|))
+        let mut flat: Vec<MoveTransformationInfo<TPuzzle>> =
+            grouped.iter().flatten().cloned().collect();
+        if random_start {
+            flat.shuffle(&mut thread_rng());
+        }
+        Self { grouped, flat }
+    }
 }
 
 fn naïve_transformation_order<TPuzzle: GenericPuzzle>(
@@ -61,17 +83,17 @@ fn canonicalize_center_amount(order: i32, amount: i32) -> i32 {
 
 impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
     pub fn try_new(
-        kpuzzle: &TPuzzle,
+        tpuzzle: &TPuzzle,
         generators: &Generators,
         metric: &MetricEnum,
         random_start: bool,
     ) -> Result<SearchGenerators<TPuzzle>, PuzzleError> {
-        let identity_transformation = TPuzzle::puzzle_identity_transformation(kpuzzle);
+        let identity_transformation = TPuzzle::puzzle_identity_transformation(tpuzzle);
 
         let mut seen_quantum_moves = HashMap::<QuantumMove, Move>::new();
 
         let moves: Vec<&Move> = match generators {
-            Generators::Default => TPuzzle::puzzle_definition_moves(kpuzzle),
+            Generators::Default => TPuzzle::puzzle_definition_moves(tpuzzle),
             Generators::Custom(generators) => generators.moves.iter().collect(),
         };
         if let Generators::Custom(custom_generators) = generators {
@@ -82,7 +104,6 @@ impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
 
         // TODO: actually calculate GCDs
         let mut grouped = Vec::<MoveTransformationMultiples<TPuzzle>>::default();
-        let mut flat = Vec::<MoveTransformationInfo<TPuzzle>>::default();
         for r#move in moves {
             if let Some(existing) = seen_quantum_moves.get(&r#move.quantum) {
                 // TODO: deduplicate by quantum move.
@@ -99,7 +120,7 @@ impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
                 amount: 1,
             };
             let move_quantum_transformation =
-                TPuzzle::puzzle_transformation_from_move(kpuzzle, &move_quantum).map_err(|e| {
+                TPuzzle::puzzle_transformation_from_move(tpuzzle, &move_quantum).map_err(|e| {
                     PuzzleError {
                         description: e.to_string(), // TODO
                     }
@@ -110,7 +131,7 @@ impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
             );
 
             let mut multiples = MoveTransformationMultiples::default(); // TODO: use order to set capacity.
-            let move_transformation = TPuzzle::puzzle_transformation_from_move(kpuzzle, r#move)
+            let move_transformation = TPuzzle::puzzle_transformation_from_move(tpuzzle, r#move)
                 .map_err(|e| PuzzleError {
                     description: e.to_string(), // TODO
                 })?;
@@ -132,7 +153,6 @@ impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
                             transformation,
                         };
                         multiples.push(info.clone());
-                        flat.push(info);
 
                         amount += r#move.amount;
                         move_multiple_transformation.apply_transformation(&move_transformation);
@@ -141,7 +161,8 @@ impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
                 MetricEnum::Quantum => {
                     let transformation: &TPuzzle::Transformation =
                         move_multiple_transformation.current();
-                        let is_self_inverse = transformation == &TPuzzle::transformation_invert(transformation);
+                    let is_self_inverse =
+                        transformation == &TPuzzle::transformation_invert(transformation);
                     let transformation = transformation.clone();
                     let info = MoveTransformationInfo {
                         r#move: r#move.clone(),
@@ -149,7 +170,6 @@ impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
                         transformation,
                     };
                     multiples.push(info.clone());
-                    flat.push(info);
                     if !is_self_inverse {
                         let transformation: &TPuzzle::Transformation =
                             move_multiple_transformation.current();
@@ -160,7 +180,6 @@ impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
                             transformation,
                         };
                         multiples.push(info.clone());
-                        flat.push(info);
                     }
                 }
             }
@@ -169,10 +188,9 @@ impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
         let mut rng = thread_rng();
         if random_start {
             grouped.shuffle(&mut rng);
-            flat.shuffle(&mut rng);
         }
 
-        Ok(Self { grouped, flat })
+        Ok(Self::from_grouped(grouped, random_start))
     }
 
     pub fn do_transformations_commute(

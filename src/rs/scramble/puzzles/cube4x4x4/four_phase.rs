@@ -15,11 +15,8 @@ use crate::{
     scramble::{
         puzzles::{
             cube4x4x4::{
-                phase2::{
-                    pattern_to_phase2_pattern, remap_piece_for_phase1_or_phase2_search_pattern,
-                },
-                phase2_symmetry::Phase2SymmetryTables,
-                random::random_4x4x4_pattern,
+                phase2::remap_piece_for_phase1_or_phase2_search_pattern,
+                phase2_symmetry::Phase2SymmetryTables, random::random_4x4x4_pattern,
             },
             definitions::{cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern},
         },
@@ -147,12 +144,7 @@ impl Scramble4x4x4FourPhase {
         dbg!(&phase1_alg.to_string());
 
         let mut phase2_alg = {
-            // TODO: unify with phase 1 (almost identical code)
-            let phase2_search_pattern = pattern_to_phase2_pattern(main_search_pattern);
-            let phase2_search_pattern = phase2_search_pattern.apply_alg(&phase1_alg).unwrap();
-
-            // let phase2_search_full_pattern = main_search_pattern.apply_alg(&phase1_alg).unwrap(); // TODO
-
+            let phase2_search_pattern = main_search_pattern.apply_alg(&phase1_alg).unwrap();
             let phase2_search_pattern = self
                 .phase2_idfs
                 .api_data

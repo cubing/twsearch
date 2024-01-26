@@ -6,9 +6,7 @@ use crate::{
         GenericPuzzleCore, MoveTransformationInfo, MoveTransformationMultiples,
         PruneTableEntryType, SearchGenerators,
     },
-    scramble::puzzles::definitions::{
-        cube4x4x4_phase2_target_kpattern, cube4x4x4_with_wing_parity_kpuzzle,
-    },
+    scramble::puzzles::definitions::cube4x4x4_kpuzzle,
 };
 
 use cubing::{
@@ -463,10 +461,7 @@ impl Phase2SymmetryTables {
             }
         }
         let mut patterns: Vec<KPattern> = Vec::new();
-        patterns.push(match coordinate_table {
-            CoordinateTable::CoordEP => cube4x4x4_with_wing_parity_kpuzzle().default_pattern(), // TODO: can we use this for the others as well?
-            _ => cube4x4x4_phase2_target_kpattern().clone(),
-        });
+        patterns.push(cube4x4x4_kpuzzle().default_pattern());
         let mut patterns_read_idx = 0;
         let mut patterns_write_idx = 1;
         while patterns_read_idx < patterns_write_idx {
@@ -506,8 +501,9 @@ impl Phase2SymmetryTables {
                 .collect(),
             algs: vec![],
         });
+        // TODO: deduplicate this with external code.
         match SearchGenerators::try_new(
-            cube4x4x4_with_wing_parity_kpuzzle(),
+            cube4x4x4_kpuzzle(),
             &phase2_generators,
             &MetricEnum::Hand,
             false,

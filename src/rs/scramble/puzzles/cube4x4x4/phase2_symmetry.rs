@@ -114,7 +114,7 @@ trait Coord {
 }
 
 #[derive(Debug)]
-struct Coord84 {
+pub(crate) struct Coord84 {
     pack84: [PackedValue; 256], // TODO: should this be unsigned?
     c84move: [[Phase2Coordinate; PHASE2_MOVE_COUNT]; NUM_COORDINATES_C8_4D2],
 }
@@ -151,7 +151,7 @@ impl Default for Coord84 {
 }
 
 #[derive(Debug)]
-struct Coord168 {
+pub(crate) struct Coord168 {
     pack168hi: [PackedValue; 128],
     pack168lo: [PackedValue; 256],
     c168move: [[Phase2Coordinate; PHASE2_MOVE_COUNT]; NUM_COORDINATES_C16_8D2],
@@ -193,7 +193,7 @@ impl Default for Coord168 {
 }
 
 #[derive(Debug)]
-struct CoordEP {
+pub(crate) struct CoordEP {
     ep_move: [[Phase2Coordinate; PHASE2_MOVE_COUNT]; NUM_COORDINATES_EP],
 }
 
@@ -232,19 +232,19 @@ impl Default for CoordEP {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub(crate) struct Phase2CoordSet {
+pub(crate) struct Phase2CoordTuple {
     c84: Phase2Coordinate,
     c168: Phase2Coordinate,
     ep: Phase2Coordinate,
 }
 
-pub(crate) const PHASE2_SOLVED_STATE: Phase2CoordSet = Phase2CoordSet {
+pub(crate) const PHASE2_SOLVED_STATE: Phase2CoordTuple = Phase2CoordTuple {
     c84: Phase2Coordinate(0),
     c168: Phase2Coordinate(0),
     ep: Phase2Coordinate(0),
 };
 
-impl Phase2CoordSet {
+impl Phase2CoordTuple {
     pub fn pack(&self) -> PackedValue {
         pack_coords(self.c84, self.c168, self.ep)
     }
@@ -258,16 +258,17 @@ fn pack_coords(c84: Phase2Coordinate, c168: Phase2Coordinate, ep: Phase2Coordina
     )
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-struct Phase2IndexedMove(pub usize);
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub(crate) struct Phase2IndexedMove(pub usize);
 
 #[derive(Debug)]
 pub(crate) struct Phase2Puzzle {
-    search_generators: SearchGenerators<Self>,
-    move_to_transformation: HashMap<Move, Phase2IndexedMove>,
-    coord_84: Coord84,
-    coord_168: Coord168,
-    coord_ep: CoordEP,
+    pub(crate) search_generators: SearchGenerators<Self>,
+    pub(crate) move_to_transformation: HashMap<Move, Phase2IndexedMove>,
+    pub(crate) transformation_to_move: HashMap<Phase2IndexedMove, Move>,
+    pub(crate) coord_84: Coord84,
+    pub(crate) coord_168: Coord168,
+    pub(crate) coord_ep: CoordEP,
 }
 
 impl Phase2Puzzle {
@@ -290,6 +291,7 @@ impl Phase2Puzzle {
 
         let mut grouped_multiples = Vec::<MoveTransformationMultiples<Self>>::default();
         let mut move_to_transformation = HashMap::<Move, Phase2IndexedMove>::default();
+        let mut transformation_to_move = HashMap::<Phase2IndexedMove, Move>::default();
 
         let mut indexed_move: Phase2IndexedMove = Phase2IndexedMove(0);
         for group in grouped_moves {
@@ -298,6 +300,7 @@ impl Phase2Puzzle {
                     .into_iter()
                     .map(|r#move| {
                         move_to_transformation.insert(r#move.clone(), indexed_move);
+                        transformation_to_move.insert(indexed_move, r#move.clone());
                         MoveTransformationInfo {
                             r#move,
                             transformation: indexed_move,
@@ -317,15 +320,24 @@ impl Phase2Puzzle {
         Self {
             search_generators,
             move_to_transformation,
+            transformation_to_move,
             coord_84,
             coord_168,
             coord_ep,
         }
     }
+
+    pub(crate) fn coordinate_for_pattern(&self, pattern: &KPattern) -> Phase2CoordTuple {
+        Phase2CoordTuple {
+            c84: self.coord_84.coordinate_for_pattern(pattern),
+            c168: self.coord_168.coordinate_for_pattern(pattern),
+            ep: self.coord_ep.coordinate_for_pattern(pattern),
+        }
+    }
 }
 
 impl GenericPuzzleCore for Phase2Puzzle {
-    type Pattern = Phase2CoordSet;
+    type Pattern = Phase2CoordTuple;
     type Transformation = Phase2IndexedMove;
 
     fn puzzle_default_pattern(&self) -> Self::Pattern {
@@ -355,7 +367,7 @@ impl GenericPuzzleCore for Phase2Puzzle {
         let c84 = self.coord_84.c84move[pattern.c84.usize()][transformation_to_apply.0];
         let c168 = self.coord_168.c168move[pattern.c168.usize()][transformation_to_apply.0];
         let ep = self.coord_ep.ep_move[pattern.ep.usize()][transformation_to_apply.0];
-        Phase2CoordSet { c84, c168, ep }
+        Phase2CoordTuple { c84, c168, ep }
     }
 
     fn pattern_apply_transformation_into(
@@ -376,8 +388,8 @@ impl GenericPuzzleCore for Phase2Puzzle {
 }
 
 pub(crate) struct Phase2SymmetryTables {
-    phase2_puzzle: Phase2Puzzle,
-    phase2_prune_table: [PruneTableEntryType; PHASE2_PRUNE_TABLE_SIZE],
+    pub(crate) phase2_puzzle: Phase2Puzzle,
+    pub(crate) phase2_prune_table: [PruneTableEntryType; PHASE2_PRUNE_TABLE_SIZE],
 }
 
 impl Phase2SymmetryTables {

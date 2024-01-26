@@ -1,3 +1,5 @@
+use std::{marker::PhantomData, sync::Arc};
+
 use cubing::{
     alg::{parse_alg, Alg, Pause},
     kpuzzle::{KPattern, KPuzzle},
@@ -6,28 +8,28 @@ use cubing::{
 use url::Url;
 
 use crate::{
-    _internal::{IDFSearch, IndividualSearchOptions},
+    _internal::{
+        options::{MetricEnum, VerbosityLevel},
+        CanonicalFSM, IDFSearch, IndividualSearchOptions, SearchGenerators, SearchLogger,
+    },
     scramble::{
         puzzles::{
             cube4x4x4::{
                 phase2::{
                     pattern_to_phase2_pattern, remap_piece_for_phase1_or_phase2_search_pattern,
-                    Phase2AdditionalSolutionCondition,
                 },
                 phase2_symmetry::Phase2SymmetryTables,
                 random::random_4x4x4_pattern,
             },
-            definitions::{
-                cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern,
-                cube4x4x4_phase2_target_kpattern, cube4x4x4_with_wing_parity_kpuzzle,
-            },
+            definitions::{cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern},
         },
         scramble_search::{basic_idfs, idfs_with_target_pattern},
     },
 };
 
 use super::{
-    super::super::scramble_search::generators_from_vec_str, phase2_symmetry::Phase2Puzzle,
+    super::super::scramble_search::generators_from_vec_str,
+    phase2_symmetry::{Phase2Puzzle, PHASE2_SOLVED_STATE},
 };
 
 pub(crate) struct Scramble4x4x4FourPhase {
@@ -44,7 +46,6 @@ pub(crate) struct Scramble4x4x4FourPhase {
 impl Default for Scramble4x4x4FourPhase {
     fn default() -> Self {
         let kpuzzle = cube4x4x4_kpuzzle().clone();
-        let phase2_kpuzzle = cube4x4x4_with_wing_parity_kpuzzle();
 
         let phase1_generators = generators_from_vec_str(vec![
             "Uw", "U", "Lw", "L", "Fw", "F", "Rw", "R", "Bw", "B", "Dw", "D",
@@ -61,19 +62,44 @@ impl Default for Scramble4x4x4FourPhase {
             None,
         );
 
-        let phase2_symmetry_tables = Phase2SymmetryTables::new();
+        let phase2_idfs = {
+            let phase2_symmetry_tables = Phase2SymmetryTables::new();
 
-        let phase2_generators =
-            generators_from_vec_str(vec!["Uw2", "U", "L", "F", "Rw", "R", "B", "Dw2", "D"]);
-        let phase2_center_target_pattern = cube4x4x4_phase2_target_kpattern();
-        // dbg!(&phase2_center_target_pattern);
-        let phase2_idfs = idfs_with_target_pattern(
-            phase2_symmetry_tables.puzzle,
-            phase2_generators.clone(),
-            phase2_center_target_pattern.clone(),
-            None,
-        );
-
+            let phase2_generators =
+                generators_from_vec_str(vec!["Uw2", "U", "L", "F", "Rw", "R", "B", "Dw2", "D"]);
+            let phase2_fsm_search_generators = SearchGenerators::<KPuzzle>::try_new(
+                &kpuzzle,
+                &phase2_generators,
+                &MetricEnum::Hand,
+                false,
+            )
+            .unwrap();
+            let canonical_fsm =
+                CanonicalFSM::<KPuzzle>::try_new(phase2_fsm_search_generators).unwrap();
+            // Transfer the `canonical_fsm` fields into an instance with a different type.
+            // This is not safe in general.
+            let canonical_fsm = CanonicalFSM::<Phase2Puzzle> {
+                next_state_lookup: canonical_fsm.next_state_lookup,
+                move_class_indices: canonical_fsm.move_class_indices,
+                _marker: PhantomData,
+            };
+            // dbg!(&phase2_center_target_pattern);
+            let search_generators = phase2_symmetry_tables
+                .phase2_puzzle
+                .search_generators
+                .clone();
+            IDFSearch::try_new_core(
+                phase2_symmetry_tables.phase2_puzzle,
+                PHASE2_SOLVED_STATE, //: TPuzzle, //:, //:Pattern,
+                Arc::new(SearchLogger {
+                    verbosity: VerbosityLevel::Info,
+                }), //: Arc<SearchLogger>,
+                None,                //: Option<usize>,
+                search_generators,   //: SearchGenerators<TPuzzle>,
+                canonical_fsm,       //: CanonicalFSM<TPuzzle>,
+            )
+            .unwrap()
+        };
         Self {
             kpuzzle,
             _filtering_idfs: filtering_idfs,
@@ -125,24 +151,19 @@ impl Scramble4x4x4FourPhase {
             let phase2_search_pattern = pattern_to_phase2_pattern(main_search_pattern);
             let phase2_search_pattern = phase2_search_pattern.apply_alg(&phase1_alg).unwrap();
 
-            let phase2_search_full_pattern = main_search_pattern.apply_alg(&phase1_alg).unwrap();
+            // let phase2_search_full_pattern = main_search_pattern.apply_alg(&phase1_alg).unwrap(); // TODO
 
-            let additional_solution_condition = Phase2AdditionalSolutionCondition {
-                puzzle: self.kpuzzle.clone(),
-                phase2_search_full_pattern,
-                _debug_num_checked: 0,
-                _debug_num_centers_rejected: 0,
-                _debug_num_total_rejected: 0,
-                _debug_num_basic_parity_rejected: 0,
-                _debug_num_known_pair_orientation_rejected: 0,
-                _debug_num_edge_parity_rejected: 0,
-            };
+            let phase2_search_pattern = self
+                .phase2_idfs
+                .api_data
+                .tpuzzle
+                .coordinate_for_pattern(&phase2_search_pattern);
 
             self.phase2_idfs
                 .search_with_additional_check(
                     &phase2_search_pattern,
                     IndividualSearchOptions::default(),
-                    Some(Box::new(additional_solution_condition)),
+                    None,
                 )
                 .next()
                 .unwrap()

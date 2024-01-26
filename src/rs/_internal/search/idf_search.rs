@@ -157,7 +157,7 @@ pub struct IDFSearchAPIData<TPuzzle: GenericPuzzleCore> {
 }
 
 pub struct IDFSearch<TPuzzle: GenericPuzzleCore> {
-    api_data: Arc<IDFSearchAPIData<TPuzzle>>,
+    pub(crate) api_data: Arc<IDFSearchAPIData<TPuzzle>>,
     prune_table: PruneTable<TPuzzle>,
 }
 

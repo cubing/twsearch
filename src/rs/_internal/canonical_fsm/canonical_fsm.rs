@@ -4,6 +4,8 @@ use std::{
     ops::{AddAssign, BitAndAssign},
 };
 
+use cubing::alg::Move;
+
 use crate::_internal::{GenericPuzzle, GenericPuzzleCore, PuzzleError, SearchGenerators};
 
 const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
@@ -83,19 +85,19 @@ pub struct CanonicalFSM<TPuzzle: GenericPuzzleCore> {
     // commutes: Vec<MoveClassMask>,
     pub(crate) move_class_indices: Vec<MoveClassIndex>,
 
-    _marker: PhantomData<TPuzzle>,
+    pub(crate) _marker: PhantomData<TPuzzle>,
 }
 
 impl<TPuzzle: GenericPuzzle> CanonicalFSM<TPuzzle> {
     // TODO: Return a more specific error.
     pub fn try_new(
-        generators: SearchGenerators<TPuzzle>,
+        search_generators: SearchGenerators<TPuzzle>,
     ) -> Result<CanonicalFSM<TPuzzle>, PuzzleError> {
         let do_transformations_commute: fn(
             &TPuzzle::Transformation,
             &TPuzzle::Transformation,
         ) -> bool = |t1, t2| SearchGenerators::<TPuzzle>::do_transformations_commute(t1, t2);
-        Self::try_new_with_do_transformations_commute(generators, do_transformations_commute)
+        Self::try_new_with_do_transformations_commute(search_generators, do_transformations_commute)
     }
 }
 

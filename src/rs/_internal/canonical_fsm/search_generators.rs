@@ -39,11 +39,20 @@ impl<TPuzzle: GenericPuzzleCore> Clone for MoveTransformationInfo<TPuzzle> {
 
 pub type MoveTransformationMultiples<TPuzzle> = Vec<MoveTransformationInfo<TPuzzle>>;
 
-#[derive(Clone, Debug)]
+#[derive(Debug)]
 pub struct SearchGenerators<TPuzzle: GenericPuzzleCore> {
     // TODO: figure out the most reusable abstraction
     pub grouped: Vec<MoveTransformationMultiples<TPuzzle>>,
     pub flat: Vec<MoveTransformationInfo<TPuzzle>>, // TODO: avoid duplicate data
+}
+
+impl<TPuzzle: GenericPuzzleCore> Clone for SearchGenerators<TPuzzle> {
+    fn clone(&self) -> Self {
+        Self {
+            grouped: self.grouped.clone(),
+            flat: self.flat.clone(),
+        }
+    }
 }
 
 impl<TPuzzle: GenericPuzzleCore> SearchGenerators<TPuzzle> {

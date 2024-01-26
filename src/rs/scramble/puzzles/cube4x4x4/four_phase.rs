@@ -26,7 +26,9 @@ use crate::{
     },
 };
 
-use super::super::super::scramble_search::generators_from_vec_str;
+use super::{
+    super::super::scramble_search::generators_from_vec_str, phase2_symmetry::Phase2Puzzle,
+};
 
 pub(crate) struct Scramble4x4x4FourPhase {
     kpuzzle: KPuzzle,
@@ -36,7 +38,7 @@ pub(crate) struct Scramble4x4x4FourPhase {
     phase1_target_pattern: KPattern,
     phase1_idfs: IDFSearch<KPuzzle>,
 
-    phase2_idfs: IDFSearch<KPuzzle>,
+    phase2_idfs: IDFSearch<Phase2Puzzle>,
 }
 
 impl Default for Scramble4x4x4FourPhase {
@@ -59,12 +61,14 @@ impl Default for Scramble4x4x4FourPhase {
             None,
         );
 
+        let phase2_symmetry_tables = Phase2SymmetryTables::new();
+
         let phase2_generators =
             generators_from_vec_str(vec!["Uw2", "U", "L", "F", "Rw", "R", "B", "Dw2", "D"]);
         let phase2_center_target_pattern = cube4x4x4_phase2_target_kpattern();
         // dbg!(&phase2_center_target_pattern);
         let phase2_idfs = idfs_with_target_pattern(
-            phase2_kpuzzle,
+            phase2_symmetry_tables.puzzle,
             phase2_generators.clone(),
             phase2_center_target_pattern.clone(),
             None,
@@ -85,10 +89,6 @@ impl Scramble4x4x4FourPhase {
         &mut self,
         main_search_pattern: &KPattern, // TODO: avoid assuming a superpattern.
     ) -> Alg {
-        let mut x = Phase2SymmetryTables::new(self.kpuzzle.clone());
-        x.init_choose_tables();
-        x.init_move_tables();
-        x.init_prune_table();
         let phase1_alg = {
             let mut phase1_search_pattern = self.phase1_target_pattern.clone();
             for orbit_info in self.kpuzzle.orbit_info_iter() {

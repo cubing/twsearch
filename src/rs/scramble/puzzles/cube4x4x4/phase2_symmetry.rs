@@ -7,7 +7,7 @@ use crate::{
         PruneTableEntryType, SearchGenerators,
     },
     scramble::puzzles::definitions::{
-        cube4x4x4_kpuzzle, cube4x4x4_phase2_target_kpattern, cube4x4x4_with_wing_parity_kpuzzle,
+        cube4x4x4_phase2_target_kpattern, cube4x4x4_with_wing_parity_kpuzzle,
     },
 };
 
@@ -17,7 +17,6 @@ use cubing::{
 };
 
 use super::{
-    super::super::scramble_search::generators_from_vec_str,
     orbit_info::orbit_info,
     phase2::{SideCenter, PHASE2_SOLVED_SIDE_CENTER_CASES},
 };
@@ -263,7 +262,7 @@ fn pack_coords(c84: Phase2Coordinate, c168: Phase2Coordinate, ep: Phase2Coordina
 struct Phase2IndexedMove(pub usize);
 
 #[derive(Debug)]
-struct Phase2Puzzle {
+pub(crate) struct Phase2Puzzle {
     search_generators: SearchGenerators<Self>,
     move_to_transformation: HashMap<Move, Phase2IndexedMove>,
     coord_84: Coord84,
@@ -378,17 +377,19 @@ impl GenericPuzzleCore for Phase2Puzzle {
 
 pub(crate) struct Phase2SymmetryTables {
     phase2_puzzle: Phase2Puzzle,
-    kpuzzle: KPuzzle, // TODO: is this needed?
     phase2_prune_table: [PruneTableEntryType; PHASE2_PRUNE_TABLE_SIZE],
 }
 
 impl Phase2SymmetryTables {
-    pub(crate) fn new(kpuzzle: KPuzzle) -> Self {
-        Self {
+    pub(crate) fn new() -> Self {
+        let mut phase2_symmetry_tables = Self {
             phase2_puzzle: Phase2Puzzle::new(),
-            kpuzzle,
             phase2_prune_table: [PRUNE_TABLE_UNINITIALIZED_VALUE; PHASE2_PRUNE_TABLE_SIZE],
-        }
+        };
+        phase2_symmetry_tables.init_choose_tables();
+        phase2_symmetry_tables.init_move_tables();
+        phase2_symmetry_tables.init_prune_table();
+        phase2_symmetry_tables
     }
 
     pub(crate) fn init_choose_tables(&mut self) {
@@ -483,7 +484,6 @@ impl Phase2SymmetryTables {
     }
 
     pub(crate) fn init_move_tables(&mut self) {
-        self.kpuzzle = cube4x4x4_kpuzzle().clone();
         let phase2_generators = Generators::Custom(CustomGenerators {
             moves: self
                 .phase2_puzzle

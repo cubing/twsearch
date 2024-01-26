@@ -10,7 +10,8 @@ use url::Url;
 use crate::{
     _internal::{
         options::{MetricEnum, VerbosityLevel},
-        CanonicalFSM, IDFSearch, IndividualSearchOptions, SearchGenerators, SearchLogger,
+        CanonicalFSM, IDFSearch, IDFSearchAPIData, IndividualSearchOptions, SearchGenerators,
+        SearchLogger,
     },
     scramble::{
         puzzles::{
@@ -40,7 +41,7 @@ pub(crate) struct Scramble4x4x4FourPhase {
     phase1_target_pattern: KPattern,
     phase1_idfs: IDFSearch<KPuzzle>,
 
-    phase2_idfs: IDFSearch<Phase2Puzzle>,
+    phase2_idfs: IDFSearch<Phase2Puzzle, Phase2SymmetryTables>,
 }
 
 impl Default for Scramble4x4x4FourPhase {
@@ -63,7 +64,7 @@ impl Default for Scramble4x4x4FourPhase {
         );
 
         let phase2_idfs = {
-            let phase2_symmetry_tables = Phase2SymmetryTables::new();
+            let (phase2_symmetry_tables, phase2_puzzle) = Phase2SymmetryTables::initialize();
 
             let phase2_generators =
                 generators_from_vec_str(vec!["Uw2", "U", "L", "F", "Rw", "R", "B", "Dw2", "D"]);
@@ -84,21 +85,17 @@ impl Default for Scramble4x4x4FourPhase {
                 _marker: PhantomData,
             };
             // dbg!(&phase2_center_target_pattern);
-            let search_generators = phase2_symmetry_tables
-                .phase2_puzzle
-                .search_generators
-                .clone();
-            IDFSearch::try_new_core(
-                phase2_symmetry_tables.phase2_puzzle,
-                PHASE2_SOLVED_STATE, //: TPuzzle, //:, //:Pattern,
-                Arc::new(SearchLogger {
+            let search_generators = phase2_puzzle.data.search_generators.clone();
+            let api_data = Arc::new(IDFSearchAPIData::<Phase2Puzzle> {
+                search_generators,
+                canonical_fsm,
+                tpuzzle: phase2_puzzle,
+                target_pattern: PHASE2_SOLVED_STATE,
+                search_logger: Arc::new(SearchLogger {
                     verbosity: VerbosityLevel::Info,
-                }), //: Arc<SearchLogger>,
-                None,                //: Option<usize>,
-                search_generators,   //: SearchGenerators<TPuzzle>,
-                canonical_fsm,       //: CanonicalFSM<TPuzzle>,
-            )
-            .unwrap()
+                }),
+            });
+            IDFSearch::try_new_core(api_data, phase2_symmetry_tables).unwrap()
         };
         Self {
             kpuzzle,

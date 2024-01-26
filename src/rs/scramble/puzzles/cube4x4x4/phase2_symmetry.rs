@@ -1,10 +1,10 @@
-use std::{collections::HashMap, ops::Sub};
+use std::{collections::HashMap, ops::Sub, sync::Arc};
 
 use crate::{
     _internal::{
         options::{CustomGenerators, Generators, MetricEnum},
         GenericPuzzleCore, MoveTransformationInfo, MoveTransformationMultiples,
-        PruneTableEntryType, SearchGenerators,
+        PruneTableEntryType, SearchGenerators, SearchHeuristic,
     },
     scramble::puzzles::definitions::{
         cube4x4x4_phase2_target_kpattern, cube4x4x4_with_wing_parity_kpuzzle,
@@ -262,16 +262,15 @@ fn pack_coords(c84: Phase2Coordinate, c168: Phase2Coordinate, ep: Phase2Coordina
 pub(crate) struct Phase2IndexedMove(pub usize);
 
 #[derive(Debug)]
-pub(crate) struct Phase2Puzzle {
-    pub(crate) search_generators: SearchGenerators<Self>,
+pub(crate) struct Phase2PuzzleData {
+    pub(crate) search_generators: SearchGenerators<Phase2Puzzle>,
     pub(crate) move_to_transformation: HashMap<Move, Phase2IndexedMove>,
-    pub(crate) transformation_to_move: HashMap<Phase2IndexedMove, Move>,
     pub(crate) coord_84: Coord84,
     pub(crate) coord_168: Coord168,
     pub(crate) coord_ep: CoordEP,
 }
 
-impl Phase2Puzzle {
+impl Phase2PuzzleData {
     fn new() -> Self {
         let grouped_moves = vec![
             // Note: the first entry of each group must be the quantum move.
@@ -289,9 +288,8 @@ impl Phase2Puzzle {
             vec![parse_move!("Dw2")],
         ];
 
-        let mut grouped_multiples = Vec::<MoveTransformationMultiples<Self>>::default();
+        let mut grouped_multiples = Vec::<MoveTransformationMultiples<Phase2Puzzle>>::default();
         let mut move_to_transformation = HashMap::<Move, Phase2IndexedMove>::default();
-        let mut transformation_to_move = HashMap::<Phase2IndexedMove, Move>::default();
 
         let mut indexed_move: Phase2IndexedMove = Phase2IndexedMove(0);
         for group in grouped_moves {
@@ -300,7 +298,6 @@ impl Phase2Puzzle {
                     .into_iter()
                     .map(|r#move| {
                         move_to_transformation.insert(r#move.clone(), indexed_move);
-                        transformation_to_move.insert(indexed_move, r#move.clone());
                         MoveTransformationInfo {
                             r#move,
                             transformation: indexed_move,
@@ -320,18 +317,24 @@ impl Phase2Puzzle {
         Self {
             search_generators,
             move_to_transformation,
-            transformation_to_move,
             coord_84,
             coord_168,
             coord_ep,
         }
     }
+}
 
+#[derive(Clone, Debug)]
+pub(crate) struct Phase2Puzzle {
+    pub(crate) data: Arc<Phase2PuzzleData>,
+}
+
+impl Phase2Puzzle {
     pub(crate) fn coordinate_for_pattern(&self, pattern: &KPattern) -> Phase2CoordTuple {
         Phase2CoordTuple {
-            c84: self.coord_84.coordinate_for_pattern(pattern),
-            c168: self.coord_168.coordinate_for_pattern(pattern),
-            ep: self.coord_ep.coordinate_for_pattern(pattern),
+            c84: self.data.coord_84.coordinate_for_pattern(pattern),
+            c168: self.data.coord_168.coordinate_for_pattern(pattern),
+            ep: self.data.coord_ep.coordinate_for_pattern(pattern),
         }
     }
 }
@@ -348,7 +351,7 @@ impl GenericPuzzleCore for Phase2Puzzle {
         &self,
         r#move: &cubing::alg::Move,
     ) -> Result<Self::Transformation, cubing::kpuzzle::InvalidAlgError> {
-        match self.move_to_transformation.get(r#move) {
+        match self.data.move_to_transformation.get(r#move) {
             Some(transformation) => Ok(*transformation),
             None => Err(InvalidAlgError::AlgParse(
                 // TODO: This should be an `InvalidMoveError`, but this is part of the `cubing::kpuzzle` interface even though it's not exported?
@@ -364,9 +367,9 @@ impl GenericPuzzleCore for Phase2Puzzle {
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
     ) -> Self::Pattern {
-        let c84 = self.coord_84.c84move[pattern.c84.usize()][transformation_to_apply.0];
-        let c168 = self.coord_168.c168move[pattern.c168.usize()][transformation_to_apply.0];
-        let ep = self.coord_ep.ep_move[pattern.ep.usize()][transformation_to_apply.0];
+        let c84 = self.data.coord_84.c84move[pattern.c84.usize()][transformation_to_apply.0];
+        let c168 = self.data.coord_168.c168move[pattern.c168.usize()][transformation_to_apply.0];
+        let ep = self.data.coord_ep.ep_move[pattern.ep.usize()][transformation_to_apply.0];
         Phase2CoordTuple { c84, c168, ep }
     }
 
@@ -376,10 +379,11 @@ impl GenericPuzzleCore for Phase2Puzzle {
         transformation_to_apply: &Self::Transformation,
         into_pattern: &mut Self::Pattern,
     ) {
-        into_pattern.c84 = self.coord_84.c84move[pattern.c84.usize()][transformation_to_apply.0];
+        into_pattern.c84 =
+            self.data.coord_84.c84move[pattern.c84.usize()][transformation_to_apply.0];
         into_pattern.c168 =
-            self.coord_168.c168move[pattern.c168.usize()][transformation_to_apply.0];
-        into_pattern.ep = self.coord_ep.ep_move[pattern.ep.usize()][transformation_to_apply.0];
+            self.data.coord_168.c168move[pattern.c168.usize()][transformation_to_apply.0];
+        into_pattern.ep = self.data.coord_ep.ep_move[pattern.ep.usize()][transformation_to_apply.0];
     }
 
     fn pattern_hash_u64(pattern: &Self::Pattern) -> u64 {
@@ -388,46 +392,64 @@ impl GenericPuzzleCore for Phase2Puzzle {
 }
 
 pub(crate) struct Phase2SymmetryTables {
-    pub(crate) phase2_puzzle: Phase2Puzzle,
     pub(crate) phase2_prune_table: [PruneTableEntryType; PHASE2_PRUNE_TABLE_SIZE],
 }
 
-impl Phase2SymmetryTables {
-    pub(crate) fn new() -> Self {
-        let mut phase2_symmetry_tables = Self {
-            phase2_puzzle: Phase2Puzzle::new(),
-            phase2_prune_table: [PRUNE_TABLE_UNINITIALIZED_VALUE; PHASE2_PRUNE_TABLE_SIZE],
-        };
-        phase2_symmetry_tables.init_choose_tables();
-        phase2_symmetry_tables.init_move_tables();
-        phase2_symmetry_tables.init_prune_table();
-        phase2_symmetry_tables
+impl SearchHeuristic<Phase2Puzzle> for Phase2SymmetryTables {
+    fn extend_for_search_depth(&mut self, search_depth: usize, _approximate_num_entries: usize) {
+        // no-op
+        eprintln!(
+            "No extension needed for extend_for_search_depth({}, …)",
+            search_depth
+        );
     }
 
-    pub(crate) fn init_choose_tables(&mut self) {
+    fn lookup(&self, pattern: &<Phase2Puzzle as GenericPuzzleCore>::Pattern) -> usize {
+        self.phase2_prune_table[pattern.pack().usize()] as usize
+    }
+}
+
+impl Phase2SymmetryTables {
+    pub(crate) fn initialize() -> (Self, Phase2Puzzle) {
+        let mut phase2_puzzle_data = Phase2PuzzleData::new();
+        let mut phase2_symmetry_tables = Self {
+            phase2_prune_table: [PRUNE_TABLE_UNINITIALIZED_VALUE; PHASE2_PRUNE_TABLE_SIZE],
+        };
+        phase2_symmetry_tables.init_choose_tables(&mut phase2_puzzle_data);
+        phase2_symmetry_tables.init_move_tables(&mut phase2_puzzle_data);
+        phase2_symmetry_tables.init_prune_table(&mut phase2_puzzle_data);
+        (
+            phase2_symmetry_tables,
+            Phase2Puzzle {
+                data: Arc::new(phase2_puzzle_data),
+            },
+        )
+    }
+
+    pub(crate) fn init_choose_tables(&mut self, phase2_puzzle_data: &mut Phase2PuzzleData) {
         let mut at = PackedValue(0);
         for i in 0..0x80usize {
             if i.count_ones() == 4 {
-                self.phase2_puzzle.coord_84.pack84[i] = at;
-                self.phase2_puzzle.coord_84.pack84[0xff - i] = at;
+                phase2_puzzle_data.coord_84.pack84[i] = at;
+                phase2_puzzle_data.coord_84.pack84[0xff - i] = at;
                 at.0 += 1;
             }
         }
         at.0 = 0;
         for i in 0..0x8000usize {
             if i.count_ones() == 8 {
-                if self.phase2_puzzle.coord_168.pack168hi[i >> 8]
+                if phase2_puzzle_data.coord_168.pack168hi[i >> 8]
                     == PACKED_VALUE_UNINITIALIZED_VALUE
                 {
-                    self.phase2_puzzle.coord_168.pack168hi[i >> 8] = at;
+                    phase2_puzzle_data.coord_168.pack168hi[i >> 8] = at;
                 }
-                if self.phase2_puzzle.coord_168.pack168lo
+                if phase2_puzzle_data.coord_168.pack168lo
                     [i & PRUNE_TABLE_UNINITIALIZED_VALUE as usize]
                     == PACKED_VALUE_UNINITIALIZED_VALUE
                 {
-                    self.phase2_puzzle.coord_168.pack168lo
+                    phase2_puzzle_data.coord_168.pack168lo
                         [i & PRUNE_TABLE_UNINITIALIZED_VALUE as usize] =
-                        at - self.phase2_puzzle.coord_168.pack168hi[i >> 8];
+                        at - phase2_puzzle_data.coord_168.pack168hi[i >> 8];
                 }
                 at.0 += 1;
             }
@@ -448,14 +470,15 @@ impl Phase2SymmetryTables {
 
     fn fill_move_table(
         &mut self,
+        phase2_puzzle_data: &mut Phase2PuzzleData,
         coordinate_table: CoordinateTable,
         search_generators: &SearchGenerators<KPuzzle>,
     ) {
         // TODO: double-check if there are any performance penalties for `dyn`.
         let coord_field: &mut dyn Coord = match coordinate_table {
-            CoordinateTable::Coord84 => &mut self.phase2_puzzle.coord_84,
-            CoordinateTable::Coord168 => &mut self.phase2_puzzle.coord_168,
-            CoordinateTable::CoordEP => &mut self.phase2_puzzle.coord_ep,
+            CoordinateTable::Coord84 => &mut phase2_puzzle_data.coord_84,
+            CoordinateTable::Coord168 => &mut phase2_puzzle_data.coord_168,
+            CoordinateTable::CoordEP => &mut phase2_puzzle_data.coord_ep,
         };
         {
             for row in coord_field.move_table() {
@@ -495,10 +518,9 @@ impl Phase2SymmetryTables {
         assert!(patterns_write_idx == tab.len());
     }
 
-    pub(crate) fn init_move_tables(&mut self) {
+    pub(crate) fn init_move_tables(&mut self, phase2_puzzle_data: &mut Phase2PuzzleData) {
         let phase2_generators = Generators::Custom(CustomGenerators {
-            moves: self
-                .phase2_puzzle
+            moves: phase2_puzzle_data
                 .search_generators
                 .grouped
                 .iter()
@@ -513,9 +535,9 @@ impl Phase2SymmetryTables {
             false,
         ) {
             Result::Ok(moves) => {
-                self.fill_move_table(CoordinateTable::Coord84, &moves);
-                self.fill_move_table(CoordinateTable::Coord168, &moves);
-                self.fill_move_table(CoordinateTable::CoordEP, &moves);
+                self.fill_move_table(phase2_puzzle_data, CoordinateTable::Coord84, &moves);
+                self.fill_move_table(phase2_puzzle_data, CoordinateTable::Coord168, &moves);
+                self.fill_move_table(phase2_puzzle_data, CoordinateTable::CoordEP, &moves);
             }
             _ => {
                 panic!();
@@ -523,7 +545,7 @@ impl Phase2SymmetryTables {
         }
     }
 
-    pub(crate) fn init_prune_table(&mut self) {
+    pub(crate) fn init_prune_table(&mut self, phase2_puzzle_data: &mut Phase2PuzzleData) {
         for i in 0..self.phase2_prune_table.len() {
             self.phase2_prune_table[i] = PRUNE_TABLE_UNINITIALIZED_VALUE;
         }
@@ -558,9 +580,9 @@ impl Phase2SymmetryTables {
                         {
                             for m in 0..PHASE2_MOVE_COUNT {
                                 let dst = pack_coords(
-                                    self.phase2_puzzle.coord_84.c84move[c84src][m],
-                                    self.phase2_puzzle.coord_168.c168move[c168src][m],
-                                    self.phase2_puzzle.coord_ep.ep_move[epsrc][m],
+                                    phase2_puzzle_data.coord_84.c84move[c84src][m],
+                                    phase2_puzzle_data.coord_168.c168move[c168src][m],
+                                    phase2_puzzle_data.coord_ep.ep_move[epsrc][m],
                                 );
                                 if self.phase2_prune_table[dst.usize()]
                                     == PRUNE_TABLE_UNINITIALIZED_VALUE

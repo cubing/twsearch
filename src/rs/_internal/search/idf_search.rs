@@ -156,9 +156,27 @@ pub struct IDFSearchAPIData<TPuzzle: GenericPuzzleCore> {
     pub search_logger: Arc<SearchLogger>,
 }
 
-pub struct IDFSearch<TPuzzle: GenericPuzzleCore> {
+pub(crate) trait SearchHeuristic<TPuzzle: GenericPuzzleCore> {
+    fn extend_for_search_depth(&mut self, search_depth: usize, approximate_num_entries: usize);
+    fn lookup(&self, pattern: &TPuzzle::Pattern) -> usize;
+}
+
+impl<TPuzzle: GenericPuzzleCore> SearchHeuristic<TPuzzle> for PruneTable<TPuzzle> {
+    fn extend_for_search_depth(&mut self, search_depth: usize, approximate_num_entries: usize) {
+        self.extend_for_search_depth(search_depth, approximate_num_entries)
+    }
+
+    fn lookup(&self, pattern: &<TPuzzle as GenericPuzzleCore>::Pattern) -> usize {
+        self.lookup(pattern)
+    }
+}
+
+pub(crate) struct IDFSearch<
+    TPuzzle: GenericPuzzleCore,
+    THeuristic: SearchHeuristic<TPuzzle> = PruneTable<TPuzzle>,
+> {
     pub(crate) api_data: Arc<IDFSearchAPIData<TPuzzle>>,
-    prune_table: PruneTable<TPuzzle>,
+    search_heuristic: THeuristic,
 }
 
 impl<TPuzzle: GenericPuzzle> IDFSearch<TPuzzle> {
@@ -175,38 +193,30 @@ impl<TPuzzle: GenericPuzzle> IDFSearch<TPuzzle> {
             SearchGenerators::<TPuzzle>::try_new(&tpuzzle, &generators, metric, random_start)?;
 
         let canonical_fsm = CanonicalFSM::try_new(search_generators.clone())?; // TODO: avoid a clone
-        Self::try_new_core(
-            tpuzzle,
-            target_pattern,
-            search_logger,
-            min_prune_table_size,
-            search_generators,
-            canonical_fsm,
-        )
-    }
-}
 
-impl<TPuzzle: GenericPuzzleCore> IDFSearch<TPuzzle> {
-    pub fn try_new_core(
-        tpuzzle: TPuzzle,
-        target_pattern: TPuzzle::Pattern,
-        search_logger: Arc<SearchLogger>,
-        min_prune_table_size: Option<usize>,
-        search_generators: SearchGenerators<TPuzzle>,
-        canonical_fsm: CanonicalFSM<TPuzzle>,
-    ) -> Result<Self, PuzzleError> {
-        let api_data: Arc<IDFSearchAPIData<TPuzzle>> = Arc::new(IDFSearchAPIData {
+        let api_data = Arc::new(IDFSearchAPIData::<TPuzzle> {
             search_generators,
             canonical_fsm,
             tpuzzle,
             target_pattern,
             search_logger: search_logger.clone(),
         });
-
         let prune_table = PruneTable::new(api_data.clone(), search_logger, min_prune_table_size); // TODO: make the prune table reusable across searches.
+
+        Self::try_new_core(api_data, prune_table)
+    }
+}
+
+impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
+    IDFSearch<TPuzzle, THeuristic>
+{
+    pub fn try_new_core(
+        api_data: Arc<IDFSearchAPIData<TPuzzle>>,
+        search_heuristic: THeuristic,
+    ) -> Result<Self, PuzzleError> {
         Ok(Self {
             api_data,
-            prune_table,
+            search_heuristic,
         })
     }
 
@@ -264,7 +274,7 @@ impl<TPuzzle: GenericPuzzleCore> IDFSearch<TPuzzle> {
                 .get_max_depth()
         {
             self.api_data.search_logger.write_info("----------------");
-            self.prune_table.extend_for_search_depth(
+            self.search_heuristic.extend_for_search_depth(
                 remaining_depth,
                 individual_search_data
                     .recursive_work_tracker
@@ -370,7 +380,7 @@ impl<TPuzzle: GenericPuzzleCore> IDFSearch<TPuzzle> {
             }
         }
 
-        let prune_table_depth = self.prune_table.lookup(current_pattern);
+        let prune_table_depth = self.search_heuristic.lookup(current_pattern);
         if prune_table_depth > remaining_depth + 1 {
             return SearchRecursionResult::ContinueSearchingExcludingCurrentMoveClass();
         }

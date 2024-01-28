@@ -1,4 +1,4 @@
-use std::{marker::PhantomData, sync::Arc};
+use std::sync::Arc;
 
 use cubing::{
     alg::{parse_alg, Alg, Pause},
@@ -9,9 +9,8 @@ use url::Url;
 
 use crate::{
     _internal::{
-        options::{MetricEnum, VerbosityLevel},
-        CanonicalFSM, IDFSearch, IDFSearchAPIData, IndividualSearchOptions, SearchGenerators,
-        SearchLogger,
+        options::VerbosityLevel, CanonicalFSM, IDFSearch, IDFSearchAPIData,
+        IndividualSearchOptions, SearchLogger,
     },
     scramble::{
         puzzles::{
@@ -30,7 +29,7 @@ use crate::{
 
 use super::{
     super::super::scramble_search::generators_from_vec_str,
-    phase2_symmetry::{Phase2Puzzle, PHASE2_SOLVED_STATE},
+    phase2_symmetry::{Phase2IndexedTransformation, Phase2Puzzle, PHASE2_SOLVED_STATE},
 };
 
 pub(crate) struct Scramble4x4x4FourPhase {
@@ -66,24 +65,33 @@ impl Default for Scramble4x4x4FourPhase {
         let phase2_idfs = {
             let (phase2_symmetry_tables, phase2_puzzle) = Phase2SymmetryTables::initialize();
 
-            let phase2_generators =
-                generators_from_vec_str(vec!["Uw2", "U", "L", "F", "Rw", "R", "B", "Dw2", "D"]);
-            let phase2_fsm_search_generators = SearchGenerators::<KPuzzle>::try_new(
-                &kpuzzle,
-                &phase2_generators,
-                &MetricEnum::Hand,
-                false,
-            )
-            .unwrap();
+            let do_transformations_commute =
+                |phase1_t1: &Phase2IndexedTransformation,
+                 phase1_t2: &Phase2IndexedTransformation| {
+                    // TODO: make this all *way* more ergonomic
+
+                    let m1 = phase2_puzzle
+                        .data
+                        .transformation_to_move
+                        .get(phase1_t1)
+                        .unwrap();
+                    let m2 = phase2_puzzle
+                        .data
+                        .transformation_to_move
+                        .get(phase1_t2)
+                        .unwrap();
+
+                    let full_t1 = kpuzzle.transformation_from_move(m1).unwrap();
+                    let full_t2 = kpuzzle.transformation_from_move(m2).unwrap();
+
+                    full_t1.apply_transformation(&full_t2) == full_t2.apply_transformation(&full_t1)
+                };
             let canonical_fsm =
-                CanonicalFSM::<KPuzzle>::try_new(phase2_fsm_search_generators).unwrap();
-            // Transfer the `canonical_fsm` fields into an instance with a different type.
-            // This is not safe in general.
-            let canonical_fsm = CanonicalFSM::<Phase2Puzzle> {
-                next_state_lookup: canonical_fsm.next_state_lookup,
-                move_class_indices: canonical_fsm.move_class_indices,
-                _marker: PhantomData,
-            };
+                CanonicalFSM::<Phase2Puzzle>::try_new_with_do_transformations_commute(
+                    phase2_puzzle.data.search_generators.clone(),
+                    &do_transformations_commute,
+                )
+                .unwrap();
             // dbg!(&phase2_center_target_pattern);
             let search_generators = phase2_puzzle.data.search_generators.clone();
             let api_data = Arc::new(IDFSearchAPIData::<Phase2Puzzle> {

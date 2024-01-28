@@ -259,12 +259,13 @@ fn pack_coords(c84: Phase2Coordinate, c168: Phase2Coordinate, ep: Phase2Coordina
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub(crate) struct Phase2IndexedMove(pub usize);
+pub(crate) struct Phase2IndexedTransformation(pub usize);
 
 #[derive(Debug)]
 pub(crate) struct Phase2PuzzleData {
     pub(crate) search_generators: SearchGenerators<Phase2Puzzle>,
-    pub(crate) move_to_transformation: HashMap<Move, Phase2IndexedMove>,
+    pub(crate) move_to_transformation: HashMap<Move, Phase2IndexedTransformation>,
+    pub(crate) transformation_to_move: HashMap<Phase2IndexedTransformation, Move>,
     pub(crate) coord_84: Coord84,
     pub(crate) coord_168: Coord168,
     pub(crate) coord_ep: CoordEP,
@@ -289,15 +290,18 @@ impl Phase2PuzzleData {
         ];
 
         let mut grouped_multiples = Vec::<MoveTransformationMultiples<Phase2Puzzle>>::default();
-        let mut move_to_transformation = HashMap::<Move, Phase2IndexedMove>::default();
+        let mut move_to_transformation = HashMap::<Move, Phase2IndexedTransformation>::default();
+        let mut transformation_to_move: HashMap<Phase2IndexedTransformation, Move> =
+            HashMap::<Phase2IndexedTransformation, Move>::default();
 
-        let mut indexed_move: Phase2IndexedMove = Phase2IndexedMove(0);
+        let mut indexed_move: Phase2IndexedTransformation = Phase2IndexedTransformation(0);
         for group in grouped_moves {
             grouped_multiples.push(
                 group
                     .into_iter()
                     .map(|r#move| {
                         move_to_transformation.insert(r#move.clone(), indexed_move);
+                        transformation_to_move.insert(indexed_move, r#move.clone());
                         MoveTransformationInfo {
                             r#move,
                             transformation: indexed_move,
@@ -317,6 +321,7 @@ impl Phase2PuzzleData {
         Self {
             search_generators,
             move_to_transformation,
+            transformation_to_move,
             coord_84,
             coord_168,
             coord_ep,
@@ -341,7 +346,7 @@ impl Phase2Puzzle {
 
 impl GenericPuzzleCore for Phase2Puzzle {
     type Pattern = Phase2CoordTuple;
-    type Transformation = Phase2IndexedMove;
+    type Transformation = Phase2IndexedTransformation;
 
     fn puzzle_default_pattern(&self) -> Self::Pattern {
         PHASE2_SOLVED_STATE
@@ -534,10 +539,22 @@ impl Phase2SymmetryTables {
             &MetricEnum::Hand,
             false,
         ) {
-            Result::Ok(moves) => {
-                self.fill_move_table(phase2_puzzle_data, CoordinateTable::Coord84, &moves);
-                self.fill_move_table(phase2_puzzle_data, CoordinateTable::Coord168, &moves);
-                self.fill_move_table(phase2_puzzle_data, CoordinateTable::CoordEP, &moves);
+            Result::Ok(search_generators) => {
+                self.fill_move_table(
+                    phase2_puzzle_data,
+                    CoordinateTable::Coord84,
+                    &search_generators,
+                );
+                self.fill_move_table(
+                    phase2_puzzle_data,
+                    CoordinateTable::Coord168,
+                    &search_generators,
+                );
+                self.fill_move_table(
+                    phase2_puzzle_data,
+                    CoordinateTable::CoordEP,
+                    &search_generators,
+                );
             }
             _ => {
                 panic!();

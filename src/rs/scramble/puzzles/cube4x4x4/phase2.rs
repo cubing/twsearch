@@ -296,7 +296,7 @@ impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
         // };
 
         let kpuzzle_4x4x4 = self.phase2_search_full_pattern.kpuzzle();
-        let mut accept = false;
+        let mut accept = true;
 
         // TODO: the rest of this function is old code ported to a new implementation. We can probably make this simpler.
 

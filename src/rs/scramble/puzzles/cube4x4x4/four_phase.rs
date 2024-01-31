@@ -225,7 +225,8 @@ impl Scramble4x4x4FourPhase {
             // let hardcoded_scramble_alg_for_testing = parse_alg!(
             //     "Uw2 Fw2 U' L2 F2 L' Uw2 Fw2 U D' L' U2 R' Fw D' Rw2 F' L2 Uw' //Fw L U' R2 Uw Fw"
             // );
-            let scramble_pattern = random_4x4x4_pattern(Some(&hardcoded_scramble_alg_for_testing));
+            // let scramble_pattern = random_4x4x4_pattern(Some(&hardcoded_scramble_alg_for_testing));
+            let scramble_pattern = random_4x4x4_pattern(None);
 
             if !self.is_valid_scramble_pattern(&scramble_pattern) {
                 continue;

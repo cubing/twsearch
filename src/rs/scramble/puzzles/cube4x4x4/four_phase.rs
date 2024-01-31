@@ -1,10 +1,11 @@
 use std::{collections::HashSet, sync::Arc};
 
 use cubing::{
-    alg::{parse_alg, Alg, Pause},
+    alg::{parse_alg, parse_move, Alg, AlgBuilder, AlgNode, Pause},
     kpuzzle::{KPattern, KPuzzle},
 };
 
+use rand::{seq::SliceRandom, thread_rng};
 use url::Url;
 
 use crate::{
@@ -226,17 +227,50 @@ impl Scramble4x4x4FourPhase {
             //     "Uw2 Fw2 U' L2 F2 L' Uw2 Fw2 U D' L' U2 R' Fw D' Rw2 F' L2 Uw' //Fw L U' R2 Uw Fw"
             // );
             // let scramble_pattern = random_4x4x4_pattern(Some(&hardcoded_scramble_alg_for_testing));
-            let scramble_pattern = random_4x4x4_pattern(None);
+            // let scramble_pattern = random_4x4x4_pattern(None);
+
+            // Randomize phase 2 only
+            let mut alg_builder = AlgBuilder::default();
+            let moves = vec![
+                parse_move!("U"),
+                parse_move!("U2"),
+                parse_move!("U'"),
+                parse_move!("Uw2"),
+                parse_move!("L"),
+                parse_move!("L2"),
+                parse_move!("L'"),
+                parse_move!("F"),
+                parse_move!("F2"),
+                parse_move!("F'"),
+                parse_move!("R"),
+                parse_move!("R2"),
+                parse_move!("R'"),
+                parse_move!("Rw"),
+                parse_move!("Rw2"),
+                parse_move!("Rw'"),
+                parse_move!("B"),
+                parse_move!("B2"),
+                parse_move!("B'"),
+                parse_move!("D"),
+                parse_move!("D2"),
+                parse_move!("D'"),
+                parse_move!("Dw2"),
+            ];
+            let mut rng = thread_rng();
+            for _ in 0..100 {
+                let r#move = moves.choose(&mut rng).unwrap();
+                let alg_node: AlgNode = r#move.clone().into();
+                alg_builder.push(&alg_node);
+            }
+            let scramble_alg = alg_builder.to_alg();
+            let scramble_pattern = random_4x4x4_pattern(Some(&scramble_alg));
 
             if !self.is_valid_scramble_pattern(&scramble_pattern) {
                 continue;
             }
-            dbg!(hardcoded_scramble_alg_for_testing.to_string());
+            dbg!(&scramble_alg.to_string());
             let solution_alg = self.solve_4x4x4_pattern(&scramble_pattern);
-            println!(
-                "{}",
-                twizzle_link(&hardcoded_scramble_alg_for_testing, &solution_alg)
-            );
+            println!("{}", twizzle_link(&scramble_alg, &solution_alg));
             return solution_alg;
         }
     }

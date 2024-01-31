@@ -18,7 +18,7 @@ use cubing::{
 
 use super::{
     orbit_info::orbit_info,
-    phase2::{SideCenter, PHASE2_SOLVED_SIDE_CENTER_CASES},
+    phase2::{SideCenter, PHASE2_SOLVED_SIDE_CENTER_CASES, pattern_to_phase2_pattern},
 };
 
 const PHASE1_PRUNE_TABLE_SIZE: usize = 735471; // this is 24 choose 8
@@ -126,12 +126,17 @@ impl Coord for Coord84 {
     fn coordinate_for_pattern(&self, pattern: &KPattern) -> Phase2Coordinate {
         let mut bits = 0;
         // TODO: store this in the struct?
+        let mut sum: i32 = 0 ;
         let centers_orbit_info = orbit_info(pattern.kpuzzle(), 2, "CENTERS");
         for idx in L_AND_R_CENTER_INDICES {
+            sum += pattern.get_piece(centers_orbit_info, idx) as i32 ;
             bits *= 2;
             if pattern.get_piece(centers_orbit_info, idx) == L_CENTER_PIECE {
                 bits += 1
             }
+        }
+        if (sum != 16) {
+           panic!("Called coord84 on the wrong kind of kpuzzle") ;
         }
         Phase2Coordinate(self.pack84[bits].0)
     }
@@ -162,10 +167,12 @@ impl Coord for Coord168 {
         let mut bits = 0;
         // TODO: store this in the struct?
         let centers_orbit_info = orbit_info(pattern.kpuzzle(), 2, "CENTERS");
+        let mut sum: i32 = 0;
         for idx in [
             0, 1, 2, 3, 20, 21, 22, 23, // U and D
             8, 9, 10, 11, 16, 17, 18, 19, // F and B
         ] {
+            sum += pattern.get_piece(centers_orbit_info, idx) as i32;
             bits *= 2;
             if pattern.get_piece(centers_orbit_info, idx) == 0 {
                 bits += 1
@@ -173,6 +180,9 @@ impl Coord for Coord168 {
         }
         if bits >= 32768 {
             bits = 65535 - bits;
+        }
+        if (sum != 16) {
+           panic!("Called coord168 on the wrong kind of kpuzzle") ;
         }
         Phase2Coordinate(
             self.pack168hi[bits >> 8].0
@@ -345,9 +355,10 @@ pub(crate) struct Phase2Puzzle {
 
 impl Phase2Puzzle {
     pub(crate) fn coordinate_for_pattern(&self, pattern: &KPattern) -> Phase2CoordTuple {
+        let p2p = pattern_to_phase2_pattern(&pattern);
         Phase2CoordTuple {
-            c84: self.data.coord_84.coordinate_for_pattern(pattern),
-            c168: self.data.coord_168.coordinate_for_pattern(pattern),
+            c84: self.data.coord_84.coordinate_for_pattern(&p2p),
+            c168: self.data.coord_168.coordinate_for_pattern(&p2p),
             ep: self.data.coord_ep.coordinate_for_pattern(pattern),
         }
     }

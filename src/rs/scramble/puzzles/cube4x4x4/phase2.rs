@@ -263,7 +263,7 @@ fn is_solve_center_center_case(case: &[[SideCenter; 4]; 2]) -> bool {
     false
 }
 
-const CHECK_META_CENTER_PARITY: bool = true;
+const CHECK_META_CENTER_PARITY: bool = false;
 const SHORT_CIRCUIT_REJECTION: bool = true;
 const COUNT_MULTIPLE_KNOWN_PAIR_REJECTION_PER_PATTERN: bool = true;
 
@@ -315,7 +315,7 @@ impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
             // TODO: is it more efficient to check this later?
 
             let centers_orbit_info = &kpuzzle_4x4x4.data.ordered_orbit_info[2];
-            assert!(centers_orbit_info.name == "CENTERS".into());
+            debug_assert!(centers_orbit_info.name == "CENTERS".into());
 
             let piece_at_index_0 = pattern_with_alg_applied.get_piece(centers_orbit_info, 0);
             // for i in 0..24 {
@@ -326,13 +326,14 @@ impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
             //     stdout().flush();
             // }
             // dbg!(piece_at_index_0);
-            accept = !(4..20).contains(&piece_at_index_0);
+            let centers_okay = !(4..20).contains(&piece_at_index_0);
 
-            if !accept {
+            if !centers_okay {
                 // println!("Rejecting due to centers");
                 {
                     self._debug_num_centers_rejected += 1;
                 }
+                accept = false;
                 if SHORT_CIRCUIT_REJECTION {
                     return false;
                 }

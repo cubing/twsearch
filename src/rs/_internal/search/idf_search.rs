@@ -354,8 +354,8 @@ impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
         let mut pattern_is_maybe_unsolved = true;
 
         if remaining_depth == 0 {
-            dbg!(current_pattern);
-            dbg!(self.search_heuristic.lookup(current_pattern));
+            // dbg!(current_pattern);
+            // dbg!(self.search_heuristic.lookup(current_pattern));
 
             if let Some(previous_moves) = solution_moves.0 {
                 if is_move_disallowed(

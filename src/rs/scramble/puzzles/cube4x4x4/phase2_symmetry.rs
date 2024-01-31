@@ -162,7 +162,10 @@ impl Coord for Coord168 {
         let mut bits = 0;
         // TODO: store this in the struct?
         let centers_orbit_info = orbit_info(pattern.kpuzzle(), 2, "CENTERS");
-        for idx in [0, 1, 2, 3, 8, 9, 10, 11, 16, 17, 18, 19, 20, 21, 22, 23] {
+        for idx in [
+            0, 1, 2, 3, 20, 21, 22, 23, // U and D
+            8, 9, 10, 11, 16, 17, 18, 19, // F and B
+        ] {
             bits *= 2;
             if pattern.get_piece(centers_orbit_info, idx) == 0 {
                 bits += 1

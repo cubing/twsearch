@@ -258,7 +258,8 @@ fn is_solve_center_center_case(case: &[[SideCenter; 4]; 2]) -> bool {
     false
 }
 
-const SHORT_CIRCUIT_REJECTION: bool = true;
+const SHORT_CIRCUIT_REJECTION: bool = false;
+const COUNT_MULTIPLE_KNOWN_PAIR_REJECTION_PER_PATTERN: bool = true;
 
 impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
     for Phase2ReplacementSolutionCondition
@@ -388,7 +389,12 @@ impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
                         // println!("Rejecting due to known_pair_orientation");
                         // println!("false2 {:?}", known_pair_orientation);
                         {
-                            self._debug_num_known_pair_orientation_rejected += known_pair_inc;
+                            self._debug_num_known_pair_orientation_rejected +=
+                                if COUNT_MULTIPLE_KNOWN_PAIR_REJECTION_PER_PATTERN {
+                                    1
+                                } else {
+                                    known_pair_inc
+                                };
                             known_pair_inc = 0;
                         }
                         accept = false;
@@ -415,11 +421,14 @@ impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
             self._debug_num_total_rejected += 1;
         }
 
-        dbg!("Accepting after the following rejections:");
-        dbg!(self._debug_num_centers_rejected);
-        dbg!(self._debug_num_basic_parity_rejected);
-        dbg!(self._debug_num_known_pair_orientation_rejected);
-        dbg!(self._debug_num_edge_parity_rejected);
+        if accept {
+            dbg!("Accepting after the following rejections:");
+            dbg!(self._debug_num_total_rejected);
+            dbg!(self._debug_num_centers_rejected);
+            dbg!(self._debug_num_basic_parity_rejected);
+            dbg!(self._debug_num_known_pair_orientation_rejected);
+            dbg!(self._debug_num_edge_parity_rejected);
+        }
         accept
     }
 }

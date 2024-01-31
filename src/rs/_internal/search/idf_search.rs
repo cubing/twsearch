@@ -16,7 +16,7 @@ use super::{GenericPuzzle, GenericPuzzleCore};
 
 const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase
 
-const BACKTRACK_ON_EARLY_SOLUTIONS: bool = true;
+const BACKTRACK_ON_EARLY_SOLUTIONS_FOR_PHASE2_DEBUG: bool = true;
 
 #[allow(clippy::enum_variant_names)]
 enum SearchRecursionResult {
@@ -451,7 +451,7 @@ impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
         }
 
         let prune_table_depth = self.search_heuristic.lookup(current_pattern);
-        if BACKTRACK_ON_EARLY_SOLUTIONS {
+        if BACKTRACK_ON_EARLY_SOLUTIONS_FOR_PHASE2_DEBUG {
             // TODO: figure out whether to make this a non-debug parameter
             if individual_search_data.phase2_debug && prune_table_depth == 0 {
                 return SearchRecursionResult::ContinueSearchingExcludingCurrentMoveClass();

@@ -191,7 +191,7 @@ pub struct IDFSearchAPIData<TPuzzle: GenericPuzzleCore> {
     pub search_logger: Arc<SearchLogger>,
 }
 
-pub(crate) trait SearchHeuristic<TPuzzle: GenericPuzzleCore> {
+pub trait SearchHeuristic<TPuzzle: GenericPuzzleCore> {
     fn extend_for_search_depth(&mut self, search_depth: usize, approximate_num_entries: usize);
     fn lookup(&self, pattern: &TPuzzle::Pattern) -> usize;
 }
@@ -206,7 +206,7 @@ impl<TPuzzle: GenericPuzzleCore> SearchHeuristic<TPuzzle> for PruneTable<TPuzzle
     }
 }
 
-pub(crate) struct IDFSearch<
+pub struct IDFSearch<
     TPuzzle: GenericPuzzleCore,
     THeuristic: SearchHeuristic<TPuzzle> = PruneTable<TPuzzle>,
 > {

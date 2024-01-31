@@ -169,6 +169,7 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
             max_depth: search_command_args.search_args.max_depth,
             disallowed_initial_quanta: None,
             disallowed_final_quanta: None,
+            phase2_debug: false,
         },
     );
     let mut solution_index = 0;

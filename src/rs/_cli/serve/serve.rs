@@ -120,6 +120,7 @@ fn solve_pattern(
                     .and_then(|client_args| client_args.max_depth),
                 disallowed_initial_quanta: None,
                 disallowed_final_quanta: None,
+                phase2_debug: false,
             },
         )
         .next()

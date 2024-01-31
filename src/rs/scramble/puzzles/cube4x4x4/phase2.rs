@@ -4,7 +4,7 @@ use cubing::{
 };
 
 use crate::{
-    _internal::{AdditionalSolutionCondition, GenericPuzzle},
+    _internal::{GenericPuzzle, GenericPuzzleCore, ReplacementSolutionCondition, SearchHeuristic},
     scramble::{
         puzzles::{
             cube4x4x4::orbit_info::orbit_info,
@@ -16,6 +16,8 @@ use crate::{
         randomize::{basic_parity, BasicParity},
     },
 };
+
+use super::phase2_symmetry::{Phase2Puzzle, Phase2SymmetryTables};
 
 const NUM_4X4X4_EDGES: usize = 24;
 
@@ -133,7 +135,7 @@ pub(crate) fn pattern_to_phase2_pattern(pattern: &KPattern) -> KPattern {
     set_wing_parity(&mut new_pattern, wing_parity);
     new_pattern
 }
-pub(crate) struct Phase2AdditionalSolutionCondition<TPuzzle: GenericPuzzle> {
+pub(crate) struct Phase2AdditionalSolutionCondition<TPuzzle: GenericPuzzleCore> {
     pub(crate) puzzle: TPuzzle, // we could theoretically get this from `main_search_pattern`, but this way is more clear.
     pub(crate) phase2_search_full_pattern: TPuzzle::Pattern,
     pub(crate) _debug_num_checked: usize, // TODO: remove
@@ -255,135 +257,15 @@ fn is_solve_center_center_case(case: &[[SideCenter; 4]; 2]) -> bool {
     false
 }
 
-impl AdditionalSolutionCondition<KPuzzle> for Phase2AdditionalSolutionCondition<KPuzzle> {
+impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
+    for Phase2AdditionalSolutionCondition<Phase2Puzzle>
+{
     fn should_accept_solution(
         &mut self,
-        _candidate_pattern: &KPattern,
-        candidate_alg: &Alg,
+        candidate_pattern: &<Phase2Puzzle as GenericPuzzleCore>::Pattern,
+        search_heuristic: &Phase2SymmetryTables,
     ) -> bool {
-        let mut accept = true;
-
-        // self._debug_num_checked += 1;
-        // if self._debug_num_checked.is_power_of_two() {
-        //     println!(
-        //         "Alg ({} checked): {}",
-        //         self._debug_num_checked, candidate_alg
-        //     )
-        // }
-
-        // dbg!(&candidate_alg.to_string());
-        let transformation = self
-            .puzzle
-            .puzzle_transformation_from_alg(candidate_alg)
-            .expect("Internal error applying an alg from a search result.");
-        let pattern_with_alg_applied = &self
-            .phase2_search_full_pattern
-            .apply_transformation(&transformation);
-
-        /******** Centers ********/
-
-        // TODO: is it more efficient to check this later?
-
-        let centers_orbit_info = &self.puzzle.data.ordered_orbit_info[2];
-        assert!(centers_orbit_info.name == "CENTERS".into());
-
-        #[allow(non_snake_case)] // Speffz
-        let [E, F, G, H, M, N, O, P] = [4, 5, 6, 7, 12, 13, 14, 15].map(|idx| {
-            if pattern_with_alg_applied.get_piece(centers_orbit_info, idx) < 8 {
-                SideCenter::L
-            } else {
-                SideCenter::R
-            }
-        });
-        if !is_solve_center_center_case(&[[E, F, G, H], [M, N, O, P]]) {
-            {
-                self._debug_num_centers_rejected += 1;
-            }
-            accept = false;
-        }
-
-        /******** Edges ********/
-
-        let wings_orbit_info = &self.puzzle.data.ordered_orbit_info[1];
-        assert!(wings_orbit_info.name == "WINGS".into());
-
-        if basic_parity(
-            &unsafe {
-                pattern_with_alg_applied.packed_orbit_data().byte_slice() /* TODO */
-            }[wings_orbit_info.pieces_or_permutations_offset..wings_orbit_info.orientations_offset],
-        ) != BasicParity::Even
-        {
-            // println!("false1: {}", candidate_alg);
-            {
-                self._debug_num_basic_parity_rejected += 1;
-            }
-            accept = false;
-        }
-
-        let mut edge_parity = 0;
-        // Indexed by the value stored in an `EdgePairIndex` (i.e. half of the entries will always be `Unknown`).
-        let mut known_pair_orientations = vec![Phase2EdgeOrientation::Unknown; NUM_4X4X4_EDGES];
-        let mut known_pair_inc = 1;
-        for position in 0..24u8 {
-            // dbg!(position);
-            let position_is_high = is_high(position);
-
-            let piece = pattern_with_alg_applied.get_piece(wings_orbit_info, position);
-            let piece_is_high = is_high(piece);
-
-            let pair_orientation = if piece_is_high == position_is_high {
-                Phase2EdgeOrientation::Oriented
-            } else {
-                edge_parity += 1;
-                Phase2EdgeOrientation::Misoriented
-            };
-
-            let edge_pair_index: EdgePairIndex = EDGE_TO_INDEX[piece as usize];
-            // println!(
-            //     "comparin': {}, {}, {}, {}, {}, {}, {:?}",
-            //     candidate_alg,
-            //     position,
-            //     piece,
-            //     piece_is_high,
-            //     position_is_high,
-            //     edge_pair_index.0,
-            //     pair_orientation
-            // );
-            match &known_pair_orientations[edge_pair_index.0 as usize] {
-                Phase2EdgeOrientation::Unknown => {
-                    // println!(
-                    //     "known_pair_orientations[{}] = {:?} ({}, {})",
-                    //     edge_pair_index.0, pair_orientation, piece_is_high, position_is_high
-                    // );
-                    known_pair_orientations[edge_pair_index.0 as usize] = pair_orientation
-                }
-                known_pair_orientation => {
-                    if known_pair_orientation != &pair_orientation {
-                        // println!("false2 {:?}", known_pair_orientation);
-                        {
-                            self._debug_num_known_pair_orientation_rejected += known_pair_inc;
-                            known_pair_inc = 0;
-                        }
-                        accept = false;
-                    }
-                }
-            }
-        }
-        if edge_parity % 4 != 0 {
-            // println!("false3: {}, {}", candidate_alg, edge_parity);
-            {
-                self._debug_num_edge_parity_rejected += 1;
-            }
-            accept = false;
-        }
-
-        if !accept {
-            self._debug_num_total_rejected += 1;
-            self.log()
-        }
-
-        // println!("true: {}", candidate_alg);
-        accept
+        search_heuristic.lookup(candidate_pattern) == 0
     }
 }
 

@@ -1,4 +1,4 @@
-use std::{f32::INFINITY, sync::Arc};
+use std::sync::Arc;
 
 use cubing::{
     alg::{parse_alg, Alg, Pause},
@@ -10,7 +10,7 @@ use url::Url;
 use crate::{
     _internal::{
         options::VerbosityLevel, CanonicalFSM, IDFSearch, IDFSearchAPIData,
-        IndividualSearchOptions, SearchLogger,
+        IndividualSearchOptions, SearchLogger, SolutionCondition,
     },
     scramble::{
         puzzles::{
@@ -171,7 +171,7 @@ impl Scramble4x4x4FourPhase {
                 .search_with_additional_check(
                     &phase2_search_pattern,
                     individual_search_options,
-                    None,
+                    SolutionCondition::Default,
                 )
                 .next()
                 .unwrap()

@@ -133,6 +133,7 @@ impl IndividualSearchOptions {
     }
 }
 
+// TODO: this is very hardcoded to facilitate current scramble searches; it can likely be improved.
 pub(crate) trait AdditionalSolutionCondition<TPuzzle: GenericPuzzleCore> {
     fn should_accept_solution(
         &mut self, // TODO: un-mut?
@@ -141,12 +142,40 @@ pub(crate) trait AdditionalSolutionCondition<TPuzzle: GenericPuzzleCore> {
     ) -> bool;
 }
 
-struct IndividualSearchData<TPuzzle: GenericPuzzleCore> {
+// TODO: this is very hardcoded to facilitate current scramble searches; it can likely be improved.
+pub(crate) trait ReplacementSolutionCondition<
+    TPuzzle: GenericPuzzleCore,
+    THeuristic: SearchHeuristic<TPuzzle>,
+>
+{
+    fn should_accept_solution(
+        &mut self, // TODO: un-mut?
+        candidate_pattern: &TPuzzle::Pattern,
+        candidate_alg: &THeuristic,
+    ) -> bool;
+}
+
+pub(crate) enum SolutionCondition<
+    TPuzzle: GenericPuzzleCore,
+    THeuristic: SearchHeuristic<TPuzzle>, // TODO: avoid requiring this unless a replacement condition is needed.
+> {
+    Default,
+    Additional(Box<dyn AdditionalSolutionCondition<TPuzzle>>), // TODO: handle this with backpressure on the iterator instead.
+    Replacement(Box<dyn ReplacementSolutionCondition<TPuzzle, THeuristic>>),
+}
+
+// TODO: this is very hardcoded to facilitate current scramble searches; it can likely be improved.
+enum IsSolvedConclusion {
+    NotSolved,
+    Solved(Alg),
+}
+
+struct IndividualSearchData<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>> {
     individual_search_options: IndividualSearchOptions,
     recursive_work_tracker: RecursiveWorkTracker,
     num_solutions_sofar: usize,
     solution_sender: Sender<Option<Alg>>,
-    pub additional_solution_condition: Option<Box<dyn AdditionalSolutionCondition<TPuzzle>>>, // TODO: handle this with backpressure on the iterator instead.
+    pub solution_condition: SolutionCondition<TPuzzle, THeuristic>,
     phase2_debug: bool, // TODO: remove
 }
 
@@ -227,14 +256,18 @@ impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
         search_pattern: &TPuzzle::Pattern,
         individual_search_options: IndividualSearchOptions,
     ) -> SearchSolutions {
-        self.search_with_additional_check(search_pattern, individual_search_options, None)
+        self.search_with_additional_check(
+            search_pattern,
+            individual_search_options,
+            SolutionCondition::Default,
+        )
     }
 
     pub(crate) fn search_with_additional_check(
         &mut self,
         search_pattern: &TPuzzle::Pattern,
         mut individual_search_options: IndividualSearchOptions,
-        additional_solution_condition: Option<Box<dyn AdditionalSolutionCondition<TPuzzle>>>,
+        solution_condition: SolutionCondition<TPuzzle, THeuristic>,
     ) -> SearchSolutions {
         // TODO: do validation more consistently.
         if let Some(min_depth) = individual_search_options.min_depth {
@@ -264,7 +297,7 @@ impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
             ),
             num_solutions_sofar: 0,
             solution_sender,
-            additional_solution_condition,
+            solution_condition,
         };
 
         let search_pattern = search_pattern.clone();
@@ -306,7 +339,7 @@ impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
 
     fn recurse(
         &self,
-        individual_search_data: &mut IndividualSearchData<TPuzzle>,
+        individual_search_data: &mut IndividualSearchData<TPuzzle, THeuristic>,
         current_pattern: &TPuzzle::Pattern,
         current_state: CanonicalFSMState,
         remaining_depth: usize,
@@ -321,6 +354,9 @@ impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
         let mut pattern_is_maybe_unsolved = true;
 
         if remaining_depth == 0 {
+            dbg!(current_pattern);
+            dbg!(self.search_heuristic.lookup(current_pattern));
+
             if let Some(previous_moves) = solution_moves.0 {
                 if is_move_disallowed(
                     previous_moves.latest_move,
@@ -331,17 +367,42 @@ impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
                     return SearchRecursionResult::ContinueSearchingDefault();
                 }
             }
-            return if current_pattern == &self.api_data.target_pattern {
-                let alg = Alg::from(solution_moves);
-                if let Some(additional_solution_condition) =
-                    &mut individual_search_data.additional_solution_condition
-                {
-                    if !additional_solution_condition.should_accept_solution(current_pattern, &alg)
-                    {
-                        return SearchRecursionResult::ContinueSearchingDefault();
+            let solved_conclusion: IsSolvedConclusion =
+                match &mut individual_search_data.solution_condition {
+                    SolutionCondition::Default => {
+                        if current_pattern == &self.api_data.target_pattern {
+                            let alg = Alg::from(solution_moves); // TODO: deduplicate?
+                            IsSolvedConclusion::Solved(alg)
+                        } else {
+                            IsSolvedConclusion::NotSolved
+                        }
                     }
-                }
-
+                    SolutionCondition::Additional(solution_condition) => {
+                        if current_pattern != &self.api_data.target_pattern {
+                            IsSolvedConclusion::NotSolved
+                        } else {
+                            // TODO: avoid calculating the alg unless needed by the solution condition implementation?
+                            let alg = Alg::from(solution_moves);
+                            if solution_condition.should_accept_solution(current_pattern, &alg) {
+                                IsSolvedConclusion::Solved(alg)
+                            } else {
+                                IsSolvedConclusion::NotSolved
+                            }
+                        }
+                    }
+                    SolutionCondition::Replacement(solution_condition) => {
+                        // TODO: avoid calculating the alg unless needed by the solution condition implementation?
+                        let alg = Alg::from(solution_moves);
+                        if solution_condition
+                            .should_accept_solution(current_pattern, &self.search_heuristic)
+                        {
+                            IsSolvedConclusion::Solved(alg)
+                        } else {
+                            IsSolvedConclusion::NotSolved
+                        }
+                    }
+                };
+            return if let IsSolvedConclusion::Solved(alg) = solved_conclusion {
                 println!("send");
 
                 individual_search_data.num_solutions_sofar += 1;
@@ -367,10 +428,10 @@ impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
             };
         } else {
             #[allow(clippy::collapsible_if)]
-            if individual_search_data
-                .additional_solution_condition
-                .is_some()
-            {
+            if matches!(
+                individual_search_data.solution_condition,
+                SolutionCondition::Additional(_)
+            ) {
                 if current_pattern == &self.api_data.target_pattern {
                     // println!("early solved!");
                     if !last_pattern_is_maybe_unsolved {

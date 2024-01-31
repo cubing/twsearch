@@ -16,7 +16,7 @@ use super::{GenericPuzzle, GenericPuzzleCore};
 
 const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase
 
-const CHECK_AND_BACKTRACK_ON_EARLY_SOLUTIONS: bool = true;
+const BACKTRACK_ON_EARLY_SOLUTIONS: bool = true;
 
 #[allow(clippy::enum_variant_names)]
 enum SearchRecursionResult {
@@ -448,17 +448,15 @@ impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
                     pattern_is_maybe_unsolved = false;
                 }
             }
-            if CHECK_AND_BACKTRACK_ON_EARLY_SOLUTIONS {
-                // TODO: figure out whether to make this a non-debug parameter
-                if individual_search_data.phase2_debug
-                    && self.search_heuristic.lookup(current_pattern) == 0
-                {
-                    return SearchRecursionResult::ContinueSearchingExcludingCurrentMoveClass();
-                }
-            }
         }
 
         let prune_table_depth = self.search_heuristic.lookup(current_pattern);
+        if BACKTRACK_ON_EARLY_SOLUTIONS {
+            // TODO: figure out whether to make this a non-debug parameter
+            if individual_search_data.phase2_debug && prune_table_depth == 0 {
+                return SearchRecursionResult::ContinueSearchingExcludingCurrentMoveClass();
+            }
+        }
         if prune_table_depth > remaining_depth + 1 {
             return SearchRecursionResult::ContinueSearchingExcludingCurrentMoveClass();
         }

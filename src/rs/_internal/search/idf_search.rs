@@ -463,6 +463,9 @@ impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
         if prune_table_depth > remaining_depth {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
+        if prune_table_depth == 0 && remaining_depth == 1 {
+            return SearchRecursionResult::ContinueSearchingDefault();
+        }
         for (move_class_index, move_transformation_multiples) in
             self.api_data.search_generators.grouped.iter().enumerate()
         {

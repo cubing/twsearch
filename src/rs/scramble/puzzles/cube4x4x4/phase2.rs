@@ -282,7 +282,7 @@ impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
 
         self.checked_patterns_coord
             .insert(candidate_pattern.clone());
-
+        // println!("! {}", &candidate_alg.to_string());
         // println!("true: {}", candidate_alg);
         // dbg!(accept);
         // if self._debug_num_total_rejected % 10000 == 0 {

@@ -165,7 +165,8 @@ impl Scramble4x4x4FourPhase {
 
             let phase2_search_pattern =
                 self.phase2_idfs.api_data.tpuzzle.coordinate_for_pattern(
-                    &pattern_to_phase2_pattern(&phase2_kpuzzle_search_pattern),
+                   &phase2_kpuzzle_search_pattern,
+                   // &pattern_to_phase2_pattern(&phase2_kpuzzle_search_pattern),
                 );
 
             let mut individual_search_options = IndividualSearchOptions::default();

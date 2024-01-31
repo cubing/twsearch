@@ -204,9 +204,11 @@ impl Coord for CoordEP {
     fn coordinate_for_pattern(&self, pattern: &KPattern) -> Phase2Coordinate {
         let mut bits = 0;
         let mut r = 0;
+        let mut sum: u32 = 0;
         // TODO: store this in the struct?
         let edges_orbit_info = orbit_info(pattern.kpuzzle(), 1, "WINGS");
         for idx in 0..24u8 {
+            sum += pattern.get_piece(edges_orbit_info, idx) as u32;
             if ((bits >> idx) & 1) == 0 {
                 let mut cyclen = 0;
                 let mut j: u8 = idx;
@@ -217,6 +219,9 @@ impl Coord for CoordEP {
                 }
                 r += cyclen + 1;
             }
+        }
+        if (sum != 276) {
+          panic!("Coord for coordep called on bad kpuzzle type");
         }
         Phase2Coordinate(r & 1)
     }

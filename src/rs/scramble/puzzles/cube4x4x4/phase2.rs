@@ -351,12 +351,16 @@ impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
             }[wings_orbit_info.pieces_or_permutations_offset..wings_orbit_info.orientations_offset],
         ) != BasicParity::Even
         {
-            // println!("false1: {}", candidate_alg);
+            dbg!(&unsafe {
+                pattern_with_alg_applied.packed_orbit_data().byte_slice() /* TODO */
+            }[wings_orbit_info.pieces_or_permutations_offset..wings_orbit_info.orientations_offset]);
+            println!("false1: {}", candidate_alg);
             {
                 self._debug_num_basic_parity_rejected += 1;
             }
             accept = false;
             // println!("Rejecting due to basic_parity");
+            panic!("This should never happen");
             if SHORT_CIRCUIT_REJECTION {
                 return false;
             }

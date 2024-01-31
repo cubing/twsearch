@@ -580,6 +580,7 @@ impl Phase2SymmetryTables {
             if c84.0 > 127 {
                 c84 = Phase2Coordinate(PRUNE_TABLE_UNINITIALIZED_VALUE as u32) - c84;
             }
+            let c84 = Phase2Coordinate(phase2_puzzle_data.coord_84.pack84[c84.0 as usize].0);
             self.phase2_prune_table
                 [pack_coords(c84, Phase2Coordinate(0), Phase2Coordinate(0)).usize()] = 0;
         }

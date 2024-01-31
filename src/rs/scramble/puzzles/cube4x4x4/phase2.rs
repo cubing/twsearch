@@ -1,7 +1,4 @@
-use cubing::{
-    alg::Alg,
-    kpuzzle::{KPattern, KPuzzle, KPuzzleOrbitInfo, OrientationWithMod},
-};
+use cubing::kpuzzle::{KPattern, KPuzzleOrbitInfo, OrientationWithMod};
 
 use crate::{
     _internal::{GenericPuzzle, GenericPuzzleCore, ReplacementSolutionCondition, SearchHeuristic},

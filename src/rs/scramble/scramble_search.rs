@@ -72,6 +72,7 @@ pub(crate) fn filtered_search<TPuzzle: GenericPuzzle>(
                 max_depth: min_optimal_moves.map(|v| v - 1),
                 disallowed_initial_quanta: None,
                 disallowed_final_quanta: None,
+                phase2_debug: false,
             },
         )
         .next()
@@ -88,6 +89,7 @@ pub(crate) fn filtered_search<TPuzzle: GenericPuzzle>(
                 max_depth: None,
                 disallowed_initial_quanta: None,
                 disallowed_final_quanta: None,
+                phase2_debug: false,
             },
         )
         .next()

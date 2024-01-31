@@ -106,6 +106,7 @@ pub struct IndividualSearchOptions {
     pub max_depth: Option<usize>,
     pub disallowed_initial_quanta: Option<Vec<QuantumMove>>, // TODO: Change this to `fsm_pre_moves` so we can compute disallowed initial FSM states.
     pub disallowed_final_quanta: Option<Vec<QuantumMove>>, // TODO: Find a way to represent this using disallowed final FSM states?
+    pub phase2_debug: bool,                                // TODO: remove
 }
 
 fn is_move_disallowed(r#move: &Move, disallowed_quanta: &Option<Vec<QuantumMove>>) -> bool {
@@ -146,6 +147,7 @@ struct IndividualSearchData<TPuzzle: GenericPuzzleCore> {
     num_solutions_sofar: usize,
     solution_sender: Sender<Option<Alg>>,
     pub additional_solution_condition: Option<Box<dyn AdditionalSolutionCondition<TPuzzle>>>, // TODO: handle this with backpressure on the iterator instead.
+    phase2_debug: bool, // TODO: remove
 }
 
 pub struct IDFSearchAPIData<TPuzzle: GenericPuzzleCore> {
@@ -254,6 +256,7 @@ impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
 
         let (solution_sender, search_solutions) = SearchSolutions::construct();
         let mut individual_search_data = IndividualSearchData {
+            phase2_debug: individual_search_options.phase2_debug,
             individual_search_options,
             recursive_work_tracker: RecursiveWorkTracker::new(
                 "Search".to_owned(),
@@ -412,6 +415,12 @@ impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
                 {
                     // TODO: is it always safe to `break` here?
                     continue;
+                }
+                if current_state == CANONICAL_FSM_START_STATE
+                    && individual_search_data.phase2_debug == true
+                {
+                    dbg!(move_transformation_info.r#move.to_string());
+                    dbg!(&move_transformation_info.transformation);
                 }
                 match self.recurse(
                     individual_search_data,

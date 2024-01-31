@@ -140,6 +140,7 @@ impl Scramble3x3x3TwoPhase {
                         max_depth: None,
                         disallowed_initial_quanta: phase1_disallowed_initial_quanta,
                         disallowed_final_quanta: disallowed_final_quanta.clone(), // TODO: We currently need to pass this in case phase 2 return the empty alg. Can we handle this in another way?
+                        phase2_debug: false,
                     },
                 )
                 .next()
@@ -158,6 +159,7 @@ impl Scramble3x3x3TwoPhase {
                         max_depth: None,
                         disallowed_initial_quanta: None,
                         disallowed_final_quanta,
+                        phase2_debug: false,
                     },
                 )
                 .next()
@@ -180,6 +182,7 @@ impl Scramble3x3x3TwoPhase {
                     max_depth: Some(2),
                     disallowed_initial_quanta: None,
                     disallowed_final_quanta: None,
+                    phase2_debug: false,
                 },
             )
             .next()

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{f32::INFINITY, sync::Arc};
 
 use cubing::{
     alg::{parse_alg, Alg, Pause},
@@ -143,6 +143,7 @@ impl Scramble4x4x4FourPhase {
                         max_depth: None,
                         disallowed_initial_quanta: None,
                         disallowed_final_quanta: None,
+                        phase2_debug: false,
                     },
                 )
                 .next()
@@ -164,10 +165,12 @@ impl Scramble4x4x4FourPhase {
                 .tpuzzle
                 .coordinate_for_pattern(&phase2_search_pattern);
 
+            let mut individual_search_options = IndividualSearchOptions::default();
+            individual_search_options.phase2_debug = false;
             self.phase2_idfs
                 .search_with_additional_check(
                     &phase2_search_pattern,
-                    IndividualSearchOptions::default(),
+                    individual_search_options,
                     None,
                 )
                 .next()

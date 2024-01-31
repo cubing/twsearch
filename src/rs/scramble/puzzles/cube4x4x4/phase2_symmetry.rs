@@ -302,14 +302,15 @@ impl Phase2PuzzleData {
                     .map(|r#move| {
                         move_to_transformation.insert(r#move.clone(), indexed_move);
                         transformation_to_move.insert(indexed_move, r#move.clone());
-                        MoveTransformationInfo {
+                        let move_transformation_info = MoveTransformationInfo {
                             r#move,
                             transformation: indexed_move,
-                        }
+                        };
+                        indexed_move.0 += 1;
+                        move_transformation_info
                     })
                     .collect(),
             );
-            indexed_move.0 += 1
         }
 
         let search_generators = SearchGenerators::from_grouped(grouped_multiples, false);

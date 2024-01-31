@@ -1,4 +1,7 @@
-use std::io::{stdout, Write};
+use std::{
+    collections::HashSet,
+    io::{stdout, Write},
+};
 
 use cubing::{
     alg::Alg,
@@ -19,7 +22,7 @@ use crate::{
     },
 };
 
-use super::phase2_symmetry::{Phase2Puzzle, Phase2SymmetryTables};
+use super::phase2_symmetry::{Phase2CoordTuple, Phase2Puzzle, Phase2SymmetryTables};
 
 const NUM_4X4X4_EDGES: usize = 24;
 
@@ -138,6 +141,8 @@ pub(crate) fn pattern_to_phase2_pattern(pattern: &KPattern) -> KPattern {
     new_pattern
 }
 pub(crate) struct Phase2ReplacementSolutionCondition {
+    pub(crate) checked_patterns_coord: HashSet<Phase2CoordTuple>,
+    pub(crate) checked_patterns_full: HashSet<KPattern>,
     pub(crate) phase2_search_full_pattern: <KPuzzle as GenericPuzzleCore>::Pattern,
     pub(crate) _debug_num_checked: usize, // TODO: remove
     pub(crate) _debug_num_centers_rejected: usize, // TODO: remove
@@ -266,13 +271,16 @@ impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
 {
     fn should_accept_solution(
         &mut self,
-        candidate_pattern: &<Phase2Puzzle as GenericPuzzleCore>::Pattern,
+        candidate_pattern: &Phase2CoordTuple,
         search_heuristic: &Phase2SymmetryTables,
         candidate_alg: &Alg,
     ) -> bool {
         if search_heuristic.lookup(candidate_pattern) != 0 {
             return false;
         }
+
+        self.checked_patterns_coord
+            .insert(candidate_pattern.clone());
 
         // println!("true: {}", candidate_alg);
         // dbg!(accept);
@@ -296,6 +304,9 @@ impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
             .phase2_search_full_pattern
             .apply_alg(candidate_alg)
             .expect("Internal error applying an alg from a search result.");
+
+        self.checked_patterns_full
+            .insert(pattern_with_alg_applied.clone());
 
         /******** Centers ********/
 
@@ -428,6 +439,8 @@ impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
             dbg!(self._debug_num_basic_parity_rejected);
             dbg!(self._debug_num_known_pair_orientation_rejected);
             dbg!(self._debug_num_edge_parity_rejected);
+            dbg!(self.checked_patterns_coord.len());
+            dbg!(self.checked_patterns_full.len());
         }
         accept
     }

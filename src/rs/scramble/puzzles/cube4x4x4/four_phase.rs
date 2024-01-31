@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{collections::HashSet, sync::Arc};
 
 use cubing::{
     alg::{parse_alg, Alg, Pause},
@@ -170,6 +170,8 @@ impl Scramble4x4x4FourPhase {
             let mut individual_search_options = IndividualSearchOptions::default();
             individual_search_options.phase2_debug = false;
             let solution_condition = Phase2ReplacementSolutionCondition {
+                checked_patterns_coord: HashSet::default(),
+                checked_patterns_full: HashSet::default(),
                 phase2_search_full_pattern: phase2_kpuzzle_search_pattern,
                 _debug_num_checked: 0,
                 _debug_num_centers_rejected: 0,

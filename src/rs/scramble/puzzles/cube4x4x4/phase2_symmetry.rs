@@ -33,7 +33,7 @@ const MOVE_TABLE_UNINITIALIZED_VALUE: Phase2Coordinate = Phase2Coordinate(u32::M
 const PACKED_VALUE_UNINITIALIZED_VALUE: PackedValue = PackedValue(u32::MAX);
 const PRUNE_TABLE_UNINITIALIZED_VALUE: PruneTableEntryType = PruneTableEntryType::MAX;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub(crate) struct Phase2Coordinate(u32);
 
 impl Phase2Coordinate {
@@ -234,7 +234,7 @@ impl Default for CoordEP {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub(crate) struct Phase2CoordTuple {
     c84: Phase2Coordinate,
     c168: Phase2Coordinate,

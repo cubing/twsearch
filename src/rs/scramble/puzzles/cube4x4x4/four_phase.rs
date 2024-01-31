@@ -17,6 +17,7 @@ use crate::{
             cube4x4x4::{
                 phase2::{
                     pattern_to_phase2_pattern, remap_piece_for_phase1_or_phase2_search_pattern,
+                    Phase2ReplacementSolutionCondition,
                 },
                 phase2_symmetry::Phase2SymmetryTables,
                 random::random_4x4x4_pattern,
@@ -154,24 +155,34 @@ impl Scramble4x4x4FourPhase {
 
         let mut phase2_alg = {
             // TODO: unify with phase 1 (almost identical code)
-            let phase2_search_pattern = pattern_to_phase2_pattern(main_search_pattern);
-            let phase2_search_pattern = phase2_search_pattern.apply_alg(&phase1_alg).unwrap();
+            let phase2_kpuzzle_search_pattern = main_search_pattern;
+            let phase2_kpuzzle_search_pattern = phase2_kpuzzle_search_pattern
+                .apply_alg(&phase1_alg)
+                .unwrap();
 
             // let phase2_search_full_pattern = main_search_pattern.apply_alg(&phase1_alg).unwrap(); // TODO
 
-            let phase2_search_pattern = self
-                .phase2_idfs
-                .api_data
-                .tpuzzle
-                .coordinate_for_pattern(&phase2_search_pattern);
+            let phase2_search_pattern =
+                self.phase2_idfs.api_data.tpuzzle.coordinate_for_pattern(
+                    &pattern_to_phase2_pattern(&phase2_kpuzzle_search_pattern),
+                );
 
             let mut individual_search_options = IndividualSearchOptions::default();
             individual_search_options.phase2_debug = false;
+            let solution_condition = Phase2ReplacementSolutionCondition {
+                phase2_search_full_pattern: phase2_kpuzzle_search_pattern,
+                _debug_num_checked: 0,
+                _debug_num_centers_rejected: 0,
+                _debug_num_total_rejected: 0,
+                _debug_num_basic_parity_rejected: 0,
+                _debug_num_known_pair_orientation_rejected: 0,
+                _debug_num_edge_parity_rejected: 0,
+            };
             self.phase2_idfs
                 .search_with_additional_check(
                     &phase2_search_pattern,
                     individual_search_options,
-                    SolutionCondition::Default,
+                    SolutionCondition::Replacement(Box::new(solution_condition)),
                 )
                 .next()
                 .unwrap()

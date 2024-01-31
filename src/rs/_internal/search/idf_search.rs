@@ -151,7 +151,8 @@ pub(crate) trait ReplacementSolutionCondition<
     fn should_accept_solution(
         &mut self, // TODO: un-mut?
         candidate_pattern: &TPuzzle::Pattern,
-        candidate_alg: &THeuristic,
+        search_heuristic: &THeuristic,
+        candidate_alg: &Alg,
     ) -> bool;
 }
 
@@ -393,9 +394,11 @@ impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
                     SolutionCondition::Replacement(solution_condition) => {
                         // TODO: avoid calculating the alg unless needed by the solution condition implementation?
                         let alg = Alg::from(solution_moves);
-                        if solution_condition
-                            .should_accept_solution(current_pattern, &self.search_heuristic)
-                        {
+                        if solution_condition.should_accept_solution(
+                            current_pattern,
+                            &self.search_heuristic,
+                            &alg,
+                        ) {
                             IsSolvedConclusion::Solved(alg)
                         } else {
                             IsSolvedConclusion::NotSolved

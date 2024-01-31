@@ -258,6 +258,8 @@ fn is_solve_center_center_case(case: &[[SideCenter; 4]; 2]) -> bool {
     false
 }
 
+const SHORT_CIRCUIT_REJECTION: bool = true;
+
 impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
     for Phase2ReplacementSolutionCondition
 {
@@ -270,6 +272,18 @@ impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
         if search_heuristic.lookup(candidate_pattern) != 0 {
             return false;
         }
+
+        // println!("true: {}", candidate_alg);
+        // dbg!(accept);
+        // if self._debug_num_total_rejected % 10000 == 0 {
+        //     dbg!("--------");
+        //     dbg!(self._debug_num_checked);
+        //     dbg!(self._debug_num_centers_rejected);
+        //     dbg!(self._debug_num_total_rejected);
+        //     dbg!(self._debug_num_basic_parity_rejected);
+        //     dbg!(self._debug_num_known_pair_orientation_rejected);
+        //     dbg!(self._debug_num_edge_parity_rejected);
+        // };
 
         let kpuzzle_4x4x4 = self.phase2_search_full_pattern.kpuzzle();
         let mut accept;
@@ -298,12 +312,15 @@ impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
         //     stdout().flush();
         // }
         // dbg!(piece_at_index_0);
-        accept = piece_at_index_0 == 0;
+        accept = !(4..20).contains(&piece_at_index_0);
 
         if !accept {
             // println!("Rejecting due to centers");
             {
                 self._debug_num_centers_rejected += 1;
+            }
+            if SHORT_CIRCUIT_REJECTION {
+                return false;
             }
         }
 
@@ -318,12 +335,15 @@ impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
             }[wings_orbit_info.pieces_or_permutations_offset..wings_orbit_info.orientations_offset],
         ) != BasicParity::Even
         {
-            println!("Rejecting due to basic_parity");
             // println!("false1: {}", candidate_alg);
             {
                 self._debug_num_basic_parity_rejected += 1;
             }
             accept = false;
+            // println!("Rejecting due to basic_parity");
+            if SHORT_CIRCUIT_REJECTION {
+                return false;
+            }
         }
 
         let mut edge_parity = 0;
@@ -372,6 +392,9 @@ impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
                             known_pair_inc = 0;
                         }
                         accept = false;
+                        if SHORT_CIRCUIT_REJECTION {
+                            return false;
+                        }
                     }
                 }
             }
@@ -383,23 +406,20 @@ impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
                 self._debug_num_edge_parity_rejected += 1;
             }
             accept = false;
+            if SHORT_CIRCUIT_REJECTION {
+                return false;
+            }
         }
 
         if !accept {
             self._debug_num_total_rejected += 1;
         }
 
-        // println!("true: {}", candidate_alg);
-        // dbg!(accept);
-        if self._debug_num_total_rejected % 10000 == 0 {
-            dbg!("--------");
-            dbg!(self._debug_num_checked);
-            dbg!(self._debug_num_centers_rejected);
-            dbg!(self._debug_num_total_rejected);
-            dbg!(self._debug_num_basic_parity_rejected);
-            dbg!(self._debug_num_known_pair_orientation_rejected);
-            dbg!(self._debug_num_edge_parity_rejected);
-        };
+        dbg!("Accepting after the following rejections:");
+        dbg!(self._debug_num_centers_rejected);
+        dbg!(self._debug_num_basic_parity_rejected);
+        dbg!(self._debug_num_known_pair_orientation_rejected);
+        dbg!(self._debug_num_edge_parity_rejected);
         accept
     }
 }

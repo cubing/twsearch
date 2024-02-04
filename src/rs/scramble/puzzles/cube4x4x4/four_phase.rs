@@ -124,6 +124,8 @@ impl Scramble4x4x4FourPhase {
     ) -> Alg {
         let phase1_alg = {
             let mut phase1_search_pattern = self.phase1_target_pattern.clone();
+            dbg!(&main_search_pattern);
+            // dbg!(&phase1_search_pattern);
             for orbit_info in self.kpuzzle.orbit_info_iter() {
                 for i in 0..orbit_info.num_pieces {
                     remap_piece_for_phase1_or_phase2_search_pattern(
@@ -218,7 +220,7 @@ impl Scramble4x4x4FourPhase {
 
     pub(crate) fn scramble_4x4x4(&mut self) -> Alg {
         loop {
-            // let hardcoded_scramble_alg_for_testing = parse_alg!("F' R' B2 D L' B D L2 F L2 F2 B' L2 U2 F2 U2 F' R2 L2 D' L2 Fw2 Rw2 R F' Uw2 U2 Fw2 F Uw2 L U2 R2 D2 Uw U F R F' Rw' Fw B Uw' L' Fw2 F2");
+            let hardcoded_scramble_alg_for_testing = cubing::alg::parse_alg!("F' R' B2 D L' B D L2 F L2 F2 B' L2 U2 F2 U2 F' R2 L2 D' L2 Fw2 Rw2 R F' Uw2 U2 Fw2 F Uw2 L U2 R2 D2 Uw U F R F' Rw' Fw B Uw' L' Fw2 F2");
             // let hardcoded_scramble_alg_for_testing = parse_alg!("2R u");
             // let hardcoded_scramble_alg_for_testing =
             //     parse_alg!("r U2 x r U2 r U2 r' U2 l U2 r' U2 r U2 r' U2 r'");
@@ -262,6 +264,7 @@ impl Scramble4x4x4FourPhase {
                 alg_builder.push(&alg_node);
             }
             let scramble_alg = alg_builder.to_alg();
+            // let scramble_alg = hardcoded_scramble_alg_for_testing;
             let scramble_pattern = random_4x4x4_pattern(Some(&scramble_alg));
 
             if !self.is_valid_scramble_pattern(&scramble_pattern) {

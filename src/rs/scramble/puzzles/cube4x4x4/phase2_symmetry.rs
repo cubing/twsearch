@@ -6,9 +6,7 @@ use crate::{
         GenericPuzzleCore, MoveTransformationInfo, MoveTransformationMultiples,
         PruneTableEntryType, SearchGenerators, SearchHeuristic,
     },
-    scramble::puzzles::definitions::{
-        cube4x4x4_phase2_target_kpattern, cube4x4x4_with_wing_parity_kpuzzle,
-    },
+    scramble::puzzles::{definitions::cube4x4x4_kpuzzle, super_pattern::super_pattern},
 };
 
 use cubing::{
@@ -16,7 +14,7 @@ use cubing::{
     kpuzzle::{InvalidAlgError, KPattern, KPuzzle, KTransformation},
 };
 
-use super::{orbit_info::orbit_info, phase2::pattern_to_phase2_pattern};
+use super::orbit_info::orbit_info;
 
 const PHASE1_PRUNE_TABLE_SIZE: usize = 735471; // this is 24 choose 8
 const PHASE1_MOVE_COUNT: usize = 33;
@@ -178,7 +176,7 @@ pub(crate) struct Coord84 {
 }
 
 const L_AND_R_CENTER_INDICES: [u8; 8] = [4, 5, 6, 7, 12, 13, 14, 15];
-const L_CENTER_PIECE: u8 = 1;
+const R_LOWEST_CENTER_PIECE_INDEX: u8 = 8;
 
 impl Coord for Coord84 {
     fn coordinate_for_pattern(&self, pattern: &KPattern) -> Phase2Coordinate {
@@ -189,11 +187,12 @@ impl Coord for Coord84 {
         for idx in L_AND_R_CENTER_INDICES {
             sum += pattern.get_piece(centers_orbit_info, idx) as u32;
             bits *= 2;
-            if pattern.get_piece(centers_orbit_info, idx) == L_CENTER_PIECE {
+            if pattern.get_piece(centers_orbit_info, idx) < R_LOWEST_CENTER_PIECE_INDEX {
                 bits += 1
             }
         }
-        if sum != 16 {
+        if sum != 76 {
+            dbg!(sum);
             panic!("Called coord84 on the wrong kind of kpuzzle");
         }
         Phase2Coordinate(self.pack84[bits].0)
@@ -232,14 +231,15 @@ impl Coord for Coord168 {
         ] {
             sum += pattern.get_piece(centers_orbit_info, idx) as u32;
             bits *= 2;
-            if pattern.get_piece(centers_orbit_info, idx) == 0 {
+            let piece = pattern.get_piece(centers_orbit_info, idx);
+            if !(4..20).contains(&piece) {
                 bits += 1
             }
         }
         if bits >= 32768 {
             bits = 65535 - bits;
         }
-        if sum != 16 {
+        if sum != 200 {
             panic!("Called coord168 on the wrong kind of kpuzzle");
         }
         Phase2Coordinate(
@@ -413,10 +413,9 @@ pub(crate) struct Phase2Puzzle {
 
 impl Phase2Puzzle {
     pub(crate) fn coordinate_for_pattern(&self, pattern: &KPattern) -> Phase2CoordTuple {
-        let phase2_pattern = pattern_to_phase2_pattern(pattern);
         Phase2CoordTuple {
-            c84: self.data.coord_84.coordinate_for_pattern(&phase2_pattern),
-            c168: self.data.coord_168.coordinate_for_pattern(&phase2_pattern),
+            c84: self.data.coord_84.coordinate_for_pattern(pattern),
+            c168: self.data.coord_168.coordinate_for_pattern(pattern),
             ep: self.data.coord_ep.coordinate_for_pattern(pattern),
         }
     }
@@ -569,10 +568,7 @@ impl Phase2SymmetryTables {
             }
         }
         let mut patterns: Vec<KPattern> = Vec::new();
-        patterns.push(match coordinate_table {
-            CoordinateTable::CoordEP => cube4x4x4_with_wing_parity_kpuzzle().default_pattern(), // TODO: can we use this for the others as well?
-            _ => cube4x4x4_phase2_target_kpattern().clone(),
-        });
+        patterns.push(super_pattern(cube4x4x4_kpuzzle()));
         let mut patterns_read_idx = 0;
         let mut patterns_write_idx = 1;
         while patterns_read_idx < patterns_write_idx {
@@ -612,7 +608,7 @@ impl Phase2SymmetryTables {
             algs: vec![],
         });
         match SearchGenerators::try_new(
-            cube4x4x4_with_wing_parity_kpuzzle(),
+            cube4x4x4_kpuzzle(),
             &phase2_generators,
             &MetricEnum::Hand,
             false,

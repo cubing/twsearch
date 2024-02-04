@@ -8,3 +8,4 @@ pub mod pyraminx;
 
 mod definitions;
 mod static_move_list;
+mod super_pattern;

@@ -7,16 +7,7 @@ use cubing::{
 
 use crate::{
     _internal::{GenericPuzzleCore, ReplacementSolutionCondition, SearchHeuristic},
-    scramble::{
-        puzzles::{
-            cube4x4x4::orbit_info::orbit_info,
-            definitions::{
-                cube4x4x4_kpuzzle, cube4x4x4_phase2_target_kpattern,
-                cube4x4x4_with_wing_parity_kpuzzle,
-            },
-        },
-        randomize::{basic_parity, BasicParity},
-    },
+    scramble::randomize::{basic_parity, BasicParity},
 };
 
 use super::phase2_symmetry::{Phase2CoordTuple, Phase2Puzzle, Phase2SymmetryTables};
@@ -91,52 +82,6 @@ enum Phase2EdgeOrientation {
     Misoriented,
 }
 
-fn calculate_wing_parity(pattern: &KPattern) -> BasicParity {
-    let wings_orbit_info = orbit_info(pattern.kpuzzle(), 1, "WINGS");
-    let wing_parity = basic_parity(
-        &unsafe {
-            pattern.packed_orbit_data().byte_slice() /* TODO */
-        }[wings_orbit_info.pieces_or_permutations_offset..wings_orbit_info.orientations_offset],
-    );
-    dbg!(&wing_parity);
-    wing_parity
-}
-
-fn set_wing_parity(pattern: &mut KPattern, wing_parity: BasicParity) {
-    let kpuzzle_clone = pattern.kpuzzle().clone();
-    let wing_parity_orbit_info = orbit_info(&kpuzzle_clone, 3, "WING_PARITY");
-    pattern.set_orientation_with_mod(
-        wing_parity_orbit_info,
-        0,
-        &OrientationWithMod {
-            orientation: wing_parity.into(),
-            orientation_mod: 0,
-        },
-    );
-}
-
-pub(crate) fn pattern_to_phase2_pattern(pattern: &KPattern) -> KPattern {
-    let phase1_kpuzzle = cube4x4x4_kpuzzle();
-    let phase2_kpuzzle = cube4x4x4_with_wing_parity_kpuzzle();
-    let phase2_target_pattern = cube4x4x4_phase2_target_kpattern();
-
-    let mut new_pattern = phase2_kpuzzle.default_pattern();
-    for orbit_info in phase1_kpuzzle.orbit_info_iter() {
-        for i in 0..orbit_info.num_pieces {
-            remap_piece_for_phase1_or_phase2_search_pattern(
-                orbit_info,
-                pattern,
-                phase2_target_pattern,
-                &mut new_pattern,
-                i,
-            );
-        }
-    }
-
-    let wing_parity = calculate_wing_parity(pattern);
-    set_wing_parity(&mut new_pattern, wing_parity);
-    new_pattern
-}
 pub(crate) struct Phase2ReplacementSolutionCondition {
     pub(crate) checked_patterns_coord: HashSet<Phase2CoordTuple>,
     pub(crate) checked_patterns_full: HashSet<KPattern>,

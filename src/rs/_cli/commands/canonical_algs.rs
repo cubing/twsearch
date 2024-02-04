@@ -13,6 +13,7 @@ pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), CommandError> {
         &args.generator_args.parse(),
         &args.metric_args.metric,
         false,
+        false,
     )?;
 
     let canonical_fsm = CanonicalFSM::try_new(search_generators).expect("Expected to work!");

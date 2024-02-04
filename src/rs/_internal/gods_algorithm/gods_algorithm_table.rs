@@ -69,7 +69,7 @@ impl GodsAlgorithmSearch {
     ) -> Result<Self, PuzzleError> {
         let depth_to_patterns = vec![];
         let search_moves =
-            SearchGenerators::try_new(&kpuzzle, generators, quantum_metric, false)?;
+            SearchGenerators::try_new(&kpuzzle, generators, quantum_metric, false, true)?;
         let canonical_fsm = CanonicalFSM::try_new(search_moves.clone())?;
         Ok(Self {
             kpuzzle,
@@ -141,9 +141,9 @@ impl GodsAlgorithmSearch {
                     };
                     for move_info in moves_in_class {
                         num_tested_at_current_depth += 1;
-                        let new_pattern = queue_item.pattern.apply_transformation(
-                            todo!(), // &move_info.inverse_transformation
-                        );
+                        let new_pattern = queue_item
+                            .pattern
+                            .apply_transformation(&move_info.transformation);
                         if self.table.pattern_to_depth.get(&new_pattern).is_some() {
                             continue;
                         }

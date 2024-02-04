@@ -19,6 +19,7 @@ pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
         &benchmark_args.generator_args.parse(),
         &benchmark_args.metric_args.metric,
         false,
+        false,
     )
     .expect("Could not get search move cache"); // TODO: automatic error conversion.
 

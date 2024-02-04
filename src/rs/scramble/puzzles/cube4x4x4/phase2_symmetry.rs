@@ -288,7 +288,7 @@ impl Coord for CoordEP {
                 r += cyclen + 1;
             }
         }
-        if (sum != 276) {
+        if sum != 276 {
             panic!("Coord for coordep called on bad kpuzzle type");
         }
         Phase2Coordinate(r & 1)
@@ -413,7 +413,7 @@ pub(crate) struct Phase2Puzzle {
 
 impl Phase2Puzzle {
     pub(crate) fn coordinate_for_pattern(&self, pattern: &KPattern) -> Phase2CoordTuple {
-        let phase2_pattern = pattern_to_phase2_pattern(&pattern);
+        let phase2_pattern = pattern_to_phase2_pattern(pattern);
         Phase2CoordTuple {
             c84: self.data.coord_84.coordinate_for_pattern(&phase2_pattern),
             c168: self.data.coord_168.coordinate_for_pattern(&phase2_pattern),
@@ -615,6 +615,7 @@ impl Phase2SymmetryTables {
             cube4x4x4_with_wing_parity_kpuzzle(),
             &phase2_generators,
             &MetricEnum::Hand,
+            false,
             false,
         ) {
             Result::Ok(search_generators) => {

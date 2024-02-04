@@ -35,6 +35,7 @@ impl ScrambleInfo {
             }),
             &crate::_internal::options::MetricEnum::Hand,
             false,
+            false,
         )
         .unwrap();
         let canonical_fsm = CanonicalFSM::try_new(generators.clone()).unwrap();

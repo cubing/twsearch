@@ -1,7 +1,7 @@
 use std::{collections::HashSet, sync::Arc};
 
 use cubing::{
-    alg::{parse_alg, parse_move, Alg, AlgBuilder, AlgNode, Pause},
+    alg::{parse_move, Alg, AlgBuilder, AlgNode, Pause},
     kpuzzle::{KPattern, KPuzzle},
 };
 
@@ -17,7 +17,7 @@ use crate::{
         puzzles::{
             cube4x4x4::{
                 phase2::{
-                    pattern_to_phase2_pattern, remap_piece_for_phase1_or_phase2_search_pattern,
+                    remap_piece_for_phase1_or_phase2_search_pattern,
                     Phase2ReplacementSolutionCondition,
                 },
                 phase2_symmetry::Phase2SymmetryTables,
@@ -163,14 +163,12 @@ impl Scramble4x4x4FourPhase {
 
             // let phase2_search_full_pattern = main_search_pattern.apply_alg(&phase1_alg).unwrap(); // TODO
 
-            let phase2_search_pattern =
-                self.phase2_idfs.api_data.tpuzzle.coordinate_for_pattern(
-                   &phase2_kpuzzle_search_pattern,
-                   // &pattern_to_phase2_pattern(&phase2_kpuzzle_search_pattern),
-                );
+            let phase2_search_pattern = self.phase2_idfs.api_data.tpuzzle.coordinate_for_pattern(
+                &phase2_kpuzzle_search_pattern,
+                // &pattern_to_phase2_pattern(&phase2_kpuzzle_search_pattern),
+            );
 
-            let mut individual_search_options = IndividualSearchOptions::default();
-            individual_search_options.phase2_debug = false;
+            let individual_search_options = IndividualSearchOptions::default();
             let solution_condition = Phase2ReplacementSolutionCondition {
                 checked_patterns_coord: HashSet::default(),
                 checked_patterns_full: HashSet::default(),
@@ -220,7 +218,7 @@ impl Scramble4x4x4FourPhase {
 
     pub(crate) fn scramble_4x4x4(&mut self) -> Alg {
         loop {
-            let hardcoded_scramble_alg_for_testing = parse_alg!("F' R' B2 D L' B D L2 F L2 F2 B' L2 U2 F2 U2 F' R2 L2 D' L2 Fw2 Rw2 R F' Uw2 U2 Fw2 F Uw2 L U2 R2 D2 Uw U F R F' Rw' Fw B Uw' L' Fw2 F2");
+            // let hardcoded_scramble_alg_for_testing = parse_alg!("F' R' B2 D L' B D L2 F L2 F2 B' L2 U2 F2 U2 F' R2 L2 D' L2 Fw2 Rw2 R F' Uw2 U2 Fw2 F Uw2 L U2 R2 D2 Uw U F R F' Rw' Fw B Uw' L' Fw2 F2");
             // let hardcoded_scramble_alg_for_testing = parse_alg!("2R u");
             // let hardcoded_scramble_alg_for_testing =
             //     parse_alg!("r U2 x r U2 r U2 r' U2 l U2 r' U2 r U2 r' U2 r'");

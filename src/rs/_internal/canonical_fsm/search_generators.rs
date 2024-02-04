@@ -96,6 +96,7 @@ impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
         generators: &Generators,
         metric: &MetricEnum,
         random_start: bool,
+        invert_generators: bool, // TODO: hack for God's algorithm calculations
     ) -> Result<SearchGenerators<TPuzzle>, PuzzleError> {
         let identity_transformation = TPuzzle::puzzle_identity_transformation(tpuzzle);
 
@@ -110,6 +111,8 @@ impl<TPuzzle: GenericPuzzle> SearchGenerators<TPuzzle> {
                 eprintln!("WARNING: Alg generators are not implemented yet. Ignoring.");
             }
         };
+
+        let moves: &Vec<Move> = &moves.iter().map(|r#move| r#move.invert()).collect();
 
         // TODO: actually calculate GCDs
         let mut grouped = Vec::<MoveTransformationMultiples<TPuzzle>>::default();

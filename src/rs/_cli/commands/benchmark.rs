@@ -7,6 +7,7 @@ use twsearch::_internal::{
 
 const NUM_RANDOM_MOVES: usize = 65536;
 const NUM_TEST_TRANSFORMATIONS: usize = 100_000_000;
+const ONE_MILLION: u32 = 1_000_000;
 
 pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
     let def: KPuzzleDefinition =
@@ -42,7 +43,7 @@ pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
         let elapsed = end_time - start_time;
         let rate = std::convert::TryInto::<f64>::try_into(NUM_TEST_TRANSFORMATIONS as u32).unwrap()
             / elapsed.as_secs_f64()
-            / std::convert::TryInto::<f64>::try_into(1_000_000).unwrap();
+            / std::convert::TryInto::<f64>::try_into(ONE_MILLION).unwrap();
         println!(
             "Took {:?} for {} transformations ({:.2}M moves/s)",
             elapsed, NUM_TEST_TRANSFORMATIONS, rate

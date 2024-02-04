@@ -10,5 +10,10 @@
   },
   "[cpp]": {
     "editor.defaultFormatter": "xaver.clang-format"
+  },
+  "files.associations": {
+    "*.html": "html",
+    "twsearch-ffi.h": "c",
+    "libtwsearch_ffi.h": "c"
   }
 }

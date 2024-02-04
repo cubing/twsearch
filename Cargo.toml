@@ -17,4 +17,9 @@ license = "MPL-2.0"
 edition = "2021"
 
 [workspace.dependencies]
-cubing = { version = "0.12.2" }
+cubing = "0.13.0"
+
+[workspace.metadata.bin]
+cbindgen = { version = "0.26.0" }
+cargo-binstall = { version = "1.4.4" }
+wasm-pack = { version = "0.12.1" }

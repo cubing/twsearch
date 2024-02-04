@@ -1,3 +1,5 @@
+use std::hash::BuildHasher;
+
 use cubing::{
     alg::{Alg, Move},
     kpuzzle::{InvalidAlgError, KPattern, KPuzzle, KTransformation},
@@ -38,7 +40,8 @@ impl GenericPuzzleCore for KPuzzle {
     }
 
     fn pattern_hash_u64(pattern: &Self::Pattern) -> u64 {
-        pattern.hash()
+        let h = cityhasher::CityHasher::new();
+        h.hash_one(unsafe { pattern.byte_slice() })
     }
 }
 
@@ -91,6 +94,7 @@ impl GenericPuzzle for KPuzzle {
 
     /* TGR:  symcoords are their own hash and don't really hook up to other tables */
     fn transformation_hash_u64(transformation: &Self::Transformation) -> u64 {
-        transformation.hash()
+        let h = cityhasher::CityHasher::new();
+        h.hash_one(unsafe { transformation.byte_slice() })
     }
 }

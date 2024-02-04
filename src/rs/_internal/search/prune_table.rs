@@ -1,4 +1,5 @@
-use std::{marker::PhantomData, sync::Arc};
+use std::marker::PhantomData;
+use std::sync::Arc;
 
 use thousands::Separable;
 
@@ -34,7 +35,6 @@ struct PruneTableMutableData<TPuzzle: GenericPuzzleCore> {
 impl<TPuzzle: GenericPuzzleCore> PruneTableMutableData<TPuzzle> {
     fn hash_pattern(&self, pattern: &TPuzzle::Pattern) -> usize {
         (TPuzzle::pattern_hash_u64(pattern) as usize) & self.prune_table_index_mask
-        // TODO: use modulo when the size is not a power of 2.
     }
 
     // Returns a heurstic depth for the given pattern.

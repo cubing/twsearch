@@ -1,3 +1,5 @@
+mod events;
+
 use std::{
     ffi::{c_char, CStr, CString},
     ptr::null_mut,
@@ -11,7 +13,7 @@ use twsearch::scramble::{random_scramble_for_event, Event};
 ///
 /// Returns:
 /// - A null pointer for *any* error.
-/// - A valid scramble (in the form of C string) otherwise.
+/// - A valid scramble (in the form of a C string) otherwise.
 #[no_mangle]
 pub unsafe extern "C" fn ffi_random_scramble_for_event(
     event_raw_cstr: *const c_char,

@@ -492,8 +492,7 @@ impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
                     // TODO: is it always safe to `break` here?
                     continue;
                 }
-                if current_state == CANONICAL_FSM_START_STATE
-                    && individual_search_data.phase2_debug == true
+                if current_state == CANONICAL_FSM_START_STATE && individual_search_data.phase2_debug
                 {
                     dbg!(move_transformation_info.r#move.to_string());
                     dbg!(&move_transformation_info.transformation);

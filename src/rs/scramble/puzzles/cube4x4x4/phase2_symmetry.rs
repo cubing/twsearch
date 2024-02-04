@@ -16,10 +16,7 @@ use cubing::{
     kpuzzle::{InvalidAlgError, KPattern, KPuzzle, KTransformation},
 };
 
-use super::{
-    orbit_info::orbit_info,
-    phase2::{SideCenter, PHASE2_SOLVED_SIDE_CENTER_CASES, pattern_to_phase2_pattern},
-};
+use super::{orbit_info::orbit_info, phase2::pattern_to_phase2_pattern};
 
 const PHASE1_PRUNE_TABLE_SIZE: usize = 735471; // this is 24 choose 8
 const PHASE1_MOVE_COUNT: usize = 33;
@@ -33,6 +30,67 @@ const MOVE_TABLE_UNINITIALIZED_VALUE: Phase2Coordinate = Phase2Coordinate(u32::M
 const PACKED_VALUE_UNINITIALIZED_VALUE: PackedValue = PackedValue(u32::MAX);
 const PRUNE_TABLE_UNINITIALIZED_VALUE: PruneTableEntryType = PruneTableEntryType::MAX;
 
+// TODO: change the 4x4x4 Speffz def to have indistinguishable centers and get rid of this.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub(crate) enum SideCenter {
+    L,
+    R,
+}
+
+pub(crate) const PHASE2_SOLVED_SIDE_CENTER_CASES: [[[SideCenter; 4]; 2]; 12] = [
+    // flat faces
+    [
+        [SideCenter::L, SideCenter::L, SideCenter::L, SideCenter::L],
+        [SideCenter::R, SideCenter::R, SideCenter::R, SideCenter::R],
+    ],
+    [
+        [SideCenter::R, SideCenter::R, SideCenter::R, SideCenter::R],
+        [SideCenter::L, SideCenter::L, SideCenter::L, SideCenter::L],
+    ],
+    // horizontal bars
+    [
+        [SideCenter::L, SideCenter::L, SideCenter::R, SideCenter::R],
+        [SideCenter::L, SideCenter::L, SideCenter::R, SideCenter::R],
+    ],
+    [
+        [SideCenter::R, SideCenter::R, SideCenter::L, SideCenter::L],
+        [SideCenter::R, SideCenter::R, SideCenter::L, SideCenter::L],
+    ],
+    [
+        [SideCenter::R, SideCenter::R, SideCenter::L, SideCenter::L],
+        [SideCenter::L, SideCenter::L, SideCenter::R, SideCenter::R],
+    ],
+    [
+        [SideCenter::L, SideCenter::L, SideCenter::R, SideCenter::R],
+        [SideCenter::R, SideCenter::R, SideCenter::L, SideCenter::L],
+    ],
+    // vertical bars
+    [
+        [SideCenter::L, SideCenter::R, SideCenter::R, SideCenter::L],
+        [SideCenter::L, SideCenter::R, SideCenter::R, SideCenter::L],
+    ],
+    [
+        [SideCenter::R, SideCenter::L, SideCenter::L, SideCenter::R],
+        [SideCenter::R, SideCenter::L, SideCenter::L, SideCenter::R],
+    ],
+    [
+        [SideCenter::L, SideCenter::R, SideCenter::R, SideCenter::L],
+        [SideCenter::R, SideCenter::L, SideCenter::L, SideCenter::R],
+    ],
+    [
+        [SideCenter::R, SideCenter::L, SideCenter::L, SideCenter::R],
+        [SideCenter::L, SideCenter::R, SideCenter::R, SideCenter::L],
+    ],
+    // checkerboards
+    [
+        [SideCenter::L, SideCenter::R, SideCenter::L, SideCenter::R],
+        [SideCenter::L, SideCenter::R, SideCenter::L, SideCenter::R],
+    ],
+    [
+        [SideCenter::R, SideCenter::L, SideCenter::R, SideCenter::L],
+        [SideCenter::R, SideCenter::L, SideCenter::R, SideCenter::L],
+    ],
+];
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub(crate) struct Phase2Coordinate(u32);
 
@@ -125,18 +183,18 @@ const L_CENTER_PIECE: u8 = 1;
 impl Coord for Coord84 {
     fn coordinate_for_pattern(&self, pattern: &KPattern) -> Phase2Coordinate {
         let mut bits = 0;
+        let mut sum: u32 = 0;
         // TODO: store this in the struct?
-        let mut sum: i32 = 0 ;
         let centers_orbit_info = orbit_info(pattern.kpuzzle(), 2, "CENTERS");
         for idx in L_AND_R_CENTER_INDICES {
-            sum += pattern.get_piece(centers_orbit_info, idx) as i32 ;
+            sum += pattern.get_piece(centers_orbit_info, idx) as u32;
             bits *= 2;
             if pattern.get_piece(centers_orbit_info, idx) == L_CENTER_PIECE {
                 bits += 1
             }
         }
-        if (sum != 16) {
-           panic!("Called coord84 on the wrong kind of kpuzzle") ;
+        if sum != 16 {
+            panic!("Called coord84 on the wrong kind of kpuzzle");
         }
         Phase2Coordinate(self.pack84[bits].0)
     }
@@ -167,12 +225,12 @@ impl Coord for Coord168 {
         let mut bits = 0;
         // TODO: store this in the struct?
         let centers_orbit_info = orbit_info(pattern.kpuzzle(), 2, "CENTERS");
-        let mut sum: i32 = 0;
+        let mut sum: u32 = 0;
         for idx in [
             0, 1, 2, 3, 20, 21, 22, 23, // U and D
             8, 9, 10, 11, 16, 17, 18, 19, // F and B
         ] {
-            sum += pattern.get_piece(centers_orbit_info, idx) as i32;
+            sum += pattern.get_piece(centers_orbit_info, idx) as u32;
             bits *= 2;
             if pattern.get_piece(centers_orbit_info, idx) == 0 {
                 bits += 1
@@ -181,8 +239,8 @@ impl Coord for Coord168 {
         if bits >= 32768 {
             bits = 65535 - bits;
         }
-        if (sum != 16) {
-           panic!("Called coord168 on the wrong kind of kpuzzle") ;
+        if sum != 16 {
+            panic!("Called coord168 on the wrong kind of kpuzzle");
         }
         Phase2Coordinate(
             self.pack168hi[bits >> 8].0
@@ -231,7 +289,7 @@ impl Coord for CoordEP {
             }
         }
         if (sum != 276) {
-          panic!("Coord for coordep called on bad kpuzzle type");
+            panic!("Coord for coordep called on bad kpuzzle type");
         }
         Phase2Coordinate(r & 1)
     }
@@ -355,10 +413,10 @@ pub(crate) struct Phase2Puzzle {
 
 impl Phase2Puzzle {
     pub(crate) fn coordinate_for_pattern(&self, pattern: &KPattern) -> Phase2CoordTuple {
-        let p2p = pattern_to_phase2_pattern(&pattern);
+        let phase2_pattern = pattern_to_phase2_pattern(&pattern);
         Phase2CoordTuple {
-            c84: self.data.coord_84.coordinate_for_pattern(&p2p),
-            c168: self.data.coord_168.coordinate_for_pattern(&p2p),
+            c84: self.data.coord_84.coordinate_for_pattern(&phase2_pattern),
+            c168: self.data.coord_168.coordinate_for_pattern(&phase2_pattern),
             ep: self.data.coord_ep.coordinate_for_pattern(pattern),
         }
     }

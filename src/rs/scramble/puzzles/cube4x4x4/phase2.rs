@@ -1,7 +1,4 @@
-use std::{
-    collections::HashSet,
-    io::{stdout, Write},
-};
+use std::collections::HashSet;
 
 use cubing::{
     alg::Alg,
@@ -9,7 +6,7 @@ use cubing::{
 };
 
 use crate::{
-    _internal::{GenericPuzzle, GenericPuzzleCore, ReplacementSolutionCondition, SearchHeuristic},
+    _internal::{GenericPuzzleCore, ReplacementSolutionCondition, SearchHeuristic},
     scramble::{
         puzzles::{
             cube4x4x4::orbit_info::orbit_info,
@@ -153,19 +150,19 @@ pub(crate) struct Phase2ReplacementSolutionCondition {
 }
 
 impl Phase2ReplacementSolutionCondition {
-    fn log(&self) {
-        if !self._debug_num_total_rejected.is_power_of_two() {
-            return;
-        }
-        println!(
-            "{} total phase 2 rejections ({} centers, {} basic parity, {} known pair orientation, {} edge parity)",
-            self._debug_num_total_rejected,
-            self._debug_num_centers_rejected,
-            self._debug_num_basic_parity_rejected,
-            self._debug_num_known_pair_orientation_rejected,
-            self._debug_num_edge_parity_rejected,
-        );
-    }
+    // fn log(&self) {
+    //     if !self._debug_num_total_rejected.is_power_of_two() {
+    //         return;
+    //     }
+    //     println!(
+    //         "{} total phase 2 rejections ({} centers, {} basic parity, {} known pair orientation, {} edge parity)",
+    //         self._debug_num_total_rejected,
+    //         self._debug_num_centers_rejected,
+    //         self._debug_num_basic_parity_rejected,
+    //         self._debug_num_known_pair_orientation_rejected,
+    //         self._debug_num_edge_parity_rejected,
+    //     );
+    // }
 
     // fn debug_record_centers_rejection(&mut self) {
     //     self._debug_num_total_rejected += 1;
@@ -190,77 +187,6 @@ impl Phase2ReplacementSolutionCondition {
     //     self._debug_num_edge_parity_rejected += 1;
     //     self.log()
     // }
-}
-
-// TODO: change the 4x4x4 Speffz def to have indistinguishable centers and get rid of this.
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub(crate) enum SideCenter {
-    L,
-    R,
-}
-
-pub(crate) const PHASE2_SOLVED_SIDE_CENTER_CASES: [[[SideCenter; 4]; 2]; 12] = [
-    // flat faces
-    [
-        [SideCenter::L, SideCenter::L, SideCenter::L, SideCenter::L],
-        [SideCenter::R, SideCenter::R, SideCenter::R, SideCenter::R],
-    ],
-    [
-        [SideCenter::R, SideCenter::R, SideCenter::R, SideCenter::R],
-        [SideCenter::L, SideCenter::L, SideCenter::L, SideCenter::L],
-    ],
-    // horizontal bars
-    [
-        [SideCenter::L, SideCenter::L, SideCenter::R, SideCenter::R],
-        [SideCenter::L, SideCenter::L, SideCenter::R, SideCenter::R],
-    ],
-    [
-        [SideCenter::R, SideCenter::R, SideCenter::L, SideCenter::L],
-        [SideCenter::R, SideCenter::R, SideCenter::L, SideCenter::L],
-    ],
-    [
-        [SideCenter::R, SideCenter::R, SideCenter::L, SideCenter::L],
-        [SideCenter::L, SideCenter::L, SideCenter::R, SideCenter::R],
-    ],
-    [
-        [SideCenter::L, SideCenter::L, SideCenter::R, SideCenter::R],
-        [SideCenter::R, SideCenter::R, SideCenter::L, SideCenter::L],
-    ],
-    // vertical bars
-    [
-        [SideCenter::L, SideCenter::R, SideCenter::R, SideCenter::L],
-        [SideCenter::L, SideCenter::R, SideCenter::R, SideCenter::L],
-    ],
-    [
-        [SideCenter::R, SideCenter::L, SideCenter::L, SideCenter::R],
-        [SideCenter::R, SideCenter::L, SideCenter::L, SideCenter::R],
-    ],
-    [
-        [SideCenter::L, SideCenter::R, SideCenter::R, SideCenter::L],
-        [SideCenter::R, SideCenter::L, SideCenter::L, SideCenter::R],
-    ],
-    [
-        [SideCenter::R, SideCenter::L, SideCenter::L, SideCenter::R],
-        [SideCenter::L, SideCenter::R, SideCenter::R, SideCenter::L],
-    ],
-    // checkerboards
-    [
-        [SideCenter::L, SideCenter::R, SideCenter::L, SideCenter::R],
-        [SideCenter::L, SideCenter::R, SideCenter::L, SideCenter::R],
-    ],
-    [
-        [SideCenter::R, SideCenter::L, SideCenter::R, SideCenter::L],
-        [SideCenter::R, SideCenter::L, SideCenter::R, SideCenter::L],
-    ],
-];
-
-fn is_solve_center_center_case(case: &[[SideCenter; 4]; 2]) -> bool {
-    for phase2_solved_side_center_case in PHASE2_SOLVED_SIDE_CENTER_CASES {
-        if &phase2_solved_side_center_case == case {
-            return true;
-        }
-    }
-    false
 }
 
 const CHECK_META_CENTER_PARITY: bool = false;
@@ -351,19 +277,18 @@ impl ReplacementSolutionCondition<Phase2Puzzle, Phase2SymmetryTables>
             }[wings_orbit_info.pieces_or_permutations_offset..wings_orbit_info.orientations_offset],
         ) != BasicParity::Even
         {
-            dbg!(&unsafe {
-                pattern_with_alg_applied.packed_orbit_data().byte_slice() /* TODO */
-            }[wings_orbit_info.pieces_or_permutations_offset..wings_orbit_info.orientations_offset]);
+            dbg!(
+                &unsafe {
+                    pattern_with_alg_applied.packed_orbit_data().byte_slice() /* TODO */
+                }[wings_orbit_info.pieces_or_permutations_offset
+                    ..wings_orbit_info.orientations_offset]
+            );
             println!("false1: {}", candidate_alg);
             {
                 self._debug_num_basic_parity_rejected += 1;
             }
-            accept = false;
             // println!("Rejecting due to basic_parity");
             panic!("This should never happen");
-            if SHORT_CIRCUIT_REJECTION {
-                return false;
-            }
         }
 
         let mut edge_parity = 0;

@@ -32,6 +32,7 @@ jobs:
         with:
           node-version: 19
       - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v1
       - uses: wasmerio/setup-wasmer@v3
         continue-on-error: true
         id: wasmer

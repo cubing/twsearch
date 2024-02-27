@@ -63,7 +63,7 @@ cpp-clean:
 
 .PHONY: reset
 reset: clean
-	rm -rf ./emsdk ./node_modules
+	rm -rf ./emsdk ./node_modules ./target
 
 .PHONY: lint
 lint: lint-cpp lint-js lint-rust

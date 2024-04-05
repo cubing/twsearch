@@ -4,9 +4,9 @@
 import { FFIType, dlopen, suffix } from "bun:ffi";
 
 // @ts-ignore
-const path = await import.meta.resolve(
+const path = new URL(import.meta.resolve(
   `../../../target/release/libtwsearch_ffi.${suffix}`,
-);
+)).pathname;
 
 const {
   symbols: { ffi_random_scramble_for_event },

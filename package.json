@@ -4,6 +4,9 @@
   "scripts": {
     "dev": "make dev"
   },
+  "engines": {
+    "bun": ">=1.1.5"
+  },
   "dependencies": {
     "cubing": "^0.43.5"
   },

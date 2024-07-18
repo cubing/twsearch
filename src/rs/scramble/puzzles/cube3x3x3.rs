@@ -9,6 +9,7 @@ use lazy_static::lazy_static;
 use crate::{
     _internal::{IDFSearch, IndividualSearchOptions},
     scramble::{
+        collapse::collapse_adjacent_moves,
         randomize::{basic_parity, BasicParity},
         scramble_search::{basic_idfs, idfs_with_target_pattern},
     },
@@ -239,5 +240,8 @@ pub fn scramble_3x3x3_fmc() -> Alg {
         nodes.push(r#move.into());
     }
 
-    Alg { nodes }
+    // Note: `collapse_adjacent_moves(…)` is technically overkill, as it's only
+    // possible for a single move to overlap without completely cancelling.
+    // However, it's safer to use a common function for this instead of a one-off implementation.
+    collapse_adjacent_moves(Alg { nodes }, 4, -1)
 }

@@ -19,6 +19,9 @@ pub fn internal_init() {
 pub struct WasmTwsearchOptions {
     target_pattern: Option<KPatternData>,
     generator_moves: Option<Vec<Move>>,
+    min_depth: Option<usize>,
+    max_depth: Option<usize>,
+    quantum_metric: Option<bool>,
 
     #[serde(flatten)]
     inidividual_search_options: IndividualSearchOptions,

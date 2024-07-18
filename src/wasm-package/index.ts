@@ -1,10 +1,10 @@
 import { Alg } from "cubing/alg";
+import { KPattern, KPuzzleDefinition } from "cubing/kpuzzle";
 import {
   default as init,
   wasmRandomScrambleForEvent as rawWasmRandomScrambleForEvent,
   wasmTwsearch as rawWasmTwsearch,
 } from "../../.temp/rust-wasm/twsearch_wasm";
-import { KPattern, KPuzzleDefinition } from "cubing/kpuzzle";
 
 let cachedInitWrapper: Promise<void> | undefined;
 async function initWrapper(): Promise<void> {

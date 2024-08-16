@@ -17,7 +17,7 @@ use crate::{
 
 use super::{
     super::randomize::{
-        randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint,
+        randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
     super::scramble_search::generators_from_vec_str,
     definitions::{cube3x3x3_centerless_g1_target_kpattern, cube3x3x3_centerless_kpuzzle},
@@ -74,7 +74,7 @@ pub fn random_3x3x3_pattern() -> KPattern {
     let mut scramble_pattern = kpuzzle.default_pattern();
     let orbit_info = &kpuzzle.data.ordered_orbit_info[0];
     assert_eq!(orbit_info.name.0, "EDGES");
-    let edge_order = randomize_orbit_naive(
+    let edge_order = randomize_orbit_naïve(
         &mut scramble_pattern,
         orbit_info,
         OrbitPermutationConstraint::AnyPermutation,
@@ -83,7 +83,7 @@ pub fn random_3x3x3_pattern() -> KPattern {
     let each_orbit_parity = basic_parity(&edge_order);
     let orbit_info = &kpuzzle.data.ordered_orbit_info[1];
     assert_eq!(orbit_info.name.0, "CORNERS");
-    randomize_orbit_naive(
+    randomize_orbit_naïve(
         &mut scramble_pattern,
         orbit_info,
         match each_orbit_parity {

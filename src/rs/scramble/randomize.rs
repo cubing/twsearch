@@ -21,7 +21,7 @@ pub(crate) enum OrbitOrientationConstraint {
 // Selects a random permutation (ignoring parity).
 // Applies a random orientation to each piece (ensuring the total is 0).
 // Returns the piece order
-pub(crate) fn randomize_orbit_naive(
+pub(crate) fn randomize_orbit_naïve(
     pattern: &mut KPattern,
     orbit_info: &KPuzzleOrbitInfo,
     permutation_constraints: OrbitPermutationConstraint,

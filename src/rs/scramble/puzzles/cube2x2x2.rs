@@ -2,7 +2,7 @@ use cubing::{alg::Alg, puzzles::cube2x2x2_kpuzzle};
 
 use super::{
     super::randomize::{
-        randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint,
+        randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
     super::scramble_search::{filtered_search, generators_from_vec_str},
 };
@@ -12,7 +12,7 @@ pub fn scramble_2x2x2() -> Alg {
     loop {
         let mut scramble_pattern = kpuzzle.default_pattern();
         let orbit_info = &kpuzzle.data.ordered_orbit_info[0];
-        randomize_orbit_naive(
+        randomize_orbit_naïve(
             &mut scramble_pattern,
             orbit_info,
             OrbitPermutationConstraint::AnyPermutation,

@@ -5,7 +5,7 @@ use crate::scramble::scramble_search::move_list_from_vec;
 
 use super::{
     super::randomize::{
-        randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint,
+        randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
     super::scramble_search::{filtered_search, generators_from_vec_str},
     definitions::tetraminx_kpuzzle,
@@ -18,7 +18,7 @@ pub fn scramble_pyraminx() -> Alg {
 
         let orbit_info = &kpuzzle.data.ordered_orbit_info[0];
         assert_eq!(orbit_info.name.0, "EDGES");
-        randomize_orbit_naive(
+        randomize_orbit_naïve(
             &mut scramble_pattern,
             orbit_info,
             OrbitPermutationConstraint::SingleOrbitEvenParity,
@@ -27,7 +27,7 @@ pub fn scramble_pyraminx() -> Alg {
 
         let orbit_info = &kpuzzle.data.ordered_orbit_info[1];
         assert_eq!(orbit_info.name.0, "CORNERS");
-        randomize_orbit_naive(
+        randomize_orbit_naïve(
             &mut scramble_pattern,
             orbit_info,
             OrbitPermutationConstraint::IdentityPermutation,

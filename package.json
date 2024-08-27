@@ -5,15 +5,17 @@
     "dev": "make dev"
   },
   "engines": {
+    "node": ">=22.3.0",
     "bun": ">=1.1.5"
   },
   "dependencies": {
-    "cubing": "^0.49.0"
+    "cubing": "^0.49.0",
+    "getbuiltinmodule-ponyfill": "^1.0.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.3.1",
     "@types/bun": "^1.1.0",
-    "@types/node": "^20.12.7",
+    "@types/node": "^22.3.0",
     "bun-types": "^1.0.7",
     "esbuild": "^0.15.11"
   }

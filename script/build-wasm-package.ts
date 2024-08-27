@@ -88,7 +88,7 @@ build({
   splitting: true,
   loader: { ".wasm": "binary" },
   outdir: distDir,
-  external: ["cubing"],
+  external: ["cubing", "getbuiltinmodule-ponyfill"],
   banner: {
     js: `// Generated from \`twsearch\` ${version}`,
   },

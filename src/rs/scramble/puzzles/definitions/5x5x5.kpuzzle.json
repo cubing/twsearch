@@ -283,7 +283,7 @@
   "derivedMoves": {
     "x": "Lv'",
     "y": "Dv'",
-    "z": "x y",
+    "z": "[x: y]",
     "Rw": "2R R",
     "U": "[z: R]",
     "Uw": "[z: Rw]",

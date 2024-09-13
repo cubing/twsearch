@@ -20,7 +20,7 @@ pub fn scramble_skewb() -> Alg {
             &mut scramble_pattern,
             orbit_info,
             OrbitPermutationConstraint::SingleOrbitEvenParity,
-            OrbitOrientationConstraint::OrientationsMustSumToZero,
+            OrbitOrientationConstraint::AnySum,
         );
         
         let orbit_info = &kpuzzle.data.ordered_orbit_info[1];
@@ -29,7 +29,7 @@ pub fn scramble_skewb() -> Alg {
             &mut scramble_pattern,
             orbit_info,
             OrbitPermutationConstraint::SingleOrbitEvenParity,
-            OrbitOrientationConstraint::OrientationsMustSumToZero,
+            OrbitOrientationConstraint::AnySum,
         );
         
         let orbit_info = &kpuzzle.data.ordered_orbit_info[2];
@@ -41,8 +41,16 @@ pub fn scramble_skewb() -> Alg {
             OrbitOrientationConstraint::OrientationsMustSumToZero,
         );
 
+        // TODO: for a valid scramble, the orientation of each corner orbit depends on the permutation
+        // of the other orbit. We don't have a simple way to do generate right now,
+        // so we do extra rejection sampling to find a valid scramble.
+        // In the future, we can do one of:
+        // - Implement the math for this.
+        // - Generate states using Schreier-Sims/SGS.
+        // - Do an additional rejection sampling pass ignoring centers?
+
         let generators = generators_from_vec_str(vec!["U", "L", "R", "B"]); // TODO: cache
-        if let Some(scramble) = filtered_search(&scramble_pattern, generators, 7, Some(11), Some(11)) {
+        if let Some(scramble) = filtered_search(&scramble_pattern, generators, 7, Some(11), Some(12)) {
             return scramble;
         }
     }

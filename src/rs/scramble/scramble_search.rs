@@ -57,8 +57,8 @@ pub(crate) fn filtered_search(
     scramble_pattern: &KPattern,
     generators: Generators,
     min_optimal_moves: usize,
-    min_scramble_moves: Option<usize>,
-    max_scramble_moves: Option<usize>,
+    min_scramble_moves: Option<usize>, // inclusive
+    max_scramble_moves: Option<usize>, // exclusive
 ) -> Option<Alg> {
     assert_ne!(min_optimal_moves, 0); //<<<
 
@@ -79,19 +79,16 @@ pub(crate) fn filtered_search(
     {
         return None;
     }
-    Some(
-        idfs.search(
-            scramble_pattern,
-            IndividualSearchOptions {
-                min_num_solutions: Some(1),
-                min_depth: min_scramble_moves,
-                max_depth: None,
-                disallowed_initial_quanta: None,
-                disallowed_final_quanta: None,
-            },
-        )
-        .next()
-        .unwrap()
-        .invert(),
+    idfs.search(
+        scramble_pattern,
+        IndividualSearchOptions {
+            min_num_solutions: Some(1),
+            min_depth: min_scramble_moves,
+            max_depth: max_scramble_moves,
+            disallowed_initial_quanta: None,
+            disallowed_final_quanta: None,
+        },
     )
+    .next()
+    .map(|alg| alg.invert())
 }

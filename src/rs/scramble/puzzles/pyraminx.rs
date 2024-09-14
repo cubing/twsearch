@@ -16,21 +16,19 @@ pub fn scramble_pyraminx() -> Alg {
     loop {
         let mut scramble_pattern = kpuzzle.default_pattern();
 
-        let orbit_info = &kpuzzle.data.ordered_orbit_info[0];
-        assert_eq!(orbit_info.name.0, "EDGES");
         randomize_orbit_naïve(
             &mut scramble_pattern,
-            orbit_info,
+            0,
+            "EDGES",
             OrbitPermutationConstraint::SingleOrbitEvenParity,
             OrbitOrientationConstraint::OrientationsMustSumToZero,
             PieceZeroConstraint::AnyPositionAndOrientation,
         );
 
-        let orbit_info = &kpuzzle.data.ordered_orbit_info[1];
-        assert_eq!(orbit_info.name.0, "CORNERS");
         randomize_orbit_naïve(
             &mut scramble_pattern,
-            orbit_info,
+            1,
+            "CORNERS",
             OrbitPermutationConstraint::IdentityPermutation,
             OrbitOrientationConstraint::AnySum,
             PieceZeroConstraint::AnyPositionAndOrientation,

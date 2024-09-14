@@ -1,4 +1,4 @@
-use cubing::kpuzzle::{KPattern, KPuzzleOrbitInfo, OrientationWithMod};
+use cubing::kpuzzle::{KPattern, OrientationWithMod};
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
 pub(crate) enum OrbitPermutationConstraint {
@@ -30,11 +30,16 @@ pub(crate) enum PieceZeroConstraint {
 // Returns the piece order
 pub(crate) fn randomize_orbit_naïve(
     pattern: &mut KPattern,
-    orbit_info: &KPuzzleOrbitInfo,
+    orbit_idx: usize,
+    orbit_name: &str,
     permutation_constraints: OrbitPermutationConstraint,
     orientation_constraints: OrbitOrientationConstraint,
     piece_zero_constraint: PieceZeroConstraint,
 ) -> Vec<u8> {
+    // TODO: make it easier to reuse `OrbitInfo` references from a higher level.
+    let orbit_info = &pattern.kpuzzle().clone().data.ordered_orbit_info[orbit_idx];
+    assert_eq!(orbit_info.name.0, orbit_name);
+
     let mut rng = thread_rng();
     let first_randomized_piece = if matches!(piece_zero_constraint, PieceZeroConstraint::KeepSolved)
     {

@@ -6,7 +6,7 @@ use super::{
     super::randomize::{
         randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
-    super::scramble_search::{simple_filtered_search, generators_from_vec_str},
+    super::scramble_search::{generators_from_vec_str, simple_filtered_search},
     definitions::skewb_fixed_corner_with_co_tweaks_kpuzzle,
 };
 
@@ -62,31 +62,28 @@ pub fn scramble_skewb() -> Alg {
          * This matches: https://www.jaapsch.net/puzzles/skewb.htm
          */
 
-        let orbit_info = &kpuzzle.data.ordered_orbit_info[0];
-        assert_eq!(orbit_info.name.0, "CORNERS1");
         randomize_orbit_naïve(
             &mut scramble_pattern,
-            orbit_info,
+            0,
+            "CORNERS1",
             OrbitPermutationConstraint::SingleOrbitEvenParity,
             OrbitOrientationConstraint::AnySum,
             PieceZeroConstraint::IgnoredOrientation,
         );
 
-        let orbit_info = &kpuzzle.data.ordered_orbit_info[1];
-        assert_eq!(orbit_info.name.0, "CORNERS2");
         randomize_orbit_naïve(
             &mut scramble_pattern,
-            orbit_info,
+            1,
+            "CORNERS2",
             OrbitPermutationConstraint::SingleOrbitEvenParity,
             OrbitOrientationConstraint::AnySum,
             PieceZeroConstraint::IgnoredOrientation,
         );
 
-        let orbit_info = &kpuzzle.data.ordered_orbit_info[2];
-        assert_eq!(orbit_info.name.0, "CENTERS");
         randomize_orbit_naïve(
             &mut scramble_pattern,
-            orbit_info,
+            2,
+            "CENTERS",
             OrbitPermutationConstraint::SingleOrbitEvenParity,
             OrbitOrientationConstraint::OrientationsMustSumToZero,
             PieceZeroConstraint::AnyPositionAndOrientation,

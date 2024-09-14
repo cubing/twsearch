@@ -72,21 +72,19 @@ impl Default for Scramble3x3x3TwoPhase {
 pub fn random_3x3x3_pattern() -> KPattern {
     let kpuzzle = cube3x3x3_centerless_kpuzzle();
     let mut scramble_pattern = kpuzzle.default_pattern();
-    let orbit_info = &kpuzzle.data.ordered_orbit_info[0];
-    assert_eq!(orbit_info.name.0, "EDGES");
     let edge_order = randomize_orbit_naïve(
         &mut scramble_pattern,
-        orbit_info,
+        0,
+        "EDGES",
         OrbitPermutationConstraint::AnyPermutation,
         OrbitOrientationConstraint::OrientationsMustSumToZero,
         PieceZeroConstraint::AnyPositionAndOrientation,
     );
     let each_orbit_parity = basic_parity(&edge_order);
-    let orbit_info = &kpuzzle.data.ordered_orbit_info[1];
-    assert_eq!(orbit_info.name.0, "CORNERS");
     randomize_orbit_naïve(
         &mut scramble_pattern,
-        orbit_info,
+        1,
+        "CORNERS",
         match each_orbit_parity {
             BasicParity::Even => OrbitPermutationConstraint::SingleOrbitEvenParity,
             BasicParity::Odd => OrbitPermutationConstraint::SingleOrbitOddParity,

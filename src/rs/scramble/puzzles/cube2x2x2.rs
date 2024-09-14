@@ -33,10 +33,10 @@ pub fn scramble_2x2x2() -> Alg {
          */
 
         let mut scramble_pattern_fixed_corner = kpuzzle.default_pattern();
-        let orbit_info = &kpuzzle.data.ordered_orbit_info[0];
         randomize_orbit_naïve(
             &mut scramble_pattern_fixed_corner,
-            orbit_info,
+            0,
+            "CORNERS",
             OrbitPermutationConstraint::AnyPermutation,
             OrbitOrientationConstraint::OrientationsMustSumToZero,
             PieceZeroConstraint::KeepSolved,

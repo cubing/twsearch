@@ -16,6 +16,7 @@ impl Default for OrbitPermutationConstraint {
 pub(crate) enum OrbitOrientationConstraint {
     AnySum,
     OrientationsMustSumToZero,
+    SetPieceZeroToIgnoredOrientation, // Note: this refers to the piece that is at index 0 in the *solved* pattern (i.e. the piece with value `0` in the `permutation` array), which may not necessarily be at index 0 in the *randomized* pattern.
 }
 
 // Selects a random permutation (ignoring parity).
@@ -48,28 +49,37 @@ pub(crate) fn randomize_orbit_naïve(
     for (i, p) in piece_order.iter().enumerate() {
         let i = i as u8;
         pattern.set_piece(orbit_info, i, *p);
-        let orientation = match (i == orbit_info.num_pieces - 1, &orientation_constraints) {
-            (true, OrbitOrientationConstraint::OrientationsMustSumToZero) => {
-                subtract_u8_mod(0, total_orientation, orbit_info.num_orientations)
+        let orientation_with_mod = match (&orientation_constraints, i == orbit_info.num_pieces - 1, *p == 0) {
+            (OrbitOrientationConstraint::OrientationsMustSumToZero, true, _) => {
+                OrientationWithMod {
+                    orientation: subtract_u8_mod(0, total_orientation, orbit_info.num_orientations),
+                    orientation_mod: 0,
+                }
             }
-            (_, _) => {
+            (OrbitOrientationConstraint::SetPieceZeroToIgnoredOrientation, _, true) => {
+                OrientationWithMod {
+                    orientation: 0,
+                    orientation_mod: 1,
+                }
+            }
+            (_, _, _) => {
                 let random_orientation = rng.gen_range(0..orbit_info.num_orientations);
                 total_orientation = add_u8_mod(
                     total_orientation,
                     random_orientation,
                     orbit_info.num_orientations,
                 );
-                random_orientation
+                OrientationWithMod {
+                    orientation: random_orientation,
+                    orientation_mod: 0,
+                }
             }
         };
 
         pattern.set_orientation_with_mod(
             orbit_info,
             i,
-            &OrientationWithMod {
-                orientation,
-                orientation_mod: 0, // TODO
-            },
+            &orientation_with_mod,
         );
     }
     piece_order

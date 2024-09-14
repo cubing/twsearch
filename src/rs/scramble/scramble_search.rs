@@ -56,9 +56,11 @@ pub(crate) fn basic_idfs(
 pub(crate) fn filtered_search(
     scramble_pattern: &KPattern,
     generators: Generators,
-    min_optimal_moves: Option<usize>,
+    min_optimal_moves: usize,
     min_scramble_moves: Option<usize>,
 ) -> Option<Alg> {
+    assert_ne!(min_optimal_moves, 0);
+
     let mut idfs = basic_idfs(scramble_pattern.kpuzzle(), generators, None);
     if idfs
         .search(
@@ -66,7 +68,7 @@ pub(crate) fn filtered_search(
             IndividualSearchOptions {
                 min_num_solutions: Some(1),
                 min_depth: Some(0),
-                max_depth: min_optimal_moves.map(|v| v - 1),
+                max_depth: Some(min_optimal_moves - 1),
                 disallowed_initial_quanta: None,
                 disallowed_final_quanta: None,
             },

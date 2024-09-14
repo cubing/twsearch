@@ -3,6 +3,8 @@
     "target": "es2022",
     "module": "es2022",
     "moduleResolution": "bundler",
-    "types": ["bun-types"]
+    "types": [
+      "bun-types"
+    ]
   }
 }

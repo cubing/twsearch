@@ -21,12 +21,12 @@
     "CORNERS1": {
       "pieces": [0, 1, 2],
       "orientation": [0, 0, 0],
-      "orientationMod": [0, 0, 1]
+      "orientationMod": [1, 0, 0]
     },
     "CORNERS2": {
       "pieces": [0, 1, 2, 3],
       "orientation": [0, 0, 0, 0],
-      "orientationMod": [0, 0, 0, 1]
+      "orientationMod": [1, 0, 0, 0]
     },
     "CENTERS": {
       "pieces": [0, 1, 2, 3, 4, 5],

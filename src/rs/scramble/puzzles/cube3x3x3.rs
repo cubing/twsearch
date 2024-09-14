@@ -10,7 +10,7 @@ use crate::{
     _internal::{IDFSearch, IndividualSearchOptions},
     scramble::{
         collapse::collapse_adjacent_moves,
-        randomize::{basic_parity, BasicParity},
+        randomize::{basic_parity, BasicParity, PieceZeroConstraint},
         scramble_search::{basic_idfs, idfs_with_target_pattern},
     },
 };
@@ -79,6 +79,7 @@ pub fn random_3x3x3_pattern() -> KPattern {
         orbit_info,
         OrbitPermutationConstraint::AnyPermutation,
         OrbitOrientationConstraint::OrientationsMustSumToZero,
+        PieceZeroConstraint::AnyPositionAndOrientation,
     );
     let each_orbit_parity = basic_parity(&edge_order);
     let orbit_info = &kpuzzle.data.ordered_orbit_info[1];
@@ -91,6 +92,7 @@ pub fn random_3x3x3_pattern() -> KPattern {
             BasicParity::Odd => OrbitPermutationConstraint::SingleOrbitOddParity,
         },
         OrbitOrientationConstraint::OrientationsMustSumToZero,
+        PieceZeroConstraint::AnyPositionAndOrientation,
     );
     scramble_pattern
 }

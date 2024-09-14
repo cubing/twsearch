@@ -16,7 +16,13 @@ impl Default for OrbitPermutationConstraint {
 pub(crate) enum OrbitOrientationConstraint {
     AnySum,
     OrientationsMustSumToZero,
-    SetPieceZeroToIgnoredOrientation, // Note: this refers to the piece that is at index 0 in the *solved* pattern (i.e. the piece with value `0` in the `permutation` array), which may not necessarily be at index 0 in the *randomized* pattern.
+}
+
+// Note: this refers to the piece that is at index 0 in the *solved* pattern (i.e. the piece with value `0` in the `permutation` array), which may not necessarily be at index 0 in the *randomized* pattern.
+pub(crate) enum PieceZeroConstraint {
+    AnyPositionAndOrientation,
+    KeepSolved,
+    IgnoredOrientation,
 }
 
 // Selects a random permutation (ignoring parity).
@@ -27,9 +33,16 @@ pub(crate) fn randomize_orbit_naïve(
     orbit_info: &KPuzzleOrbitInfo,
     permutation_constraints: OrbitPermutationConstraint,
     orientation_constraints: OrbitOrientationConstraint,
+    piece_zero_constraint: PieceZeroConstraint,
 ) -> Vec<u8> {
     let mut rng = thread_rng();
-    let mut piece_order: Vec<u8> = (0..orbit_info.num_pieces).collect();
+    let first_randomized_piece = if matches!(piece_zero_constraint, PieceZeroConstraint::KeepSolved)
+    {
+        1
+    } else {
+        0
+    };
+    let mut piece_order: Vec<u8> = (first_randomized_piece..orbit_info.num_pieces).collect();
     match permutation_constraints {
         OrbitPermutationConstraint::AnyPermutation => {
             piece_order.shuffle(&mut rng);
@@ -45,24 +58,35 @@ pub(crate) fn randomize_orbit_naïve(
         OrbitPermutationConstraint::IdentityPermutation => {}
     }
 
+    if matches!(piece_zero_constraint, PieceZeroConstraint::KeepSolved) {
+        piece_order.insert(0, 0);
+    }
+
     let mut total_orientation = 0;
     for (i, p) in piece_order.iter().enumerate() {
         let i = i as u8;
         pattern.set_piece(orbit_info, i, *p);
-        let orientation_with_mod = match (&orientation_constraints, i == orbit_info.num_pieces - 1, *p == 0) {
-            (OrbitOrientationConstraint::OrientationsMustSumToZero, true, _) => {
+        let orientation_with_mod = match (
+            &orientation_constraints,
+            &piece_zero_constraint,
+            i == orbit_info.num_pieces - 1,
+            *p == 0,
+        ) {
+            (OrbitOrientationConstraint::OrientationsMustSumToZero, _, true, _) => {
                 OrientationWithMod {
                     orientation: subtract_u8_mod(0, total_orientation, orbit_info.num_orientations),
                     orientation_mod: 0,
                 }
             }
-            (OrbitOrientationConstraint::SetPieceZeroToIgnoredOrientation, _, true) => {
-                OrientationWithMod {
-                    orientation: 0,
-                    orientation_mod: 1,
-                }
-            }
-            (_, _, _) => {
+            (_, PieceZeroConstraint::KeepSolved, _, true) => OrientationWithMod {
+                orientation: 0,
+                orientation_mod: 0,
+            },
+            (_, PieceZeroConstraint::IgnoredOrientation, _, true) => OrientationWithMod {
+                orientation: 0,
+                orientation_mod: 1,
+            },
+            (_, _, _, _) => {
                 let random_orientation = rng.gen_range(0..orbit_info.num_orientations);
                 total_orientation = add_u8_mod(
                     total_orientation,
@@ -76,11 +100,7 @@ pub(crate) fn randomize_orbit_naïve(
             }
         };
 
-        pattern.set_orientation_with_mod(
-            orbit_info,
-            i,
-            &orientation_with_mod,
-        );
+        pattern.set_orientation_with_mod(orbit_info, i, &orientation_with_mod);
     }
     piece_order
 }

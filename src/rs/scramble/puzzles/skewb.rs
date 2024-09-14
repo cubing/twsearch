@@ -1,10 +1,12 @@
 use cubing::alg::Alg;
 
+use crate::scramble::randomize::PieceZeroConstraint;
+
 use super::{
     super::randomize::{
         randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
-    super::scramble_search::{filtered_search, generators_from_vec_str},
+    super::scramble_search::{simple_filtered_search, generators_from_vec_str},
     definitions::skewb_fixed_corner_with_co_tweaks_kpuzzle,
 };
 
@@ -66,7 +68,8 @@ pub fn scramble_skewb() -> Alg {
             &mut scramble_pattern,
             orbit_info,
             OrbitPermutationConstraint::SingleOrbitEvenParity,
-            OrbitOrientationConstraint::SetPieceZeroToIgnoredOrientation,
+            OrbitOrientationConstraint::AnySum,
+            PieceZeroConstraint::IgnoredOrientation,
         );
 
         let orbit_info = &kpuzzle.data.ordered_orbit_info[1];
@@ -75,7 +78,8 @@ pub fn scramble_skewb() -> Alg {
             &mut scramble_pattern,
             orbit_info,
             OrbitPermutationConstraint::SingleOrbitEvenParity,
-            OrbitOrientationConstraint::SetPieceZeroToIgnoredOrientation,
+            OrbitOrientationConstraint::AnySum,
+            PieceZeroConstraint::IgnoredOrientation,
         );
 
         let orbit_info = &kpuzzle.data.ordered_orbit_info[2];
@@ -85,10 +89,11 @@ pub fn scramble_skewb() -> Alg {
             orbit_info,
             OrbitPermutationConstraint::SingleOrbitEvenParity,
             OrbitOrientationConstraint::OrientationsMustSumToZero,
+            PieceZeroConstraint::AnyPositionAndOrientation,
         );
 
         let generators = generators_from_vec_str(vec!["U", "L", "R", "B"]); // TODO: cache
-        if let Some(scramble) = filtered_search(&scramble_pattern, generators, 7, Some(11)) {
+        if let Some(scramble) = simple_filtered_search(&scramble_pattern, generators, 7, Some(11)) {
             return scramble;
         }
     }

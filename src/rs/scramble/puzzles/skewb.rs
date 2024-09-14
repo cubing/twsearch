@@ -37,11 +37,11 @@ pub fn scramble_skewb() -> Alg {
          * - Do a bit of math to determine the values `#1` and `#2.`
          * - Set the orientations of `#1` and `#2` to "ignored" by using the `orientationMod` feature.
          *
-         * We choose to do the latter with respect to the solved state, then generate a random permutation of this pattern
-         * (taking into account permutation parity for each orbit) and solve it. In the resulting state:
+         * We choose to do the latter (with respect to the solved state) while generating a random permutation of this pattern
+         * (taking into account permutation parity for each orbit) and solve it. In the resulting state at the end of the solve:
          *
-         * - All the `@1` values match the solved state, so `#1` must also match the solved state.
-         * - All the `@2` values match the solved state, so `#2` value also match the solved state.
+         * - All the `@1` values match the solved state, so the (uniquely determined) value of `#1` must also match the solved state.
+         * - All the `@2` values match the solved state, so the (uniquely determined) value of `#2` must also match the solved state.
          *
          * That is: the entire puzzle is solved, and we can use this to return a uniform random scramble (subject to other filtering).
          *

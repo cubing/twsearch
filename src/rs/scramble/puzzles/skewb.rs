@@ -1,6 +1,5 @@
 use cubing::alg::Alg;
 
-
 use super::{
     super::randomize::{
         randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
@@ -14,7 +13,8 @@ pub fn scramble_skewb() -> Alg {
     loop {
         let mut scramble_pattern = kpuzzle.default_pattern();
 
-        /* The total orientation of each corner orbit is constrained by the permutation of the other. That is, suppose we have a valid state of Skewb with some placeholders:
+        /* The total orientation of each corner orbit is constrained by the permutation of the other.
+         * That is, suppose we have a valid state of Skewb with values labelled as follows:
          *
          * (Take note of the values highlighted by ↓↓ and ↑↑.)
          *
@@ -60,7 +60,6 @@ pub fn scramble_skewb() -> Alg {
          * This matches: https://www.jaapsch.net/puzzles/skewb.htm
          */
 
-
         let orbit_info = &kpuzzle.data.ordered_orbit_info[0];
         assert_eq!(orbit_info.name.0, "CORNERS1");
         randomize_orbit_naïve(
@@ -69,7 +68,7 @@ pub fn scramble_skewb() -> Alg {
             OrbitPermutationConstraint::SingleOrbitEvenParity,
             OrbitOrientationConstraint::SetPieceZeroToIgnoredOrientation,
         );
-        
+
         let orbit_info = &kpuzzle.data.ordered_orbit_info[1];
         assert_eq!(orbit_info.name.0, "CORNERS2");
         randomize_orbit_naïve(

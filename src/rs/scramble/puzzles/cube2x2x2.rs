@@ -19,6 +19,7 @@ pub fn scramble_2x2x2() -> Alg {
             OrbitOrientationConstraint::OrientationsMustSumToZero,
         );
         let generators = generators_from_vec_str(vec!["U", "L", "F", "R"]);
+        // TODO: this only does filtering with respect to a *fixed* orientation, we need to make this this filters with respect to any orientation.
         if let Some(scramble) = filtered_search(&scramble_pattern, generators, 4, Some(11)) {
             return scramble;
         }

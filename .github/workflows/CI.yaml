@@ -101,7 +101,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - uses: cargo-bins/cargo-binstall@v1.4.9
       - run: cargo install cargo-run-bin
-      - run: npm install
+      - run: bun install
       - run: make build-rust-wasm
       - run: make test-rust-wasm
 

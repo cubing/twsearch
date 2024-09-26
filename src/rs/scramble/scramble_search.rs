@@ -6,9 +6,9 @@ use cubing::{
 };
 
 use crate::_internal::{
-    options::{CustomGenerators, VerbosityLevel},
-    options::{Generators, MetricEnum},
-    IDFSearch, IndividualSearchOptions, SearchLogger,
+    options::{CustomGenerators, Generators, MetricEnum, VerbosityLevel},
+    GenericPuzzle, GenericPuzzleCore, IDFSearch, IndividualSearchOptions, PruneTable,
+    SearchHeuristic, SearchLogger,
 };
 
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
@@ -25,13 +25,13 @@ pub fn generators_from_vec_str(move_str_list: Vec<&str>) -> Generators {
     })
 }
 
-pub(crate) fn idfs_with_target_pattern(
+pub(crate) fn idfs_with_target_pattern<TPuzzle: GenericPuzzle>(
     kpuzzle: &KPuzzle,
     generators: Generators,
     target_pattern: KPattern,
     min_prune_table_size: Option<usize>,
-) -> IDFSearch {
-    IDFSearch::try_new(
+) -> IDFSearch<TPuzzle> {
+    IDFSearch::<TPuzzle>::try_new(
         kpuzzle.clone(),
         target_pattern,
         generators,
@@ -45,11 +45,11 @@ pub(crate) fn idfs_with_target_pattern(
     .unwrap()
 }
 
-pub(crate) fn basic_idfs(
+pub(crate) fn basic_idfs<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>(
     kpuzzle: &KPuzzle,
     generators: Generators,
     min_prune_table_size: Option<usize>,
-) -> IDFSearch {
+) -> IDFSearch<TPuzzle, THeuristic> {
     idfs_with_target_pattern(
         kpuzzle,
         generators,
@@ -58,16 +58,21 @@ pub(crate) fn basic_idfs(
     )
 }
 
-pub struct FilteredSearch {
-    idfs: IDFSearch,
+pub struct FilteredSearch<
+    TPuzzle: GenericPuzzleCore,
+    THeuristic: SearchHeuristic<TPuzzle> = PruneTable<TPuzzle>,
+> {
+    idfs: IDFSearch<TPuzzle, THeuristic>,
 }
 
-impl FilteredSearch {
+impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
+    FilteredSearch<TPuzzle, THeuristic>
+{
     pub fn new(
         kpuzzle: &KPuzzle,
         generators: Generators,
         min_prune_table_size: Option<usize>,
-    ) -> FilteredSearch {
+    ) -> Self {
         let idfs = basic_idfs(kpuzzle, generators, min_prune_table_size);
         Self { idfs }
     }
@@ -80,8 +85,7 @@ impl FilteredSearch {
                     min_num_solutions: Some(1),
                     min_depth: Some(0),
                     max_depth: Some(min_optimal_moves - 1),
-                    disallowed_initial_quanta: None,
-                    disallowed_final_quanta: None,
+                    ..Default::default()
                 },
             )
             .next()
@@ -99,9 +103,7 @@ impl FilteredSearch {
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
                     min_depth: min_scramble_moves,
-                    max_depth: None,
-                    disallowed_initial_quanta: None,
-                    disallowed_final_quanta: None,
+                    ..Default::default()
                 },
             )
             .next()

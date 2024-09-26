@@ -2,7 +2,7 @@ use cubing::{alg::Alg, kpuzzle::KPattern};
 
 use crate::scramble::{
     puzzles::definitions::cube4x4x4_kpuzzle,
-    randomize::{randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint},
+    randomize::{randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint},
 };
 
 pub fn random_4x4x4_pattern(hardcoded_scramble_alg_for_testing: Option<&Alg>) -> KPattern {
@@ -19,7 +19,7 @@ pub fn random_4x4x4_pattern(hardcoded_scramble_alg_for_testing: Option<&Alg>) ->
         }
         None => {
             for orbit_info in &kpuzzle.data.ordered_orbit_info {
-                randomize_orbit_naive(
+                randomize_orbit_naïve(
                     &mut scramble_pattern,
                     orbit_info,
                     OrbitPermutationConstraint::AnyPermutation,

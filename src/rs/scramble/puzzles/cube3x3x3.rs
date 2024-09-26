@@ -9,14 +9,15 @@ use lazy_static::lazy_static;
 use crate::{
     _internal::{IDFSearch, IndividualSearchOptions},
     scramble::{
-        randomize::{basic_parity, BasicParity},
+        collapse::collapse_adjacent_moves,
+        randomize::{basic_parity, BasicParity, PieceZeroConstraint},
         scramble_search::{basic_idfs, idfs_with_target_pattern},
     },
 };
 
 use super::{
     super::randomize::{
-        randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint,
+        randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
     super::scramble_search::generators_from_vec_str,
     definitions::{cube3x3x3_centerless_g1_target_kpattern, cube3x3x3_centerless_kpuzzle},
@@ -71,25 +72,25 @@ impl Default for Scramble3x3x3TwoPhase {
 pub fn random_3x3x3_pattern() -> KPattern {
     let kpuzzle = cube3x3x3_centerless_kpuzzle();
     let mut scramble_pattern = kpuzzle.default_pattern();
-    let orbit_info = &kpuzzle.data.ordered_orbit_info[0];
-    assert_eq!(orbit_info.name.0, "EDGES");
-    let edge_order = randomize_orbit_naive(
+    let edge_order = randomize_orbit_naïve(
         &mut scramble_pattern,
-        orbit_info,
+        0,
+        "EDGES",
         OrbitPermutationConstraint::AnyPermutation,
         OrbitOrientationConstraint::OrientationsMustSumToZero,
+        PieceZeroConstraint::AnyPositionAndOrientation,
     );
     let each_orbit_parity = basic_parity(&edge_order);
-    let orbit_info = &kpuzzle.data.ordered_orbit_info[1];
-    assert_eq!(orbit_info.name.0, "CORNERS");
-    randomize_orbit_naive(
+    randomize_orbit_naïve(
         &mut scramble_pattern,
-        orbit_info,
+        1,
+        "CORNERS",
         match each_orbit_parity {
             BasicParity::Even => OrbitPermutationConstraint::SingleOrbitEvenParity,
             BasicParity::Odd => OrbitPermutationConstraint::SingleOrbitOddParity,
         },
         OrbitOrientationConstraint::OrientationsMustSumToZero,
+        PieceZeroConstraint::AnyPositionAndOrientation,
     );
     scramble_pattern
 }
@@ -242,5 +243,8 @@ pub fn scramble_3x3x3_fmc() -> Alg {
         nodes.push(r#move.into());
     }
 
-    Alg { nodes }
+    // Note: `collapse_adjacent_moves(…)` is technically overkill, as it's only
+    // possible for a single move to overlap without completely cancelling.
+    // However, it's safer to use a common function for this instead of a one-off implementation.
+    collapse_adjacent_moves(Alg { nodes }, 4, -1)
 }

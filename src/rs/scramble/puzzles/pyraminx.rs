@@ -4,13 +4,13 @@ use cubing::{
 };
 use rand::{thread_rng, Rng};
 
-use crate::scramble::scramble_search::move_list_from_vec;
+use crate::scramble::{randomize::PieceZeroConstraint, scramble_search::move_list_from_vec};
 
 use super::{
     super::randomize::{
-        randomize_orbit_naive, OrbitOrientationConstraint, OrbitPermutationConstraint,
+        randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
-    super::scramble_search::{filtered_search, generators_from_vec_str},
+    super::scramble_search::{generators_from_vec_str, simple_filtered_search},
     definitions::tetraminx_kpuzzle,
 };
 
@@ -19,42 +19,45 @@ pub fn scramble_pyraminx() -> Alg {
     loop {
         let mut scramble_pattern = kpuzzle.default_pattern();
 
-        let orbit_info = &kpuzzle.data.ordered_orbit_info[0];
-        assert_eq!(orbit_info.name.0, "EDGES");
-        randomize_orbit_naive(
+        randomize_orbit_naïve(
             &mut scramble_pattern,
-            orbit_info,
+            0,
+            "EDGES",
             OrbitPermutationConstraint::SingleOrbitEvenParity,
             OrbitOrientationConstraint::OrientationsMustSumToZero,
+            PieceZeroConstraint::AnyPositionAndOrientation,
         );
 
-        let orbit_info = &kpuzzle.data.ordered_orbit_info[1];
-        assert_eq!(orbit_info.name.0, "CORNERS");
-        randomize_orbit_naive(
+        randomize_orbit_naïve(
             &mut scramble_pattern,
-            orbit_info,
+            1,
+            "CORNERS",
             OrbitPermutationConstraint::IdentityPermutation,
             OrbitOrientationConstraint::AnySum,
+            PieceZeroConstraint::AnyPositionAndOrientation,
         );
 
         let tip_moves = move_list_from_vec(vec!["u", "l", "r", "b"]); // TODO: cache
-
         let mut rng = thread_rng();
-        let generators = generators_from_vec_str(vec!["U", "L", "R", "B"]); // TODO: cache
-        if let Some(scramble) =
-            filtered_search::<KPuzzle>(kpuzzle, &scramble_pattern, generators, Some(4), Some(11))
-        {
-            let mut alg_nodes: Vec<AlgNode> = vec![];
-            for tip_move in tip_moves {
-                let amount = rng.gen_range(-1..=1);
-                if amount == 0 {
-                    continue;
-                }
-                alg_nodes.push(cubing::alg::AlgNode::MoveNode(Move {
-                    quantum: tip_move.quantum.clone(),
-                    amount,
-                }))
+        let mut alg_nodes: Vec<AlgNode> = vec![];
+        for tip_move in tip_moves {
+            let amount = rng.gen_range(-1..=1);
+            if amount == 0 {
+                continue;
             }
+            alg_nodes.push(cubing::alg::AlgNode::MoveNode(Move {
+                quantum: tip_move.quantum.clone(),
+                amount,
+            }))
+        }
+
+        let generators = generators_from_vec_str(vec!["U", "L", "R", "B"]); // TODO: cache
+        if let Some(scramble) = simple_filtered_search(
+            &scramble_pattern,
+            generators,
+            6 - alg_nodes.len(),
+            Some(11 - alg_nodes.len()),
+        ) {
             let mut nodes = scramble.nodes;
             nodes.append(&mut alg_nodes);
             return Alg { nodes };

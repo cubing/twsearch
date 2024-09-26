@@ -3,9 +3,10 @@
 import assert from "node:assert";
 import { mkdir } from "node:fs/promises";
 import { env } from "node:process";
+import { fileURLToPath } from "node:url";
 import { build } from "esbuild";
 
-const distDir = new URL("../dist/wasm/", import.meta.url).pathname;
+const distDir = fileURLToPath(new URL("../dist/wasm/", import.meta.url));
 
 const BITS_PER_BYTE = 8;
 
@@ -17,7 +18,7 @@ function secondsToDownloadUsing3G(numBytes: number): number {
 }
 
 const wasmSize = Bun.file(
-  new URL("../.temp/rust-wasm/twsearch_wasm_bg.wasm", import.meta.url).pathname,
+  new URL("../.temp/rust-wasm/twsearch_wasm_bg.wasm", import.meta.url),
 ).size;
 console.log(
   `WASM size: ${Math.round(wasmSize / KiB)} KiB (${
@@ -80,14 +81,14 @@ const version = (async () => {
 
 build({
   entryPoints: [
-    new URL("../src/wasm-package/index.ts", import.meta.url).pathname,
+    fileURLToPath(new URL("../src/wasm-package/index.ts", import.meta.url)),
   ],
   format: "esm",
   bundle: true,
   splitting: true,
   loader: { ".wasm": "binary" },
   outdir: distDir,
-  external: ["cubing"],
+  external: ["cubing", "getbuiltinmodule-ponyfill"],
   banner: {
     js: `// Generated from \`twsearch\` ${version}`,
   },

@@ -105,8 +105,8 @@ impl Iterator for SearchSolutions {
 #[serde(rename_all = "camelCase")]
 pub struct IndividualSearchOptions {
     pub min_num_solutions: Option<usize>,
-    pub min_depth: Option<usize>,
-    pub max_depth: Option<usize>,
+    pub min_depth: Option<usize>,                            // inclusive
+    pub max_depth: Option<usize>,                            // exclusive
     pub disallowed_initial_quanta: Option<Vec<QuantumMove>>, // TODO: Change this to `fsm_pre_moves` so we can compute disallowed initial FSM states.
     pub disallowed_final_quanta: Option<Vec<QuantumMove>>, // TODO: Find a way to represent this using disallowed final FSM states?
     pub phase2_debug: bool,                                // TODO: remove
@@ -295,6 +295,10 @@ impl<TPuzzle: GenericPuzzleCore, THeuristic: SearchHeuristic<TPuzzle>>
                 individual_search_options.max_depth = Some(MAX_SUPPORTED_SEARCH_DEPTH);
             }
         }
+
+        assert!(
+            individual_search_options.get_max_depth() > individual_search_options.get_min_depth()
+        );
 
         let (solution_sender, search_solutions) = SearchSolutions::construct();
         let mut individual_search_data = IndividualSearchData {

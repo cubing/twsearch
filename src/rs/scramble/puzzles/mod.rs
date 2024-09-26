@@ -5,6 +5,7 @@ pub mod cube3x3x3;
 pub mod cube4x4x4;
 pub mod megaminx;
 pub mod pyraminx;
+pub mod skewb;
 
 mod definitions;
 mod static_move_list;

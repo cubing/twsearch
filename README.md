@@ -330,6 +330,21 @@ To get completions in your shell, install using one of:
 - `brew install --HEAD cubing/cubing/twsearch-cpp-wrapper`
 - `cargo install --path .; twsearch-cpp-wrapper completions <your shell>`
 
+## Build tools
+
+Depending on the target:
+
+- An appropriate C++ compiler.
+- Rust and `cargo` (e.g. via [`rustup.rs`](https://rustup.rs/))
+- [`cargo-run-bin`](https://crates.io/crates/cargo-run-bin)
+- [`bun`](https://bun.sh/)
+
+Automatically installed into the repository:
+
+- [`emsdk`](https://github.com/emscripten-core/emsdk) (automatically installed)
+- [`wasm-pack`](https://github.com/rustwasm/wasm-pack)
+- [`cbindgen`](https://github.com/mozilla/cbindgen)
+
 ## License
 
 This work is dual-licensed under the Mozilla Public License 2.0 and GPL 3.0 (or

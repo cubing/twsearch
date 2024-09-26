@@ -11,6 +11,7 @@ use super::{
         cube4x4x4::scramble_4x4x4,
         megaminx::scramble_megaminx,
         pyraminx::scramble_pyraminx,
+        skewb::scramble_skewb,
     },
     Event,
 };
@@ -32,7 +33,7 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
         Event::ClockSpeedsolving => Ok(scramble_clock()),
         Event::MegaminxSpeedsolving => Ok(scramble_megaminx()),
         Event::PyraminxSpeedsolving => Ok(scramble_pyraminx()),
-        Event::SkewbSpeedsolving => err,
+        Event::SkewbSpeedsolving => Ok(scramble_skewb()),
         Event::Square1Speedsolving => err,
         Event::Cube4x4x4Blindfolded => err,
         Event::Cube5x5x5Blindfolded => Ok(scramble_5x5x5_bld()),

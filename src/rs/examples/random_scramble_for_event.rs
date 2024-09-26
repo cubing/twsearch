@@ -20,6 +20,7 @@ pub fn main() {
         Event::Cube5x5x5Blindfolded,
         Event::Cube3x3x3MultiBlind,
         Event::ClockSpeedsolving,
+        Event::SkewbSpeedsolving,
         Event::Cube3x3x3FewestMoves,
         Event::Cube3x3x3FewestMoves,
         Event::Cube3x3x3FewestMoves,

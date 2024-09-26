@@ -1,11 +1,14 @@
 use std::sync::Arc;
 
-use cubing::alg::{Alg, Move};
+use cubing::{
+    alg::{Alg, Move},
+    kpuzzle::{KPattern, KPuzzle},
+};
 
 use crate::_internal::{
     options::{CustomGenerators, VerbosityLevel},
     options::{Generators, MetricEnum},
-    GenericPuzzle, IDFSearch, IndividualSearchOptions, SearchLogger,
+    IDFSearch, IndividualSearchOptions, SearchLogger,
 };
 
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
@@ -22,78 +25,103 @@ pub fn generators_from_vec_str(move_str_list: Vec<&str>) -> Generators {
     })
 }
 
-pub(crate) fn idfs_with_target_pattern<TPuzzle: GenericPuzzle>(
-    tpuzzle: &TPuzzle,
+pub(crate) fn idfs_with_target_pattern(
+    kpuzzle: &KPuzzle,
     generators: Generators,
-    target_pattern: TPuzzle::Pattern,
-    min_size: Option<usize>,
-) -> IDFSearch<TPuzzle> {
+    target_pattern: KPattern,
+    min_prune_table_size: Option<usize>,
+) -> IDFSearch {
     IDFSearch::try_new(
-        tpuzzle.clone(),
+        kpuzzle.clone(),
         target_pattern,
         generators,
         Arc::new(SearchLogger {
-            verbosity: VerbosityLevel::Info,
+            verbosity: VerbosityLevel::Silent,
         }),
         &MetricEnum::Hand,
         true,
-        min_size,
+        min_prune_table_size,
     )
     .unwrap()
 }
 
-pub(crate) fn basic_idfs<TPuzzle: GenericPuzzle>(
-    puzzle: &TPuzzle,
+pub(crate) fn basic_idfs(
+    kpuzzle: &KPuzzle,
     generators: Generators,
-    min_size: Option<usize>,
-) -> IDFSearch<TPuzzle> {
+    min_prune_table_size: Option<usize>,
+) -> IDFSearch {
     idfs_with_target_pattern(
-        puzzle,
+        kpuzzle,
         generators,
-        puzzle.puzzle_default_pattern(),
-        min_size,
+        kpuzzle.default_pattern(),
+        min_prune_table_size,
     )
 }
 
-pub(crate) fn filtered_search<TPuzzle: GenericPuzzle>(
-    puzzle: &TPuzzle,
-    scramble_pattern: &TPuzzle::Pattern,
+pub struct FilteredSearch {
+    idfs: IDFSearch,
+}
+
+impl FilteredSearch {
+    pub fn new(
+        kpuzzle: &KPuzzle,
+        generators: Generators,
+        min_prune_table_size: Option<usize>,
+    ) -> FilteredSearch {
+        let idfs = basic_idfs(kpuzzle, generators, min_prune_table_size);
+        Self { idfs }
+    }
+
+    pub fn filter(&mut self, scramble_pattern: &KPattern, min_optimal_moves: usize) -> Option<Alg> {
+        self.idfs
+            .search(
+                scramble_pattern,
+                IndividualSearchOptions {
+                    min_num_solutions: Some(1),
+                    min_depth: Some(0),
+                    max_depth: Some(min_optimal_moves - 1),
+                    disallowed_initial_quanta: None,
+                    disallowed_final_quanta: None,
+                },
+            )
+            .next()
+    }
+
+    // This function depends on the caller to have passed parameters that will always result in an alg.
+    pub fn generate_scramble(
+        &mut self,
+        scramble_pattern: &KPattern,
+        min_scramble_moves: Option<usize>,
+    ) -> Alg {
+        self.idfs
+            .search(
+                scramble_pattern,
+                IndividualSearchOptions {
+                    min_num_solutions: Some(1),
+                    min_depth: min_scramble_moves,
+                    max_depth: None,
+                    disallowed_initial_quanta: None,
+                    disallowed_final_quanta: None,
+                },
+            )
+            .next()
+            .unwrap()
+            .invert()
+    }
+}
+
+pub(crate) fn simple_filtered_search(
+    scramble_pattern: &KPattern,
     generators: Generators,
-    min_optimal_moves: Option<usize>,
+    min_optimal_moves: usize,
     min_scramble_moves: Option<usize>,
 ) -> Option<Alg> {
-    let mut idfs = basic_idfs(puzzle, generators, None);
-    if idfs
-        .search(
-            scramble_pattern,
-            IndividualSearchOptions {
-                min_num_solutions: Some(1),
-                min_depth: Some(0),
-                max_depth: min_optimal_moves.map(|v| v - 1),
-                disallowed_initial_quanta: None,
-                disallowed_final_quanta: None,
-                phase2_debug: false,
-            },
-        )
-        .next()
+    let mut filtered_search = FilteredSearch::new(scramble_pattern.kpuzzle(), generators, None);
+    if filtered_search
+        .filter(scramble_pattern, min_optimal_moves)
         .is_some()
     {
         return None;
     }
-    Some(
-        idfs.search(
-            scramble_pattern,
-            IndividualSearchOptions {
-                min_num_solutions: Some(1),
-                min_depth: min_scramble_moves,
-                max_depth: None,
-                disallowed_initial_quanta: None,
-                disallowed_final_quanta: None,
-                phase2_debug: false,
-            },
-        )
-        .next()
-        .unwrap()
-        .invert(),
-    )
+    Some(filtered_search.generate_scramble(scramble_pattern, min_scramble_moves))
 }

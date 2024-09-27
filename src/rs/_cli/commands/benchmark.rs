@@ -41,9 +41,9 @@ pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
         }
         let end_time = Instant::now();
         let elapsed = end_time - start_time;
-        let rate = std::convert::TryInto::<f64>::try_into(NUM_TEST_TRANSFORMATIONS as u32).unwrap()
+        let rate = std::convert::Into::<f64>::into(NUM_TEST_TRANSFORMATIONS as u32)
             / elapsed.as_secs_f64()
-            / std::convert::TryInto::<f64>::try_into(ONE_MILLION).unwrap();
+            / std::convert::Into::<f64>::into(ONE_MILLION);
         println!(
             "Took {:?} for {} transformations ({:.2}M moves/s)",
             elapsed, NUM_TEST_TRANSFORMATIONS, rate

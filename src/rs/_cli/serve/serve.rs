@@ -9,6 +9,7 @@ use rouille::Request;
 use rouille::Response;
 use serde::Deserialize;
 use serde::Serialize;
+use twsearch::_internal::AlwaysValid;
 use twsearch::_internal::SearchLogger;
 
 use std::sync::Arc;
@@ -87,7 +88,7 @@ fn solve_pattern(
         Ok(search_pattern) => search_pattern,
         Err(e) => return Response::text(e.to_string()).with_status_code(400),
     };
-    let mut search = match IDFSearch::try_new(
+    let mut search = match IDFSearch::<AlwaysValid>::try_new(
         kpuzzle,
         target_pattern,
         Generators::Custom(CustomGenerators {

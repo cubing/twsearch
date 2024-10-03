@@ -6,9 +6,8 @@ use cubing::{
 };
 
 use crate::_internal::{
-    options::{CustomGenerators, VerbosityLevel},
-    options::{Generators, MetricEnum},
-    IDFSearch, IndividualSearchOptions, SearchLogger,
+    options::{CustomGenerators, Generators, MetricEnum, VerbosityLevel},
+    AlwaysValid, IDFSearch, IndividualSearchOptions, SearchLogger,
 };
 
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
@@ -30,7 +29,7 @@ pub(crate) fn idfs_with_target_pattern(
     generators: Generators,
     target_pattern: KPattern,
     min_prune_table_size: Option<usize>,
-) -> IDFSearch {
+) -> IDFSearch<AlwaysValid> {
     IDFSearch::try_new(
         kpuzzle.clone(),
         target_pattern,
@@ -49,7 +48,7 @@ pub(crate) fn basic_idfs(
     kpuzzle: &KPuzzle,
     generators: Generators,
     min_prune_table_size: Option<usize>,
-) -> IDFSearch {
+) -> IDFSearch<AlwaysValid> {
     idfs_with_target_pattern(
         kpuzzle,
         generators,
@@ -59,7 +58,7 @@ pub(crate) fn basic_idfs(
 }
 
 pub struct FilteredSearch {
-    idfs: IDFSearch,
+    idfs: IDFSearch<AlwaysValid>,
 }
 
 impl FilteredSearch {

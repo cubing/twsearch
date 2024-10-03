@@ -15,6 +15,8 @@ use crate::_internal::{
     SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
+use super::CheckPattern;
+
 const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase
 
 #[allow(clippy::enum_variant_names)]
@@ -147,12 +149,12 @@ pub struct IDFSearchAPIData {
     pub search_logger: Arc<SearchLogger>,
 }
 
-pub struct IDFSearch {
+pub struct IDFSearch<T: CheckPattern> {
     api_data: Arc<IDFSearchAPIData>,
-    prune_table: PruneTable,
+    prune_table: PruneTable<T>,
 }
 
-impl IDFSearch {
+impl<T: CheckPattern> IDFSearch<T> {
     pub fn try_new(
         kpuzzle: KPuzzle,
         target_pattern: KPattern,
@@ -333,9 +335,16 @@ impl IDFSearch {
                     // TODO: is it always safe to `break` here?
                     continue;
                 }
+
+                let next_pattern =
+                    &current_pattern.apply_transformation(&move_transformation_info.transformation);
+                if !T::is_valid(next_pattern) {
+                    continue;
+                }
+
                 match self.recurse(
                     individual_search_data,
-                    &current_pattern.apply_transformation(&move_transformation_info.transformation),
+                    next_pattern,
                     next_state,
                     remaining_depth - 1,
                     SolutionMoves(Some(&SolutionPreviousMoves {

@@ -143,7 +143,7 @@ impl GodsAlgorithmSearch {
                         let new_pattern = queue_item
                             .pattern
                             .apply_transformation(&move_info.inverse_transformation);
-                        if self.table.pattern_to_depth.get(&new_pattern).is_some() {
+                        if self.table.pattern_to_depth.contains_key(&new_pattern) {
                             continue;
                         }
 

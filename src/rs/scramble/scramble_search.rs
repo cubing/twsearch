@@ -6,8 +6,7 @@ use cubing::{
 };
 
 use crate::_internal::{
-    options::{CustomGenerators, Generators, MetricEnum, VerbosityLevel},
-    AlwaysValid, IDFSearch, IndividualSearchOptions, SearchLogger,
+    options::{CustomGenerators, Generators, MetricEnum, VerbosityLevel}, CheckPattern, IDFSearch, IndividualSearchOptions, SearchLogger
 };
 
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
@@ -24,18 +23,19 @@ pub fn generators_from_vec_str(move_str_list: Vec<&str>) -> Generators {
     })
 }
 
-pub(crate) fn idfs_with_target_pattern(
+pub(crate) fn idfs_with_target_pattern<T: CheckPattern> (
     kpuzzle: &KPuzzle,
     generators: Generators,
     target_pattern: KPattern,
     min_prune_table_size: Option<usize>,
-) -> IDFSearch<AlwaysValid> {
+) -> IDFSearch<T> {
     IDFSearch::try_new(
         kpuzzle.clone(),
         target_pattern,
         generators,
         Arc::new(SearchLogger {
-            verbosity: VerbosityLevel::Silent,
+            // <<< verbosity: VerbosityLevel::Silent,
+            verbosity: VerbosityLevel::Info, //<<<
         }),
         &MetricEnum::Hand,
         true,
@@ -44,11 +44,11 @@ pub(crate) fn idfs_with_target_pattern(
     .unwrap()
 }
 
-pub(crate) fn basic_idfs(
+pub(crate) fn basic_idfs<T: CheckPattern>(
     kpuzzle: &KPuzzle,
     generators: Generators,
     min_prune_table_size: Option<usize>,
-) -> IDFSearch<AlwaysValid> {
+) -> IDFSearch<T> {
     idfs_with_target_pattern(
         kpuzzle,
         generators,
@@ -57,21 +57,24 @@ pub(crate) fn basic_idfs(
     )
 }
 
-pub struct FilteredSearch {
-    idfs: IDFSearch<AlwaysValid>,
+pub struct FilteredSearch<T: CheckPattern> {
+    idfs: IDFSearch<T>,
 }
 
-impl FilteredSearch {
+impl<T: CheckPattern> FilteredSearch<T> {
     pub fn new(
         kpuzzle: &KPuzzle,
         generators: Generators,
         min_prune_table_size: Option<usize>,
-    ) -> FilteredSearch {
+    ) -> FilteredSearch<T> {
         let idfs = basic_idfs(kpuzzle, generators, min_prune_table_size);
         Self { idfs }
     }
 
     pub fn filter(&mut self, scramble_pattern: &KPattern, min_optimal_moves: usize) -> Option<Alg> {
+        if min_optimal_moves == 0 {
+            return None;
+        }
         self.idfs
             .search(
                 scramble_pattern,
@@ -109,13 +112,13 @@ impl FilteredSearch {
     }
 }
 
-pub(crate) fn simple_filtered_search(
+pub(crate) fn simple_filtered_search<T: CheckPattern>(
     scramble_pattern: &KPattern,
     generators: Generators,
     min_optimal_moves: usize,
     min_scramble_moves: Option<usize>,
 ) -> Option<Alg> {
-    let mut filtered_search = FilteredSearch::new(scramble_pattern.kpuzzle(), generators, None);
+    let mut filtered_search = FilteredSearch::<T>::new(scramble_pattern.kpuzzle(), generators, None);
     if filtered_search
         .filter(scramble_pattern, min_optimal_moves)
         .is_some()

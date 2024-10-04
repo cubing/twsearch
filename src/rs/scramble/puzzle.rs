@@ -1,5 +1,6 @@
 use super::Event;
 
+#[derive(Debug)]
 pub struct PuzzleError {
     pub description: String,
 }

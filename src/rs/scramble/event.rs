@@ -4,6 +4,7 @@ use std::fmt::Display;
 
 use super::Puzzle;
 
+#[derive(Debug)]
 pub struct EventError {
     pub description: String,
 }

@@ -5,7 +5,7 @@ use std::{
 
 use cubing::kpuzzle::KTransformation;
 
-use crate::_internal::{PuzzleError, SearchGenerators};
+use crate::_internal::{SearchError, SearchGenerators};
 
 const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
 
@@ -91,10 +91,10 @@ pub struct CanonicalFSM {
 
 impl CanonicalFSM {
     // TODO: Return a more specific error.
-    pub fn try_new(generators: SearchGenerators) -> Result<CanonicalFSM, PuzzleError> {
+    pub fn try_new(generators: SearchGenerators) -> Result<CanonicalFSM, SearchError> {
         let num_move_classes = generators.grouped.len();
         if num_move_classes > MAX_NUM_MOVE_CLASSES {
-            return Err(PuzzleError {
+            return Err(SearchError {
                 description: "Too many move classes!".to_owned(),
             });
         }

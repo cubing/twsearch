@@ -77,6 +77,10 @@ fn main() {
             &None,
             &None, // TODO: allow custom target pattern?
         ),
+        CliCommand::Scramble(_args) => {
+            println!("This command is not supported for the wrapper CLI");
+            exit(1);
+        }
         CliCommand::Benchmark(benchmark_args) => benchmark(benchmark_args),
     };
     if let Err(err) = result {

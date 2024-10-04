@@ -46,6 +46,8 @@ pub enum CliCommand {
     TimingTest(TimingTestArgs),
     // Enumerate canonical algs (move sequences) at iterative depths.
     CanonicalAlgs(CanonicalAlgsArgs),
+    // Generate a scramble
+    Scramble(ScrambleArgs),
 
     /// Run an internal benchmark suite.
     Benchmark(BenchmarkArgs),
@@ -335,6 +337,12 @@ impl Display for MetricEnum {
         };
         write!(f, "{}", s)
     }
+}
+
+#[derive(Args, Debug)]
+pub struct ScrambleArgs {
+    /// Event ID (WCA or unofficial)
+    pub event_id: String,
 }
 
 #[derive(Args, Debug)]

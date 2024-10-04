@@ -7,4 +7,5 @@ pub mod pyraminx;
 pub mod skewb;
 
 mod definitions;
+mod mask_pattern;
 mod static_move_list;

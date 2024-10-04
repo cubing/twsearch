@@ -1,7 +1,5 @@
 use cubing::alg::Alg;
 
-use crate::_internal::PuzzleError;
-
 use super::{
     puzzles::{
         big_cubes::{scramble_5x5x5, scramble_5x5x5_bld, scramble_6x6x6, scramble_7x7x7},
@@ -12,7 +10,7 @@ use super::{
         pyraminx::scramble_pyraminx,
         skewb::scramble_skewb,
     },
-    Event,
+    Event, PuzzleError,
 };
 
 pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {

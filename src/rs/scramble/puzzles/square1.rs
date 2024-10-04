@@ -5,11 +5,14 @@ use rand::thread_rng;
 use crate::{_internal::CheckPattern, scramble::randomize::PieceZeroConstraint};
 
 use super::{
-    super::randomize::{
-        randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
+    super::{
+        randomize::{
+            randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
+        },
+        scramble_search::{generators_from_vec_str, simple_filtered_search},
     },
-    super::scramble_search::{generators_from_vec_str, simple_filtered_search},
-    definitions::square1_unbandaged_kpuzzle,
+    definitions::{square1_cube_shape_kpattern, square1_unbandaged_kpuzzle},
+    mask_pattern::mask,
 };
 
 struct Square1SlicableChecker;
@@ -152,16 +155,23 @@ pub fn scramble_square1() -> Alg {
         // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("U_SQ_3 D_SQ_2 _SLASH_ D_SQ_")).unwrap();
         let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("U_SQ_5' D_SQ_0 _SLASH_ U_SQ_4' D_SQ_2 _SLASH_ U_SQ_1 D_SQ_5' _SLASH_ U_SQ_3' D_SQ_0 _SLASH_ U_SQ_1' D_SQ_4' _SLASH_ U_SQ_2' D_SQ_0 _SLASH_ U_SQ_3' D_SQ_0 ")).unwrap();
 
-        if !Square1SlicableChecker::is_valid(&scramble_pattern) {
+        let phase1_start_pattern = mask(&scramble_pattern, square1_cube_shape_kpattern());
+
+        if !Square1SlicableChecker::is_valid(&phase1_start_pattern) {
             println!("discaring invalid scramble"); //<<<
             continue;
         }
 
+        dbg!(serde_json::to_string(&phase1_start_pattern));
+
         let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]); // TODO: cache
-                                                                                     // <<< if let Some(solution) = simple_filtered_search(&scramble_pattern, generators, 11, None) {
-        if let Some(solution) =
-            simple_filtered_search::<Square1SlicableChecker>(&scramble_pattern, generators, 0, None)
-        {
+                                                                                     // <<< if let Some(solution) = simple_filtered_search(&phase1_start_pattern, generators, 11, None) {
+        if let Some(solution) = simple_filtered_search::<Square1SlicableChecker>(
+            &phase1_start_pattern,
+            generators,
+            0, /* TODO */
+            None,
+        ) {
             //<<<
             return solution.invert();
         }

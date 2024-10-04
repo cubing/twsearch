@@ -1,7 +1,8 @@
 {
   "formatter": {
     "indentStyle": "space",
-    "indentWidth": 2
+    "indentWidth": 2,
+    "ignore": ["./emsdk"]
   },
   "linter": {
     "enabled": true,
@@ -13,6 +14,7 @@
       "suspicious": {
         "noExplicitAny": "off"
       }
-    }
+    },
+    "ignore": ["./emsdk"]
   }
 }

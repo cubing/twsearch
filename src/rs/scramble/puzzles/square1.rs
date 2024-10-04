@@ -1,6 +1,6 @@
 use cubing::alg::{parse_alg, Alg};
-use rand::thread_rng;
 use rand::seq::SliceRandom;
+use rand::thread_rng;
 
 use crate::{_internal::CheckPattern, scramble::randomize::PieceZeroConstraint};
 
@@ -12,47 +12,58 @@ use super::{
     definitions::square1_unbandaged_kpuzzle,
 };
 
-struct Square1Checker;
+struct Square1SlicableChecker;
 
-const CORNER_LOOKUP: [bool; 24] = [
-    // top
-    true,
-    false,
-    false,
-    true,
-    false,
-    false,
-    true,
-    false,
-    false,
-    true,
-    false,
-    false,
-    // bottom
-    false,
-    true,
-    false,
-    false,
-    true,
-    false,
-    false,
-    true,
-    false,
-    false,
-    true,
-    false,
+const SLOTS_THAT_ARE_BEFORE_SLICES: [u8; 4] = [5, 11, 17, 23];
+// const LOWER_CORNER_CUBE_SLOTS: [u8; 4] = [0, 3, 6, 9, 13, 16, 19, 22];
+
+#[derive(PartialEq, Eq)]
+enum WedgeType {
+    CornerLower,
+    CornerUpper,
+    Edge,
+}
+
+const WEDGE_TYPE_LOOKUP: [WedgeType; 24] = [
+    WedgeType::CornerLower,
+    WedgeType::CornerUpper,
+    WedgeType::Edge,
+    WedgeType::CornerLower,
+    WedgeType::CornerUpper,
+    WedgeType::Edge,
+    WedgeType::CornerLower,
+    WedgeType::CornerUpper,
+    WedgeType::Edge,
+    WedgeType::CornerLower,
+    WedgeType::CornerUpper,
+    WedgeType::Edge,
+    WedgeType::Edge,
+    WedgeType::CornerLower,
+    WedgeType::CornerUpper,
+    WedgeType::Edge,
+    WedgeType::CornerLower,
+    WedgeType::CornerUpper,
+    WedgeType::Edge,
+    WedgeType::CornerLower,
+    WedgeType::CornerUpper,
+    WedgeType::Edge,
+    WedgeType::CornerLower,
+    WedgeType::CornerUpper,
 ];
 
-impl CheckPattern for Square1Checker {
+impl CheckPattern for Square1SlicableChecker {
     fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
         let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
         assert_eq!(orbit_info.name.0, "WEDGES");
 
+        for slot in SLOTS_THAT_ARE_BEFORE_SLICES {
+            let value = unsafe {
+                pattern
+                    .packed_orbit_data()
+                    .get_raw_piece_or_permutation_value(orbit_info, slot)
+            };
 
-        for slot in [5, 11, 17, 23] {
-            let value = unsafe { pattern.packed_orbit_data().get_raw_piece_or_permutation_value(orbit_info, slot) };
-
-            if CORNER_LOOKUP[value as usize] {
+            if WEDGE_TYPE_LOOKUP[value as usize] == WedgeType::CornerLower {
                 return false;
             }
         }
@@ -60,6 +71,35 @@ impl CheckPattern for Square1Checker {
         true
     }
 }
+
+// impl CheckPattern for Square1CubeShapeChecker {
+//     fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
+//         let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
+//         assert_eq!(orbit_info.name.0, "WEDGES");
+
+//         for i in [0, 1, 2, 11, 12, 13] {
+//             let value = unsafe {
+//                 pattern
+//                     .packed_orbit_data()
+//                     .get_raw_piece_or_permutation_value(orbit_info, i)
+//             };
+
+//             for j in [3, 6, 9] {
+//                 if value
+//                     != unsafe {
+//                         pattern
+//                             .packed_orbit_data()
+//                             .get_raw_piece_or_permutation_value(orbit_info, i + j)
+//                     }
+//                 {
+//                     return false;
+//                 }
+//             }
+//         }
+
+//         true
+//     }
+// }
 
 pub fn scramble_square1() -> Alg {
     let kpuzzle = square1_unbandaged_kpuzzle();
@@ -112,14 +152,17 @@ pub fn scramble_square1() -> Alg {
         // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("U_SQ_3 D_SQ_2 _SLASH_ D_SQ_")).unwrap();
         let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("U_SQ_5' D_SQ_0 _SLASH_ U_SQ_4' D_SQ_2 _SLASH_ U_SQ_1 D_SQ_5' _SLASH_ U_SQ_3' D_SQ_0 _SLASH_ U_SQ_1' D_SQ_4' _SLASH_ U_SQ_2' D_SQ_0 _SLASH_ U_SQ_3' D_SQ_0 ")).unwrap();
 
-        if !Square1Checker::is_valid(&scramble_pattern) {
+        if !Square1SlicableChecker::is_valid(&scramble_pattern) {
             println!("discaring invalid scramble"); //<<<
             continue;
         }
 
         let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]); // TODO: cache
-        // <<< if let Some(solution) = simple_filtered_search(&scramble_pattern, generators, 11, None) {
-        if let Some(solution) = simple_filtered_search::<Square1Checker>(&scramble_pattern, generators, 0, None) { //<<<
+                                                                                     // <<< if let Some(solution) = simple_filtered_search(&scramble_pattern, generators, 11, None) {
+        if let Some(solution) =
+            simple_filtered_search::<Square1SlicableChecker>(&scramble_pattern, generators, 0, None)
+        {
+            //<<<
             return solution.invert();
         }
     }

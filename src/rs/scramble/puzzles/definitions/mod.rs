@@ -8,4 +8,6 @@ kpuzzle_from_json_file!(pub(crate), cube6x6x6, "6x6x6.kpuzzle.json");
 kpuzzle_from_json_file!(pub(crate), cube7x7x7, "7x7x7.kpuzzle.json");
 kpuzzle_from_json_file!(pub(crate), tetraminx, "tetraminx.kpuzzle.json");
 kpuzzle_from_json_file!(pub(crate), skewb_fixed_corner_with_co_tweaks, "skewb-fixed-corner-with-co-tweaks.kpuzzle.json");
+
 kpuzzle_from_json_file!(pub(crate), square1_unbandaged, "square1-unbandaged.kpuzzle.json");
+kpattern_from_json_file!(pub(crate), square1_cube_shape, "square1-cube-shape.target-pattern.json", square1_unbandaged_kpuzzle());

@@ -8,7 +8,7 @@ use rand::{seq::SliceRandom, thread_rng};
 
 use crate::_internal::{
     cli::options::{Generators, MetricEnum},
-    PuzzleError,
+    SearchError,
 };
 
 #[derive(Clone, Debug)]
@@ -56,7 +56,7 @@ impl SearchGenerators {
         generators: &Generators,
         metric: &MetricEnum,
         random_start: bool,
-    ) -> Result<SearchGenerators, PuzzleError> {
+    ) -> Result<SearchGenerators, SearchError> {
         let identity_transformation = kpuzzle.identity_transformation();
 
         let mut seen_quantum_moves = HashMap::<QuantumMove, Move>::new();
@@ -99,7 +99,7 @@ impl SearchGenerators {
             };
             let move_quantum_transformation = kpuzzle
                 .transformation_from_move(&move_quantum)
-                .map_err(|e| PuzzleError {
+                .map_err(|e| SearchError {
                     description: e.to_string(), // TODO
                 })?;
             let order =
@@ -109,7 +109,7 @@ impl SearchGenerators {
             let move_transformation =
                 kpuzzle
                     .transformation_from_move(r#move)
-                    .map_err(|e| PuzzleError {
+                    .map_err(|e| SearchError {
                         description: e.to_string(), // TODO
                     })?;
             let mut move_multiple_transformation =

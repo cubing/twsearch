@@ -7,7 +7,7 @@ use std::{
     sync::Arc,
 };
 
-use commands::{benchmark, canonical_algs};
+use commands::{benchmark, canonical_algs, cli_scramble};
 use cubing::{
     alg::Alg,
     kpuzzle::{KPattern, KPatternData, KPuzzle, KPuzzleDefinition},
@@ -34,6 +34,7 @@ fn main() -> Result<(), CommandError> {
         CliCommand::GodsAlgorithm(gods_algorithm_args) => gods_algorithm(gods_algorithm_args),
         CliCommand::TimingTest(_args) => todo!(),
         CliCommand::CanonicalAlgs(args) => canonical_algs(&args),
+        CliCommand::Scramble(scramble_args) => cli_scramble(&scramble_args),
         CliCommand::Benchmark(benchmark_args) => benchmark(&benchmark_args),
     }
 }

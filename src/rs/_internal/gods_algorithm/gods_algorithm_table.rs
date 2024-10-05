@@ -6,7 +6,7 @@ use thousands::Separable;
 use crate::_internal::{
     cli::options::{Generators, MetricEnum},
     gods_algorithm::factor_number::factor_number,
-    CanonicalFSM, CanonicalFSMState, PuzzleError, SearchGenerators, CANONICAL_FSM_START_STATE,
+    CanonicalFSM, CanonicalFSMState, SearchError, SearchGenerators, CANONICAL_FSM_START_STATE,
 };
 
 type SearchDepth = usize;
@@ -66,7 +66,7 @@ impl GodsAlgorithmSearch {
         start_pattern: Option<KPattern>,
         generators: &Generators,
         quantum_metric: &MetricEnum,
-    ) -> Result<Self, PuzzleError> {
+    ) -> Result<Self, SearchError> {
         let depth_to_patterns = vec![];
         let search_moves = SearchGenerators::try_new(&kpuzzle, generators, quantum_metric, false)?;
         let canonical_fsm = CanonicalFSM::try_new(search_moves.clone())?;

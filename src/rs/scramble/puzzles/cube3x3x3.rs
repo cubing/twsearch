@@ -16,11 +16,14 @@ use crate::{
 };
 
 use super::{
-    super::randomize::{
-        randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
+    super::{
+        randomize::{
+            randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
+        },
+        scramble_search::generators_from_vec_str,
     },
-    super::scramble_search::generators_from_vec_str,
     definitions::{cube3x3x3_centerless_g1_target_kpattern, cube3x3x3_centerless_kpuzzle},
+    mask_pattern::mask,
     static_move_list::{add_random_suffixes_from, static_parsed_list, static_parsed_opt_list},
 };
 
@@ -116,21 +119,7 @@ impl Scramble3x3x3TwoPhase {
         };
 
         let phase1_alg = {
-            let mut phase1_search_pattern = self.phase1_target_pattern.clone();
-            for orbit_info in self.kpuzzle.orbit_info_iter() {
-                for i in 0..orbit_info.num_pieces {
-                    let old_piece = pattern.get_piece(orbit_info, i);
-                    let old_piece_mapped =
-                        self.phase1_target_pattern.get_piece(orbit_info, old_piece);
-                    phase1_search_pattern.set_piece(orbit_info, i, old_piece_mapped);
-                    let orientation_with_mod = pattern.get_orientation_with_mod(orbit_info, i);
-                    phase1_search_pattern.set_orientation_with_mod(
-                        orbit_info,
-                        i,
-                        orientation_with_mod,
-                    );
-                }
-            }
+            let phase1_search_pattern = mask(pattern, &self.phase1_target_pattern);
 
             self.phase1_idfs
                 .search(

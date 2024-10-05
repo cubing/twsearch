@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::_internal::{
     cli::options::{Generators, MetricEnum},
-    CanonicalFSM, CanonicalFSMState, MoveClassIndex, PruneTable, PuzzleError, RecursiveWorkTracker,
+    CanonicalFSM, CanonicalFSMState, MoveClassIndex, PruneTable, RecursiveWorkTracker, SearchError,
     SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
@@ -163,7 +163,7 @@ impl<T: CheckPattern> IDFSearch<T> {
         metric: &MetricEnum,
         random_start: bool,
         min_prune_table_size: Option<usize>,
-    ) -> Result<Self, PuzzleError> {
+    ) -> Result<Self, SearchError> {
         let search_generators =
             SearchGenerators::try_new(&kpuzzle, &generators, metric, random_start)?;
         let canonical_fsm = CanonicalFSM::try_new(search_generators.clone())?; // TODO: avoid a clone

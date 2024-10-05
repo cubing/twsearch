@@ -6,7 +6,8 @@ use cubing::{
 };
 
 use crate::_internal::{
-    options::{CustomGenerators, Generators, MetricEnum, VerbosityLevel}, CheckPattern, IDFSearch, IndividualSearchOptions, SearchLogger
+    options::{CustomGenerators, Generators, MetricEnum, VerbosityLevel},
+    CheckPattern, IDFSearch, IndividualSearchOptions, SearchLogger,
 };
 
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
@@ -23,7 +24,7 @@ pub fn generators_from_vec_str(move_str_list: Vec<&str>) -> Generators {
     })
 }
 
-pub(crate) fn idfs_with_target_pattern<T: CheckPattern> (
+pub(crate) fn idfs_with_target_pattern<T: CheckPattern>(
     kpuzzle: &KPuzzle,
     generators: Generators,
     target_pattern: KPattern,
@@ -48,13 +49,9 @@ pub(crate) fn basic_idfs<T: CheckPattern>(
     kpuzzle: &KPuzzle,
     generators: Generators,
     min_prune_table_size: Option<usize>,
+    target_pattern: KPattern,
 ) -> IDFSearch<T> {
-    idfs_with_target_pattern(
-        kpuzzle,
-        generators,
-        kpuzzle.default_pattern(),
-        min_prune_table_size,
-    )
+    idfs_with_target_pattern(kpuzzle, generators, target_pattern, min_prune_table_size)
 }
 
 pub struct FilteredSearch<T: CheckPattern> {
@@ -66,8 +63,9 @@ impl<T: CheckPattern> FilteredSearch<T> {
         kpuzzle: &KPuzzle,
         generators: Generators,
         min_prune_table_size: Option<usize>,
+        target_pattern: KPattern,
     ) -> FilteredSearch<T> {
-        let idfs = basic_idfs(kpuzzle, generators, min_prune_table_size);
+        let idfs = basic_idfs(kpuzzle, generators, min_prune_table_size, target_pattern);
         Self { idfs }
     }
 
@@ -118,7 +116,9 @@ pub(crate) fn simple_filtered_search<T: CheckPattern>(
     min_optimal_moves: usize,
     min_scramble_moves: Option<usize>,
 ) -> Option<Alg> {
-    let mut filtered_search = FilteredSearch::<T>::new(scramble_pattern.kpuzzle(), generators, None);
+    let kpuzzle = scramble_pattern.kpuzzle();
+    let mut filtered_search =
+        FilteredSearch::<T>::new(kpuzzle, generators, None, kpuzzle.default_pattern());
     if filtered_search
         .filter(scramble_pattern, min_optimal_moves)
         .is_some()

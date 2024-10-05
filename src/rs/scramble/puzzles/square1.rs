@@ -1,8 +1,14 @@
-use cubing::alg::{parse_alg, Alg};
+use cubing::alg::{parse_alg, parse_move, Alg, Move};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
-use crate::{_internal::CheckPattern, scramble::randomize::PieceZeroConstraint};
+use crate::{
+    _internal::{AlwaysValid, CheckPattern},
+    scramble::{
+        randomize::{basic_parity, PieceZeroConstraint},
+        scramble_search::FilteredSearch,
+    },
+};
 
 use super::{
     super::{
@@ -14,8 +20,6 @@ use super::{
     definitions::{square1_cube_shape_kpattern, square1_unbandaged_kpuzzle},
     mask_pattern::mask,
 };
-
-struct Square1SlicableChecker;
 
 const SLOTS_THAT_ARE_BEFORE_SLICES: [u8; 4] = [5, 11, 17, 23];
 // const LOWER_CORNER_CUBE_SLOTS: [u8; 4] = [0, 3, 6, 9, 13, 16, 19, 22];
@@ -54,6 +58,8 @@ const WEDGE_TYPE_LOOKUP: [WedgeType; 24] = [
     WedgeType::CornerUpper,
 ];
 
+struct Square1SlicableChecker;
+
 impl CheckPattern for Square1SlicableChecker {
     fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
         let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
@@ -75,34 +81,36 @@ impl CheckPattern for Square1SlicableChecker {
     }
 }
 
-// impl CheckPattern for Square1CubeShapeChecker {
-//     fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
-//         let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
-//         assert_eq!(orbit_info.name.0, "WEDGES");
+struct Square1CubeShapeChecker;
 
-//         for i in [0, 1, 2, 11, 12, 13] {
-//             let value = unsafe {
-//                 pattern
-//                     .packed_orbit_data()
-//                     .get_raw_piece_or_permutation_value(orbit_info, i)
-//             };
+impl CheckPattern for Square1CubeShapeChecker {
+    fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
+        let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
+        assert_eq!(orbit_info.name.0, "WEDGES");
 
-//             for j in [3, 6, 9] {
-//                 if value
-//                     != unsafe {
-//                         pattern
-//                             .packed_orbit_data()
-//                             .get_raw_piece_or_permutation_value(orbit_info, i + j)
-//                     }
-//                 {
-//                     return false;
-//                 }
-//             }
-//         }
+        for i in [0, 1, 2, 11, 12, 13] {
+            let value = unsafe {
+                pattern
+                    .packed_orbit_data()
+                    .get_raw_piece_or_permutation_value(orbit_info, i)
+            };
 
-//         true
-//     }
-// }
+            for j in [3, 6, 9] {
+                if value
+                    != unsafe {
+                        pattern
+                            .packed_orbit_data()
+                            .get_raw_piece_or_permutation_value(orbit_info, i + j)
+                    }
+                {
+                    return false;
+                }
+            }
+        }
+
+        true
+    }
+}
 
 pub fn scramble_square1() -> Alg {
     let kpuzzle = square1_unbandaged_kpuzzle();
@@ -153,27 +161,68 @@ pub fn scramble_square1() -> Alg {
 
         // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("U_SQ_2' _SLASH_ U_SQ_5 D_SQ_2 _SLASH_ U_SQ_4 D_SQ_2' _SLASH_")).unwrap();
         // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("U_SQ_3 D_SQ_2 _SLASH_ D_SQ_")).unwrap();
-        let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("U_SQ_5' D_SQ_0 _SLASH_ U_SQ_4' D_SQ_2 _SLASH_ U_SQ_1 D_SQ_5' _SLASH_ U_SQ_3' D_SQ_0 _SLASH_ U_SQ_1' D_SQ_4' _SLASH_ U_SQ_2' D_SQ_0 _SLASH_ U_SQ_3' D_SQ_0 ")).unwrap();
+        let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("(U_SQ_5' D_SQ_0) / (U_SQ_0 D_SQ_3) / (U_SQ_3 D_SQ_0) / (U_SQ_' D_SQ_4') / (U_SQ_4 D_SQ_2') / (U_SQ_5 D_SQ_4') / (U_SQ_2' D_SQ_0) / (U_SQ_0 D_SQ_3') / (U_SQ_' D_SQ_0) / (U_SQ_3 D_SQ_4') / (U_SQ_4 D_SQ_2') /")).unwrap();
 
-        let phase1_start_pattern = mask(&scramble_pattern, square1_cube_shape_kpattern());
+        let phase1_start_pattern = mask(&scramble_pattern, square1_cube_shape_kpattern()).unwrap();
 
         if !Square1SlicableChecker::is_valid(&phase1_start_pattern) {
-            println!("discaring invalid scramble"); //<<<
+            println!("discarding invalid scramble"); //<<<
             continue;
         }
 
-        dbg!(serde_json::to_string(&phase1_start_pattern));
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&phase1_start_pattern.to_data()).unwrap()
+        );
+
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&square1_cube_shape_kpattern().to_data()).unwrap()
+        );
 
         let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]); // TODO: cache
                                                                                      // <<< if let Some(solution) = simple_filtered_search(&phase1_start_pattern, generators, 11, None) {
-        if let Some(solution) = simple_filtered_search::<Square1SlicableChecker>(
-            &phase1_start_pattern,
-            generators,
-            0, /* TODO */
+
+        let mut phase1_filtered_search = FilteredSearch::<Square1SlicableChecker>::new(
+            kpuzzle,
+            generators.clone(),
             None,
-        ) {
-            //<<<
-            return solution.invert();
+            square1_cube_shape_kpattern().clone(),
+        );
+
+        let mut phase1_solution =
+            phase1_filtered_search.generate_scramble(&phase1_start_pattern, None);
+
+        while let Some(cubing::alg::AlgNode::MoveNode(r#move)) = phase1_solution.nodes.last() {
+            if r#move == &parse_move!("_SLASH_'")
+            // TODO: redundant parsing
+            {
+                break;
+            }
+            phase1_solution.nodes.pop();
         }
+        dbg!(&parse_move!("/"));
+
+        let phase2_start_pattern = scramble_pattern.apply_alg(&phase1_solution).unwrap();
+
+        // dbg!(basic_parity(phase2_start_pattern.));
+
+        let mut phase2_filtered_search = FilteredSearch::<Square1CubeShapeChecker>::new(
+            kpuzzle,
+            generators,
+            None,
+            square1_cube_shape_kpattern().clone(),
+        );
+        let mut phase2_solution =
+            phase2_filtered_search.generate_scramble(&phase2_start_pattern, None);
+
+        let mut nodes = phase1_solution.nodes;
+        nodes.append(&mut phase2_solution.nodes);
+        Alg { nodes }.invert();
+
+        // if let Some(solution) = filtered_search.generate_scramble(&phase1_start_pattern, 0) {
+        //     //<<<
+        //     return solution.invert();
+        // }
     }
 }

@@ -7,7 +7,7 @@ use cubing::{
 
 use crate::_internal::{
     options::{CustomGenerators, Generators, MetricEnum, VerbosityLevel},
-    CheckPattern, IDFSearch, IndividualSearchOptions, SearchLogger,
+    CheckPattern, IDFSearch, IndividualSearchOptions, SearchLogger, SearchSolutions,
 };
 
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
@@ -93,20 +93,29 @@ impl<T: CheckPattern> FilteredSearch<T> {
         scramble_pattern: &KPattern,
         min_scramble_moves: Option<usize>,
     ) -> Alg {
-        self.idfs
-            .search(
-                scramble_pattern,
-                IndividualSearchOptions {
-                    min_num_solutions: Some(1),
-                    min_depth: min_scramble_moves,
-                    max_depth: None,
-                    disallowed_initial_quanta: None,
-                    disallowed_final_quanta: None,
-                },
-            )
+        self.search(scramble_pattern, Some(1), min_scramble_moves, None)
             .next()
             .unwrap()
             .invert()
+    }
+
+    pub fn search(
+        &mut self,
+        scramble_pattern: &KPattern,
+        min_num_solutions: Option<usize>,
+        min_depth: Option<usize>,
+        max_depth: Option<usize>,
+    ) -> SearchSolutions {
+        self.idfs.search(
+            scramble_pattern,
+            IndividualSearchOptions {
+                min_num_solutions,
+                min_depth,
+                max_depth,
+                disallowed_initial_quanta: None,
+                disallowed_final_quanta: None,
+            },
+        )
     }
 }
 

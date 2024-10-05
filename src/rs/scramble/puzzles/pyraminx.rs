@@ -1,7 +1,10 @@
 use cubing::alg::{Alg, AlgNode, Move};
 use rand::{thread_rng, Rng};
 
-use crate::{_internal::AlwaysValid, scramble::{randomize::PieceZeroConstraint, scramble_search::move_list_from_vec}};
+use crate::{
+    _internal::AlwaysValid,
+    scramble::{randomize::PieceZeroConstraint, scramble_search::move_list_from_vec},
+};
 
 use super::{
     super::randomize::{

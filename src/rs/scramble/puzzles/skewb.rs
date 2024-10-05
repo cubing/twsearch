@@ -90,7 +90,9 @@ pub fn scramble_skewb() -> Alg {
         );
 
         let generators = generators_from_vec_str(vec!["U", "L", "R", "B"]); // TODO: cache
-        if let Some(scramble) = simple_filtered_search::<AlwaysValid>(&scramble_pattern, generators, 7, Some(11)) {
+        if let Some(scramble) =
+            simple_filtered_search::<AlwaysValid>(&scramble_pattern, generators, 7, Some(11))
+        {
             return scramble;
         }
     }

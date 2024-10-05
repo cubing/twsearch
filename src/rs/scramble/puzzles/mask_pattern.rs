@@ -25,15 +25,12 @@ pub(crate) fn mask(
                 });
             };
 
-            dbg!("1");
-
             let source_mod = source_orientation_with_mod.orientation_mod;
             let source_mod = if source_mod == 0 {
                 orbit_info.num_orientations
             } else {
                 source_mod
             };
-            dbg!("2");
 
             let mask_mod = mask_orientation_with_mod.orientation_mod;
             let mask_mod = if mask_mod == 0 {
@@ -41,7 +38,6 @@ pub(crate) fn mask(
             } else {
                 mask_mod
             };
-            dbg!("3", mask_mod, source_mod);
 
             if source_mod % mask_mod != 0 && mask_mod % source_mod != 0 {
                 return Err(PuzzleError {

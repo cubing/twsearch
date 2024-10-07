@@ -264,6 +264,10 @@ impl<T: CheckPattern> IDFSearch<T> {
         remaining_depth: usize,
         solution_moves: SolutionMoves,
     ) -> SearchRecursionResult {
+        if remaining_depth == 0 && !T::is_valid(current_pattern) {
+            return SearchRecursionResult::ContinueSearchingDefault();
+        }
+
         individual_search_data
             .recursive_work_tracker
             .record_recursive_call();
@@ -338,9 +342,6 @@ impl<T: CheckPattern> IDFSearch<T> {
 
                 let next_pattern =
                     &current_pattern.apply_transformation(&move_transformation_info.transformation);
-                if !T::is_valid(next_pattern) {
-                    continue;
-                }
 
                 match self.recurse(
                     individual_search_data,

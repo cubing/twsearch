@@ -6,7 +6,7 @@ use crate::{
     _internal::{AlwaysValid, CheckPattern},
     scramble::{
         randomize::{basic_parity, BasicParity, PieceZeroConstraint},
-        scramble_search::FilteredSearch,
+        scramble_search::{simple_filtered_search, FilteredSearch},
     },
 };
 
@@ -176,9 +176,12 @@ pub fn scramble_square1() -> Alg {
         // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("(U_SQ_5' D_SQ_0) / (U_SQ_0 D_SQ_3) / (U_SQ_3 D_SQ_0) / (U_SQ_' D_SQ_4') / (U_SQ_4 D_SQ_2') / (U_SQ_5 D_SQ_4') / (U_SQ_2' D_SQ_0) / (U_SQ_0 D_SQ_3') / (U_SQ_' D_SQ_0) / (U_SQ_3 D_SQ_4') / (U_SQ_4 D_SQ_2') /")).unwrap();
         // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("(U_SQ_4 D_SQ_3) / (U_SQ_' D_SQ_') / (U_SQ_0 D_SQ_3') / (U_SQ_3' D_SQ_3') / (U_SQ_ D_SQ_2') / (U_SQ_3' D_SQ_4') / (U_SQ_3 D_SQ_0) / (U_SQ_4' D_SQ_5') / (U_SQ_3' D_SQ_0) / (U_SQ_4' D_SQ_0) / (U_SQ_0 D_SQ_2')")).unwrap();
         // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("(U_SQ_0 D_SQ_5) / (U_SQ_ D_SQ_5') / (U_SQ_0 D_SQ_3') / (U_SQ_3 D_SQ_0) / (U_SQ_4' D_SQ_') / (U_SQ_3' D_SQ_3') / (U_SQ_0 D_SQ_5') / (U_SQ_3' D_SQ_3') / (U_SQ_4' D_SQ_0) / (U_SQ_0 D_SQ_5') / (U_SQ_4 D_SQ_3') / (U_SQ_0 D_SQ_2') /")).unwrap();
-        // <<<         let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("
-        // <<< (U_SQ_0 D_SQ_') / (U_SQ_0 D_SQ_3') / (U_SQ_0 D_SQ_3') / (U_SQ_4 D_SQ_5') / (U_SQ_5 D_SQ_4') / (U_SQ_5' D_SQ_2') / (U_SQ_5 D_SQ_0) / (U_SQ_3' D_SQ_3') / (U_SQ_2' D_SQ_0) / (U_SQ_6 D_SQ_') / (U_SQ_5' D_SQ_4') / (U_SQ_2' D_SQ_0)
-        // <<< ")).unwrap();
+        let scramble_pattern = kpuzzle
+            .default_pattern()
+            .apply_alg(&parse_alg!(
+                "(0, 5) / (3, 0) / (-5, -2) / (3, -3) / (5, -4) / (0, -3) / (-2, 0) / (-3, -3)"
+            ))
+            .unwrap();
 
         let phase1_start_pattern =
             mask(&scramble_pattern, square1_square_square_shape_kpattern()).unwrap();
@@ -188,18 +191,35 @@ pub fn scramble_square1() -> Alg {
             continue;
         }
 
-        // <<< println!(
-        // <<<     "{}",
-        // <<<     serde_json::to_string_pretty(&phase1_start_pattern.to_data()).unwrap()
-        // <<< );
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&phase1_start_pattern.to_data()).unwrap()
+        );
+
+        dbg!(
+            &phase1_start_pattern
+                .apply_alg(&parse_alg!("(3, 3) / (-1, 1)"))
+                .unwrap()
+                == square1_square_square_shape_kpattern()
+        );
         // <<<
-        // <<< println!(
-        // <<<     "{}",
-        // <<<     serde_json::to_string_pretty(&square1_square_square_shape_kpattern().to_data()).unwrap()
-        // <<< );
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&square1_square_square_shape_kpattern().to_data())
+                .unwrap()
+        );
 
         let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]); // TODO: cache
                                                                                      // <<< if let Some(solution) = simple_filtered_search(&phase1_start_pattern, generators, 11, None) {
+
+        // let direct = simple_filtered_search::<AlwaysValid>(
+        //     &phase1_start_pattern,
+        //     generators.clone(),
+        //     0,
+        //     None,
+        // )
+        // .unwrap();
+        // println!("{}", direct);
 
         let mut phase1_filtered_search = FilteredSearch::<Phase1Checker>::new(
             kpuzzle,
@@ -221,7 +241,7 @@ pub fn scramble_square1() -> Alg {
             &phase1_start_pattern,
             Some(100000), // see "le tired' below
             None,
-            None,
+            Some(5),
         ) {
             let phase2_start_pattern = scramble_pattern.apply_alg(&phase1_solution).unwrap();
 
@@ -242,7 +262,8 @@ pub fn scramble_square1() -> Alg {
                 continue;
             }
 
-            println!("Searching for a phase2 solution");
+            println!("\n\n\n\n\n{}", phase1_solution);
+            println!("\n\n\n\n\nSearching for a phase2 solution");
             let phase2_solution = phase2_filtered_search
                 .search(
                     &phase2_start_pattern,

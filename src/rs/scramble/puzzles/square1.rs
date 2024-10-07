@@ -15,9 +15,9 @@ use super::{
         randomize::{
             randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
         },
-        scramble_search::{generators_from_vec_str, simple_filtered_search},
+        scramble_search::generators_from_vec_str,
     },
-    definitions::{square1_cube_shape_kpattern, square1_unbandaged_kpuzzle},
+    definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
     mask_pattern::mask,
 };
 
@@ -180,7 +180,8 @@ pub fn scramble_square1() -> Alg {
         // <<< (U_SQ_0 D_SQ_') / (U_SQ_0 D_SQ_3') / (U_SQ_0 D_SQ_3') / (U_SQ_4 D_SQ_5') / (U_SQ_5 D_SQ_4') / (U_SQ_5' D_SQ_2') / (U_SQ_5 D_SQ_0) / (U_SQ_3' D_SQ_3') / (U_SQ_2' D_SQ_0) / (U_SQ_6 D_SQ_') / (U_SQ_5' D_SQ_4') / (U_SQ_2' D_SQ_0)
         // <<< ")).unwrap();
 
-        let phase1_start_pattern = mask(&scramble_pattern, square1_cube_shape_kpattern()).unwrap();
+        let phase1_start_pattern =
+            mask(&scramble_pattern, square1_square_square_shape_kpattern()).unwrap();
 
         if !Phase1Checker::is_valid(&phase1_start_pattern) {
             println!("discarding invalid scramble"); //<<<
@@ -194,7 +195,7 @@ pub fn scramble_square1() -> Alg {
         // <<<
         // <<< println!(
         // <<<     "{}",
-        // <<<     serde_json::to_string_pretty(&square1_cube_shape_kpattern().to_data()).unwrap()
+        // <<<     serde_json::to_string_pretty(&square1_square_square_shape_kpattern().to_data()).unwrap()
         // <<< );
 
         let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]); // TODO: cache
@@ -204,7 +205,7 @@ pub fn scramble_square1() -> Alg {
             kpuzzle,
             generators.clone(),
             None,
-            square1_cube_shape_kpattern().clone(),
+            square1_square_square_shape_kpattern().clone(),
         );
 
         let mut phase2_filtered_search = FilteredSearch::<Phase2Checker>::new(
@@ -213,6 +214,8 @@ pub fn scramble_square1() -> Alg {
             None,
             kpuzzle.default_pattern(),
         );
+
+        println!("PHASE1ING");
 
         for phase1_solution in phase1_filtered_search.search(
             &phase1_start_pattern,
@@ -235,7 +238,7 @@ pub fn scramble_square1() -> Alg {
             }
 
             if basic_parity(&bandaged_wedges) == BasicParity::Odd {
-                println!("Found a phase 1 solution that results in parity. Skipping.");
+                // println!("Found a phase 1 solution that results in parity. Skipping.");
                 continue;
             }
 
@@ -245,14 +248,15 @@ pub fn scramble_square1() -> Alg {
                     &phase2_start_pattern,
                     Some(1),
                     None,
-                    Some(21), // <<< needs explanation
+                    Some(26), // <<< needs explanation
                 )
                 .next();
 
             if let Some(mut phase2_solution) = phase2_solution {
                 let mut nodes = phase1_solution.nodes;
                 nodes.append(&mut phase2_solution.nodes);
-                println!( //<<<
+                println!(
+                    //<<<
                     "{}",
                     serde_json::to_string_pretty(&scramble_pattern.to_data()).unwrap()
                 );

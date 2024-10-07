@@ -237,6 +237,8 @@ pub fn scramble_square1() -> Alg {
 
         println!("PHASE1ING");
 
+        let generators2 = generators_from_vec_str(vec!["US", "DS", "UUU", "DDD"]); // TODO: cache
+
         for phase1_solution in phase1_filtered_search.search(
             &phase1_start_pattern,
             Some(100000), // see "le tired' below

@@ -1,4 +1,9 @@
-use cubing::alg::{parse_alg, parse_move, Alg, Move};
+use std::process::exit;
+
+use cubing::{
+    alg::{parse_alg, parse_move, Alg, Move},
+    kpuzzle::KPattern,
+};
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
@@ -124,6 +129,16 @@ impl CheckPattern for Phase2Checker {
 
 pub fn scramble_square1() -> Alg {
     let kpuzzle = square1_unbandaged_kpuzzle();
+    //     dbg!(wedge_parity(
+    //         &kpuzzle
+    //             .default_pattern()
+    //             .apply_alg(&parse_alg!(
+    //                 "(0, 5) / (3, 0) / (-5, -2) / (3, -3) / (5, -4) / (0, -3) / (-3, 0) / (-3, -3)
+    // / U_SQ_2' D_SQ_ / U_SQ_'"
+    //             ))
+    //             .unwrap()
+    //     ));
+    //     exit(1);
     loop {
         let mut scramble_pattern = kpuzzle.default_pattern();
 
@@ -179,7 +194,7 @@ pub fn scramble_square1() -> Alg {
         let scramble_pattern = kpuzzle
             .default_pattern()
             .apply_alg(&parse_alg!(
-                "(0, 5) / (3, 0) / (-5, -2) / (3, -3) / (5, -4) / (0, -3) / (-2, 0) / (-3, -3)"
+                "(0, 5) / (3, 0) / (-5, -2) / (3, -3) / (5, -4) / (0, -3) / (-3, 0) / (-3, -3)"
             ))
             .unwrap();
 
@@ -196,12 +211,12 @@ pub fn scramble_square1() -> Alg {
             serde_json::to_string_pretty(&phase1_start_pattern.to_data()).unwrap()
         );
 
-        dbg!(
-            &phase1_start_pattern
-                .apply_alg(&parse_alg!("(3, 3) / (-1, 1)"))
-                .unwrap()
-                == square1_square_square_shape_kpattern()
-        );
+        // dbg!(
+        //     &phase1_start_pattern
+        //         .apply_alg(&parse_alg!("(3, 3) / (-1, 1)"))
+        //         .unwrap()
+        //         == square1_square_square_shape_kpattern()
+        // );
         // <<<
         println!(
             "{}",
@@ -228,6 +243,7 @@ pub fn scramble_square1() -> Alg {
             square1_square_square_shape_kpattern().clone(),
         );
 
+        let generators2 = generators_from_vec_str(vec!["US", "DS", "UUU", "DDD"]); // TODO: cache
         let mut phase2_filtered_search = FilteredSearch::<Phase2Checker>::new(
             kpuzzle,
             generators,
@@ -237,41 +253,48 @@ pub fn scramble_square1() -> Alg {
 
         println!("PHASE1ING");
 
-        let generators2 = generators_from_vec_str(vec!["US", "DS", "UUU", "DDD"]); // TODO: cache
-
-        for phase1_solution in phase1_filtered_search.search(
+        for mut phase1_solution in phase1_filtered_search.search(
             &phase1_start_pattern,
-            Some(100000), // see "le tired' below
+            Some(100_000), // see "le tired' below
             None,
-            Some(5),
+            Some(18), // Max phase 1 length
         ) {
-            let phase2_start_pattern = scramble_pattern.apply_alg(&phase1_solution).unwrap();
+            let phase2_start_pattern_for_parity =
+                scramble_pattern.apply_alg(&phase1_solution).unwrap();
 
-            let mut bandaged_wedges = Vec::<u8>::default();
-            for slot in 0..NUM_WEDGES {
-                let value = unsafe {
-                    scramble_pattern
-                        .packed_orbit_data()
-                        .get_raw_piece_or_permutation_value(wedge_orbit_info, slot)
-                };
-                if WEDGE_TYPE_LOOKUP[value as usize] != WedgeType::CornerUpper {
-                    bandaged_wedges.push(value);
-                }
-            }
-
-            if basic_parity(&bandaged_wedges) == BasicParity::Odd {
-                // println!("Found a phase 1 solution that results in parity. Skipping.");
+            println!("--------\n{}", phase1_solution);
+            let par = wedge_parity(&phase2_start_pattern_for_parity);
+            wedge_parity(&phase2_start_pattern_for_parity);
+            println!("{:?}", par);
+            println!("{:?}", wedge_parity(&kpuzzle.default_pattern()
+                .apply_alg(&parse_alg!("(0, 5) / (3, 0) / (-5, -2) / (3, -3) / (5, -4) / (0, -3) / (-3, 0) / (-3, -3)")).unwrap()
+                .apply_alg(&phase1_solution).unwrap())
+            );
+            println!("{:?}", par == BasicParity::Odd);
+            if par == BasicParity::Odd {
+                println!("Found a phase 1 solution that results in parity. Skipping.");
                 continue;
             }
 
-            println!("\n\n\n\n\n{}", phase1_solution);
-            println!("\n\n\n\n\nSearching for a phase2 solution");
+            while let Some(cubing::alg::AlgNode::MoveNode(r#move)) = phase1_solution.nodes.last() {
+                if r#move == &parse_move!("_SLASH_'")
+                // TODO: redundant parsing
+                {
+                    break;
+                }
+                phase1_solution.nodes.pop();
+            }
+
+            let phase2_start_pattern = scramble_pattern.apply_alg(&phase1_solution).unwrap();
+
+            println!("\n{}", phase1_solution);
+            println!("\nSearching for a phase2 solution");
             let phase2_solution = phase2_filtered_search
                 .search(
                     &phase2_start_pattern,
                     Some(1),
                     None,
-                    Some(26), // <<< needs explanation
+                    Some(22), // <<< needs explanation
                 )
                 .next();
 
@@ -312,4 +335,22 @@ pub fn scramble_square1() -> Alg {
         //     return solution.invert();
         // }
     }
+}
+
+fn wedge_parity(pattern: &KPattern) -> BasicParity {
+    let wedge_orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
+    assert_eq!(wedge_orbit_info.name.0, "WEDGES");
+
+    let mut bandaged_wedges = Vec::<u8>::default();
+    for slot in 0..NUM_WEDGES {
+        let value = unsafe {
+            pattern
+                .packed_orbit_data()
+                .get_raw_piece_or_permutation_value(wedge_orbit_info, slot)
+        };
+        if WEDGE_TYPE_LOOKUP[value as usize] != WedgeType::CornerUpper {
+            bandaged_wedges.push(value);
+        }
+    }
+    basic_parity(&bandaged_wedges)
 }

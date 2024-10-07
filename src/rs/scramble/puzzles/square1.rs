@@ -247,7 +247,7 @@ pub fn scramble_square1() -> Alg {
         let mut phase2_filtered_search = FilteredSearch::<Phase2Checker>::new(
             kpuzzle,
             generators,
-            None,
+            None, // TODO
             kpuzzle.default_pattern(),
         );
 
@@ -294,7 +294,7 @@ pub fn scramble_square1() -> Alg {
                     &phase2_start_pattern,
                     Some(1),
                     None,
-                    Some(22), // <<< needs explanation
+                    Some(17), // <<< needs explanation
                 )
                 .next();
 

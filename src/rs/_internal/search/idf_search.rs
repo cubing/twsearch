@@ -15,6 +15,8 @@ use crate::_internal::{
     SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
+use super::KPatternStack;
+
 const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase
 
 #[allow(clippy::enum_variant_names)]
@@ -220,6 +222,7 @@ impl IDFSearch {
 
         let search_pattern = search_pattern.clone();
 
+        let mut kpattern_stack = KPatternStack::new(search_pattern);
         for remaining_depth in individual_search_data
             .individual_search_options
             .get_min_depth()
@@ -239,7 +242,7 @@ impl IDFSearch {
                 .start_depth(remaining_depth, Some("Starting search…"));
             let recursion_result = self.recurse(
                 &mut individual_search_data,
-                &search_pattern,
+                &mut kpattern_stack,
                 CANONICAL_FSM_START_STATE,
                 remaining_depth,
                 SolutionMoves(None),
@@ -257,7 +260,7 @@ impl IDFSearch {
     fn recurse(
         &self,
         individual_search_data: &mut IndividualSearchData,
-        current_pattern: &KPattern,
+        kpattern_stack: &mut KPatternStack,
         current_state: CanonicalFSMState,
         remaining_depth: usize,
         solution_moves: SolutionMoves,
@@ -265,6 +268,7 @@ impl IDFSearch {
         individual_search_data
             .recursive_work_tracker
             .record_recursive_call();
+        let current_pattern = kpattern_stack.current_pattern();
         if remaining_depth == 0 {
             if let Some(previous_moves) = solution_moves.0 {
                 if is_move_disallowed(
@@ -333,16 +337,21 @@ impl IDFSearch {
                     // TODO: is it always safe to `break` here?
                     continue;
                 }
-                match self.recurse(
+
+                kpattern_stack.push(&move_transformation_info.transformation);
+                let recursive_result = self.recurse(
                     individual_search_data,
-                    &current_pattern.apply_transformation(&move_transformation_info.transformation),
+                    kpattern_stack,
                     next_state,
                     remaining_depth - 1,
                     SolutionMoves(Some(&SolutionPreviousMoves {
                         latest_move: &move_transformation_info.r#move,
                         previous_moves: &solution_moves,
                     })),
-                ) {
+                );
+                kpattern_stack.pop();
+
+                match recursive_result {
                     SearchRecursionResult::DoneSearching() => {
                         return SearchRecursionResult::DoneSearching();
                     }

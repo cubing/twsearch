@@ -118,8 +118,8 @@ fn solve_pattern(
                     .client_args
                     .as_ref()
                     .and_then(|client_args| client_args.max_depth),
-                disallowed_initial_quanta: None,
-                disallowed_final_quanta: None,
+                // TODO: support canonical FSM pre-moves and post-moves.
+                ..Default::default()
             },
         )
         .next()

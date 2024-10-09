@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{default::Default, sync::Arc};
 
 use cubing::{
     alg::{Alg, Move},
@@ -80,8 +80,7 @@ impl FilteredSearch {
                     min_num_solutions: Some(1),
                     min_depth: Some(0),
                     max_depth: Some(min_optimal_moves - 1),
-                    disallowed_initial_quanta: None,
-                    disallowed_final_quanta: None,
+                    ..Default::default()
                 },
             )
             .next()
@@ -99,9 +98,7 @@ impl FilteredSearch {
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
                     min_depth: min_scramble_moves,
-                    max_depth: None,
-                    disallowed_initial_quanta: None,
-                    disallowed_final_quanta: None,
+                    ..Default::default()
                 },
             )
             .next()

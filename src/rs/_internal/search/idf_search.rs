@@ -104,9 +104,9 @@ impl Iterator for SearchSolutions {
 #[serde(rename_all = "camelCase")]
 pub struct IndividualSearchOptions {
     pub min_num_solutions: Option<usize>,
-    pub min_depth: Option<usize>,                            // inclusive
-    pub max_depth: Option<usize>,                            // exclusive
-    pub disallowed_initial_quanta: Option<Vec<QuantumMove>>, // TODO: Change this to `fsm_pre_moves` so we can compute disallowed initial FSM states.
+    pub min_depth: Option<usize>, // inclusive
+    pub max_depth: Option<usize>, // exclusive
+    pub canonical_fsm_pre_moves: Option<Vec<Move>>,
     pub disallowed_final_quanta: Option<Vec<QuantumMove>>, // TODO: Find a way to represent this using disallowed final FSM states?
 }
 
@@ -241,10 +241,11 @@ impl IDFSearch {
             individual_search_data
                 .recursive_work_tracker
                 .start_depth(remaining_depth, Some("Starting search…"));
+            let initial_state = self.initial_state(&individual_search_data);
             let recursion_result = self.recurse(
                 &mut individual_search_data,
                 &mut kpattern_stack,
-                CANONICAL_FSM_START_STATE,
+                initial_state,
                 remaining_depth,
                 SolutionMoves(None),
             );
@@ -305,18 +306,6 @@ impl IDFSearch {
             };
 
             for move_transformation_info in move_transformation_multiples {
-                if current_state == CANONICAL_FSM_START_STATE
-                    && is_move_disallowed(
-                        &move_transformation_info.r#move,
-                        &individual_search_data
-                            .individual_search_options
-                            .disallowed_initial_quanta,
-                    )
-                {
-                    // TODO: is it always safe to `break` here?
-                    continue;
-                }
-
                 kpattern_stack.push(&move_transformation_info.transformation);
                 let recursive_result = self.recurse(
                     individual_search_data,
@@ -342,6 +331,35 @@ impl IDFSearch {
             }
         }
         SearchRecursionResult::ContinueSearchingDefault()
+    }
+
+    fn initial_state(&self, individual_search_data: &IndividualSearchData) -> CanonicalFSMState {
+        let mut current_state = CANONICAL_FSM_START_STATE;
+        if let Some(moves) = &individual_search_data
+            .individual_search_options
+            .canonical_fsm_pre_moves
+        {
+            for r#move in moves {
+                let move_class_index = self
+                    .api_data
+                    .search_generators
+                    .by_move
+                    .get(r#move)
+                    .expect("move!")
+                    .0;
+                current_state = match self
+                    .api_data
+                    .canonical_fsm
+                    .next_state(current_state, move_class_index)
+                {
+                    Some(next_state) => next_state,
+                    None => {
+                        panic!("TODO: invalid canonical FSM pre-moves.");
+                    }
+                }
+            }
+        };
+        current_state
     }
 
     fn base_case(

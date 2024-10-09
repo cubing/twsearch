@@ -10,7 +10,7 @@ use crate::_internal::{SearchError, SearchGenerators};
 const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
 
 #[derive(Clone, Copy, Debug)]
-pub(crate) struct MoveClassIndex(pub usize);
+pub struct MoveClassIndex(pub usize);
 
 // Bit N is indexed by a `MoveClass` value of N.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]

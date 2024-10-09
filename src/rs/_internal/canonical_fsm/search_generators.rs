@@ -11,6 +11,8 @@ use crate::_internal::{
     SearchError,
 };
 
+use super::MoveClassIndex;
+
 #[derive(Clone, Debug)]
 pub struct MoveTransformationInfo {
     #[allow(dead_code)] // TODO
@@ -29,6 +31,7 @@ pub struct SearchGenerators {
     // TODO: figure out the most reusable abstraction
     pub grouped: Vec<MoveTransformationMultiples>,
     pub flat: Vec<MoveTransformationInfo>, // TODO: avoid duplicate data
+    pub by_move: HashMap<Move, (MoveClassIndex, MoveTransformationInfo)>, // TODO: avoid duplicate data
 }
 
 fn transformation_order(
@@ -82,7 +85,9 @@ impl SearchGenerators {
         // TODO: actually calculate GCDs
         let mut grouped = Vec::<MoveTransformationMultiples>::default();
         let mut flat = Vec::<MoveTransformationInfo>::default();
-        for r#move in moves {
+        let mut by_move = HashMap::<Move, (MoveClassIndex, MoveTransformationInfo)>::default();
+        for (move_class_index, r#move) in moves.into_iter().enumerate() {
+            let move_class_index = MoveClassIndex(move_class_index);
             if let Some(existing) = seen_quantum_moves.get(&r#move.quantum) {
                 // TODO: deduplicate by quantum move.
                 println!(
@@ -128,7 +133,8 @@ impl SearchGenerators {
                             inverse_transformation: move_multiple_transformation.current().invert(),
                         };
                         multiples.push(info.clone());
-                        flat.push(info);
+                        flat.push(info.clone());
+                        by_move.insert(r#move.clone(), (move_class_index, info));
 
                         amount += r#move.amount;
                         move_multiple_transformation.apply_transformation(&move_transformation);
@@ -143,7 +149,8 @@ impl SearchGenerators {
                     };
                     let is_self_inverse = info.transformation == info.inverse_transformation;
                     multiples.push(info.clone());
-                    flat.push(info);
+                    flat.push(info.clone());
+                    by_move.insert(r#move.clone(), (move_class_index, info));
                     if !is_self_inverse {
                         let info = MoveTransformationInfo {
                             r#move: r#move.invert(),
@@ -152,7 +159,8 @@ impl SearchGenerators {
                             inverse_transformation: move_multiple_transformation.current().clone(),
                         };
                         multiples.push(info.clone());
-                        flat.push(info);
+                        flat.push(info.clone());
+                        by_move.insert(r#move.clone(), (move_class_index, info));
                     }
                 }
             }
@@ -164,6 +172,10 @@ impl SearchGenerators {
             flat.shuffle(&mut rng);
         }
 
-        Ok(Self { grouped, flat })
+        Ok(Self {
+            grouped,
+            flat,
+            by_move,
+        })
     }
 }

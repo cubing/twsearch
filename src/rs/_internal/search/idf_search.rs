@@ -281,29 +281,7 @@ impl IDFSearch {
                     return SearchRecursionResult::ContinueSearchingDefault();
                 }
             }
-            return if current_pattern == &self.api_data.target_pattern {
-                individual_search_data.num_solutions_sofar += 1;
-                let alg = Alg::from(solution_moves);
-                individual_search_data
-                    .solution_sender
-                    .send(Some(alg))
-                    .expect("Internal error: could not send solution");
-                if individual_search_data.num_solutions_sofar
-                    >= individual_search_data
-                        .individual_search_options
-                        .get_min_num_solutions()
-                {
-                    individual_search_data
-                        .solution_sender
-                        .send(None)
-                        .expect("Internal error: could not send end of search");
-                    SearchRecursionResult::DoneSearching()
-                } else {
-                    SearchRecursionResult::ContinueSearchingDefault()
-                }
-            } else {
-                SearchRecursionResult::ContinueSearchingDefault()
-            };
+            return self.base_case(current_pattern, individual_search_data, solution_moves);
         }
         let prune_table_depth = self.prune_table.lookup(current_pattern);
         if prune_table_depth > remaining_depth + 1 {
@@ -364,5 +342,36 @@ impl IDFSearch {
             }
         }
         SearchRecursionResult::ContinueSearchingDefault()
+    }
+
+    fn base_case(
+        &self,
+        current_pattern: &KPattern,
+        individual_search_data: &mut IndividualSearchData,
+        solution_moves: SolutionMoves,
+    ) -> SearchRecursionResult {
+        if current_pattern == &self.api_data.target_pattern {
+            individual_search_data.num_solutions_sofar += 1;
+            let alg = Alg::from(solution_moves);
+            individual_search_data
+                .solution_sender
+                .send(Some(alg))
+                .expect("Internal error: could not send solution");
+            if individual_search_data.num_solutions_sofar
+                >= individual_search_data
+                    .individual_search_options
+                    .get_min_num_solutions()
+            {
+                individual_search_data
+                    .solution_sender
+                    .send(None)
+                    .expect("Internal error: could not send end of search");
+                SearchRecursionResult::DoneSearching()
+            } else {
+                SearchRecursionResult::ContinueSearchingDefault()
+            }
+        } else {
+            SearchRecursionResult::ContinueSearchingDefault()
+        }
     }
 }

@@ -127,14 +127,14 @@ impl SearchGenerators {
                         let mut move_multiple = r#move.clone();
                         move_multiple.amount = canonicalize_center_amount(order, amount);
                         let info = MoveTransformationInfo {
-                            r#move: move_multiple,
+                            r#move: move_multiple.clone(),
                             // metric_turns: 1, // TODO
                             transformation: move_multiple_transformation.current().clone(),
                             inverse_transformation: move_multiple_transformation.current().invert(),
                         };
                         multiples.push(info.clone());
                         flat.push(info.clone());
-                        by_move.insert(r#move.clone(), (move_class_index, info));
+                        by_move.insert(move_multiple, (move_class_index, info));
 
                         amount += r#move.amount;
                         move_multiple_transformation.apply_transformation(&move_transformation);
@@ -160,7 +160,7 @@ impl SearchGenerators {
                         };
                         multiples.push(info.clone());
                         flat.push(info.clone());
-                        by_move.insert(r#move.clone(), (move_class_index, info));
+                        by_move.insert(r#move.invert(), (move_class_index, info));
                     }
                 }
             }

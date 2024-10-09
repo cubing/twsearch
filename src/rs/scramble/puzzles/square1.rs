@@ -1,3 +1,8 @@
+use std::{
+    io::{stdout, Write},
+    time::{Duration, Instant},
+};
+
 use cubing::{
     alg::{parse_alg, parse_move, Alg},
     kpuzzle::KPattern,
@@ -241,7 +246,7 @@ pub fn scramble_square1() -> Alg {
             square1_square_square_shape_kpattern().clone(),
         );
 
-        let generators2 = generators_from_vec_str(vec!["US", "DS", "UUU", "DDD"]); // TODO: cache
+        // let generators2 = generators_from_vec_str(vec!["US", "DS", "UUU", "DDD"]); // TODO: cache
         let mut phase2_filtered_search = FilteredSearch::<Phase2Checker>::new(
             kpuzzle,
             generators,
@@ -251,24 +256,29 @@ pub fn scramble_square1() -> Alg {
 
         println!("PHASE1ING");
 
-        for mut phase1_solution in phase1_filtered_search.search(
+        let start_time = Instant::now();
+        let mut elapsed_in_phase2 = Duration::default();
+        let mut num_phase2_starts = 0;
+        'phase1_loop: for mut phase1_solution in phase1_filtered_search.search(
             &phase1_start_pattern,
-            Some(100_000), // see "le tired' below
+            Some(10_000_000), // see "le tired' below
             None,
             Some(18), // Max phase 1 length
         ) {
+            num_phase2_starts += 1;
+            let phase2_start_time = Instant::now();
             let phase2_start_pattern_for_parity =
                 scramble_pattern.apply_alg(&phase1_solution).unwrap();
 
-            println!("--------\n{}", phase1_solution);
+            // println!("--------\n{}", phase1_solution);
             let par = wedge_parity(&phase2_start_pattern_for_parity);
             wedge_parity(&phase2_start_pattern_for_parity);
-            println!("{:?}", par);
-            println!("{:?}", wedge_parity(&kpuzzle.default_pattern()
-                .apply_alg(&parse_alg!("(0, 5) / (3, 0) / (-5, -2) / (3, -3) / (5, -4) / (0, -3) / (-3, 0) / (-3, -3)")).unwrap()
-                .apply_alg(&phase1_solution).unwrap())
-            );
-            println!("{:?}", par == BasicParity::Odd);
+            // println!("{:?}", par);
+            // println!("{:?}", wedge_parity(&kpuzzle.default_pattern()
+            //     .apply_alg(&parse_alg!("(0, 5) / (3, 0) / (-5, -2) / (3, -3) / (5, -4) / (0, -3) / (-3, 0) / (-3, -3)")).unwrap()
+            //     .apply_alg(&phase1_solution).unwrap())
+            // );
+            // println!("{:?}", par == BasicParity::Odd);
             if par == BasicParity::Odd {
                 println!("Found a phase 1 solution that results in parity. Skipping.");
                 continue;
@@ -280,13 +290,19 @@ pub fn scramble_square1() -> Alg {
                 {
                     break;
                 }
+                // Discard equivalent phase 1 solutions (reduces redundant phaase 2 searches by a factor of 16).
+                if r#move.amount > 2 {
+                    continue 'phase1_loop;
+                }
                 phase1_solution.nodes.pop();
             }
 
             let phase2_start_pattern = scramble_pattern.apply_alg(&phase1_solution).unwrap();
 
-            println!("\n{}", phase1_solution);
-            println!("\nSearching for a phase2 solution");
+            // println!("\n{}", phase1_solution);
+            // println!("\nSearching for a phase2 solution");
+            print!(".");
+            let _ = stdout().flush();
             let phase2_solution = phase2_filtered_search
                 .search(
                     &phase2_start_pattern,
@@ -307,6 +323,18 @@ pub fn scramble_square1() -> Alg {
 
                 // <<< return Alg { nodes }.invert()
                 return Alg { nodes }; // because slash' is not a valid move we can print
+            }
+
+            let now = Instant::now();
+            elapsed_in_phase2 += now - phase2_start_time;
+            if num_phase2_starts % 100 == 0 {
+                let total_elapsed = now - start_time;
+                println!(
+                    "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2\n",
+                    num_phase2_starts,
+                    total_elapsed - elapsed_in_phase2,
+                    elapsed_in_phase2
+                )
             }
         }
 

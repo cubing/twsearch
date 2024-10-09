@@ -222,6 +222,7 @@ impl IDFSearch {
 
         let search_pattern = search_pattern.clone();
 
+        // TODO: combine `KPatternStack` with `SolutionMoves`?
         let mut kpattern_stack = KPatternStack::new(search_pattern);
         for remaining_depth in individual_search_data
             .individual_search_options

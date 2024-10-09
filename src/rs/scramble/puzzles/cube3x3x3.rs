@@ -1,7 +1,7 @@
 use std::sync::Mutex;
 
 use cubing::{
-    alg::{Alg, AlgNode, Move, QuantumMove},
+    alg::{parse_move, Alg, AlgNode, Move},
     kpuzzle::{KPattern, KPuzzle},
 };
 use lazy_static::lazy_static;
@@ -114,27 +114,25 @@ impl Scramble3x3x3TwoPhase {
         pattern: &KPattern,
         constraints: PrefixOrSuffixConstraints,
     ) -> Alg {
-        // TODO: once perf is good enough, use `F`` as "required first move" and `R'` as "required last move" in the search (overlapping with the affixes).
-        let (phase1_disallowed_initial_quanta, disallowed_final_quanta) = match constraints {
+        let (canonical_fsm_pre_moves, canonical_fsm_post_moves) = match constraints {
             PrefixOrSuffixConstraints::None => (None, None),
-            PrefixOrSuffixConstraints::ForFMC => (
-                Some(static_parsed_list::<QuantumMove>(&["F", "B"])),
-                Some(static_parsed_list::<QuantumMove>(&["R", "L"])),
-            ),
+            PrefixOrSuffixConstraints::ForFMC => {
+                // For the pre-moves, we don't have to specify R' and U' because we know the FSM only depends on the final `F` move.
+                // For similar reasons, we only have to specify R' for the post-moves.
+                (Some(vec![parse_move!("F")]), Some(vec![parse_move!("R'")]))
+            }
         };
 
         let phase1_alg = {
             let phase1_search_pattern = mask(pattern, &self.phase1_target_pattern).unwrap();
-
             self.phase1_idfs
                 .search(
                     &phase1_search_pattern,
                     IndividualSearchOptions {
                         min_num_solutions: Some(1),
-                        min_depth: None,
-                        max_depth: None,
-                        disallowed_initial_quanta: phase1_disallowed_initial_quanta,
-                        disallowed_final_quanta: disallowed_final_quanta.clone(), // TODO: We currently need to pass this in case phase 2 return the empty alg. Can we handle this in another way?
+                        canonical_fsm_pre_moves,
+                        canonical_fsm_post_moves, // TODO: We currently need to pass this in case phase 2 return the empty alg. Can we handle this in another way?
+                        ..Default::default()
                     },
                 )
                 .next()
@@ -149,10 +147,7 @@ impl Scramble3x3x3TwoPhase {
                     &phase2_search_pattern,
                     IndividualSearchOptions {
                         min_num_solutions: Some(1),
-                        min_depth: None,
-                        max_depth: None,
-                        disallowed_initial_quanta: None,
-                        disallowed_final_quanta,
+                        ..Default::default()
                     },
                 )
                 .next()
@@ -173,8 +168,7 @@ impl Scramble3x3x3TwoPhase {
                     min_num_solutions: Some(1),
                     min_depth: Some(0),
                     max_depth: Some(2),
-                    disallowed_initial_quanta: None,
-                    disallowed_final_quanta: None,
+                    ..Default::default()
                 },
             )
             .next()

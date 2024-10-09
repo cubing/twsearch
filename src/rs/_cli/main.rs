@@ -168,8 +168,7 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
             min_num_solutions: search_command_args.min_num_solutions,
             min_depth: search_command_args.search_args.min_depth,
             max_depth: search_command_args.search_args.max_depth,
-            disallowed_initial_quanta: None,
-            disallowed_final_quanta: None,
+            ..Default::default()
         },
     );
     let mut solution_index = 0;

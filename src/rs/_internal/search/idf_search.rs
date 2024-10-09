@@ -4,7 +4,7 @@ use std::sync::{
 };
 
 use cubing::{
-    alg::{Alg, AlgNode, Move, QuantumMove},
+    alg::{Alg, AlgNode, Move},
     kpuzzle::{KPattern, KPuzzle},
 };
 use serde::{Deserialize, Serialize};
@@ -15,7 +15,7 @@ use crate::_internal::{
     SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
-use super::CheckPattern;
+use super::{CheckPattern, KPatternStack};
 
 const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase
 
@@ -104,22 +104,10 @@ impl Iterator for SearchSolutions {
 #[serde(rename_all = "camelCase")]
 pub struct IndividualSearchOptions {
     pub min_num_solutions: Option<usize>,
-    pub min_depth: Option<usize>,                            // inclusive
-    pub max_depth: Option<usize>,                            // exclusive
-    pub disallowed_initial_quanta: Option<Vec<QuantumMove>>, // TODO: Change this to `fsm_pre_moves` so we can compute disallowed initial FSM states.
-    pub disallowed_final_quanta: Option<Vec<QuantumMove>>, // TODO: Find a way to represent this using disallowed final FSM states?
-}
-
-fn is_move_disallowed(r#move: &Move, disallowed_quanta: &Option<Vec<QuantumMove>>) -> bool {
-    // TODO Use something like a `HashSet` to speed this up?
-    if let Some(disallowed_quanta) = disallowed_quanta {
-        for disallowed_quantum in disallowed_quanta {
-            if r#move.quantum.as_ref() == disallowed_quantum {
-                return true;
-            }
-        }
-    }
-    false
+    pub min_depth: Option<usize>, // inclusive
+    pub max_depth: Option<usize>, // exclusive
+    pub canonical_fsm_pre_moves: Option<Vec<Move>>,
+    pub canonical_fsm_post_moves: Option<Vec<Move>>,
 }
 
 impl IndividualSearchOptions {
@@ -222,6 +210,8 @@ impl<T: CheckPattern> IDFSearch<T> {
 
         let search_pattern = search_pattern.clone();
 
+        // TODO: combine `KPatternStack` with `SolutionMoves`?
+        let mut kpattern_stack = KPatternStack::new(search_pattern);
         for remaining_depth in individual_search_data
             .individual_search_options
             .get_min_depth()
@@ -239,10 +229,18 @@ impl<T: CheckPattern> IDFSearch<T> {
             individual_search_data
                 .recursive_work_tracker
                 .start_depth(remaining_depth, Some("Starting search…"));
+            let initial_state = self
+                .apply_optional_fsm_moves(
+                    CANONICAL_FSM_START_STATE,
+                    &individual_search_data
+                        .individual_search_options
+                        .canonical_fsm_pre_moves,
+                )
+                .expect("TODO: invalid canonical FSM pre-moves.");
             let recursion_result = self.recurse(
                 &mut individual_search_data,
-                &search_pattern,
-                CANONICAL_FSM_START_STATE,
+                &mut kpattern_stack,
+                initial_state,
                 remaining_depth,
                 SolutionMoves(None),
             );
@@ -259,11 +257,12 @@ impl<T: CheckPattern> IDFSearch<T> {
     fn recurse(
         &self,
         individual_search_data: &mut IndividualSearchData,
-        current_pattern: &KPattern,
+        kpattern_stack: &mut KPatternStack,
         current_state: CanonicalFSMState,
         remaining_depth: usize,
         solution_moves: SolutionMoves,
     ) -> SearchRecursionResult {
+        let current_pattern = kpattern_stack.current_pattern();
         if remaining_depth == 0 && !T::is_valid(current_pattern) {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
@@ -272,39 +271,12 @@ impl<T: CheckPattern> IDFSearch<T> {
             .recursive_work_tracker
             .record_recursive_call();
         if remaining_depth == 0 {
-            if let Some(previous_moves) = solution_moves.0 {
-                if is_move_disallowed(
-                    previous_moves.latest_move,
-                    &individual_search_data
-                        .individual_search_options
-                        .disallowed_final_quanta,
-                ) {
-                    return SearchRecursionResult::ContinueSearchingDefault();
-                }
-            }
-            return if current_pattern == &self.api_data.target_pattern {
-                individual_search_data.num_solutions_sofar += 1;
-                let alg = Alg::from(solution_moves);
-                individual_search_data
-                    .solution_sender
-                    .send(Some(alg))
-                    .expect("Internal error: could not send solution");
-                if individual_search_data.num_solutions_sofar
-                    >= individual_search_data
-                        .individual_search_options
-                        .get_min_num_solutions()
-                {
-                    individual_search_data
-                        .solution_sender
-                        .send(None)
-                        .expect("Internal error: could not send end of search");
-                    SearchRecursionResult::DoneSearching()
-                } else {
-                    SearchRecursionResult::ContinueSearchingDefault()
-                }
-            } else {
-                SearchRecursionResult::ContinueSearchingDefault()
-            };
+            return self.base_case(
+                individual_search_data,
+                current_pattern,
+                current_state,
+                solution_moves,
+            );
         }
         let prune_table_depth = self.prune_table.lookup(current_pattern);
         if prune_table_depth > remaining_depth + 1 {
@@ -316,43 +288,29 @@ impl<T: CheckPattern> IDFSearch<T> {
         for (move_class_index, move_transformation_multiples) in
             self.api_data.search_generators.grouped.iter().enumerate()
         {
-            let next_state = match self
+            let Some(next_state) = self
                 .api_data
                 .canonical_fsm
                 .next_state(current_state, MoveClassIndex(move_class_index))
-            {
-                Some(next_state) => next_state,
-                None => {
-                    continue;
-                }
+            else {
+                continue;
             };
 
             for move_transformation_info in move_transformation_multiples {
-                if current_state == CANONICAL_FSM_START_STATE
-                    && is_move_disallowed(
-                        &move_transformation_info.r#move,
-                        &individual_search_data
-                            .individual_search_options
-                            .disallowed_initial_quanta,
-                    )
-                {
-                    // TODO: is it always safe to `break` here?
-                    continue;
-                }
-
-                let next_pattern =
-                    &current_pattern.apply_transformation(&move_transformation_info.transformation);
-
-                match self.recurse(
+                kpattern_stack.push(&move_transformation_info.transformation);
+                let recursive_result = self.recurse(
                     individual_search_data,
-                    next_pattern,
+                    kpattern_stack,
                     next_state,
                     remaining_depth - 1,
                     SolutionMoves(Some(&SolutionPreviousMoves {
                         latest_move: &move_transformation_info.r#move,
                         previous_moves: &solution_moves,
                     })),
-                ) {
+                );
+                kpattern_stack.pop();
+
+                match recursive_result {
                     SearchRecursionResult::DoneSearching() => {
                         return SearchRecursionResult::DoneSearching();
                     }
@@ -364,5 +322,81 @@ impl<T: CheckPattern> IDFSearch<T> {
             }
         }
         SearchRecursionResult::ContinueSearchingDefault()
+    }
+
+    // Returns `None` if the moves cannot be applied, else returns the result of applying the moves.
+    fn apply_optional_fsm_moves(
+        &self,
+        start_state: CanonicalFSMState,
+        moves: &Option<Vec<Move>>,
+    ) -> Option<CanonicalFSMState> {
+        let mut current_state = start_state;
+        if let Some(moves) = moves {
+            for r#move in moves {
+                let move_class_index = self
+                    .api_data
+                    .search_generators
+                    .by_move
+                    .get(r#move)
+                    .expect("move!")
+                    .0;
+                current_state = match self
+                    .api_data
+                    .canonical_fsm
+                    .next_state(current_state, move_class_index)
+                {
+                    Some(next_state) => next_state,
+                    None => return None,
+                }
+            }
+        }
+        Some(current_state)
+    }
+
+    fn base_case(
+        &self,
+        individual_search_data: &mut IndividualSearchData,
+        current_pattern: &KPattern,
+        current_state: CanonicalFSMState,
+        solution_moves: SolutionMoves,
+    ) -> SearchRecursionResult {
+        if current_pattern != &self.api_data.target_pattern {
+            return SearchRecursionResult::ContinueSearchingDefault();
+        }
+        if self
+            .apply_optional_fsm_moves(
+                current_state,
+                &individual_search_data
+                    .individual_search_options
+                    .canonical_fsm_post_moves,
+            )
+            .is_none()
+        {
+            self.api_data.search_logger.write_info(&format!(
+                "Rejecting potential solution for invalid end moves: {}",
+                Alg::from(solution_moves)
+            ));
+            return SearchRecursionResult::ContinueSearchingDefault();
+        }
+
+        individual_search_data.num_solutions_sofar += 1;
+        let alg = Alg::from(solution_moves);
+        individual_search_data
+            .solution_sender
+            .send(Some(alg))
+            .expect("Internal error: could not send solution");
+        if individual_search_data.num_solutions_sofar
+            >= individual_search_data
+                .individual_search_options
+                .get_min_num_solutions()
+        {
+            individual_search_data
+                .solution_sender
+                .send(None)
+                .expect("Internal error: could not send end of search");
+            SearchRecursionResult::DoneSearching()
+        } else {
+            SearchRecursionResult::ContinueSearchingDefault()
+        }
     }
 }

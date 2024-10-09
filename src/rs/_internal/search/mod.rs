@@ -13,3 +13,6 @@ pub use search_logger::*;
 
 mod check_pattern;
 pub use check_pattern::*;
+
+mod kpattern_stack;
+pub(crate) use kpattern_stack::*;

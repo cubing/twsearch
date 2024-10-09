@@ -1,17 +1,15 @@
-use std::process::exit;
-
 use cubing::{
-    alg::{parse_alg, parse_move, Alg, Move},
+    alg::{parse_alg, parse_move, Alg},
     kpuzzle::KPattern,
 };
 use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::{
-    _internal::{AlwaysValid, CheckPattern},
+    _internal::CheckPattern,
     scramble::{
         randomize::{basic_parity, BasicParity, PieceZeroConstraint},
-        scramble_search::{simple_filtered_search, FilteredSearch},
+        scramble_search::FilteredSearch,
     },
 };
 

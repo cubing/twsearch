@@ -35,8 +35,8 @@ pub(crate) fn idfs_with_target_pattern<T: CheckPattern>(
         target_pattern,
         generators,
         Arc::new(SearchLogger {
-            // <<< verbosity: VerbosityLevel::Silent,
-            verbosity: VerbosityLevel::Info, //<<<
+            verbosity: VerbosityLevel::Silent,
+            // verbosity: VerbosityLevel::Info, //<<<
         }),
         &MetricEnum::Hand,
         true,

@@ -263,7 +263,8 @@ impl<T: CheckPattern> IDFSearch<T> {
         solution_moves: SolutionMoves,
     ) -> SearchRecursionResult {
         let current_pattern = kpattern_stack.current_pattern();
-        if remaining_depth == 0 && !T::is_valid(current_pattern) {
+        // TODO: apply invalid checks only to intermediate state (i.e. exclude remaining_depth == 0)?
+        if !T::is_valid(current_pattern) {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
 

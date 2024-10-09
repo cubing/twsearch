@@ -32,7 +32,11 @@ impl KPatternStack {
         &self.stack[self.current_idx]
     }
 
+    // Note: this function does not perform any bound checking in release mode.
+    // Calling code must ensure it never calls calls `.pop()`` more often than
+    // it has called `.push(…)`.
     pub fn pop(&mut self) {
+        debug_assert!(self.current_idx > 0);
         self.current_idx -= 1;
     }
 }

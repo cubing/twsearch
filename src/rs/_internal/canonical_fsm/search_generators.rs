@@ -14,7 +14,7 @@ use crate::_internal::{
 use super::MoveClassIndex;
 
 #[derive(Clone, Debug)]
-struct FlatMoveIndex(usize);
+pub struct FlatMoveIndex(usize);
 
 #[derive(Clone, Debug)]
 pub struct MoveTransformationInfo {

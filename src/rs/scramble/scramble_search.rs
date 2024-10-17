@@ -55,7 +55,7 @@ pub(crate) fn basic_idfs<T: CheckPattern>(
 }
 
 pub struct FilteredSearch<T: CheckPattern> {
-    idfs: IDFSearch<T>,
+    pub(crate) idfs: IDFSearch<T>,
 }
 
 impl<T: CheckPattern> FilteredSearch<T> {

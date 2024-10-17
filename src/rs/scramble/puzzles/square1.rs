@@ -253,6 +253,10 @@ pub fn scramble_square1() -> Alg {
             None, // TODO
             kpuzzle.default_pattern(),
         );
+        // phase2_filtered_search
+        //     .idfs
+        //     .prune_table
+        //     .extend_for_search_depth(11, 6140878);
 
         println!("PHASE1ING");
 

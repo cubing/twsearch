@@ -139,7 +139,7 @@ pub struct IDFSearchAPIData {
 
 pub struct IDFSearch<T: CheckPattern> {
     api_data: Arc<IDFSearchAPIData>,
-    prune_table: PruneTable<T>,
+    pub prune_table: PruneTable<T>,
 }
 
 impl<T: CheckPattern> IDFSearch<T> {

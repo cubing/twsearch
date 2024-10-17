@@ -7,6 +7,8 @@ pub mod pyraminx;
 pub mod skewb;
 pub mod square1;
 
+pub mod square1_phase_lookup_table;
+
 mod definitions;
 mod mask_pattern;
 mod static_move_list;

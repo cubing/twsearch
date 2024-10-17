@@ -27,6 +27,7 @@ use super::{
     },
     definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
     mask_pattern::mask,
+    square1_phase_lookup_table::build_phase_lookup_table,
 };
 
 #[derive(PartialEq, Eq)]
@@ -132,6 +133,14 @@ impl CheckPattern for Phase2Checker {
 
 pub fn scramble_square1() -> Alg {
     let kpuzzle = square1_unbandaged_kpuzzle();
+    let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]); // TODO: cache
+
+    let _phase_lookup_table = build_phase_lookup_table::<Phase1Checker>(
+        kpuzzle.clone(),
+        &generators,
+        square1_square_square_shape_kpattern().to_owned(),
+    );
+
     //     dbg!(wedge_parity(
     //         &kpuzzle
     //             .default_pattern()
@@ -142,6 +151,7 @@ pub fn scramble_square1() -> Alg {
     //             .unwrap()
     //     ));
     //     exit(1);
+    //
     loop {
         let mut scramble_pattern = kpuzzle.default_pattern();
 
@@ -194,10 +204,15 @@ pub fn scramble_square1() -> Alg {
         // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("(U_SQ_5' D_SQ_0) / (U_SQ_0 D_SQ_3) / (U_SQ_3 D_SQ_0) / (U_SQ_' D_SQ_4') / (U_SQ_4 D_SQ_2') / (U_SQ_5 D_SQ_4') / (U_SQ_2' D_SQ_0) / (U_SQ_0 D_SQ_3') / (U_SQ_' D_SQ_0) / (U_SQ_3 D_SQ_4') / (U_SQ_4 D_SQ_2') /")).unwrap();
         // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("(U_SQ_4 D_SQ_3) / (U_SQ_' D_SQ_') / (U_SQ_0 D_SQ_3') / (U_SQ_3' D_SQ_3') / (U_SQ_ D_SQ_2') / (U_SQ_3' D_SQ_4') / (U_SQ_3 D_SQ_0) / (U_SQ_4' D_SQ_5') / (U_SQ_3' D_SQ_0) / (U_SQ_4' D_SQ_0) / (U_SQ_0 D_SQ_2')")).unwrap();
         // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("(U_SQ_0 D_SQ_5) / (U_SQ_ D_SQ_5') / (U_SQ_0 D_SQ_3') / (U_SQ_3 D_SQ_0) / (U_SQ_4' D_SQ_') / (U_SQ_3' D_SQ_3') / (U_SQ_0 D_SQ_5') / (U_SQ_3' D_SQ_3') / (U_SQ_4' D_SQ_0) / (U_SQ_0 D_SQ_5') / (U_SQ_4 D_SQ_3') / (U_SQ_0 D_SQ_2') /")).unwrap();
+
         let scramble_pattern = kpuzzle
             .default_pattern()
             .apply_alg(&parse_alg!(
-                "(0, 5) / (3, 0) / (-5, -2) / (3, -3) / (5, -4) / (0, -3) / (-3, 0) / (-3, -3)"
+                // this is square-square
+                // "(0, 5) / (3, 0) / (-5, -2) / (3, -3) / (5, -4) / (0, -3) / (-3, 0) / (-3, -3)"
+
+                // this is not square-square
+                "(0, -1) / (0, -3) / (0, -3) / (-2, -2) / (-3, -4) / (-3, 0) / (0, -3) / (-5, 0) / (5, 0) / (-2, -3) / (0, -4) / (-5, 0) / (0, -2) /"
             ))
             .unwrap();
 
@@ -227,8 +242,7 @@ pub fn scramble_square1() -> Alg {
                 .unwrap()
         );
 
-        let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]); // TODO: cache
-                                                                                     // <<< if let Some(solution) = simple_filtered_search(&phase1_start_pattern, generators, 11, None) {
+        // <<< if let Some(solution) = simple_filtered_search(&phase1_start_pattern, generators, 11, None) {
 
         // let direct = simple_filtered_search::<AlwaysValid>(
         //     &phase1_start_pattern,
@@ -261,30 +275,36 @@ pub fn scramble_square1() -> Alg {
         println!("PHASE1ING");
 
         let start_time = Instant::now();
-        let mut elapsed_in_phase2 = Duration::default();
+        let mut odd_parity_counter = 0;
         let mut num_phase2_starts = 0;
+        let mut phase1_start_time = Instant::now();
+        let mut phase1_cumulative_time = Duration::default();
+        let mut phase2_cumulative_time = Duration::default();
+        let mut parity_check_cumulative_time = Duration::default();
         'phase1_loop: for mut phase1_solution in phase1_filtered_search.search(
             &phase1_start_pattern,
             Some(10_000_000), // see "le tired' below
             None,
             Some(18), // Max phase 1 length
         ) {
-            num_phase2_starts += 1;
-            let phase2_start_time = Instant::now();
+            phase1_cumulative_time += Instant::now() - phase1_start_time;
+
             let phase2_start_pattern_for_parity =
                 scramble_pattern.apply_alg(&phase1_solution).unwrap();
 
             // println!("--------\n{}", phase1_solution);
+            let parity_check_start_time = Instant::now();
             let par = wedge_parity(&phase2_start_pattern_for_parity);
-            wedge_parity(&phase2_start_pattern_for_parity);
             // println!("{:?}", par);
             // println!("{:?}", wedge_parity(&kpuzzle.default_pattern()
             //     .apply_alg(&parse_alg!("(0, 5) / (3, 0) / (-5, -2) / (3, -3) / (5, -4) / (0, -3) / (-3, 0) / (-3, -3)")).unwrap()
             //     .apply_alg(&phase1_solution).unwrap())
             // );
             // println!("{:?}", par == BasicParity::Odd);
+            parity_check_cumulative_time += Instant::now() - parity_check_start_time;
             if par == BasicParity::Odd {
-                println!("Found a phase 1 solution that results in parity. Skipping.");
+                odd_parity_counter += 1;
+                phase1_start_time = Instant::now();
                 continue;
             }
 
@@ -294,8 +314,9 @@ pub fn scramble_square1() -> Alg {
                 {
                     break;
                 }
-                // Discard equivalent phase 1 solutions (reduces redundant phaase 2 searches by a factor of 16).
-                if r#move.amount > 2 {
+                // Discard equivalent phase 1 solutions (reduces redundant phase 2 searches by a factor of 16).
+                if r#move.amount > 2 || r#move.amount < 0 {
+                    phase1_start_time = Instant::now();
                     continue 'phase1_loop;
                 }
                 phase1_solution.nodes.pop();
@@ -303,6 +324,7 @@ pub fn scramble_square1() -> Alg {
 
             let phase2_start_pattern = scramble_pattern.apply_alg(&phase1_solution).unwrap();
 
+            num_phase2_starts += 1;
             // println!("\n{}", phase1_solution);
             // println!("\nSearching for a phase2 solution");
             print!(".");
@@ -316,6 +338,7 @@ pub fn scramble_square1() -> Alg {
                 )
                 .next();
 
+            let phase2_start_time = Instant::now();
             if let Some(mut phase2_solution) = phase2_solution {
                 let mut nodes = phase1_solution.nodes;
                 nodes.append(&mut phase2_solution.nodes);
@@ -328,18 +351,22 @@ pub fn scramble_square1() -> Alg {
                 // <<< return Alg { nodes }.invert()
                 return Alg { nodes }; // because slash' is not a valid move we can print
             }
+            phase2_cumulative_time += Instant::now() - phase2_start_time;
 
-            let now = Instant::now();
-            elapsed_in_phase2 += now - phase2_start_time;
+            let cumulative_time = Instant::now() - start_time;
             if num_phase2_starts % 100 == 0 {
-                let total_elapsed = now - start_time;
                 println!(
-                    "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2\n",
+                    "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2, {:?} in phase transition, {:?} in parity check, {:?} odd parities\n",
                     num_phase2_starts,
-                    total_elapsed - elapsed_in_phase2,
-                    elapsed_in_phase2
+                    phase1_cumulative_time,
+                    phase2_cumulative_time,
+                    cumulative_time - phase1_cumulative_time - phase2_cumulative_time,
+                    parity_check_cumulative_time,
+                    odd_parity_counter,
                 )
             }
+
+            phase1_start_time = Instant::now();
         }
 
         panic!("I am le tired, I give up");
@@ -367,7 +394,7 @@ pub fn scramble_square1() -> Alg {
     }
 }
 
-fn wedge_parity(pattern: &KPattern) -> BasicParity {
+pub fn wedge_parity(pattern: &KPattern) -> BasicParity {
     let wedge_orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
     assert_eq!(wedge_orbit_info.name.0, "WEDGES");
 

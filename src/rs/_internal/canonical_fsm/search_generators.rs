@@ -14,6 +14,9 @@ use crate::_internal::{
 use super::MoveClassIndex;
 
 #[derive(Clone, Debug)]
+struct FlatMoveIndex(usize);
+
+#[derive(Clone, Debug)]
 pub struct MoveTransformationInfo {
     #[allow(dead_code)] // TODO
     pub r#move: Move,
@@ -22,6 +25,8 @@ pub struct MoveTransformationInfo {
     pub transformation: KTransformation,
     #[allow(dead_code)] // TODO
     pub inverse_transformation: KTransformation,
+
+    pub flat_move_index: FlatMoveIndex,
 }
 
 pub type MoveTransformationMultiples = Vec<MoveTransformationInfo>;
@@ -131,6 +136,7 @@ impl SearchGenerators {
                             // metric_turns: 1, // TODO
                             transformation: move_multiple_transformation.current().clone(),
                             inverse_transformation: move_multiple_transformation.current().invert(),
+                            flat_move_index: FlatMoveIndex(flat.len()),
                         };
                         multiples.push(info.clone());
                         flat.push(info.clone());
@@ -146,6 +152,7 @@ impl SearchGenerators {
                         // metric_turns: 1, // TODO
                         transformation: move_multiple_transformation.current().clone(),
                         inverse_transformation: move_multiple_transformation.current().invert(),
+                        flat_move_index: FlatMoveIndex(flat.len()),
                     };
                     let is_self_inverse = info.transformation == info.inverse_transformation;
                     multiples.push(info.clone());
@@ -157,6 +164,7 @@ impl SearchGenerators {
                             // metric_turns: 1, // TODO
                             transformation: move_multiple_transformation.current().invert(),
                             inverse_transformation: move_multiple_transformation.current().clone(),
+                            flat_move_index: FlatMoveIndex(flat.len()),
                         };
                         multiples.push(info.clone());
                         flat.push(info.clone());

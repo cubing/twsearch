@@ -42,7 +42,12 @@ impl Default for Scramble3x3x3TwoPhase {
     fn default() -> Self {
         let kpuzzle = cube3x3x3_centerless_kpuzzle().clone();
         let generators = generators_from_vec_str(vec!["U", "L", "F", "R", "B", "D"]);
-        let filtering_idfs = basic_idfs(&kpuzzle, generators.clone(), Some(32));
+        let filtering_idfs = basic_idfs(
+            &kpuzzle,
+            generators.clone(),
+            Some(32),
+            kpuzzle.default_pattern(),
+        );
 
         let phase1_target_pattern = cube3x3x3_centerless_g1_target_kpattern().clone();
         let phase1_idfs = idfs_with_target_pattern(
@@ -119,7 +124,7 @@ impl Scramble3x3x3TwoPhase {
         };
 
         let phase1_alg = {
-            let phase1_search_pattern = mask(pattern, &self.phase1_target_pattern);
+            let phase1_search_pattern = mask(pattern, &self.phase1_target_pattern).unwrap();
             self.phase1_idfs
                 .search(
                     &phase1_search_pattern,

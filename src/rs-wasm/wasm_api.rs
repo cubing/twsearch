@@ -66,7 +66,7 @@ pub fn wasmTwsearch(
         None => Generators::Default,
     };
 
-    let idfs = IDFSearch::try_new(
+    let idfs = <IDFSearch>::try_new(
         kpuzzle,
         target_pattern,
         generators,

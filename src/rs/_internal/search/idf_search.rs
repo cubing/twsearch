@@ -11,11 +11,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::_internal::{
     cli::options::{Generators, MetricEnum},
-    CanonicalFSM, CanonicalFSMState, MoveClassIndex, PruneTable, RecursiveWorkTracker, SearchError,
-    SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
+    CanonicalFSM, CanonicalFSMState, HashPruneTable, MoveClassIndex, RecursiveWorkTracker,
+    SearchError, SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
-use super::KPatternStack;
+use super::{AlwaysValid, KPatternStack, PatternValidityChecker};
 
 const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase
 
@@ -137,12 +137,12 @@ pub struct IDFSearchAPIData {
     pub search_logger: Arc<SearchLogger>,
 }
 
-pub struct IDFSearch {
+pub struct IDFSearch<ValidityChecker: PatternValidityChecker = AlwaysValid> {
     api_data: Arc<IDFSearchAPIData>,
-    prune_table: PruneTable,
+    pub prune_table: HashPruneTable<ValidityChecker>,
 }
 
-impl IDFSearch {
+impl<ValidityChecker: PatternValidityChecker> IDFSearch<ValidityChecker> {
     pub fn try_new(
         kpuzzle: KPuzzle,
         target_pattern: KPattern,
@@ -163,7 +163,8 @@ impl IDFSearch {
             search_logger: search_logger.clone(),
         });
 
-        let prune_table = PruneTable::new(api_data.clone(), search_logger, min_prune_table_size); // TODO: make the prune table reusable across searches.
+        let prune_table =
+            HashPruneTable::new(api_data.clone(), search_logger, min_prune_table_size); // TODO: make the prune table reusable across searches.
         Ok(Self {
             api_data,
             prune_table,
@@ -262,10 +263,15 @@ impl IDFSearch {
         remaining_depth: usize,
         solution_moves: SolutionMoves,
     ) -> SearchRecursionResult {
+        let current_pattern = kpattern_stack.current_pattern();
+        // TODO: apply invalid checks only to intermediate state (i.e. exclude remaining_depth == 0)?
+        if !ValidityChecker::is_valid(current_pattern) {
+            return SearchRecursionResult::ContinueSearchingDefault();
+        }
+
         individual_search_data
             .recursive_work_tracker
             .record_recursive_call();
-        let current_pattern = kpattern_stack.current_pattern();
         if remaining_depth == 0 {
             return self.base_case(
                 individual_search_data,
@@ -281,8 +287,12 @@ impl IDFSearch {
         if prune_table_depth > remaining_depth {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
-        for (move_class_index, move_transformation_multiples) in
-            self.api_data.search_generators.grouped.iter().enumerate()
+        for (move_class_index, move_transformation_multiples) in self
+            .api_data
+            .search_generators
+            .by_move_class
+            .iter()
+            .enumerate()
         {
             let Some(next_state) = self
                 .api_data

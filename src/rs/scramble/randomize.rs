@@ -127,7 +127,7 @@ fn set_parity(permutation: &mut [u8], target_parity: BasicParity) {
     };
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub(crate) enum BasicParity {
     Even,
     Odd,

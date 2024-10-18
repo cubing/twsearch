@@ -11,5 +11,8 @@ pub(crate) use recursive_work_tracker::*;
 mod search_logger;
 pub use search_logger::*;
 
+mod check_pattern;
+pub use check_pattern::*;
+
 mod kpattern_stack;
 pub(crate) use kpattern_stack::*;

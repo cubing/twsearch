@@ -17,14 +17,19 @@ pub fn scramble_2x2x2() -> Alg {
     let kpuzzle = cube2x2x2_kpuzzle();
 
     #[allow(non_snake_case)] // Move meanings are case sensitive.
-    let mut filtered_search_L_B_D =
-        FilteredSearch::new(kpuzzle, generators_from_vec_str(vec!["L", "B", "D"]), None);
+    let mut filtered_search_L_B_D = <FilteredSearch>::new(
+        kpuzzle,
+        generators_from_vec_str(vec!["L", "B", "D"]),
+        None,
+        kpuzzle.default_pattern(),
+    );
 
     #[allow(non_snake_case)] // Move meanings are case sensitive.
-    let mut filtered_search_U_L_F_R = FilteredSearch::new(
+    let mut filtered_search_U_L_F_R = <FilteredSearch>::new(
         kpuzzle,
         generators_from_vec_str(vec!["U", "L", "F", "R"]),
         None,
+        kpuzzle.default_pattern(),
     );
 
     loop {

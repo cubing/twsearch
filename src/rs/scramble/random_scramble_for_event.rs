@@ -9,6 +9,7 @@ use super::{
         megaminx::scramble_megaminx,
         pyraminx::scramble_pyraminx,
         skewb::scramble_skewb,
+        square1::scramble_square1,
     },
     Event, PuzzleError,
 };
@@ -31,7 +32,7 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
         Event::MegaminxSpeedsolving => Ok(scramble_megaminx()),
         Event::PyraminxSpeedsolving => Ok(scramble_pyraminx()),
         Event::SkewbSpeedsolving => Ok(scramble_skewb()),
-        Event::Square1Speedsolving => err,
+        Event::Square1Speedsolving => Ok(scramble_square1()),
         Event::Cube4x4x4Blindfolded => err,
         Event::Cube5x5x5Blindfolded => Ok(scramble_5x5x5_bld()),
         Event::Cube3x3x3MultiBlind => Ok(scramble_3x3x3_bld()), // TODO: represent multiple returned scrambles without affecting ergonomics for other events.

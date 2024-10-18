@@ -6,12 +6,17 @@ use cubing::{
 };
 use rand::{seq::SliceRandom, thread_rng};
 
-use crate::_internal::{
-    cli::options::{Generators, MetricEnum},
-    SearchError,
+use crate::{
+    _internal::{
+        cli::options::{Generators, MetricEnum},
+        SearchError,
+    },
+    index_type,
 };
 
 use super::MoveClassIndex;
+
+index_type!(FlatMoveIndex);
 
 #[derive(Clone, Debug)]
 pub struct MoveTransformationInfo {
@@ -22,6 +27,8 @@ pub struct MoveTransformationInfo {
     pub transformation: KTransformation,
     #[allow(dead_code)] // TODO
     pub inverse_transformation: KTransformation,
+
+    pub flat_move_index: FlatMoveIndex,
 }
 
 pub type MoveTransformationMultiples = Vec<MoveTransformationInfo>;
@@ -29,7 +36,7 @@ pub type MoveTransformationMultiples = Vec<MoveTransformationInfo>;
 #[derive(Clone, Debug)]
 pub struct SearchGenerators {
     // TODO: figure out the most reusable abstraction
-    pub grouped: Vec<MoveTransformationMultiples>,
+    pub by_move_class: Vec<MoveTransformationMultiples>,
     pub flat: Vec<MoveTransformationInfo>, // TODO: avoid duplicate data
     pub by_move: HashMap<Move, (MoveClassIndex, MoveTransformationInfo)>, // TODO: avoid duplicate data
 }
@@ -120,47 +127,39 @@ impl SearchGenerators {
             let mut move_multiple_transformation =
                 KTransformationBuffer::from(move_transformation.clone());
 
+            let mut populate_fields = |r#move: Move, transformation: &KTransformation| {
+                let info = MoveTransformationInfo {
+                    r#move: r#move.clone(),
+                    // metric_turns: 1, // TODO
+                    transformation: transformation.clone(),
+                    inverse_transformation: transformation.invert(),
+                    flat_move_index: FlatMoveIndex(flat.len()),
+                };
+                multiples.push(info.clone());
+                flat.push(info.clone());
+                by_move.insert(r#move, (move_class_index, info));
+            };
+
             match metric {
                 MetricEnum::Hand => {
                     let mut amount: i32 = r#move.amount;
                     while move_multiple_transformation.current() != &identity_transformation {
                         let mut move_multiple = r#move.clone();
                         move_multiple.amount = canonicalize_center_amount(order, amount);
-                        let info = MoveTransformationInfo {
-                            r#move: move_multiple.clone(),
-                            // metric_turns: 1, // TODO
-                            transformation: move_multiple_transformation.current().clone(),
-                            inverse_transformation: move_multiple_transformation.current().invert(),
-                        };
-                        multiples.push(info.clone());
-                        flat.push(info.clone());
-                        by_move.insert(move_multiple, (move_class_index, info));
+                        populate_fields(move_multiple, move_multiple_transformation.current());
 
                         amount += r#move.amount;
                         move_multiple_transformation.apply_transformation(&move_transformation);
                     }
                 }
                 MetricEnum::Quantum => {
-                    let info = MoveTransformationInfo {
-                        r#move: r#move.clone(),
-                        // metric_turns: 1, // TODO
-                        transformation: move_multiple_transformation.current().clone(),
-                        inverse_transformation: move_multiple_transformation.current().invert(),
-                    };
-                    let is_self_inverse = info.transformation == info.inverse_transformation;
-                    multiples.push(info.clone());
-                    flat.push(info.clone());
-                    by_move.insert(r#move.clone(), (move_class_index, info));
-                    if !is_self_inverse {
-                        let info = MoveTransformationInfo {
-                            r#move: r#move.invert(),
-                            // metric_turns: 1, // TODO
-                            transformation: move_multiple_transformation.current().invert(),
-                            inverse_transformation: move_multiple_transformation.current().clone(),
-                        };
-                        multiples.push(info.clone());
-                        flat.push(info.clone());
-                        by_move.insert(r#move.invert(), (move_class_index, info));
+                    let transformation = move_multiple_transformation.current();
+                    populate_fields(r#move.clone(), transformation);
+
+                    let inverse_transformation = transformation.invert();
+                    if transformation != &inverse_transformation {
+                        // TODO: avoid redundant calculations?
+                        populate_fields(r#move.invert(), &inverse_transformation);
                     }
                 }
             }
@@ -173,7 +172,7 @@ impl SearchGenerators {
         }
 
         Ok(Self {
-            grouped,
+            by_move_class: grouped,
             flat,
             by_move,
         })

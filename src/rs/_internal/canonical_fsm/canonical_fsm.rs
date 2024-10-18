@@ -92,7 +92,7 @@ pub struct CanonicalFSM {
 impl CanonicalFSM {
     // TODO: Return a more specific error.
     pub fn try_new(generators: SearchGenerators) -> Result<CanonicalFSM, SearchError> {
-        let num_move_classes = generators.grouped.len();
+        let num_move_classes = generators.by_move_class.len();
         if num_move_classes > MAX_NUM_MOVE_CLASSES {
             return Err(SearchError {
                 description: "Too many move classes!".to_owned(),
@@ -113,8 +113,8 @@ impl CanonicalFSM {
         for i in 0..num_move_classes {
             for j in 0..num_move_classes {
                 if !do_transformations_commute(
-                    &generators.grouped[i][0].transformation,
-                    &generators.grouped[j][0].transformation,
+                    &generators.by_move_class[i][0].transformation,
+                    &generators.by_move_class[j][0].transformation,
                 ) {
                     commutes[i] &= MoveClassMask(!(1 << j));
                     commutes[j] &= MoveClassMask(!(1 << i));

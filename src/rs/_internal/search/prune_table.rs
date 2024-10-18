@@ -1,3 +1,4 @@
+use std::marker::PhantomData;
 use std::{hash::BuildHasher, sync::Arc};
 
 use cubing::kpuzzle::KPattern;
@@ -9,19 +10,22 @@ use crate::_internal::{
 };
 
 use super::idf_search::IDFSearchAPIData;
+use super::PatternValidityChecker;
 
 type PruneTableEntryType = u8;
 // 0 is uninitialized, all other values are stored as 1+depth.
 // This allows us to save initialization time by allowing table memory pages to start as "blank" (all 0).
-const UNINITIALIZED_DEPTH: PruneTableEntryType = 0;
-const MAX_PRUNE_TABLE_DEPTH: PruneTableEntryType = PruneTableEntryType::MAX - 1;
+const UNINITIALIZED_SENTINEL: PruneTableEntryType = 0;
+const INVALID_PATTERN_SENTINEL: PruneTableEntryType = PruneTableEntryType::MAX;
+const INVALID_PATTERN_DEPTH: PruneTableEntryType = INVALID_PATTERN_SENTINEL - 1;
+const MAX_PRUNE_TABLE_DEPTH: PruneTableEntryType = PruneTableEntryType::MAX - 2;
 
 const DEFAULT_MIN_PRUNE_TABLE_SIZE: usize = 1 << 20;
 
-struct PruneTableImmutableData {
+struct HashPruneTableImmutableData {
     search_api_data: Arc<IDFSearchAPIData>,
 }
-struct PruneTableMutableData {
+struct HashPruneTableMutableData {
     min_size: usize,               // power of 2
     prune_table_size: usize,       // power of 2
     prune_table_index_mask: usize, // prune_table_size - 1
@@ -31,7 +35,7 @@ struct PruneTableMutableData {
     search_logger: Arc<SearchLogger>,
 }
 
-impl PruneTableMutableData {
+impl HashPruneTableMutableData {
     fn hash_pattern(&self, pattern: &KPattern) -> usize {
         let h = cityhasher::CityHasher::new();
         (h.hash_one(unsafe { pattern.byte_slice() }) as usize) & self.prune_table_index_mask
@@ -42,7 +46,7 @@ impl PruneTableMutableData {
     pub fn lookup(&self, pattern: &KPattern) -> usize {
         let pattern_hash = self.hash_pattern(pattern);
         let table_value = self.pattern_hash_to_depth[pattern_hash];
-        if table_value == UNINITIALIZED_DEPTH {
+        if table_value == UNINITIALIZED_SENTINEL {
             (self.current_pruning_depth as usize) + 1
         } else {
             (table_value as usize) - 1
@@ -51,18 +55,25 @@ impl PruneTableMutableData {
 
     pub fn set_if_uninitialized(&mut self, pattern: &KPattern, depth: u8) {
         let pattern_hash = self.hash_pattern(pattern);
-        if self.pattern_hash_to_depth[pattern_hash] == UNINITIALIZED_DEPTH {
+        if self.pattern_hash_to_depth[pattern_hash] == UNINITIALIZED_SENTINEL
+            || self.pattern_hash_to_depth[pattern_hash] == INVALID_PATTERN_SENTINEL
+        {
             self.pattern_hash_to_depth[pattern_hash] = depth + 1
         };
     }
+
+    pub fn set_invalid_depth(&mut self, pattern: &KPattern) {
+        self.set_if_uninitialized(pattern, INVALID_PATTERN_DEPTH)
+    }
 }
 
-pub struct PruneTable {
-    immutable: PruneTableImmutableData,
-    mutable: PruneTableMutableData,
+pub struct HashPruneTable<T: PatternValidityChecker> {
+    immutable: HashPruneTableImmutableData,
+    mutable: HashPruneTableMutableData,
+    phantom: PhantomData<T>,
 }
 
-impl PruneTable {
+impl<T: PatternValidityChecker> HashPruneTable<T> {
     pub fn new(
         search_api_data: Arc<IDFSearchAPIData>,
         search_logger: Arc<SearchLogger>,
@@ -73,8 +84,8 @@ impl PruneTable {
             None => DEFAULT_MIN_PRUNE_TABLE_SIZE,
         };
         let mut prune_table = Self {
-            immutable: PruneTableImmutableData { search_api_data },
-            mutable: PruneTableMutableData {
+            immutable: HashPruneTableImmutableData { search_api_data },
+            mutable: HashPruneTableMutableData {
                 min_size,
                 prune_table_size: min_size,
                 prune_table_index_mask: min_size - 1,
@@ -86,6 +97,7 @@ impl PruneTable {
                 ),
                 search_logger,
             },
+            phantom: PhantomData,
         };
         prune_table.extend_for_search_depth(0, 1);
         prune_table
@@ -97,9 +109,9 @@ impl PruneTable {
         let mut new_pruning_depth =
             std::convert::TryInto::<PruneTableEntryType>::try_into(search_depth / 2)
                 .expect("Prune table depth exceeded available size");
-        if new_pruning_depth >= MAX_PRUNE_TABLE_DEPTH {
+        if new_pruning_depth > MAX_PRUNE_TABLE_DEPTH {
             self.mutable.search_logger.write_warning(&format!(
-                "[Prune table] Hit max depth, limiting to {}.",
+                "[Prune table] Exceeded max depth, limiting to {}.",
                 MAX_PRUNE_TABLE_DEPTH
             ));
             new_pruning_depth = MAX_PRUNE_TABLE_DEPTH;
@@ -150,8 +162,8 @@ impl PruneTable {
     // TODO: dedup with IDFSearch?
     // TODO: Store a reference to `search_api_data` so that you can't accidentally pass in the wrong `search_api_data`?
     fn recurse(
-        immutable_data: &PruneTableImmutableData,
-        mutable_data: &mut PruneTableMutableData,
+        immutable_data: &HashPruneTableImmutableData,
+        mutable_data: &mut HashPruneTableMutableData,
         current_pattern: &KPattern,
         current_state: CanonicalFSMState,
         remaining_depth: PruneTableEntryType,
@@ -164,7 +176,7 @@ impl PruneTable {
         for (move_class_index, move_transformation_multiples) in immutable_data
             .search_api_data
             .search_generators
-            .grouped
+            .by_move_class
             .iter()
             .enumerate()
         {
@@ -180,10 +192,16 @@ impl PruneTable {
             };
 
             for move_transformation_info in move_transformation_multiples {
+                let next_pattern =
+                    &current_pattern.apply_transformation(&move_transformation_info.transformation);
+                if !T::is_valid(next_pattern) {
+                    mutable_data.set_invalid_depth(next_pattern);
+                    continue;
+                }
                 Self::recurse(
                     immutable_data,
                     mutable_data,
-                    &current_pattern.apply_transformation(&move_transformation_info.transformation),
+                    next_pattern,
                     next_state,
                     remaining_depth - 1,
                 )
@@ -191,7 +209,7 @@ impl PruneTable {
         }
     }
 
-    // Returns a heurstic depth for the given pattern.
+    // Returns a heuristic depth for the given pattern.
     pub fn lookup(&self, pattern: &KPattern) -> usize {
         self.mutable.lookup(pattern)
     }

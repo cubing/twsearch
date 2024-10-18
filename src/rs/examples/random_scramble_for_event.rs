@@ -21,6 +21,7 @@ pub fn main() {
         Event::Cube3x3x3MultiBlind,
         Event::ClockSpeedsolving,
         Event::SkewbSpeedsolving,
+        Event::Square1Speedsolving,
         Event::Cube3x3x3FewestMoves,
         Event::Cube3x3x3FewestMoves,
         Event::Cube3x3x3FewestMoves,

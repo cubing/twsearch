@@ -198,16 +198,13 @@ impl SetCppArgs for MetricArgs {
 
 impl SetCppArgs for InputDefAndOptionalScrambleFileArgs {
     fn set_cpp_args(&self) {
-        match &self.scramble_alg {
-            Some(scramble_alg) => {
-                let parsed_alg = match scramble_alg.parse::<Alg>() {
-                    Ok(alg) => alg,
-                    Err(_) => panic!("Invalid scramble alg."),
-                };
-                // TODO: Use `cubing::kpuzzle` to handle nested input syntax
-                set_arg("--scramblealg", &parsed_alg.to_string())
-            }
-            None => (),
+        if let Some(scramble_alg) = &self.scramble_alg {
+            let parsed_alg = match scramble_alg.parse::<Alg>() {
+                Ok(alg) => alg,
+                Err(_) => panic!("Invalid scramble alg."),
+            };
+            // TODO: Use `cubing::kpuzzle` to handle nested input syntax
+            set_arg("--scramblealg", &parsed_alg.to_string())
         };
         set_boolean_arg("-s", self.stdin_scrambles)
     }

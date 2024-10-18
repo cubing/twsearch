@@ -86,16 +86,18 @@ pub fn build_phase_lookup_table<C: CheckPattern>(
         SearchGenerators::try_new(&kpuzzle, generators, &MetricEnum::Hand, random_start)
             .expect("Couldn't build SearchGenerators while building PhaseLookupTable");
 
-    let mut fringe = VecDeque::new();
-    fringe.push_back(kpuzzle.default_pattern());
+    // (lookup pattern, depth)
+    let mut fringe = VecDeque::<(KPattern, usize)>::new();
+    fringe.push_back((kpuzzle.default_pattern(), 0));
 
     let mut index_to_lookup_pattern = IndexedVec::<PhasePatternIndex, LookupPattern>::default();
     let mut lookup_pattern_to_index = HashMap::<LookupPattern, PhasePatternIndex>::default();
+    let mut exact_prune_table = IndexedVec::<PhasePatternIndex, usize>::default();
 
     let mut index_to_representative_full_pattern =
         IndexedVec::<PhasePatternIndex, KPattern>::default();
 
-    while let Some(full_pattern) = fringe.pop_front() {
+    while let Some((full_pattern, depth)) = fringe.pop_front() {
         let Some(lookup_pattern) = LookupPattern::try_new::<C>(&full_pattern, phase_mask) else {
             continue;
         };
@@ -109,12 +111,13 @@ pub fn build_phase_lookup_table<C: CheckPattern>(
         let index = index_to_lookup_pattern.len();
         index_to_lookup_pattern.push(lookup_pattern.clone());
         lookup_pattern_to_index.insert(lookup_pattern, PhasePatternIndex(index));
+        exact_prune_table.push(depth);
 
         for move_transformation_info in &search_generators.flat {
-            // <<< let flat_move_index = move_transformation_info.flat_move_index;
-            fringe.push_back(
+            fringe.push_back((
                 full_pattern.apply_transformation(&move_transformation_info.transformation),
-            );
+                depth + 1,
+            ));
         }
 
         // Note that this is safe to do at the end of this loop because we use BFS rather than DFS.
@@ -150,6 +153,8 @@ pub fn build_phase_lookup_table<C: CheckPattern>(
         "Built phase lookup table in: {:?}",
         Instant::now() - start_time
     );
+
+    dbg!(exact_prune_table);
 
     (
         PhaseLookupTable {

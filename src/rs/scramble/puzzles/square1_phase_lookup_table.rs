@@ -157,7 +157,7 @@ pub fn build_phase_lookup_table<C: PatternValidityChecker>(
         Instant::now() - start_time
     );
 
-    dbg!(exact_prune_table);
+    // dbg!(exact_prune_table);
 
     (
         PhaseLookupTable {

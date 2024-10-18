@@ -36,7 +36,7 @@ impl Debug for LookupPattern {
 }
 
 impl LookupPattern {
-    fn try_new<C: PatternValidityChecker>(
+    pub fn try_new<C: PatternValidityChecker>(
         full_pattern: &KPattern,
         phase_mask: &KPattern,
     ) -> Option<Self> {

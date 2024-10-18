@@ -8,7 +8,7 @@ use wasm_bindgen::prelude::*;
 
 use twsearch::scramble::{random_scramble_for_event, Event};
 
-use twsearch::_internal::{AlwaysValid, IDFSearch, IndividualSearchOptions, SearchLogger};
+use twsearch::_internal::{IDFSearch, IndividualSearchOptions, SearchLogger};
 
 pub fn internal_init() {
     console_error_panic_hook::set_once();
@@ -66,7 +66,7 @@ pub fn wasmTwsearch(
         None => Generators::Default,
     };
 
-    let idfs = IDFSearch::<AlwaysValid>::try_new(
+    let idfs = <IDFSearch>::try_new(
         kpuzzle,
         target_pattern,
         generators,

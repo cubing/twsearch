@@ -14,6 +14,7 @@ use rand::thread_rng;
 use crate::{
     _internal::{FlatMoveIndex, PatternValidityChecker},
     scramble::{
+        puzzles::square1_phase_lookup_table::LookupPattern,
         randomize::{basic_parity, BasicParity, PieceZeroConstraint},
         scramble_search::FilteredSearch,
     },
@@ -183,6 +184,13 @@ pub fn scramble_square1() -> Alg {
     );
 
     dbg!(&search_generators.flat[10]);
+    dbg!(phase_lookup_table.lookup_pattern_to_index.get(
+        &LookupPattern::try_new::<Phase1Checker>(
+            &kpuzzle.default_pattern(),
+            square1_square_square_shape_kpattern(),
+        )
+        .unwrap(),
+    ));
 
     //     dbg!(wedge_parity(
     //         &kpuzzle

@@ -16,7 +16,7 @@ use serve::serve;
 use twsearch::_internal::{
     cli::options::{get_options, CliCommand, GodsAlgorithmArgs, SearchCommandArgs},
     options::VerbosityLevel,
-    read_to_json, AlwaysValid, ArgumentError, CommandError, GodsAlgorithmSearch, IDFSearch,
+    read_to_json, ArgumentError, CommandError, GodsAlgorithmSearch, IDFSearch,
     IndividualSearchOptions, SearchLogger,
 };
 
@@ -146,7 +146,7 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
         }
     };
 
-    let mut idf_search = IDFSearch::<AlwaysValid>::try_new(
+    let mut idf_search = <IDFSearch>::try_new(
         kpuzzle,
         target_pattern,
         search_command_args.generator_args.parse(),

@@ -256,10 +256,7 @@ pub fn scramble_square1() -> Alg {
             continue;
         }
 
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&phase1_start_pattern.to_data()).unwrap()
-        );
+        dbg!(&phase1_start_pattern.to_data());
 
         // dbg!(
         //     &phase1_start_pattern
@@ -268,11 +265,7 @@ pub fn scramble_square1() -> Alg {
         //         == square1_square_square_shape_kpattern()
         // );
         // <<<
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&square1_square_square_shape_kpattern().to_data())
-                .unwrap()
-        );
+        dbg!(&square1_square_square_shape_kpattern().to_data());
 
         // <<< if let Some(solution) = simple_filtered_search(&phase1_start_pattern, generators, 11, None) {
 
@@ -374,11 +367,7 @@ pub fn scramble_square1() -> Alg {
             if let Some(mut phase2_solution) = phase2_solution {
                 let mut nodes = phase1_solution.nodes;
                 nodes.append(&mut phase2_solution.nodes);
-                println!(
-                    //<<<
-                    "{}",
-                    serde_json::to_string_pretty(&scramble_pattern.to_data()).unwrap()
-                );
+                dbg!(&scramble_pattern.to_data());
 
                 // <<< return Alg { nodes }.invert()
                 return Alg { nodes }; // because slash' is not a valid move we can print

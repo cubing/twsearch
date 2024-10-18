@@ -126,7 +126,7 @@ impl<ValidityChecker: PatternValidityChecker> FilteredSearch<ValidityChecker> {
     }
 }
 
-pub(crate) fn simple_filtered_search<T: PatternValidityChecker>(
+pub(crate) fn simple_filtered_search(
     scramble_pattern: &KPattern,
     generators: Generators,
     min_optimal_moves: usize,
@@ -134,7 +134,7 @@ pub(crate) fn simple_filtered_search<T: PatternValidityChecker>(
 ) -> Option<Alg> {
     let kpuzzle = scramble_pattern.kpuzzle();
     let mut filtered_search =
-        FilteredSearch::<T>::new(kpuzzle, generators, None, kpuzzle.default_pattern());
+        <FilteredSearch>::new(kpuzzle, generators, None, kpuzzle.default_pattern());
     if filtered_search
         .filter(scramble_pattern, min_optimal_moves)
         .is_some()

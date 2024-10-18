@@ -288,7 +288,7 @@ pub fn scramble_square1() -> Alg {
 
         // <<< if let Some(solution) = simple_filtered_search(&phase1_start_pattern, generators, 11, None) {
 
-        // let direct = simple_filtered_search::<AlwaysValid>(
+        // let direct = simple_filtered_search(
         //     &phase1_start_pattern,
         //     generators.clone(),
         //     0,

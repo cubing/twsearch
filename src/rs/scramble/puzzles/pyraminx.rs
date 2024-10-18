@@ -1,10 +1,7 @@
 use cubing::alg::{Alg, AlgNode, Move};
 use rand::{thread_rng, Rng};
 
-use crate::{
-    _internal::AlwaysValid,
-    scramble::{randomize::PieceZeroConstraint, scramble_search::move_list_from_vec},
-};
+use crate::scramble::{randomize::PieceZeroConstraint, scramble_search::move_list_from_vec};
 
 use super::{
     super::randomize::{
@@ -52,7 +49,7 @@ pub fn scramble_pyraminx() -> Alg {
         }
 
         let generators = generators_from_vec_str(vec!["U", "L", "R", "B"]); // TODO: cache
-        if let Some(scramble) = simple_filtered_search::<AlwaysValid>(
+        if let Some(scramble) = simple_filtered_search(
             &scramble_pattern,
             generators,
             6 - alg_nodes.len(),

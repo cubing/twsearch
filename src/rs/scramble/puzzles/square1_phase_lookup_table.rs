@@ -1,4 +1,8 @@
-use std::{collections::HashMap, fmt::Debug, time::Instant};
+use std::{
+    collections::{HashMap, VecDeque},
+    fmt::Debug,
+    time::Instant,
+};
 
 use cubing::kpuzzle::{KPattern, KPuzzle};
 
@@ -82,7 +86,8 @@ pub fn build_phase_lookup_table<C: CheckPattern>(
         SearchGenerators::try_new(&kpuzzle, generators, &MetricEnum::Hand, random_start)
             .expect("Couldn't build SearchGenerators while building PhaseLookupTable");
 
-    let mut fringe = vec![kpuzzle.default_pattern()];
+    let mut fringe = VecDeque::new();
+    fringe.push_back(kpuzzle.default_pattern());
 
     let mut index_to_lookup_pattern = IndexedVec::<PhasePatternIndex, LookupPattern>::default();
     let mut lookup_pattern_to_index = HashMap::<LookupPattern, PhasePatternIndex>::default();
@@ -90,8 +95,7 @@ pub fn build_phase_lookup_table<C: CheckPattern>(
     let mut index_to_representative_full_pattern =
         IndexedVec::<PhasePatternIndex, KPattern>::default();
 
-    // TODO: use a queue so that we can pop off from the front (which leads to a more intuitive indexing pre-order rather than post-order)?
-    while let Some(full_pattern) = fringe.pop() {
+    while let Some(full_pattern) = fringe.pop_front() {
         let Some(lookup_pattern) = LookupPattern::try_new::<C>(&full_pattern, phase_mask) else {
             continue;
         };
@@ -108,8 +112,9 @@ pub fn build_phase_lookup_table<C: CheckPattern>(
 
         for move_transformation_info in &search_generators.flat {
             // <<< let flat_move_index = move_transformation_info.flat_move_index;
-            fringe
-                .push(full_pattern.apply_transformation(&move_transformation_info.transformation));
+            fringe.push_back(
+                full_pattern.apply_transformation(&move_transformation_info.transformation),
+            );
         }
 
         // Note that this is safe to do at the end of this loop because we use BFS rather than DFS.

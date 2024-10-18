@@ -11,7 +11,7 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::{
-    _internal::{PatternValidityChecker, FlatMoveIndex},
+    _internal::{FlatMoveIndex, PatternValidityChecker},
     scramble::{
         randomize::{basic_parity, BasicParity, PieceZeroConstraint},
         scramble_search::FilteredSearch,
@@ -132,6 +132,8 @@ impl PatternValidityChecker for Phase2Checker {
 }
 
 pub fn scramble_square1() -> Alg {
+    eprintln!("⚠️👷 Square-1 scrambling is still under construction! The code may hang or produce invalid results at this time. 👷⚠️");
+
     let kpuzzle = square1_unbandaged_kpuzzle();
     let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]); // TODO: cache
 

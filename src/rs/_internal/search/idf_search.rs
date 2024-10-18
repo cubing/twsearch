@@ -286,8 +286,12 @@ impl<T: CheckPattern> IDFSearch<T> {
         if prune_table_depth > remaining_depth {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
-        for (move_class_index, move_transformation_multiples) in
-            self.api_data.search_generators.grouped.iter().enumerate()
+        for (move_class_index, move_transformation_multiples) in self
+            .api_data
+            .search_generators
+            .by_move_class
+            .iter()
+            .enumerate()
         {
             let Some(next_state) = self
                 .api_data

@@ -6,15 +6,17 @@ use cubing::{
 };
 use rand::{seq::SliceRandom, thread_rng};
 
-use crate::_internal::{
-    cli::options::{Generators, MetricEnum},
-    SearchError,
+use crate::{
+    _internal::{
+        cli::options::{Generators, MetricEnum},
+        SearchError,
+    },
+    index_type,
 };
 
 use super::MoveClassIndex;
 
-#[derive(Clone, Debug)]
-pub struct FlatMoveIndex(usize);
+index_type!(FlatMoveIndex);
 
 #[derive(Clone, Debug)]
 pub struct MoveTransformationInfo {
@@ -34,7 +36,7 @@ pub type MoveTransformationMultiples = Vec<MoveTransformationInfo>;
 #[derive(Clone, Debug)]
 pub struct SearchGenerators {
     // TODO: figure out the most reusable abstraction
-    pub grouped: Vec<MoveTransformationMultiples>,
+    pub by_move_class: Vec<MoveTransformationMultiples>,
     pub flat: Vec<MoveTransformationInfo>, // TODO: avoid duplicate data
     pub by_move: HashMap<Move, (MoveClassIndex, MoveTransformationInfo)>, // TODO: avoid duplicate data
 }
@@ -181,7 +183,7 @@ impl SearchGenerators {
         }
 
         Ok(Self {
-            grouped,
+            by_move_class: grouped,
             flat,
             by_move,
         })

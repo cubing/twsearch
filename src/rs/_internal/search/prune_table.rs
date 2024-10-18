@@ -176,7 +176,7 @@ impl<T: CheckPattern> PruneTable<T> {
         for (move_class_index, move_transformation_multiples) in immutable_data
             .search_api_data
             .search_generators
-            .grouped
+            .by_move_class
             .iter()
             .enumerate()
         {

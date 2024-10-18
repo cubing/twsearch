@@ -114,13 +114,13 @@ fn scramble_big_cube(scramble_info: &ScrambleInfo, num_random_moves: usize) -> A
         // TODO: we can forward-cache the valid move classes for each state instead of rejection sampling.
         loop {
             let move_class_index =
-                MoveClassIndex(rng.gen_range(0..scramble_info.generators.grouped.len()));
+                MoveClassIndex(rng.gen_range(0..scramble_info.generators.by_move_class.len()));
             let next = scramble_info
                 .canonical_fsm
                 .next_state(current_fsm_state, move_class_index);
             if let Some(next) = next {
                 nodes.push(AlgNode::MoveNode(
-                    scramble_info.generators.grouped[move_class_index.0]
+                    scramble_info.generators.by_move_class[move_class_index.0]
                         .choose(&mut rng)
                         .unwrap()
                         .r#move

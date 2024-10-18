@@ -1,4 +1,5 @@
 use std::{
+    env,
     io::{stdout, Write},
     time::{Duration, Instant},
 };
@@ -132,7 +133,15 @@ impl PatternValidityChecker for Phase2Checker {
 }
 
 pub fn scramble_square1() -> Alg {
-    eprintln!("⚠️👷 Square-1 scrambling is still under construction! The code may hang or produce invalid results at this time. 👷⚠️");
+    match env::var("EXPERIMENTAL_SQUARE1").as_deref() {
+        Ok("true") => {
+            eprintln!("⚠️👷 Square-1 scrambling is still under construction! The code may hang or produce invalid results at this time. 👷⚠️");
+        }
+        _ => {
+            eprintln!("⚠️👷 Square-1 scrambling is still under construction! Returning a bogus alg. Set `EXPERIMENTAL_SQUARE1=true` in the environment to run the scramble code. 👷⚠️");
+            return parse_alg!("_SLASH_");
+        }
+    }
 
     let kpuzzle = square1_unbandaged_kpuzzle();
     let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]); // TODO: cache

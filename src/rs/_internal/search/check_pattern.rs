@@ -1,12 +1,12 @@
 use cubing::kpuzzle::KPattern;
 
-pub trait CheckPattern {
+pub trait PatternValidityChecker {
     fn is_valid(pattern: &KPattern) -> bool;
 }
 
 pub struct AlwaysValid;
 
-impl CheckPattern for AlwaysValid {
+impl PatternValidityChecker for AlwaysValid {
     fn is_valid(_pattern: &KPattern) -> bool {
         true
     }

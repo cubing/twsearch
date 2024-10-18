@@ -7,7 +7,8 @@ use cubing::{
 
 use crate::_internal::{
     options::{CustomGenerators, Generators, MetricEnum, VerbosityLevel},
-    CheckPattern, IDFSearch, IndividualSearchOptions, SearchLogger, SearchSolutions,
+    AlwaysValid, IDFSearch, IndividualSearchOptions, PatternValidityChecker, SearchLogger,
+    SearchSolutions,
 };
 
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
@@ -24,7 +25,7 @@ pub fn generators_from_vec_str(move_str_list: Vec<&str>) -> Generators {
     })
 }
 
-pub(crate) fn idfs_with_target_pattern<T: CheckPattern>(
+pub(crate) fn idfs_with_target_pattern<T: PatternValidityChecker>(
     kpuzzle: &KPuzzle,
     generators: Generators,
     target_pattern: KPattern,
@@ -45,26 +46,26 @@ pub(crate) fn idfs_with_target_pattern<T: CheckPattern>(
     .unwrap()
 }
 
-pub(crate) fn basic_idfs<T: CheckPattern>(
+pub(crate) fn basic_idfs<ValidityChecker: PatternValidityChecker>(
     kpuzzle: &KPuzzle,
     generators: Generators,
     min_prune_table_size: Option<usize>,
     target_pattern: KPattern,
-) -> IDFSearch<T> {
+) -> IDFSearch<ValidityChecker> {
     idfs_with_target_pattern(kpuzzle, generators, target_pattern, min_prune_table_size)
 }
 
-pub struct FilteredSearch<T: CheckPattern> {
-    pub(crate) idfs: IDFSearch<T>,
+pub struct FilteredSearch<ValidityChecker: PatternValidityChecker = AlwaysValid> {
+    pub(crate) idfs: IDFSearch<ValidityChecker>,
 }
 
-impl<T: CheckPattern> FilteredSearch<T> {
+impl<ValidityChecker: PatternValidityChecker> FilteredSearch<ValidityChecker> {
     pub fn new(
         kpuzzle: &KPuzzle,
         generators: Generators,
         min_prune_table_size: Option<usize>,
         target_pattern: KPattern,
-    ) -> FilteredSearch<T> {
+    ) -> FilteredSearch<ValidityChecker> {
         let idfs = basic_idfs(kpuzzle, generators, min_prune_table_size, target_pattern);
         Self { idfs }
     }
@@ -125,7 +126,7 @@ impl<T: CheckPattern> FilteredSearch<T> {
     }
 }
 
-pub(crate) fn simple_filtered_search<T: CheckPattern>(
+pub(crate) fn simple_filtered_search<T: PatternValidityChecker>(
     scramble_pattern: &KPattern,
     generators: Generators,
     min_optimal_moves: usize,

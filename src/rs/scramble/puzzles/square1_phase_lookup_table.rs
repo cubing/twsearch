@@ -9,7 +9,7 @@ use cubing::kpuzzle::{KPattern, KPuzzle};
 use crate::{
     _internal::{
         options::{Generators, MetricEnum},
-        CheckPattern, FlatMoveIndex, SearchGenerators,
+        FlatMoveIndex, PatternValidityChecker, SearchGenerators,
     },
     scramble::randomize::BasicParity,
 };
@@ -36,7 +36,10 @@ impl Debug for LookupPattern {
 }
 
 impl LookupPattern {
-    fn try_new<C: CheckPattern>(full_pattern: &KPattern, phase_mask: &KPattern) -> Option<Self> {
+    fn try_new<C: PatternValidityChecker>(
+        full_pattern: &KPattern,
+        phase_mask: &KPattern,
+    ) -> Option<Self> {
         let Ok(masked_pattern) = mask(full_pattern, phase_mask) else {
             panic!("Mask application failed");
         };
@@ -75,7 +78,7 @@ impl PhaseLookupTable {
     }
 }
 
-pub fn build_phase_lookup_table<C: CheckPattern>(
+pub fn build_phase_lookup_table<C: PatternValidityChecker>(
     kpuzzle: KPuzzle,
     generators: &Generators,
     phase_mask: &KPattern,

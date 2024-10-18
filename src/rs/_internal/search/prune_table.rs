@@ -10,7 +10,7 @@ use crate::_internal::{
 };
 
 use super::idf_search::IDFSearchAPIData;
-use super::CheckPattern;
+use super::PatternValidityChecker;
 
 type PruneTableEntryType = u8;
 // 0 is uninitialized, all other values are stored as 1+depth.
@@ -22,10 +22,10 @@ const MAX_PRUNE_TABLE_DEPTH: PruneTableEntryType = PruneTableEntryType::MAX - 2;
 
 const DEFAULT_MIN_PRUNE_TABLE_SIZE: usize = 1 << 20;
 
-struct PruneTableImmutableData {
+struct HashPruneTableImmutableData {
     search_api_data: Arc<IDFSearchAPIData>,
 }
-struct PruneTableMutableData {
+struct HashPruneTableMutableData {
     min_size: usize,               // power of 2
     prune_table_size: usize,       // power of 2
     prune_table_index_mask: usize, // prune_table_size - 1
@@ -35,7 +35,7 @@ struct PruneTableMutableData {
     search_logger: Arc<SearchLogger>,
 }
 
-impl PruneTableMutableData {
+impl HashPruneTableMutableData {
     fn hash_pattern(&self, pattern: &KPattern) -> usize {
         let h = cityhasher::CityHasher::new();
         (h.hash_one(unsafe { pattern.byte_slice() }) as usize) & self.prune_table_index_mask
@@ -67,13 +67,13 @@ impl PruneTableMutableData {
     }
 }
 
-pub struct PruneTable<T: CheckPattern> {
-    immutable: PruneTableImmutableData,
-    mutable: PruneTableMutableData,
+pub struct HashPruneTable<T: PatternValidityChecker> {
+    immutable: HashPruneTableImmutableData,
+    mutable: HashPruneTableMutableData,
     phantom: PhantomData<T>,
 }
 
-impl<T: CheckPattern> PruneTable<T> {
+impl<T: PatternValidityChecker> HashPruneTable<T> {
     pub fn new(
         search_api_data: Arc<IDFSearchAPIData>,
         search_logger: Arc<SearchLogger>,
@@ -84,8 +84,8 @@ impl<T: CheckPattern> PruneTable<T> {
             None => DEFAULT_MIN_PRUNE_TABLE_SIZE,
         };
         let mut prune_table = Self {
-            immutable: PruneTableImmutableData { search_api_data },
-            mutable: PruneTableMutableData {
+            immutable: HashPruneTableImmutableData { search_api_data },
+            mutable: HashPruneTableMutableData {
                 min_size,
                 prune_table_size: min_size,
                 prune_table_index_mask: min_size - 1,
@@ -162,8 +162,8 @@ impl<T: CheckPattern> PruneTable<T> {
     // TODO: dedup with IDFSearch?
     // TODO: Store a reference to `search_api_data` so that you can't accidentally pass in the wrong `search_api_data`?
     fn recurse(
-        immutable_data: &PruneTableImmutableData,
-        mutable_data: &mut PruneTableMutableData,
+        immutable_data: &HashPruneTableImmutableData,
+        mutable_data: &mut HashPruneTableMutableData,
         current_pattern: &KPattern,
         current_state: CanonicalFSMState,
         remaining_depth: PruneTableEntryType,

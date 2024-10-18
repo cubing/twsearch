@@ -11,11 +11,11 @@ use serde::{Deserialize, Serialize};
 
 use crate::_internal::{
     cli::options::{Generators, MetricEnum},
-    CanonicalFSM, CanonicalFSMState, MoveClassIndex, PruneTable, RecursiveWorkTracker, SearchError,
-    SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
+    CanonicalFSM, CanonicalFSMState, HashPruneTable, MoveClassIndex, RecursiveWorkTracker,
+    SearchError, SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
-use super::{CheckPattern, KPatternStack};
+use super::{AlwaysValid, KPatternStack, PatternValidityChecker};
 
 const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase
 
@@ -137,12 +137,12 @@ pub struct IDFSearchAPIData {
     pub search_logger: Arc<SearchLogger>,
 }
 
-pub struct IDFSearch<T: CheckPattern> {
+pub struct IDFSearch<ValidityChecker: PatternValidityChecker = AlwaysValid> {
     api_data: Arc<IDFSearchAPIData>,
-    pub prune_table: PruneTable<T>,
+    pub prune_table: HashPruneTable<ValidityChecker>,
 }
 
-impl<T: CheckPattern> IDFSearch<T> {
+impl<ValidityChecker: PatternValidityChecker> IDFSearch<ValidityChecker> {
     pub fn try_new(
         kpuzzle: KPuzzle,
         target_pattern: KPattern,
@@ -163,7 +163,8 @@ impl<T: CheckPattern> IDFSearch<T> {
             search_logger: search_logger.clone(),
         });
 
-        let prune_table = PruneTable::new(api_data.clone(), search_logger, min_prune_table_size); // TODO: make the prune table reusable across searches.
+        let prune_table =
+            HashPruneTable::new(api_data.clone(), search_logger, min_prune_table_size); // TODO: make the prune table reusable across searches.
         Ok(Self {
             api_data,
             prune_table,
@@ -264,7 +265,7 @@ impl<T: CheckPattern> IDFSearch<T> {
     ) -> SearchRecursionResult {
         let current_pattern = kpattern_stack.current_pattern();
         // TODO: apply invalid checks only to intermediate state (i.e. exclude remaining_depth == 0)?
-        if !T::is_valid(current_pattern) {
+        if !ValidityChecker::is_valid(current_pattern) {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
 

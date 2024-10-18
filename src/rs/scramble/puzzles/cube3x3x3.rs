@@ -7,7 +7,7 @@ use cubing::{
 use lazy_static::lazy_static;
 
 use crate::{
-    _internal::{AlwaysValid, IDFSearch, IndividualSearchOptions},
+    _internal::{IDFSearch, IndividualSearchOptions},
     scramble::{
         collapse::collapse_adjacent_moves,
         randomize::{basic_parity, BasicParity, PieceZeroConstraint},
@@ -30,12 +30,12 @@ use super::{
 pub struct Scramble3x3x3TwoPhase {
     kpuzzle: KPuzzle,
 
-    filtering_idfs: IDFSearch<AlwaysValid>,
+    filtering_idfs: IDFSearch,
 
     phase1_target_pattern: KPattern,
-    phase1_idfs: IDFSearch<AlwaysValid>,
+    phase1_idfs: IDFSearch,
 
-    phase2_idfs: IDFSearch<AlwaysValid>,
+    phase2_idfs: IDFSearch,
 }
 
 impl Default for Scramble3x3x3TwoPhase {

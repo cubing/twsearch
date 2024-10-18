@@ -11,7 +11,7 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::{
-    _internal::{CheckPattern, FlatMoveIndex},
+    _internal::{PatternValidityChecker, FlatMoveIndex},
     scramble::{
         randomize::{basic_parity, BasicParity, PieceZeroConstraint},
         scramble_search::FilteredSearch,
@@ -70,7 +70,7 @@ struct Phase1Checker;
 
 const SLOTS_THAT_ARE_AFTER_SLICES: [u8; 4] = [0, 6, 12, 18];
 
-impl CheckPattern for Phase1Checker {
+impl PatternValidityChecker for Phase1Checker {
     fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
         let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
         assert_eq!(orbit_info.name.0, "WEDGES");
@@ -95,7 +95,7 @@ impl CheckPattern for Phase1Checker {
 
 struct Phase2Checker;
 
-impl CheckPattern for Phase2Checker {
+impl PatternValidityChecker for Phase2Checker {
     fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
         let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
         assert_eq!(orbit_info.name.0, "WEDGES");

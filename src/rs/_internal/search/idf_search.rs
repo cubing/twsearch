@@ -3,19 +3,17 @@ use std::sync::{
     Arc,
 };
 
-use cubing::{
-    alg::{Alg, AlgNode, Move},
-    kpuzzle::{KPattern, KPuzzle},
-};
+use cubing::alg::{Alg, AlgNode, Move};
 use serde::{Deserialize, Serialize};
 
 use crate::_internal::{
     cli::options::{Generators, MetricEnum},
-    CanonicalFSM, CanonicalFSMState, HashPruneTable, MoveClassIndex, RecursiveWorkTracker,
-    SearchError, SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
+    CanonicalFSM, CanonicalFSMState, GroupActionPuzzle, HashPruneTable, MoveClassIndex,
+    RecursiveWorkTracker, SearchError, SearchGenerators, SearchLogger, SemiGroupActionPuzzle,
+    CANONICAL_FSM_START_STATE,
 };
 
-use super::{AlwaysValid, KPatternStack, PatternValidityChecker};
+use super::{AlwaysValid, PatternStack, PatternValidityChecker};
 
 const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase
 
@@ -129,23 +127,30 @@ struct IndividualSearchData {
     solution_sender: Sender<Option<Alg>>,
 }
 
-pub struct IDFSearchAPIData {
-    pub search_generators: SearchGenerators,
+pub struct IDFSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
+    pub search_generators: SearchGenerators<TPuzzle>,
     pub canonical_fsm: CanonicalFSM,
-    pub kpuzzle: KPuzzle,
-    pub target_pattern: KPattern,
+    pub tpuzzle: TPuzzle,
+    pub target_pattern: TPuzzle::Pattern,
     pub search_logger: Arc<SearchLogger>,
 }
 
-pub struct IDFSearch<ValidityChecker: PatternValidityChecker = AlwaysValid> {
-    api_data: Arc<IDFSearchAPIData>,
-    pub prune_table: HashPruneTable<ValidityChecker>,
+pub struct IDFSearch<
+    TPuzzle: SemiGroupActionPuzzle, // TODO: = KPuzzle,
+    ValidityChecker: PatternValidityChecker<TPuzzle> = AlwaysValid,
+> {
+    api_data: Arc<IDFSearchAPIData<TPuzzle>>,
+    pub prune_table: HashPruneTable<TPuzzle, ValidityChecker>,
 }
 
-impl<ValidityChecker: PatternValidityChecker> IDFSearch<ValidityChecker> {
+impl<
+        TPuzzle: GroupActionPuzzle, // TOOD: SemiGroupActionPuzzle
+        ValidityChecker: PatternValidityChecker<TPuzzle>,
+    > IDFSearch<TPuzzle, ValidityChecker>
+{
     pub fn try_new(
-        kpuzzle: KPuzzle,
-        target_pattern: KPattern,
+        tpuzzle: TPuzzle,
+        target_pattern: TPuzzle::Pattern,
         generators: Generators,
         search_logger: Arc<SearchLogger>,
         metric: &MetricEnum,
@@ -153,18 +158,22 @@ impl<ValidityChecker: PatternValidityChecker> IDFSearch<ValidityChecker> {
         min_prune_table_size: Option<usize>,
     ) -> Result<Self, SearchError> {
         let search_generators =
-            SearchGenerators::try_new(&kpuzzle, &generators, metric, random_start)?;
+            SearchGenerators::try_new(&tpuzzle, &generators, metric, random_start)?;
         let canonical_fsm = CanonicalFSM::try_new(search_generators.clone())?; // TODO: avoid a clone
         let api_data = Arc::new(IDFSearchAPIData {
             search_generators,
             canonical_fsm,
-            kpuzzle,
+            tpuzzle,
             target_pattern,
             search_logger: search_logger.clone(),
         });
 
-        let prune_table =
-            HashPruneTable::new(api_data.clone(), search_logger, min_prune_table_size); // TODO: make the prune table reusable across searches.
+        let prune_table = HashPruneTable::new(
+            tpuzzle,
+            api_data.clone(),
+            search_logger,
+            min_prune_table_size,
+        ); // TODO: make the prune table reusable across searches.
         Ok(Self {
             api_data,
             prune_table,
@@ -173,7 +182,7 @@ impl<ValidityChecker: PatternValidityChecker> IDFSearch<ValidityChecker> {
 
     pub fn search(
         &mut self,
-        search_pattern: &KPattern,
+        search_pattern: &TPuzzle::Pattern,
         mut individual_search_options: IndividualSearchOptions,
     ) -> SearchSolutions {
         // TODO: do validation more consistently.
@@ -212,7 +221,7 @@ impl<ValidityChecker: PatternValidityChecker> IDFSearch<ValidityChecker> {
         let search_pattern = search_pattern.clone();
 
         // TODO: combine `KPatternStack` with `SolutionMoves`?
-        let mut kpattern_stack = KPatternStack::new(search_pattern);
+        let mut pattern_stack = PatternStack::new(self.api_data.tpuzzle.clone(), search_pattern);
         for remaining_depth in individual_search_data
             .individual_search_options
             .get_min_depth()
@@ -240,7 +249,7 @@ impl<ValidityChecker: PatternValidityChecker> IDFSearch<ValidityChecker> {
                 .expect("TODO: invalid canonical FSM pre-moves.");
             let recursion_result = self.recurse(
                 &mut individual_search_data,
-                &mut kpattern_stack,
+                &mut pattern_stack,
                 initial_state,
                 remaining_depth,
                 SolutionMoves(None),
@@ -258,12 +267,12 @@ impl<ValidityChecker: PatternValidityChecker> IDFSearch<ValidityChecker> {
     fn recurse(
         &self,
         individual_search_data: &mut IndividualSearchData,
-        kpattern_stack: &mut KPatternStack,
+        pattern_stack: &mut PatternStack<TPuzzle>,
         current_state: CanonicalFSMState,
         remaining_depth: usize,
         solution_moves: SolutionMoves,
     ) -> SearchRecursionResult {
-        let current_pattern = kpattern_stack.current_pattern();
+        let current_pattern = pattern_stack.current_pattern();
         // TODO: apply invalid checks only to intermediate state (i.e. exclude remaining_depth == 0)?
         if !ValidityChecker::is_valid(current_pattern) {
             return SearchRecursionResult::ContinueSearchingDefault();
@@ -303,10 +312,10 @@ impl<ValidityChecker: PatternValidityChecker> IDFSearch<ValidityChecker> {
             };
 
             for move_transformation_info in move_transformation_multiples {
-                kpattern_stack.push(&move_transformation_info.transformation);
+                pattern_stack.push(&move_transformation_info.transformation);
                 let recursive_result = self.recurse(
                     individual_search_data,
-                    kpattern_stack,
+                    pattern_stack,
                     next_state,
                     remaining_depth - 1,
                     SolutionMoves(Some(&SolutionPreviousMoves {
@@ -314,7 +323,7 @@ impl<ValidityChecker: PatternValidityChecker> IDFSearch<ValidityChecker> {
                         previous_moves: &solution_moves,
                     })),
                 );
-                kpattern_stack.pop();
+                pattern_stack.pop();
 
                 match recursive_result {
                     SearchRecursionResult::DoneSearching() => {
@@ -362,7 +371,7 @@ impl<ValidityChecker: PatternValidityChecker> IDFSearch<ValidityChecker> {
     fn base_case(
         &self,
         individual_search_data: &mut IndividualSearchData,
-        current_pattern: &KPattern,
+        current_pattern: &TPuzzle::Pattern,
         current_state: CanonicalFSMState,
         solution_moves: SolutionMoves,
     ) -> SearchRecursionResult {

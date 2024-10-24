@@ -2,14 +2,14 @@ use std::collections::HashMap;
 
 use cubing::{
     alg::{Move, QuantumMove},
-    kpuzzle::{KPuzzle, KTransformation, KTransformationBuffer},
+    kpuzzle::KTransformationBuffer,
 };
 use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
     _internal::{
         cli::options::{Generators, MetricEnum},
-        SearchError,
+        GroupActionPuzzle, SearchError, SemiGroupActionPuzzle,
     },
     index_type,
 };
@@ -19,39 +19,31 @@ use super::MoveClassIndex;
 index_type!(FlatMoveIndex);
 
 #[derive(Clone, Debug)]
-pub struct MoveTransformationInfo {
+pub struct MoveTransformationInfo<
+    TPuzzle: SemiGroupActionPuzzle, // TODO = KPuzzle
+> {
     #[allow(dead_code)] // TODO
     pub r#move: Move,
     // move_class: MoveClass, // TODO: do we need this?
     // pub metric_turns: i32,
-    pub transformation: KTransformation,
-    #[allow(dead_code)] // TODO
-    pub inverse_transformation: KTransformation,
-
+    pub transformation: TPuzzle::Transformation,
+    // #[allow(dead_code)] // TODO
+    // pub inverse_transformation: TPuzzle::Transformation,
     pub flat_move_index: FlatMoveIndex,
 }
 
-pub type MoveTransformationMultiples = Vec<MoveTransformationInfo>;
+pub type MoveTransformationMultiples<
+    TPuzzle: SemiGroupActionPuzzle, // TODO = KPuzzle
+> = Vec<MoveTransformationInfo<TPuzzle>>;
 
 #[derive(Clone, Debug)]
-pub struct SearchGenerators {
+pub struct SearchGenerators<
+    TPuzzle: SemiGroupActionPuzzle, // TODO = KPuzzle
+> {
     // TODO: figure out the most reusable abstraction
-    pub by_move_class: Vec<MoveTransformationMultiples>,
-    pub flat: Vec<MoveTransformationInfo>, // TODO: avoid duplicate data
-    pub by_move: HashMap<Move, (MoveClassIndex, MoveTransformationInfo)>, // TODO: avoid duplicate data
-}
-
-fn transformation_order(
-    identity_transformation: &KTransformation,
-    transformation: &KTransformation,
-) -> i32 {
-    let mut order: i32 = 1;
-    let mut current_transformation = KTransformationBuffer::from(transformation.clone());
-    while current_transformation.current() != identity_transformation {
-        current_transformation.apply_transformation(transformation);
-        order += 1;
-    }
-    order
+    pub by_move_class: Vec<MoveTransformationMultiples<TPuzzle>>,
+    pub flat: Vec<MoveTransformationInfo<TPuzzle>>, // TODO: avoid duplicate data
+    pub by_move: HashMap<Move, (MoveClassIndex, MoveTransformationInfo<TPuzzle>)>, // TODO: avoid duplicate data
 }
 
 // See: https://github.com/cubing/cubing.js/blob/145d0a7a3271a71fd1051c871bb170560561a24b/src/cubing/alg/simplify/options.ts#L15
@@ -60,27 +52,22 @@ fn canonicalize_center_amount(order: i32, amount: i32) -> i32 {
     (amount + offset).rem_euclid(order) - offset
 }
 
-impl SearchGenerators {
+impl<
+        TPuzzle: GroupActionPuzzle, // TODO: Make this work for SemiGroupAction
+    > SearchGenerators<TPuzzle>
+{
     pub fn try_new(
-        kpuzzle: &KPuzzle,
+        tpuzzle: &TPuzzle,
         generators: &Generators,
         metric: &MetricEnum,
         random_start: bool,
-    ) -> Result<SearchGenerators, SearchError> {
-        let identity_transformation = kpuzzle.identity_transformation();
+    ) -> Result<SearchGenerators<TPuzzle>, SearchError> {
+        let identity_transformation = tpuzzle.puzzle_identity_transformation();
 
         let mut seen_quantum_moves = HashMap::<QuantumMove, Move>::new();
 
         let moves: Vec<&Move> = match generators {
-            Generators::Default => {
-                let def = kpuzzle.definition();
-                let moves = def.moves.keys();
-                if let Some(derived_moves) = &def.derived_moves {
-                    moves.chain(derived_moves.keys()).collect()
-                } else {
-                    moves.collect()
-                }
-            }
+            Generators::Default => tpuzzle.puzzle_definition_all_moves(),
             Generators::Custom(generators) => generators.moves.iter().collect(),
         };
         if let Generators::Custom(custom_generators) = generators {
@@ -90,9 +77,10 @@ impl SearchGenerators {
         };
 
         // TODO: actually calculate GCDs
-        let mut grouped = Vec::<MoveTransformationMultiples>::default();
-        let mut flat = Vec::<MoveTransformationInfo>::default();
-        let mut by_move = HashMap::<Move, (MoveClassIndex, MoveTransformationInfo)>::default();
+        let mut grouped = Vec::<MoveTransformationMultiples<TPuzzle>>::default();
+        let mut flat = Vec::<MoveTransformationInfo<TPuzzle>>::default();
+        let mut by_move =
+            HashMap::<Move, (MoveClassIndex, MoveTransformationInfo<TPuzzle>)>::default();
         for (move_class_index, r#move) in moves.into_iter().enumerate() {
             let move_class_index = MoveClassIndex(move_class_index);
             if let Some(existing) = seen_quantum_moves.get(&r#move.quantum) {
@@ -109,30 +97,39 @@ impl SearchGenerators {
                 quantum: r#move.quantum.clone(),
                 amount: 1,
             };
-            let move_quantum_transformation = kpuzzle
-                .transformation_from_move(&move_quantum)
-                .map_err(|e| SearchError {
-                    description: e.to_string(), // TODO
-                })?;
-            let order =
-                transformation_order(&identity_transformation, &move_quantum_transformation);
+            let Ok(order) = tpuzzle.move_order(&move_quantum) else {
+                return Err(SearchError {
+                    description: format!(
+                        "Could not calculate order for move quantum: {}",
+                        move_quantum
+                    ),
+                });
+            };
 
             let mut multiples = MoveTransformationMultiples::default(); // TODO: use order to set capacity.
             let move_transformation =
-                kpuzzle
-                    .transformation_from_move(r#move)
+                tpuzzle
+                    .puzzle_transformation_from_move(r#move)
                     .map_err(|e| SearchError {
                         description: e.to_string(), // TODO
                     })?;
-            let mut move_multiple_transformation =
-                KTransformationBuffer::from(move_transformation.clone());
+            // let mut move_multiple_transformation =
+            //     KTransformationBuffer::from(move_transformation.clone());
 
-            let mut populate_fields = |r#move: Move, transformation: &KTransformation| {
+            let mut move_multiple_transformation = tpuzzle
+                .puzzle_transformation_from_move(&Move {
+                    quantum: r#move.quantum,
+                    amount: r#move.amount * ,
+                })
+                .map_err(|e| SearchError {
+                    description: e.to_string(), // TODO
+                })?;
+
+            let mut populate_fields = |r#move: Move, transformation: &TPuzzle::Transformation| {
                 let info = MoveTransformationInfo {
                     r#move: r#move.clone(),
                     // metric_turns: 1, // TODO
                     transformation: transformation.clone(),
-                    inverse_transformation: transformation.invert(),
                     flat_move_index: FlatMoveIndex(flat.len()),
                 };
                 multiples.push(info.clone());

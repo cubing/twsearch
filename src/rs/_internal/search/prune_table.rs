@@ -1,11 +1,10 @@
 use std::marker::PhantomData;
-use std::{hash::BuildHasher, sync::Arc};
+use std::sync::Arc;
 
-use cubing::kpuzzle::KPattern;
 use thousands::Separable;
 
 use crate::_internal::{
-    CanonicalFSMState, MoveClassIndex, RecursiveWorkTracker, SearchLogger,
+    CanonicalFSMState, MoveClassIndex, RecursiveWorkTracker, SearchLogger, SemiGroupActionPuzzle,
     CANONICAL_FSM_START_STATE,
 };
 
@@ -22,10 +21,11 @@ const MAX_PRUNE_TABLE_DEPTH: PruneTableEntryType = PruneTableEntryType::MAX - 2;
 
 const DEFAULT_MIN_PRUNE_TABLE_SIZE: usize = 1 << 20;
 
-struct HashPruneTableImmutableData {
-    search_api_data: Arc<IDFSearchAPIData>,
+struct HashPruneTableImmutableData<TPuzzle: SemiGroupActionPuzzle> {
+    search_api_data: Arc<IDFSearchAPIData<TPuzzle>>,
 }
-struct HashPruneTableMutableData {
+struct HashPruneTableMutableData<TPuzzle: SemiGroupActionPuzzle> {
+    tpuzzle: TPuzzle,
     min_size: usize,               // power of 2
     prune_table_size: usize,       // power of 2
     prune_table_index_mask: usize, // prune_table_size - 1
@@ -35,15 +35,14 @@ struct HashPruneTableMutableData {
     search_logger: Arc<SearchLogger>,
 }
 
-impl HashPruneTableMutableData {
-    fn hash_pattern(&self, pattern: &KPattern) -> usize {
-        let h = cityhasher::CityHasher::new();
-        (h.hash_one(unsafe { pattern.byte_slice() }) as usize) & self.prune_table_index_mask
+impl<TPuzzle: SemiGroupActionPuzzle> HashPruneTableMutableData<TPuzzle> {
+    fn hash_pattern(&self, pattern: &TPuzzle::Pattern) -> usize {
         // TODO: use modulo when the size is not a power of 2.
+        self.tpuzzle.pattern_hash_u64(pattern) as usize & self.prune_table_index_mask
     }
 
     // Returns a heurstic depth for the given pattern.
-    pub fn lookup(&self, pattern: &KPattern) -> usize {
+    pub fn lookup(&self, pattern: &TPuzzle::Pattern) -> usize {
         let pattern_hash = self.hash_pattern(pattern);
         let table_value = self.pattern_hash_to_depth[pattern_hash];
         if table_value == UNINITIALIZED_SENTINEL {
@@ -53,7 +52,7 @@ impl HashPruneTableMutableData {
         }
     }
 
-    pub fn set_if_uninitialized(&mut self, pattern: &KPattern, depth: u8) {
+    pub fn set_if_uninitialized(&mut self, pattern: &TPuzzle::Pattern, depth: u8) {
         let pattern_hash = self.hash_pattern(pattern);
         if self.pattern_hash_to_depth[pattern_hash] == UNINITIALIZED_SENTINEL
             || self.pattern_hash_to_depth[pattern_hash] == INVALID_PATTERN_SENTINEL
@@ -62,20 +61,27 @@ impl HashPruneTableMutableData {
         };
     }
 
-    pub fn set_invalid_depth(&mut self, pattern: &KPattern) {
+    pub fn set_invalid_depth(&mut self, pattern: &TPuzzle::Pattern) {
         self.set_if_uninitialized(pattern, INVALID_PATTERN_DEPTH)
     }
 }
 
-pub struct HashPruneTable<T: PatternValidityChecker> {
-    immutable: HashPruneTableImmutableData,
-    mutable: HashPruneTableMutableData,
-    phantom: PhantomData<T>,
+pub struct HashPruneTable<
+    TPuzzle: SemiGroupActionPuzzle,
+    ValidityChecker: PatternValidityChecker<TPuzzle>,
+> {
+    // We would store a `tpuzzle` here, but the one stored in `.mutable` is sufficient.
+    immutable: HashPruneTableImmutableData<TPuzzle>,
+    mutable: HashPruneTableMutableData<TPuzzle>,
+    phantom_validity_checker: PhantomData<ValidityChecker>,
 }
 
-impl<T: PatternValidityChecker> HashPruneTable<T> {
+impl<TPuzzle: SemiGroupActionPuzzle, ValidityChecker: PatternValidityChecker<TPuzzle>>
+    HashPruneTable<TPuzzle, ValidityChecker>
+{
     pub fn new(
-        search_api_data: Arc<IDFSearchAPIData>,
+        tpuzzle: TPuzzle,
+        search_api_data: Arc<IDFSearchAPIData<TPuzzle>>,
         search_logger: Arc<SearchLogger>,
         min_size: Option<usize>,
     ) -> Self {
@@ -86,6 +92,7 @@ impl<T: PatternValidityChecker> HashPruneTable<T> {
         let mut prune_table = Self {
             immutable: HashPruneTableImmutableData { search_api_data },
             mutable: HashPruneTableMutableData {
+                tpuzzle,
                 min_size,
                 prune_table_size: min_size,
                 prune_table_index_mask: min_size - 1,
@@ -97,7 +104,7 @@ impl<T: PatternValidityChecker> HashPruneTable<T> {
                 ),
                 search_logger,
             },
-            phantom: PhantomData,
+            phantom_validity_checker: PhantomData,
         };
         prune_table.extend_for_search_depth(0, 1);
         prune_table
@@ -162,9 +169,10 @@ impl<T: PatternValidityChecker> HashPruneTable<T> {
     // TODO: dedup with IDFSearch?
     // TODO: Store a reference to `search_api_data` so that you can't accidentally pass in the wrong `search_api_data`?
     fn recurse(
-        immutable_data: &HashPruneTableImmutableData,
-        mutable_data: &mut HashPruneTableMutableData,
-        current_pattern: &KPattern,
+        immutable_data: &HashPruneTableImmutableData<TPuzzle>,
+        mutable_data: &mut HashPruneTableMutableData<TPuzzle>,
+        // TODO: Use a `PatternStack` to avoid allocations.
+        current_pattern: &TPuzzle::Pattern,
         current_state: CanonicalFSMState,
         remaining_depth: PruneTableEntryType,
     ) {
@@ -192,16 +200,18 @@ impl<T: PatternValidityChecker> HashPruneTable<T> {
             };
 
             for move_transformation_info in move_transformation_multiples {
-                let next_pattern =
-                    &current_pattern.apply_transformation(&move_transformation_info.transformation);
-                if !T::is_valid(next_pattern) {
-                    mutable_data.set_invalid_depth(next_pattern);
+                let next_pattern = mutable_data.tpuzzle.pattern_apply_transformation(
+                    current_pattern,
+                    &move_transformation_info.transformation,
+                );
+                if !ValidityChecker::is_valid(&next_pattern) {
+                    mutable_data.set_invalid_depth(&next_pattern);
                     continue;
                 }
                 Self::recurse(
                     immutable_data,
                     mutable_data,
-                    next_pattern,
+                    &next_pattern,
                     next_state,
                     remaining_depth - 1,
                 )
@@ -210,7 +220,7 @@ impl<T: PatternValidityChecker> HashPruneTable<T> {
     }
 
     // Returns a heuristic depth for the given pattern.
-    pub fn lookup(&self, pattern: &KPattern) -> usize {
+    pub fn lookup(&self, pattern: &TPuzzle::Pattern) -> usize {
         self.mutable.lookup(pattern)
     }
 }

@@ -27,6 +27,19 @@ impl SemiGroupActionPuzzle for KPuzzle {
         Ok(order)
     }
 
+    fn do_moves_commute(
+        &self,
+        move1_info: &crate::_internal::MoveTransformationInfo<Self>,
+        move2_info: &crate::_internal::MoveTransformationInfo<Self>,
+    ) -> bool {
+        move1_info
+            .transformation
+            .apply_transformation(&move2_info.transformation)
+            == move2_info
+                .transformation
+                .apply_transformation(&move1_info.transformation)
+    }
+
     fn puzzle_transformation_from_move(
         &self,
         r#move: &Move,

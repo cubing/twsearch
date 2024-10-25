@@ -6,7 +6,7 @@ use std::{
 
 use cubing::{
     alg::{parse_alg, parse_move, Alg},
-    kpuzzle::KPattern,
+    kpuzzle::{KPattern, KPuzzle},
 };
 use rand::seq::SliceRandom;
 use rand::thread_rng;
@@ -72,7 +72,7 @@ struct Phase1Checker;
 
 const SLOTS_THAT_ARE_AFTER_SLICES: [u8; 4] = [0, 6, 12, 18];
 
-impl PatternValidityChecker for Phase1Checker {
+impl PatternValidityChecker<KPuzzle> for Phase1Checker {
     fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
         let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
         assert_eq!(orbit_info.name.0, "WEDGES");
@@ -97,7 +97,7 @@ impl PatternValidityChecker for Phase1Checker {
 
 struct Phase2Checker;
 
-impl PatternValidityChecker for Phase2Checker {
+impl PatternValidityChecker<KPuzzle> for Phase2Checker {
     fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
         let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
         assert_eq!(orbit_info.name.0, "WEDGES");

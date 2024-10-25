@@ -16,3 +16,6 @@ pub use check_pattern::*;
 
 mod pattern_stack;
 pub(crate) use pattern_stack::*;
+
+mod indexed_vec;
+pub use indexed_vec::*;

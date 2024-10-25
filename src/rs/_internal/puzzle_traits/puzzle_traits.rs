@@ -5,9 +5,12 @@ use cubing::{
     kpuzzle::InvalidAlgError,
 };
 
+use crate::_internal::MoveTransformationInfo;
+
 pub type MoveCount = i32; // TODO: move this somewhere more appropriate.
 
 // TODO: split this into 3 related traits.
+/// The `Clone` implementation must be cheap for both the main struct as well as the `Pattern` and `Transformation` types (e.g. implemented using data shared with an `Arc` under the hood whenever any non-trivial amount of data is associated).
 pub trait SemiGroupActionPuzzle: Debug + Clone {
     type Pattern: Eq + Clone + Debug;
     /// This is a proper "transformation" (such as a permutation) in the general
@@ -30,6 +33,13 @@ pub trait SemiGroupActionPuzzle: Debug + Clone {
         &self,
         r#move: &Move,
     ) -> Result<Self::Transformation, InvalidAlgError>;
+
+    // TODO: this is a leaky abstraction. use traits and enums to create a natural API for this.
+    fn do_moves_commute(
+        &self,
+        move1_info: &MoveTransformationInfo<Self>,
+        move2_info: &MoveTransformationInfo<Self>,
+    ) -> bool;
 
     /********* Functions "defined on the pattern". ********/
 
@@ -61,6 +71,7 @@ pub trait GroupActionPuzzle: SemiGroupActionPuzzle {
         alg: &Alg,
     ) -> Result<Self::Transformation, InvalidAlgError>;
     fn puzzle_identity_transformation(&self) -> Self::Transformation; // TODO: also define this on `KPuzzle` itself.
+                                                                      // TODO: should this return owned `Move`s?
     fn puzzle_definition_all_moves(&self) -> Vec<&Move>;
 
     /********* Functions "defined on the transformation". ********/

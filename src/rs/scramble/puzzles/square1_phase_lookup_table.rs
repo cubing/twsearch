@@ -9,16 +9,13 @@ use cubing::kpuzzle::{KPattern, KPuzzle};
 use crate::{
     _internal::{
         options::{Generators, MetricEnum},
-        FlatMoveIndex, PatternValidityChecker, SearchGenerators,
+        FlatMoveIndex, IndexedVec, PatternValidityChecker, SearchGenerators,
     },
+    index_type,
     scramble::randomize::BasicParity,
 };
 
-use super::{
-    indexed_vec::{self, IndexedVec},
-    mask_pattern::mask,
-    square1::wedge_parity,
-};
+use super::{mask_pattern::mask, square1::wedge_parity};
 
 #[derive(PartialEq, Eq, Hash, Clone)]
 pub struct LookupPattern {
@@ -36,7 +33,7 @@ impl Debug for LookupPattern {
 }
 
 impl LookupPattern {
-    pub fn try_new<ValidityChecker: PatternValidityChecker>(
+    pub fn try_new<ValidityChecker: PatternValidityChecker<KPuzzle>>(
         full_pattern: &KPattern,
         phase_mask: &KPattern,
     ) -> Option<Self> {
@@ -56,7 +53,7 @@ impl LookupPattern {
     }
 }
 
-indexed_vec::index_type!(PhasePatternIndex);
+index_type!(PhasePatternIndex);
 
 pub struct PhaseLookupTable {
     pub index_to_lookup_pattern: IndexedVec<PhasePatternIndex, LookupPattern>, // TODO: support optimizations when the size is known ahead of time
@@ -78,16 +75,20 @@ impl PhaseLookupTable {
     }
 }
 
-pub fn build_phase_lookup_table<C: PatternValidityChecker>(
+pub fn build_phase_lookup_table<C: PatternValidityChecker<KPuzzle>>(
     kpuzzle: KPuzzle,
     generators: &Generators,
     phase_mask: &KPattern,
-) -> (PhaseLookupTable, SearchGenerators) {
+) -> (PhaseLookupTable, SearchGenerators<KPuzzle>) {
     let start_time = Instant::now();
     let random_start = false; // TODO: for scrambles, we may want this to be true
-    let search_generators =
-        SearchGenerators::try_new(&kpuzzle, generators, &MetricEnum::Hand, random_start)
-            .expect("Couldn't build SearchGenerators while building PhaseLookupTable");
+    let search_generators = SearchGenerators::try_new(
+        &kpuzzle,
+        generators.enumerate_moves_for_kpuzzle(&kpuzzle),
+        &MetricEnum::Hand,
+        random_start,
+    )
+    .expect("Couldn't build SearchGenerators while building PhaseLookupTable");
 
     // (lookup pattern, depth)
     let mut fringe = VecDeque::<(KPattern, usize)>::new();

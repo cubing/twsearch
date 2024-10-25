@@ -6,38 +6,34 @@ use cubing::{
 };
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
-use crate::_internal::{
-    options::CustomGenerators, CanonicalFSM, MoveClassIndex, SearchGenerators,
-    CANONICAL_FSM_START_STATE,
-};
+use crate::_internal::{CanonicalFSM, MoveClassIndex, SearchGenerators, CANONICAL_FSM_START_STATE};
 
 use super::{
     definitions::{cube5x5x5_kpuzzle, cube6x6x6_kpuzzle, cube7x7x7_kpuzzle},
     static_move_list::{add_random_suffixes_from, static_parsed_list, static_parsed_opt_list},
 };
 
+use crate::_internal::puzzle_traits::SemiGroupActionPuzzle;
+
 const NUM_5X5X5_RANDOM_MOVES: usize = 60;
 const NUM_6X6X6_RANDOM_MOVES: usize = 80;
 const NUM_7X7X7_RANDOM_MOVES: usize = 100;
 
-struct ScrambleInfo {
-    generators: SearchGenerators,
-    canonical_fsm: CanonicalFSM,
+struct ScrambleInfo<TPuzzle: SemiGroupActionPuzzle> {
+    generators: SearchGenerators<TPuzzle>,
+    canonical_fsm: CanonicalFSM<TPuzzle>,
 }
 
-impl ScrambleInfo {
-    pub fn new(kpuzzle: &KPuzzle, moves: Vec<Move>) -> Self {
+impl<TPuzzle: SemiGroupActionPuzzle> ScrambleInfo<TPuzzle> {
+    pub fn new(tpuzzle: &TPuzzle, moves: Vec<Move>) -> Self {
         let generators = SearchGenerators::try_new(
-            kpuzzle,
-            &crate::_internal::options::Generators::Custom(CustomGenerators {
-                moves,
-                algs: vec![],
-            }),
+            tpuzzle,
+            moves.iter().collect(),
             &crate::_internal::options::MetricEnum::Hand,
             false,
         )
         .unwrap();
-        let canonical_fsm = CanonicalFSM::try_new(generators.clone()).unwrap();
+        let canonical_fsm = CanonicalFSM::try_new(tpuzzle.clone(), generators.clone()).unwrap();
         Self {
             generators,
             canonical_fsm,
@@ -45,7 +41,7 @@ impl ScrambleInfo {
     }
 }
 
-static CUBE5X5X5_SCRAMBLE_INFO_CELL: OnceLock<ScrambleInfo> = OnceLock::new();
+static CUBE5X5X5_SCRAMBLE_INFO_CELL: OnceLock<ScrambleInfo<KPuzzle>> = OnceLock::new();
 pub fn scramble_5x5x5() -> Alg {
     let scramble_info = CUBE5X5X5_SCRAMBLE_INFO_CELL.get_or_init(|| {
         ScrambleInfo::new(
@@ -69,7 +65,7 @@ pub fn scramble_5x5x5_bld() -> Alg {
     add_random_suffixes_from(scramble_5x5x5(), [s1, s2])
 }
 
-static CUBE6X6X6_SCRAMBLE_INFO_CELL: OnceLock<ScrambleInfo> = OnceLock::new();
+static CUBE6X6X6_SCRAMBLE_INFO_CELL: OnceLock<ScrambleInfo<KPuzzle>> = OnceLock::new();
 pub fn scramble_6x6x6() -> Alg {
     let scramble_info = CUBE6X6X6_SCRAMBLE_INFO_CELL.get_or_init(|| {
         ScrambleInfo::new(
@@ -87,7 +83,7 @@ pub fn scramble_6x6x6() -> Alg {
     scramble_big_cube(scramble_info, NUM_6X6X6_RANDOM_MOVES)
 }
 
-static CUBE7X7X7_SCRAMBLE_INFO_CELL: OnceLock<ScrambleInfo> = OnceLock::new();
+static CUBE7X7X7_SCRAMBLE_INFO_CELL: OnceLock<ScrambleInfo<KPuzzle>> = OnceLock::new();
 pub fn scramble_7x7x7() -> Alg {
     let scramble_info = CUBE7X7X7_SCRAMBLE_INFO_CELL.get_or_init(|| {
         ScrambleInfo::new(
@@ -105,7 +101,7 @@ pub fn scramble_7x7x7() -> Alg {
     scramble_big_cube(scramble_info, NUM_7X7X7_RANDOM_MOVES)
 }
 
-fn scramble_big_cube(scramble_info: &ScrambleInfo, num_random_moves: usize) -> Alg {
+fn scramble_big_cube(scramble_info: &ScrambleInfo<KPuzzle>, num_random_moves: usize) -> Alg {
     // TODO: globally cache generators and `canonical_fsm` for each puzzle.
     let mut current_fsm_state = CANONICAL_FSM_START_STATE;
     let mut rng = thread_rng();

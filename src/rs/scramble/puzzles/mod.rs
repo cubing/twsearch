@@ -12,5 +12,4 @@ pub mod square1_phase_lookup_table;
 mod definitions;
 mod mask_pattern;
 
-pub mod indexed_vec; // TODO: avoid making this fully public
 mod static_move_list;

@@ -2,12 +2,15 @@ use clap::{Args, CommandFactory, Parser, Subcommand, ValueEnum};
 use clap_complete::generator::generate;
 use clap_complete::{Generator, Shell};
 use cubing::alg::{Alg, Move};
+use cubing::kpuzzle::KPuzzle;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::io::stdout;
 use std::path::PathBuf;
 use std::process::exit;
 use std::str::FromStr;
+
+use crate::_internal::puzzle_traits::GroupActionPuzzle;
 
 /// twsearch-cpp-wrapper — a native Rust wrapper for `twsearch` functionality.
 #[derive(Parser, Debug)]
@@ -145,6 +148,21 @@ pub struct GeneratorArgs {
 pub enum Generators {
     Default,
     Custom(CustomGenerators),
+}
+
+impl Generators {
+    pub fn enumerate_moves_for_kpuzzle<'a>(&'a self, kpuzzle: &'a KPuzzle) -> Vec<&'a Move> {
+        if let Generators::Custom(custom_generators) = self {
+            if !custom_generators.algs.is_empty() {
+                eprintln!("WARNING: Alg generators are not implemented yet. Ignoring.");
+            }
+        };
+
+        match self {
+            Generators::Default => kpuzzle.puzzle_definition_all_moves(),
+            Generators::Custom(generators) => generators.moves.iter().collect(),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]

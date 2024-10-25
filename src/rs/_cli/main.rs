@@ -146,10 +146,13 @@ fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
         }
     };
 
-    let mut idf_search = <IDFSearch>::try_new(
-        kpuzzle,
+    let mut idf_search = <IDFSearch<KPuzzle>>::try_new(
+        kpuzzle.clone(),
         target_pattern,
-        search_command_args.generator_args.parse(),
+        search_command_args
+            .generator_args
+            .parse()
+            .enumerate_moves_for_kpuzzle(&kpuzzle),
         Arc::new(SearchLogger {
             verbosity: search_command_args
                 .verbosity_args

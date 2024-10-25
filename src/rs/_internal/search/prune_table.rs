@@ -3,8 +3,9 @@ use std::sync::Arc;
 
 use thousands::Separable;
 
+use crate::_internal::puzzle_traits::SemiGroupActionPuzzle;
 use crate::_internal::{
-    CanonicalFSMState, MoveClassIndex, RecursiveWorkTracker, SearchLogger, SemiGroupActionPuzzle,
+    CanonicalFSMState, MoveClassIndex, RecursiveWorkTracker, SearchLogger,
     CANONICAL_FSM_START_STATE,
 };
 

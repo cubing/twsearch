@@ -2,12 +2,12 @@ use std::marker::PhantomData;
 
 /// Contains some direct convenience methods. Use `.0` to access the underlying array.
 #[derive(Debug)]
-pub struct IndexedVec<K: From<usize> + Into<usize> + Default, V>(pub(crate) Vec<V>, PhantomData<K>);
+pub struct IndexedVec<K: From<usize> + Into<usize> + Default, V>(pub Vec<V>, PhantomData<K>);
 
 impl<K: From<usize> + Into<usize> + Default, V> IndexedVec<K, V> {
-    // pub fn new(v: Vec<V>) -> Self {
-    //     Self(v, Default::default())
-    // }
+    pub fn new(v: Vec<V>) -> Self {
+        Self(v, Default::default())
+    }
 
     // Convenience wrapper
     pub fn push(&mut self, v: V) {
@@ -18,6 +18,7 @@ impl<K: From<usize> + Into<usize> + Default, V> IndexedVec<K, V> {
         &self.0[k.into()]
     }
 
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.0.len()
     }

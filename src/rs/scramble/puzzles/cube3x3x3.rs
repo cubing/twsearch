@@ -30,12 +30,12 @@ use super::{
 pub struct Scramble3x3x3TwoPhase {
     kpuzzle: KPuzzle,
 
-    filtering_idfs: IDFSearch,
+    filtering_idfs: IDFSearch<KPuzzle>,
 
     phase1_target_pattern: KPattern,
-    phase1_idfs: IDFSearch,
+    phase1_idfs: IDFSearch<KPuzzle>,
 
-    phase2_idfs: IDFSearch,
+    phase2_idfs: IDFSearch<KPuzzle>,
 }
 
 impl Default for Scramble3x3x3TwoPhase {

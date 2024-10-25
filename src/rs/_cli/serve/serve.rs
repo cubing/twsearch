@@ -87,13 +87,14 @@ fn solve_pattern(
         Ok(search_pattern) => search_pattern,
         Err(e) => return Response::text(e.to_string()).with_status_code(400),
     };
-    let mut search = match <IDFSearch>::try_new(
-        kpuzzle,
+    let mut search = match <IDFSearch<KPuzzle>>::try_new(
+        kpuzzle.clone(),
         target_pattern,
         Generators::Custom(CustomGenerators {
             moves: move_list.clone(),
             algs: vec![],
-        }),
+        })
+        .enumerate_moves_for_kpuzzle(&kpuzzle),
         search_logger,
         &MetricEnum::Hand, // TODO
         match args_for_individual_search.client_args {

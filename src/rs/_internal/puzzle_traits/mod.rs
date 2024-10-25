@@ -1,6 +1,4 @@
-mod buffers;
-pub(crate) use buffers::*;
-
+#[allow(clippy::module_inception)]
 mod puzzle_traits;
 pub(crate) use puzzle_traits::*;
 

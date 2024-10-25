@@ -1,4 +1,4 @@
-use crate::_internal::SemiGroupActionPuzzle;
+use crate::_internal::puzzle_traits::SemiGroupActionPuzzle;
 
 pub(crate) struct PatternStack<TPuzzle: SemiGroupActionPuzzle> {
     puzzle: TPuzzle,
@@ -29,7 +29,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> PatternStack<TPuzzle> {
             let (left, right) = self.stack.split_at_mut(self.current_idx);
 
             self.puzzle.pattern_apply_transformation_into(
-                &left.last().unwrap(),
+                left.last().unwrap(),
                 transformation,
                 right.first_mut().unwrap(),
             );

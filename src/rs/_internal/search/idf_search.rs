@@ -7,10 +7,10 @@ use cubing::alg::{Alg, AlgNode, Move};
 use serde::{Deserialize, Serialize};
 
 use crate::_internal::{
-    cli::options::{Generators, MetricEnum},
-    CanonicalFSM, CanonicalFSMState, GroupActionPuzzle, HashPruneTable, MoveClassIndex,
-    RecursiveWorkTracker, SearchError, SearchGenerators, SearchLogger, SemiGroupActionPuzzle,
-    CANONICAL_FSM_START_STATE,
+    cli::options::MetricEnum,
+    puzzle_traits::{GroupActionPuzzle, SemiGroupActionPuzzle},
+    CanonicalFSM, CanonicalFSMState, HashPruneTable, MoveClassIndex, RecursiveWorkTracker,
+    SearchError, SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
 use super::{AlwaysValid, PatternStack, PatternValidityChecker};
@@ -129,7 +129,7 @@ struct IndividualSearchData {
 
 pub struct IDFSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
     pub search_generators: SearchGenerators<TPuzzle>,
-    pub canonical_fsm: CanonicalFSM,
+    pub canonical_fsm: CanonicalFSM<TPuzzle>,
     pub tpuzzle: TPuzzle,
     pub target_pattern: TPuzzle::Pattern,
     pub search_logger: Arc<SearchLogger>,
@@ -151,19 +151,19 @@ impl<
     pub fn try_new(
         tpuzzle: TPuzzle,
         target_pattern: TPuzzle::Pattern,
-        generators: Generators,
+        generator_moves: Vec<&Move>, // TODO: turn this back into `Generators`
         search_logger: Arc<SearchLogger>,
         metric: &MetricEnum,
         random_start: bool,
         min_prune_table_size: Option<usize>,
     ) -> Result<Self, SearchError> {
         let search_generators =
-            SearchGenerators::try_new(&tpuzzle, &generators, metric, random_start)?;
-        let canonical_fsm = CanonicalFSM::try_new(search_generators.clone())?; // TODO: avoid a clone
+            SearchGenerators::try_new(&tpuzzle, generator_moves, metric, random_start)?;
+        let canonical_fsm = CanonicalFSM::try_new(tpuzzle.clone(), search_generators.clone())?; // TODO: avoid a clone
         let api_data = Arc::new(IDFSearchAPIData {
             search_generators,
             canonical_fsm,
-            tpuzzle,
+            tpuzzle: tpuzzle.clone(),
             target_pattern,
             search_logger: search_logger.clone(),
         });

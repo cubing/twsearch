@@ -68,7 +68,7 @@ const WEDGE_TYPE_LOOKUP: [WedgeType; NUM_WEDGES as usize] = [
     WedgeType::CornerUpper,
 ];
 
-struct Phase1Checker;
+pub struct Phase1Checker;
 
 const SLOTS_THAT_ARE_AFTER_SLICES: [u8; 4] = [0, 6, 12, 18];
 
@@ -146,51 +146,6 @@ pub fn scramble_square1() -> Alg {
 
     let kpuzzle = square1_unbandaged_kpuzzle();
     let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]); // TODO: cache
-
-    let (phase_lookup_table, search_generators) = build_phase_lookup_table::<Phase1Checker>(
-        kpuzzle.clone(),
-        &generators,
-        &square1_square_square_shape_kpattern().to_owned(),
-    );
-    // let idx = phase_lookup_table
-    //     .index_to_lookup_pattern
-    //     .at(PhasePatternIndex(0));
-    #[allow(non_snake_case)]
-    let U_SQ_ = phase_lookup_table.apply_move(PhasePatternIndex(0), FlatMoveIndex(22));
-    dbg!(U_SQ_);
-    dbg!(phase_lookup_table
-        .index_to_lookup_pattern
-        .at(U_SQ_.unwrap()));
-    dbg!(phase_lookup_table.apply_move(U_SQ_.unwrap(), FlatMoveIndex(10)));
-    #[allow(non_snake_case)]
-    let U_SQ_SLICE = phase_lookup_table
-        .index_to_lookup_pattern
-        .at(phase_lookup_table
-            .apply_move(U_SQ_.unwrap(), FlatMoveIndex(22))
-            .unwrap());
-    dbg!(U_SQ_SLICE);
-    dbg!(
-        U_SQ_,
-        phase_lookup_table
-            .move_application_table
-            .at(U_SQ_.unwrap())
-            .at(FlatMoveIndex(22))
-    );
-    dbg!(
-        U_SQ_,
-        phase_lookup_table
-            .index_to_lookup_pattern
-            .at(PhasePatternIndex(1))
-    );
-
-    dbg!(&search_generators.flat[10]);
-    dbg!(phase_lookup_table.lookup_pattern_to_index.get(
-        &LookupPattern::try_new::<Phase1Checker>(
-            &kpuzzle.default_pattern(),
-            square1_square_square_shape_kpattern(),
-        )
-        .unwrap(),
-    ));
 
     //     dbg!(wedge_parity(
     //         &kpuzzle

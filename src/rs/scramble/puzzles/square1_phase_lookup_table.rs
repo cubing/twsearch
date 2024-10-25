@@ -169,3 +169,116 @@ pub fn build_phase_lookup_table<C: PatternValidityChecker<KPuzzle>>(
         search_generators,
     )
 }
+
+#[cfg(test)]
+mod tests {
+    use cubing::alg::{parse_alg, parse_move};
+
+    use super::build_phase_lookup_table;
+    use crate::{
+        _internal::FlatMoveIndex,
+        scramble::{
+            puzzles::{
+                definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
+                square1::{wedge_parity, Phase1Checker},
+                square1_phase_lookup_table::{LookupPattern, PhasePatternIndex},
+            },
+            scramble_search::generators_from_vec_str,
+        },
+    };
+
+    #[test]
+    fn phase_lookup_table_test() {
+        let kpuzzle = square1_unbandaged_kpuzzle();
+        let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]);
+
+        let (phase_lookup_table, _search_generators) = build_phase_lookup_table::<Phase1Checker>(
+            kpuzzle.clone(),
+            &generators,
+            &square1_square_square_shape_kpattern().to_owned(),
+        );
+        let cube_pattern_index = PhasePatternIndex(0);
+
+        #[allow(non_snake_case)]
+        let U_SQ_move_index = FlatMoveIndex(0);
+
+        #[allow(non_snake_case)]
+        let U_SQ_pattern_index = phase_lookup_table
+            .apply_move(cube_pattern_index, U_SQ_move_index)
+            .unwrap();
+        dbg!(U_SQ_pattern_index);
+
+        let lookup_pattern = phase_lookup_table
+            .index_to_lookup_pattern
+            .at(U_SQ_pattern_index);
+
+        assert_eq!(
+            &U_SQ_pattern_index,
+            phase_lookup_table
+                .lookup_pattern_to_index
+                .get(lookup_pattern)
+                .unwrap(),
+        );
+
+        let other_pattern = kpuzzle.default_pattern()
+            .apply_move(&parse_move!("U_SQ_1"))
+            .unwrap();
+        let other_lookup_pattern =
+            &LookupPattern::try_new::<Phase1Checker>(&other_pattern, square1_square_square_shape_kpattern())
+                .unwrap();
+
+        assert_eq!(
+            &U_SQ_pattern_index,
+            phase_lookup_table
+                .lookup_pattern_to_index
+                .get(other_lookup_pattern)
+                .unwrap()
+        );
+
+        // <<< dbg!(phase_lookup_table
+        // <<<     .index_to_lookup_pattern
+        // <<<     .at(U_SQ_.unwrap()));
+        // <<< dbg!(phase_lookup_table.apply_move(U_SQ_.unwrap(), FlatMoveIndex(10)));
+        // <<< #[allow(non_snake_case)]
+        // <<< let U_SQ_SLICE = phase_lookup_table
+        // <<<     .index_to_lookup_pattern
+        // <<<     .at(phase_lookup_table
+        // <<<         .apply_move(U_SQ_.unwrap(), FlatMoveIndex(22))
+        // <<<         .unwrap());
+        // <<< dbg!(U_SQ_SLICE);
+        // <<< dbg!(
+        // <<<     U_SQ_,
+        // <<<     phase_lookup_table
+        // <<<         .move_application_table
+        // <<<         .at(U_SQ_.unwrap())
+        // <<<         .at(FlatMoveIndex(22))
+        // <<< );
+        // <<< dbg!(
+        // <<<     U_SQ_,
+        // <<<     phase_lookup_table
+        // <<<         .index_to_lookup_pattern
+        // <<<         .at(PhasePatternIndex(1))
+        // <<< );
+        // <<<
+        // <<< dbg!(&search_generators.flat[10]);
+        // <<< dbg!(phase_lookup_table.lookup_pattern_to_index.get(
+        // <<<     &LookupPattern::try_new::<Phase1Checker>(
+        // <<<         &kpuzzle.default_pattern(),
+        // <<<         &square1_square_square_shape_kpattern()
+        // <<<             .apply_alg(&parse_alg!("(1, 0)"))
+        // <<<             .unwrap(),
+        // <<<     )
+        // <<<     .unwrap(),
+        // <<< ));
+        // <<< dbg!(phase_lookup_table.lookup_pattern_to_index.get(
+        // <<<     &LookupPattern::try_new::<Phase1Checker>(
+        // <<<         &kpuzzle.default_pattern(),
+        // <<<         &square1_square_square_shape_kpattern()
+        // <<<             .apply_alg(&parse_alg!("(4, 0)"))
+        // <<<             .unwrap(),
+        // <<<     )
+        // <<<     .unwrap(),
+        // <<< ));
+        // <<< dbg!();
+    }
+}

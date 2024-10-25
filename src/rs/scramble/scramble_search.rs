@@ -25,12 +25,12 @@ pub fn generators_from_vec_str(move_str_list: Vec<&str>) -> Generators {
     })
 }
 
-pub(crate) fn idfs_with_target_pattern<ValidityChecker: PatternValidityChecker<KPuzzle>>(
+pub(crate) fn idfs_with_target_pattern<TPatternValidityChecker: PatternValidityChecker<KPuzzle>>(
     kpuzzle: &KPuzzle,
     generators: Generators,
     target_pattern: KPattern,
     min_prune_table_size: Option<usize>,
-) -> IDFSearch<KPuzzle, ValidityChecker> {
+) -> IDFSearch<KPuzzle, TPatternValidityChecker> {
     IDFSearch::try_new(
         kpuzzle.clone(),
         target_pattern,
@@ -46,26 +46,28 @@ pub(crate) fn idfs_with_target_pattern<ValidityChecker: PatternValidityChecker<K
     .unwrap()
 }
 
-pub(crate) fn basic_idfs<ValidityChecker: PatternValidityChecker<KPuzzle>>(
+pub(crate) fn basic_idfs<TPatternValidityChecker: PatternValidityChecker<KPuzzle>>(
     kpuzzle: &KPuzzle,
     generators: Generators,
     min_prune_table_size: Option<usize>,
     target_pattern: KPattern,
-) -> IDFSearch<KPuzzle, ValidityChecker> {
+) -> IDFSearch<KPuzzle, TPatternValidityChecker> {
     idfs_with_target_pattern(kpuzzle, generators, target_pattern, min_prune_table_size)
 }
 
-pub struct FilteredSearch<ValidityChecker: PatternValidityChecker<KPuzzle> = AlwaysValid> {
-    pub(crate) idfs: IDFSearch<KPuzzle, ValidityChecker>,
+pub struct FilteredSearch<TPatternValidityChecker: PatternValidityChecker<KPuzzle> = AlwaysValid> {
+    pub(crate) idfs: IDFSearch<KPuzzle, TPatternValidityChecker>,
 }
 
-impl<ValidityChecker: PatternValidityChecker<KPuzzle>> FilteredSearch<ValidityChecker> {
+impl<TPatternValidityChecker: PatternValidityChecker<KPuzzle>>
+    FilteredSearch<TPatternValidityChecker>
+{
     pub fn new(
         kpuzzle: &KPuzzle,
         generators: Generators,
         min_prune_table_size: Option<usize>,
         target_pattern: KPattern,
-    ) -> FilteredSearch<ValidityChecker> {
+    ) -> FilteredSearch<TPatternValidityChecker> {
         let idfs = basic_idfs(kpuzzle, generators, min_prune_table_size, target_pattern);
         Self { idfs }
     }

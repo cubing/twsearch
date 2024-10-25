@@ -69,16 +69,16 @@ impl<TPuzzle: SemiGroupActionPuzzle> HashPruneTableMutableData<TPuzzle> {
 
 pub struct HashPruneTable<
     TPuzzle: SemiGroupActionPuzzle,
-    ValidityChecker: PatternValidityChecker<TPuzzle>,
+    TPatternValidityChecker: PatternValidityChecker<TPuzzle>,
 > {
     // We would store a `tpuzzle` here, but the one stored in `.mutable` is sufficient.
     immutable: HashPruneTableImmutableData<TPuzzle>,
     mutable: HashPruneTableMutableData<TPuzzle>,
-    phantom_validity_checker: PhantomData<ValidityChecker>,
+    phantom_validity_checker: PhantomData<TPatternValidityChecker>,
 }
 
-impl<TPuzzle: SemiGroupActionPuzzle, ValidityChecker: PatternValidityChecker<TPuzzle>>
-    HashPruneTable<TPuzzle, ValidityChecker>
+impl<TPuzzle: SemiGroupActionPuzzle, TPatternValidityChecker: PatternValidityChecker<TPuzzle>>
+    HashPruneTable<TPuzzle, TPatternValidityChecker>
 {
     pub fn new(
         tpuzzle: TPuzzle,
@@ -205,7 +205,7 @@ impl<TPuzzle: SemiGroupActionPuzzle, ValidityChecker: PatternValidityChecker<TPu
                     current_pattern,
                     &move_transformation_info.transformation,
                 );
-                if !ValidityChecker::is_valid(&next_pattern) {
+                if !TPatternValidityChecker::is_valid(&next_pattern) {
                     mutable_data.set_invalid_depth(&next_pattern);
                     continue;
                 }

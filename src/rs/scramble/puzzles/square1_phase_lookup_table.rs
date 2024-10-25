@@ -33,7 +33,7 @@ impl Debug for LookupPattern {
 }
 
 impl LookupPattern {
-    pub fn try_new<ValidityChecker: PatternValidityChecker<KPuzzle>>(
+    pub fn try_new<TPatternValidityChecker: PatternValidityChecker<KPuzzle>>(
         full_pattern: &KPattern,
         phase_mask: &KPattern,
     ) -> Option<Self> {
@@ -41,7 +41,7 @@ impl LookupPattern {
             panic!("Mask application failed");
         };
 
-        if !ValidityChecker::is_valid(&masked_pattern) {
+        if !TPatternValidityChecker::is_valid(&masked_pattern) {
             return None;
         }
 

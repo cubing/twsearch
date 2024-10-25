@@ -137,10 +137,10 @@ pub struct IDFSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
 
 pub struct IDFSearch<
     TPuzzle: SemiGroupActionPuzzle, // TODO: = KPuzzle,
-    ValidityChecker: PatternValidityChecker<TPuzzle> = AlwaysValid,
+    TPatternValidityChecker: PatternValidityChecker<TPuzzle> = AlwaysValid,
 > {
     api_data: Arc<IDFSearchAPIData<TPuzzle>>,
-    pub prune_table: HashPruneTable<TPuzzle, ValidityChecker>,
+    pub prune_table: HashPruneTable<TPuzzle, TPatternValidityChecker>,
 }
 
 impl<

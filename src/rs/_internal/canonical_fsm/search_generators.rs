@@ -78,12 +78,13 @@ impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
             let amount_iterator: Vec<i32> = match (metric, order) {
                 (MetricEnum::Hand, order) => {
                     let original_amount = r#move.amount;
+                    let mod_amount = order * original_amount;
                     let max_positive_amount = order / 2;
-                    (original_amount..=order - original_amount)
+                    (original_amount..=mod_amount - original_amount)
                         .step_by(original_amount as usize)
                         .map(|amount| {
                             if amount > max_positive_amount {
-                                amount - order
+                                amount - mod_amount
                             } else {
                                 amount
                             }
@@ -112,14 +113,14 @@ impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
                     });
                 };
                 let info = MoveTransformationInfo {
-                    r#move: r#move.clone(),
+                    r#move: move_multiple.clone(),
                     // metric_turns: 1, // TODO
                     transformation,
                     flat_move_index: FlatMoveIndex(flat.len()),
                 };
                 multiples.push(info.clone());
                 flat.push(info.clone());
-                by_move.insert(r#move.clone(), (move_class_index, info));
+                by_move.insert(move_multiple, (move_class_index, info));
             }
             grouped.push(multiples);
         }

@@ -14,5 +14,8 @@ pub use search_logger::*;
 mod check_pattern;
 pub use check_pattern::*;
 
-mod kpattern_stack;
-pub(crate) use kpattern_stack::*;
+mod pattern_stack;
+pub(crate) use pattern_stack::*;
+
+mod indexed_vec;
+pub use indexed_vec::*;

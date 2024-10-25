@@ -16,7 +16,10 @@ pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
 
     let search_generators = SearchGenerators::try_new(
         &kpuzzle,
-        &benchmark_args.generator_args.parse(),
+        benchmark_args
+            .generator_args
+            .parse()
+            .enumerate_moves_for_kpuzzle(&kpuzzle),
         &benchmark_args.metric_args.metric,
         false,
     )

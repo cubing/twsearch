@@ -12,3 +12,5 @@ pub use errors::*;
 
 mod search;
 pub use search::*;
+
+pub mod puzzle_traits;

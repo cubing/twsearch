@@ -66,10 +66,10 @@ pub fn wasmTwsearch(
         None => Generators::Default,
     };
 
-    let idfs = <IDFSearch>::try_new(
-        kpuzzle,
+    let idfs = <IDFSearch<KPuzzle>>::try_new(
+        kpuzzle.clone(),
         target_pattern,
-        generators,
+        generators.enumerate_moves_for_kpuzzle(&kpuzzle),
         Arc::new(SearchLogger::default()),
         &MetricEnum::Hand,
         true,

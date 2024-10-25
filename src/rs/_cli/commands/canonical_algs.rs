@@ -10,12 +10,15 @@ pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), CommandError> {
 
     let search_generators = SearchGenerators::try_new(
         &kpuzzle,
-        &args.generator_args.parse(),
+        args.generator_args
+            .parse()
+            .enumerate_moves_for_kpuzzle(&kpuzzle),
         &args.metric_args.metric,
         false,
     )?;
 
-    let canonical_fsm = CanonicalFSM::try_new(search_generators).expect("Expected to work!");
+    let canonical_fsm =
+        CanonicalFSM::try_new(kpuzzle, search_generators).expect("Expected to work!");
     dbg!(canonical_fsm);
 
     Ok(())

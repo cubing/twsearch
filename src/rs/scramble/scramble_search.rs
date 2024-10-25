@@ -25,16 +25,16 @@ pub fn generators_from_vec_str(move_str_list: Vec<&str>) -> Generators {
     })
 }
 
-pub(crate) fn idfs_with_target_pattern<T: PatternValidityChecker>(
+pub(crate) fn idfs_with_target_pattern<ValidityChecker: PatternValidityChecker<KPuzzle>>(
     kpuzzle: &KPuzzle,
     generators: Generators,
     target_pattern: KPattern,
     min_prune_table_size: Option<usize>,
-) -> IDFSearch<T> {
+) -> IDFSearch<KPuzzle, ValidityChecker> {
     IDFSearch::try_new(
         kpuzzle.clone(),
         target_pattern,
-        generators,
+        generators.enumerate_moves_for_kpuzzle(kpuzzle),
         Arc::new(SearchLogger {
             verbosity: VerbosityLevel::Silent,
             // verbosity: VerbosityLevel::Info, //<<<
@@ -46,20 +46,20 @@ pub(crate) fn idfs_with_target_pattern<T: PatternValidityChecker>(
     .unwrap()
 }
 
-pub(crate) fn basic_idfs<ValidityChecker: PatternValidityChecker>(
+pub(crate) fn basic_idfs<ValidityChecker: PatternValidityChecker<KPuzzle>>(
     kpuzzle: &KPuzzle,
     generators: Generators,
     min_prune_table_size: Option<usize>,
     target_pattern: KPattern,
-) -> IDFSearch<ValidityChecker> {
+) -> IDFSearch<KPuzzle, ValidityChecker> {
     idfs_with_target_pattern(kpuzzle, generators, target_pattern, min_prune_table_size)
 }
 
-pub struct FilteredSearch<ValidityChecker: PatternValidityChecker = AlwaysValid> {
-    pub(crate) idfs: IDFSearch<ValidityChecker>,
+pub struct FilteredSearch<ValidityChecker: PatternValidityChecker<KPuzzle> = AlwaysValid> {
+    pub(crate) idfs: IDFSearch<KPuzzle, ValidityChecker>,
 }
 
-impl<ValidityChecker: PatternValidityChecker> FilteredSearch<ValidityChecker> {
+impl<ValidityChecker: PatternValidityChecker<KPuzzle>> FilteredSearch<ValidityChecker> {
     pub fn new(
         kpuzzle: &KPuzzle,
         generators: Generators,

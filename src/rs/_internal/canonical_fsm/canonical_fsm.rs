@@ -1,11 +1,10 @@
 use std::{
     collections::HashMap,
+    marker::PhantomData,
     ops::{AddAssign, BitAndAssign},
 };
 
-use cubing::kpuzzle::KTransformation;
-
-use crate::_internal::{SearchError, SearchGenerators};
+use crate::_internal::{puzzle_traits::SemiGroupActionPuzzle, SearchError, SearchGenerators};
 
 const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
 
@@ -20,10 +19,6 @@ impl BitAndAssign for MoveClassMask {
     fn bitand_assign(&mut self, rhs: Self) {
         self.0 = self.0 & rhs.0
     }
-}
-
-fn do_transformations_commute(t1: &KTransformation, t2: &KTransformation) -> bool {
-    t1.apply_transformation(t2) == t2.apply_transformation(t1)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
@@ -79,7 +74,7 @@ impl StateToMask {
 }
 
 #[derive(Debug)]
-pub struct CanonicalFSM {
+pub struct CanonicalFSM<TPuzzle: SemiGroupActionPuzzle> {
     // disallowed_move_classes, indexed by state ordinal, holds the set of move classes that should
     // not be made from this state.
     // disallowed_move_classes: StateToMask,
@@ -87,11 +82,16 @@ pub struct CanonicalFSM {
     pub(crate) next_state_lookup: Vec<Vec<CanonicalFSMState>>,
     // commutes: Vec<MoveClassMask>,
     pub(crate) move_class_indices: Vec<MoveClassIndex>,
+
+    phantom_data: PhantomData<TPuzzle>,
 }
 
-impl CanonicalFSM {
+impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
     // TODO: Return a more specific error.
-    pub fn try_new(generators: SearchGenerators) -> Result<CanonicalFSM, SearchError> {
+    pub fn try_new(
+        tpuzzle: TPuzzle,
+        generators: SearchGenerators<TPuzzle>,
+    ) -> Result<CanonicalFSM<TPuzzle>, SearchError> {
         let num_move_classes = generators.by_move_class.len();
         if num_move_classes > MAX_NUM_MOVE_CLASSES {
             return Err(SearchError {
@@ -112,9 +112,9 @@ impl CanonicalFSM {
         // - T-perm and `(R2 U2)3` commute.
         for i in 0..num_move_classes {
             for j in 0..num_move_classes {
-                if !do_transformations_commute(
-                    &generators.by_move_class[i][0].transformation,
-                    &generators.by_move_class[j][0].transformation,
+                if !tpuzzle.do_moves_commute(
+                    &generators.by_move_class[i][0],
+                    &generators.by_move_class[j][0],
                 ) {
                     commutes[i] &= MoveClassMask(!(1 << j));
                     commutes[j] &= MoveClassMask(!(1 << i));
@@ -199,6 +199,7 @@ impl CanonicalFSM {
             next_state_lookup,
             // commutes,
             move_class_indices,
+            phantom_data: PhantomData,
         })
     }
 

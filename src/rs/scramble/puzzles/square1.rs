@@ -147,17 +147,12 @@ pub fn scramble_square1() -> Alg {
     let kpuzzle = square1_unbandaged_kpuzzle();
     let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]); // TODO: cache
 
-    //     dbg!(wedge_parity(
-    //         &kpuzzle
-    //             .default_pattern()
-    //             .apply_alg(&parse_alg!(
-    //                 "(0, 5) / (3, 0) / (-5, -2) / (3, -3) / (5, -4) / (0, -3) / (-3, 0) / (-3, -3)
-    // / U_SQ_2' D_SQ_ / U_SQ_'"
-    //             ))
-    //             .unwrap()
-    //     ));
-    //     exit(1);
-    //
+    let (phase_lookup_table, _search_generators) = build_phase_lookup_table::<Phase1Checker>(
+        kpuzzle.clone(),
+        &generators,
+        &square1_square_square_shape_kpattern().to_owned(),
+    );
+
     loop {
         let mut scramble_pattern = kpuzzle.default_pattern();
 

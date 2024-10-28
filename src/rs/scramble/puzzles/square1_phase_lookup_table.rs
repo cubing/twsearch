@@ -183,6 +183,7 @@ mod tests {
                 square1::{wedge_parity, Phase1Checker},
                 square1_phase_lookup_table::{LookupPattern, PhasePatternIndex},
             },
+            randomize::BasicParity,
             scramble_search::generators_from_vec_str,
         },
     };
@@ -220,12 +221,20 @@ mod tests {
                 .unwrap(),
         );
 
-        let other_pattern = kpuzzle.default_pattern()
+        let other_pattern = kpuzzle
+            .default_pattern()
             .apply_move(&parse_move!("U_SQ_1"))
             .unwrap();
-        let other_lookup_pattern =
-            &LookupPattern::try_new::<Phase1Checker>(&other_pattern, square1_square_square_shape_kpattern())
-                .unwrap();
+
+        dbg!(&other_pattern);
+        dbg!(wedge_parity(&other_pattern));
+        assert_eq!(BasicParity::Odd, wedge_parity(&other_pattern));
+
+        let other_lookup_pattern = &LookupPattern::try_new::<Phase1Checker>(
+            &other_pattern,
+            square1_square_square_shape_kpattern(),
+        )
+        .unwrap();
 
         assert_eq!(
             &U_SQ_pattern_index,
@@ -234,51 +243,5 @@ mod tests {
                 .get(other_lookup_pattern)
                 .unwrap()
         );
-
-        // <<< dbg!(phase_lookup_table
-        // <<<     .index_to_lookup_pattern
-        // <<<     .at(U_SQ_.unwrap()));
-        // <<< dbg!(phase_lookup_table.apply_move(U_SQ_.unwrap(), FlatMoveIndex(10)));
-        // <<< #[allow(non_snake_case)]
-        // <<< let U_SQ_SLICE = phase_lookup_table
-        // <<<     .index_to_lookup_pattern
-        // <<<     .at(phase_lookup_table
-        // <<<         .apply_move(U_SQ_.unwrap(), FlatMoveIndex(22))
-        // <<<         .unwrap());
-        // <<< dbg!(U_SQ_SLICE);
-        // <<< dbg!(
-        // <<<     U_SQ_,
-        // <<<     phase_lookup_table
-        // <<<         .move_application_table
-        // <<<         .at(U_SQ_.unwrap())
-        // <<<         .at(FlatMoveIndex(22))
-        // <<< );
-        // <<< dbg!(
-        // <<<     U_SQ_,
-        // <<<     phase_lookup_table
-        // <<<         .index_to_lookup_pattern
-        // <<<         .at(PhasePatternIndex(1))
-        // <<< );
-        // <<<
-        // <<< dbg!(&search_generators.flat[10]);
-        // <<< dbg!(phase_lookup_table.lookup_pattern_to_index.get(
-        // <<<     &LookupPattern::try_new::<Phase1Checker>(
-        // <<<         &kpuzzle.default_pattern(),
-        // <<<         &square1_square_square_shape_kpattern()
-        // <<<             .apply_alg(&parse_alg!("(1, 0)"))
-        // <<<             .unwrap(),
-        // <<<     )
-        // <<<     .unwrap(),
-        // <<< ));
-        // <<< dbg!(phase_lookup_table.lookup_pattern_to_index.get(
-        // <<<     &LookupPattern::try_new::<Phase1Checker>(
-        // <<<         &kpuzzle.default_pattern(),
-        // <<<         &square1_square_square_shape_kpattern()
-        // <<<             .apply_alg(&parse_alg!("(4, 0)"))
-        // <<<             .unwrap(),
-        // <<<     )
-        // <<<     .unwrap(),
-        // <<< ));
-        // <<< dbg!();
     }
 }

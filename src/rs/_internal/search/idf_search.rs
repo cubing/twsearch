@@ -1,6 +1,9 @@
-use std::sync::{
-    mpsc::{channel, Receiver, Sender},
-    Arc,
+use std::{
+    marker::PhantomData,
+    sync::{
+        mpsc::{channel, Receiver, Sender},
+        Arc,
+    },
 };
 
 use cubing::alg::{Alg, AlgNode, Move};
@@ -13,7 +16,7 @@ use crate::_internal::{
     SearchError, SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
-use super::{AlwaysValid, PatternStack, PatternValidityChecker};
+use super::{AlwaysValid, PatternStack, PatternValidityChecker, PruneTable};
 
 const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase
 
@@ -138,9 +141,12 @@ pub struct IDFSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
 pub struct IDFSearch<
     TPuzzle: SemiGroupActionPuzzle, // TODO: = KPuzzle,
     TPatternValidityChecker: PatternValidityChecker<TPuzzle> = AlwaysValid,
+    TPruneTable: PruneTable<TPuzzle> = HashPruneTable<TPuzzle, TPatternValidityChecker>,
 > {
     api_data: Arc<IDFSearchAPIData<TPuzzle>>,
-    pub prune_table: HashPruneTable<TPuzzle, TPatternValidityChecker>,
+    pub prune_table: TPruneTable,
+
+    phantom_data: PhantomData<TPatternValidityChecker>,
 }
 
 impl<
@@ -177,6 +183,7 @@ impl<
         Ok(Self {
             api_data,
             prune_table,
+            phantom_data: PhantomData,
         })
     }
 

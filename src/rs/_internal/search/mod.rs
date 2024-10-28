@@ -2,8 +2,11 @@
 mod idf_search;
 pub use idf_search::*;
 
-mod prune_table;
-pub(crate) use prune_table::*;
+mod hash_prune_table;
+pub(crate) use hash_prune_table::*;
+
+mod prune_table_trait;
+pub(crate) use prune_table_trait::*;
 
 mod recursive_work_tracker;
 pub(crate) use recursive_work_tracker::*;

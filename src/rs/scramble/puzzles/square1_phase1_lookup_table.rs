@@ -7,14 +7,14 @@ use std::{
 
 use cubing::{
     alg::parse_move,
-    kpuzzle::{InvalidAlgError, KPattern, KPuzzle},
+    kpuzzle::{InvalidAlgError, InvalidMoveError, KPattern, KPuzzle},
 };
 
 use crate::{
     _internal::{
         options::{Generators, MetricEnum},
         puzzle_traits::{MoveCount, SemiGroupActionPuzzle},
-        FlatMoveIndex, IndexedVec, PatternValidityChecker, PruneTable, SearchGenerators,
+        Depth, FlatMoveIndex, IndexedVec, PatternValidityChecker, PruneTable, SearchGenerators,
     },
     index_type,
     scramble::randomize::BasicParity,
@@ -68,6 +68,8 @@ pub struct Square1Phase1LookupTableData {
     pub coordinates_to_index: HashMap<Square1Phase1Coordinates, PhaseCoordinatesIndex>,
     pub move_application_table:
         IndexedVec<PhaseCoordinatesIndex, IndexedVec<FlatMoveIndex, Option<PhaseCoordinatesIndex>>>,
+    pub exact_prune_table: IndexedVec<PhaseCoordinatesIndex, Depth>,
+    search_generators: SearchGenerators<KPuzzle>, // TODO: avoid `KPuzzle`
 }
 
 #[derive(Debug)]
@@ -113,7 +115,7 @@ pub fn build_phase1_lookup_table(
         IndexedVec::<PhaseCoordinatesIndex, Square1Phase1Coordinates>::default();
     let mut coordinates_to_index =
         HashMap::<Square1Phase1Coordinates, PhaseCoordinatesIndex>::default();
-    let mut exact_prune_table = IndexedVec::<PhaseCoordinatesIndex, usize>::default();
+    let mut exact_prune_table = IndexedVec::<PhaseCoordinatesIndex, Depth>::default();
 
     let mut index_to_representative_full_pattern =
         IndexedVec::<PhaseCoordinatesIndex, KPattern>::default();
@@ -133,7 +135,7 @@ pub fn build_phase1_lookup_table(
         let index = index_to_lookup_pattern.len();
         index_to_lookup_pattern.push(lookup_pattern.clone());
         coordinates_to_index.insert(lookup_pattern, PhaseCoordinatesIndex(index));
-        exact_prune_table.push(depth);
+        exact_prune_table.push(Depth(depth));
 
         for move_transformation_info in &search_generators.flat {
             fringe.push_back((
@@ -184,6 +186,8 @@ pub fn build_phase1_lookup_table(
         index_to_coordinates: index_to_lookup_pattern,
         coordinates_to_index,
         move_application_table,
+        exact_prune_table,
+        search_generators: search_generators.clone(),
     });
     (Square1Phase1LookupTable { data }, search_generators)
 }
@@ -201,10 +205,6 @@ impl SemiGroupActionPuzzle for Square1Phase1LookupTable {
 
     type Transformation = FlatMoveIndex;
 
-    fn puzzle_default_pattern(&self) -> Self::Pattern {
-        todo!()
-    }
-
     fn move_order(&self, r#move: &cubing::alg::Move) -> Result<MoveCount, InvalidAlgError> {
         square1_unbandaged_kpuzzle().move_order(r#move) // TODO
     }
@@ -213,7 +213,12 @@ impl SemiGroupActionPuzzle for Square1Phase1LookupTable {
         &self,
         r#move: &cubing::alg::Move,
     ) -> Result<Self::Transformation, InvalidAlgError> {
-        todo!()
+        let Some(by_move) = self.data.search_generators.by_move.get(r#move) else {
+            return Err(InvalidAlgError::InvalidMove(InvalidMoveError {
+                description: format!("Invalid move: {}", r#move),
+            }));
+        };
+        Ok(by_move.1.flat_move_index)
     }
 
     fn do_moves_commute(
@@ -250,27 +255,29 @@ impl SemiGroupActionPuzzle for Square1Phase1LookupTable {
     }
 }
 
-pub struct Square1Phase1PruneTable {}
+pub struct Square1Phase1PruneTable {
+    tpuzzle: Square1Phase1LookupTable, // TODO: store just the prune table here
+}
 
 impl PruneTable<Square1Phase1LookupTable> for Square1Phase1PruneTable {
     fn new(
         tpuzzle: Square1Phase1LookupTable,
-        search_api_data: Arc<crate::_internal::IDFSearchAPIData<Square1Phase1LookupTable>>,
-        search_logger: Arc<crate::_internal::SearchLogger>,
-        min_size: Option<usize>,
+        _search_api_data: Arc<crate::_internal::IDFSearchAPIData<Square1Phase1LookupTable>>,
+        _search_logger: Arc<crate::_internal::SearchLogger>,
+        _min_size: Option<usize>,
     ) -> Self {
-        build_phase1_lookup_table(tpuzzle, search_api_data.search_generators, phase_mask)
+        Self { tpuzzle }
     }
 
     fn lookup(
         &self,
         coordinates: &<Square1Phase1LookupTable as SemiGroupActionPuzzle>::Pattern,
-    ) -> usize {
-        todo!()
+    ) -> Depth {
+        *self.tpuzzle.data.exact_prune_table.at(*coordinates)
     }
 
-    fn extend_for_search_depth(&mut self, search_depth: usize, approximate_num_entries: usize) {
-        todo!()
+    fn extend_for_search_depth(&mut self, _search_depth: Depth, _approximate_num_entries: usize) {
+        // nothing
     }
 }
 
@@ -297,7 +304,7 @@ mod tests {
         let kpuzzle = square1_unbandaged_kpuzzle();
         let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]);
 
-        let (phase_lookup_table, _search_generators) = build_phase1_lookup_table::<Phase1Checker>(
+        let (phase_lookup_table, _search_generators) = build_phase1_lookup_table(
             kpuzzle.clone(),
             &generators,
             &square1_square_square_shape_kpattern().to_owned(),
@@ -336,7 +343,7 @@ mod tests {
         dbg!(wedge_parity(&other_pattern));
         assert_eq!(BasicParity::Odd, wedge_parity(&other_pattern));
 
-        let other_lookup_pattern = &Square1Phase1Coordinates::try_new::<Phase1Checker>(
+        let other_lookup_pattern = &Square1Phase1Coordinates::try_new(
             &other_pattern,
             square1_square_square_shape_kpattern(),
         )

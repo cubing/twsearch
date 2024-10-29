@@ -11,9 +11,9 @@ impl SemiGroupActionPuzzle for KPuzzle {
     type Pattern = KPattern;
     type Transformation = KTransformation;
 
-    fn puzzle_default_pattern(&self) -> Self::Pattern {
-        self.default_pattern()
-    }
+    // fn puzzle_default_pattern(&self) -> Self::Pattern {
+    //     self.default_pattern()
+    // }
 
     fn move_order(&self, r#move: &Move) -> Result<MoveCount, InvalidAlgError> {
         let transformation = self.puzzle_transformation_from_move(r#move)?;

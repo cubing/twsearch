@@ -21,9 +21,8 @@ pub trait SemiGroupActionPuzzle: Debug + Clone {
     /// - An index or reference into an array that encodes how to apply it
     type Transformation: Eq + Clone + Debug;
 
-    /********* Functions "defined on the puzzle". ********/
-
-    fn puzzle_default_pattern(&self) -> Self::Pattern;
+    // /********* Functions "defined on the puzzle". ********/
+    // fn puzzle_default_pattern(&self) -> Self::Pattern;
 
     /********* Functions "defined on the move". ********/
 

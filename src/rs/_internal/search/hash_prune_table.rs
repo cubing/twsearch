@@ -23,7 +23,7 @@ const MAX_PRUNE_TABLE_DEPTH: PruneTableEntryType = PruneTableEntryType::MAX - 2;
 const DEFAULT_MIN_PRUNE_TABLE_SIZE: usize = 1 << 20;
 
 struct HashPruneTableImmutableData<TPuzzle: SemiGroupActionPuzzle> {
-    search_api_data: Arc<IDFSearchAPIData<TPuzzle>>,
+    target_pattern: TPuzzle::Pattern,
 }
 struct HashPruneTableMutableData<TPuzzle: SemiGroupActionPuzzle> {
     tpuzzle: TPuzzle,
@@ -80,37 +80,6 @@ pub struct HashPruneTable<
 impl<TPuzzle: SemiGroupActionPuzzle, TPatternValidityChecker: PatternValidityChecker<TPuzzle>>
     HashPruneTable<TPuzzle, TPatternValidityChecker>
 {
-    pub fn new(
-        tpuzzle: TPuzzle,
-        search_api_data: Arc<IDFSearchAPIData<TPuzzle>>,
-        search_logger: Arc<SearchLogger>,
-        min_size: Option<usize>,
-    ) -> Self {
-        let min_size = match min_size {
-            Some(min_size) => min_size.next_power_of_two(),
-            None => DEFAULT_MIN_PRUNE_TABLE_SIZE,
-        };
-        let mut prune_table = Self {
-            immutable: HashPruneTableImmutableData { search_api_data },
-            mutable: HashPruneTableMutableData {
-                tpuzzle,
-                min_size,
-                prune_table_size: min_size,
-                prune_table_index_mask: min_size - 1,
-                current_pruning_depth: 0,
-                pattern_hash_to_depth: vec![0; min_size],
-                recursive_work_tracker: RecursiveWorkTracker::new(
-                    "Prune table".to_owned(),
-                    search_logger.clone(),
-                ),
-                search_logger,
-            },
-            phantom_validity_checker: PhantomData,
-        };
-        prune_table.extend_for_search_depth(0, 1);
-        prune_table
-    }
-
     // TODO: dedup with IDFSearch?
     // TODO: Store a reference to `search_api_data` so that you can't accidentally pass in the wrong `search_api_data`?
     fn recurse(
@@ -168,6 +137,37 @@ impl<TPuzzle: SemiGroupActionPuzzle, TPatternValidityChecker: PatternValidityChe
 impl<TPuzzle: SemiGroupActionPuzzle, TPatternValidityChecker: PatternValidityChecker<TPuzzle>>
     PruneTable<TPuzzle> for HashPruneTable<TPuzzle, TPatternValidityChecker>
 {
+    fn new(
+        tpuzzle: TPuzzle,
+        search_api_data: Arc<IDFSearchAPIData<TPuzzle>>,
+        search_logger: Arc<SearchLogger>,
+        min_size: Option<usize>,
+    ) -> Self {
+        let min_size = match min_size {
+            Some(min_size) => min_size.next_power_of_two(),
+            None => DEFAULT_MIN_PRUNE_TABLE_SIZE,
+        };
+        let mut prune_table = Self {
+            immutable: HashPruneTableImmutableData { search_api_data },
+            mutable: HashPruneTableMutableData {
+                tpuzzle,
+                min_size,
+                prune_table_size: min_size,
+                prune_table_index_mask: min_size - 1,
+                current_pruning_depth: 0,
+                pattern_hash_to_depth: vec![0; min_size],
+                recursive_work_tracker: RecursiveWorkTracker::new(
+                    "Prune table".to_owned(),
+                    search_logger.clone(),
+                ),
+                search_logger,
+            },
+            phantom_validity_checker: PhantomData,
+        };
+        prune_table.extend_for_search_depth(0, 1);
+        prune_table
+    }
+
     // Returns a heuristic depth for the given pattern.
     fn lookup(&self, pattern: &TPuzzle::Pattern) -> usize {
         self.mutable.lookup(pattern)
@@ -220,7 +220,7 @@ impl<TPuzzle: SemiGroupActionPuzzle, TPatternValidityChecker: PatternValidityChe
             Self::recurse(
                 &self.immutable,
                 &mut self.mutable,
-                &self.immutable.search_api_data.target_pattern,
+                &self.immutable.target_pattern,
                 CANONICAL_FSM_START_STATE,
                 depth,
             );

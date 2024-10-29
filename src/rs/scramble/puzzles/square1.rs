@@ -12,9 +12,8 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::{
-    _internal::{FlatMoveIndex, PatternValidityChecker},
+    _internal::{AlwaysValid, IDFSearch, PatternValidityChecker, SearchLogger},
     scramble::{
-        puzzles::square1_phase_lookup_table::LookupPattern,
         randomize::{basic_parity, BasicParity, PieceZeroConstraint},
         scramble_search::FilteredSearch,
     },
@@ -29,7 +28,10 @@ use super::{
     },
     definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
     mask_pattern::mask,
-    square1_phase_lookup_table::{build_phase_lookup_table, PhasePatternIndex},
+    square1_phase1_lookup_table::{
+        build_phase1_lookup_table, Square1Phase1Coordinates, Square1Phase1LookupTable,
+        Square1Phase1PruneTable,
+    },
 };
 
 #[derive(PartialEq, Eq)]
@@ -147,11 +149,43 @@ pub fn scramble_square1() -> Alg {
     let kpuzzle = square1_unbandaged_kpuzzle();
     let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]); // TODO: cache
 
-    let (phase_lookup_table, _search_generators) = build_phase_lookup_table::<Phase1Checker>(
-        kpuzzle.clone(),
-        &generators,
-        &square1_square_square_shape_kpattern().to_owned(),
-    );
+    let (square1_phase1_lookup_table, _search_generators) =
+        build_phase1_lookup_table::<Phase1Checker>(
+            kpuzzle.clone(),
+            &generators,
+            &square1_square_square_shape_kpattern().to_owned(),
+        );
+
+    let mut scramble_pattern = kpuzzle.default_pattern().apply_alg(&parse_alg!("/"));
+    let phase1_target_pattern = square1_phase1_lookup_table
+        .data
+        .coordinates_to_index
+        .get(
+            &Square1Phase1Coordinates::try_new(
+                &kpuzzle.default_pattern(),
+                square1_square_square_shape_kpattern(),
+            )
+            .unwrap(),
+        )
+        .unwrap()
+        .clone();
+    let generic_idfs =
+        IDFSearch::<Square1Phase1LookupTable, AlwaysValid, Square1Phase1PruneTable>::try_new(
+            square1_phase1_lookup_table,
+            phase1_target_pattern.clone(),
+            vec![
+                &parse_move!("U_SQ_"),
+                &parse_move!("D_SQ_"),
+                &parse_move!("_SLASH_"),
+            ],
+            SearchLogger {
+                verbosity: crate::_internal::options::VerbosityLevel::Info,
+            }
+            .into(),
+            &crate::_internal::options::MetricEnum::Hand,
+            false,
+            None,
+        );
 
     loop {
         let mut scramble_pattern = kpuzzle.default_pattern();

@@ -10,10 +10,9 @@ use cubing::alg::{Alg, AlgNode, Move};
 use serde::{Deserialize, Serialize};
 
 use crate::_internal::{
-    cli::options::MetricEnum,
-    puzzle_traits::{GroupActionPuzzle, SemiGroupActionPuzzle},
-    CanonicalFSM, CanonicalFSMState, HashPruneTable, MoveClassIndex, RecursiveWorkTracker,
-    SearchError, SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
+    cli::options::MetricEnum, puzzle_traits::SemiGroupActionPuzzle, CanonicalFSM,
+    CanonicalFSMState, HashPruneTable, MoveClassIndex, RecursiveWorkTracker, SearchError,
+    SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
 use super::{AlwaysValid, PatternStack, PatternValidityChecker, PruneTable};
@@ -150,9 +149,10 @@ pub struct IDFSearch<
 }
 
 impl<
-        TPuzzle: GroupActionPuzzle, // TOOD: SemiGroupActionPuzzle
+        TPuzzle: SemiGroupActionPuzzle,
         ValidityChecker: PatternValidityChecker<TPuzzle>,
-    > IDFSearch<TPuzzle, ValidityChecker>
+        TPruneTable: PruneTable<TPuzzle>,
+    > IDFSearch<TPuzzle, ValidityChecker, TPruneTable>
 {
     pub fn try_new(
         tpuzzle: TPuzzle,
@@ -174,7 +174,7 @@ impl<
             search_logger: search_logger.clone(),
         });
 
-        let prune_table = HashPruneTable::new(
+        let prune_table = TPruneTable::new(
             tpuzzle,
             api_data.clone(),
             search_logger,

@@ -249,7 +249,6 @@ impl SemiGroupActionPuzzle for Square1Phase1LookupTable {
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
     ) -> Option<Self::Pattern> {
-        println!("{:?}, {:?}", pattern, transformation_to_apply);
         self.apply_move(*pattern, *transformation_to_apply)
     }
 

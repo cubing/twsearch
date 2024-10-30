@@ -29,7 +29,6 @@ impl<TPuzzle: SemiGroupActionPuzzle> PatternStack<TPuzzle> {
 
     #[must_use]
     pub fn push(&mut self, transformation: &TPuzzle::Transformation) -> bool {
-        println!("##{}, {:?}", self.current_idx, &self);
         if self.current_idx + 1 >= self.stack.len() {
             let Some(pattern) = self
                 .puzzle
@@ -39,8 +38,6 @@ impl<TPuzzle: SemiGroupActionPuzzle> PatternStack<TPuzzle> {
             };
             self.stack.push(pattern)
         } else {
-            println!("{}, {:?}", self.current_idx, &self);
-
             // We have to use `split_at_mut` so that we can borrow both the read and write entries at the same time: https://doc.rust-lang.org/nomicon/borrow-splitting.html
             let (left, right) = self.stack.split_at_mut(self.current_idx + 1);
 

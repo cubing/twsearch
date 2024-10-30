@@ -155,7 +155,7 @@ pub fn scramble_square1() -> Alg {
     let scramble_pattern = square1_phase1_lookup_table.full_pattern_to_coordinates(
         &kpuzzle
             .default_pattern()
-            .apply_alg(&parse_alg!("/"))
+            .apply_alg(&parse_alg!("(0, 5) / (1, 4) / (5, -1) / (-3, 0) / (-2, -2) / (5, -3) / (0, -3) / (3, 0) / (5, 0) / (1, 0) / (-4, 0) / (-4, 0) /"))
             .unwrap(),
     );
     let phase1_target_pattern =
@@ -181,15 +181,23 @@ pub fn scramble_square1() -> Alg {
 
     // println!(
     //     "{}",
-    generic_idfs
+    let mut last_solution: Alg = parse_alg!("/");
+    for (i, solution) in generic_idfs
         .search(
             &scramble_pattern,
             IndividualSearchOptions {
+                min_num_solutions: Some(1_000_000),
                 ..Default::default()
             },
         )
-        .next()
-        .unwrap()
+        .enumerate()
+    {
+        if (i + 1) % 100_000 == 0 {
+            println!("{} // Phase 1 solution #{}", solution, i + 1)
+        }
+        last_solution = solution;
+    }
+    last_solution
     // );
 
     // sleep(Duration::from_secs(10));

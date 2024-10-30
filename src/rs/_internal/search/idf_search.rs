@@ -189,7 +189,6 @@ impl<
     ) -> Result<Self, SearchError> {
         let search_generators =
             SearchGenerators::try_new(&tpuzzle, generator_moves, metric, random_start)?;
-        dbg!(&search_generators);
         let canonical_fsm = CanonicalFSM::try_new(tpuzzle.clone(), search_generators.clone())?; // TODO: avoid a clone
         let api_data = Arc::new(IDFSearchAPIData {
             search_generators,
@@ -335,7 +334,6 @@ impl<
             .iter()
             .enumerate()
         {
-            dbg!(move_class_index);
             let Some(next_state) = self
                 .api_data
                 .canonical_fsm

@@ -198,12 +198,13 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> SemiGroupActionPuzzle
         &self,
         r#move: &cubing::alg::Move,
     ) -> Result<Self::Transformation, InvalidAlgError> {
-        let Some(by_move) = self.data.search_generators.by_move.get(r#move) else {
+        let Some((_, move_transformation_info)) = self.data.search_generators.by_move.get(r#move)
+        else {
             return Err(InvalidAlgError::InvalidMove(InvalidMoveError {
                 description: format!("Invalid move: {}", r#move),
             }));
         };
-        Ok(by_move.1.flat_move_index)
+        Ok(move_transformation_info.flat_move_index)
     }
 
     fn do_moves_commute(

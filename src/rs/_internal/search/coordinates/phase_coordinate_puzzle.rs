@@ -47,26 +47,26 @@ struct PhaseCoordinateLookupTables<
     TPuzzle: SemiGroupActionPuzzle,
     TSemanticCoordinate: SemanticCoordinate<TPuzzle>,
 > {
-    puzzle: TPuzzle,
+    pub(crate) puzzle: TPuzzle,
 
-    semantic_coordinate_to_index: HashMap<TSemanticCoordinate, PhaseCoordinateIndex>,
-    move_application_table:
+    pub(crate) semantic_coordinate_to_index: HashMap<TSemanticCoordinate, PhaseCoordinateIndex>,
+    pub(crate) move_application_table:
         IndexedVec<PhaseCoordinateIndex, IndexedVec<FlatMoveIndex, Option<PhaseCoordinateIndex>>>,
-    exact_prune_table: ExactCoordinatePruneTable,
+    pub(crate) exact_prune_table: ExactCoordinatePruneTable,
 
-    search_generators: SearchGenerators<TPuzzle>, // TODO: avoid `KPuzzle`
+    pub(crate) search_generators: SearchGenerators<TPuzzle>, // TODO: avoid `KPuzzle`
 
     // This is useful for testing and debugging.
     #[allow(unused)]
-    pub index_to_semantic_coordinate: IndexedVec<PhaseCoordinateIndex, TSemanticCoordinate>, // TODO: support optimizations when the size is known ahead of time
+    pub(crate) index_to_semantic_coordinate: IndexedVec<PhaseCoordinateIndex, TSemanticCoordinate>, // TODO: support optimizations when the size is known ahead of time
 
-    phantom_data: PhantomData<TSemanticCoordinate>,
+    pub(crate) phantom_data: PhantomData<TSemanticCoordinate>,
 }
 
 // TODO: Genericize this to `TPuzzle`.
 #[derive(Clone, Debug)]
 pub struct PhaseCoordinatePuzzle<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> {
-    data: Arc<PhaseCoordinateLookupTables<KPuzzle, TSemanticCoordinate>>,
+    pub(crate) data: Arc<PhaseCoordinateLookupTables<KPuzzle, TSemanticCoordinate>>,
 }
 
 impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> PhaseCoordinatePuzzle<TSemanticCoordinate> {
@@ -221,6 +221,8 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> SemiGroupActionPuzzle
         move1_info: &MoveTransformationInfo<Self>,
         move2_info: &MoveTransformationInfo<Self>,
     ) -> bool {
+        // TODO: Place this in a trait for the semantic coordinate or
+        eprintln!("Using a naïve move commutation heuristic");
         move1_info.r#move.quantum == move2_info.r#move.quantum
     }
 

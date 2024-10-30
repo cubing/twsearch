@@ -89,7 +89,10 @@ impl GodsAlgorithmSearch {
                 .0
                 .iter()
                 .enumerate()
-                .map(|(i, info)| {
+                .map(|(i, (flat_move_index, info))| {
+                    if flat_move_index != FlatMoveIndex(i) {
+                        panic!("Flat move indexing is out of order");
+                    }
                     if info.flat_move_index.0 != i {
                         panic!("Flat move indexing is out of order");
                     }

@@ -10,7 +10,7 @@ use super::{
     super::randomize::{
         randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
-    super::scramble_search::{generators_from_vec_str, simple_filtered_search},
+    super::scramble_search::simple_filtered_search,
     definitions::tetraminx_kpuzzle,
 };
 
@@ -51,7 +51,7 @@ pub fn scramble_pyraminx() -> Alg {
             }))
         }
 
-        let generators = generators_from_vec_str(vec!["U", "L", "R", "B"]); // TODO: cache
+        let generators = move_list_from_vec(vec!["U", "L", "R", "B"]); // TODO: cache
         if let Some(scramble) = simple_filtered_search(
             &scramble_pattern,
             generators,

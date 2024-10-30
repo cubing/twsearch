@@ -1,12 +1,15 @@
 use cubing::alg::Alg;
 
-use crate::{_internal::MoveCount, scramble::randomize::PieceZeroConstraint};
+use crate::{
+    _internal::MoveCount,
+    scramble::{randomize::PieceZeroConstraint, scramble_search::move_list_from_vec},
+};
 
 use super::{
     super::randomize::{
         randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
-    super::scramble_search::{generators_from_vec_str, simple_filtered_search},
+    super::scramble_search::simple_filtered_search,
     definitions::skewb_fixed_corner_with_co_tweaks_kpuzzle,
 };
 
@@ -89,7 +92,7 @@ pub fn scramble_skewb() -> Alg {
             PieceZeroConstraint::AnyPositionAndOrientation,
         );
 
-        let generators = generators_from_vec_str(vec!["U", "L", "R", "B"]); // TODO: cache
+        let generators = move_list_from_vec(vec!["U", "L", "R", "B"]); // TODO: cache
         if let Some(scramble) = simple_filtered_search(
             &scramble_pattern,
             generators,

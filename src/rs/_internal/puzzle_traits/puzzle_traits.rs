@@ -64,7 +64,7 @@ pub trait GroupActionPuzzle: SemiGroupActionPuzzle {
     // ) -> Result<Self::Transformation, InvalidAlgError>;
     // fn puzzle_identity_transformation(&self) -> Self::Transformation; // TODO: also define this on `KPuzzle` itself.
     //                                                                   // TODO: should this return owned `Move`s?
-    fn puzzle_definition_all_moves(&self) -> Vec<&Move>;
+    fn puzzle_definition_all_moves(&self) -> Vec<Move>;
 
     // /********* Functions "defined on the transformation". ********/
     // // fn transformation_puzzle(transformation: &Self::Transformation) -> &Self; // TODO: add an additional trait for this.

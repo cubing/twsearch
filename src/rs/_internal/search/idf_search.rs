@@ -1,5 +1,6 @@
 use std::{
     fmt::Debug,
+    io::{stdout, Write},
     marker::PhantomData,
     sync::{
         mpsc::{channel, Receiver, Sender},
@@ -8,7 +9,7 @@ use std::{
 };
 
 use cubing::{
-    alg::{Alg, AlgNode, Move},
+    alg::{parse_move, Alg, AlgNode, Move},
     kpuzzle::KPuzzle,
 };
 use serde::{Deserialize, Serialize};
@@ -167,21 +168,23 @@ impl DefaultSearchOptimizations<KPuzzle> for KPuzzle {
 
 pub struct IDFSearch<
     TPuzzle: SemiGroupActionPuzzle + DefaultSearchOptimizations<TPuzzle> = KPuzzle,
-    P: SearchOptimizations<TPuzzle> = <TPuzzle as DefaultSearchOptimizations<TPuzzle>>::Optimizations,
+    Optimizations: SearchOptimizations<TPuzzle> = <TPuzzle as DefaultSearchOptimizations<
+        TPuzzle,
+    >>::Optimizations,
 > {
     api_data: Arc<IDFSearchAPIData<TPuzzle>>,
-    pub prune_table: P::PruneTable,
+    pub prune_table: Optimizations::PruneTable,
 }
 
 impl<
         TPuzzle: SemiGroupActionPuzzle + DefaultSearchOptimizations<TPuzzle>,
-        P: SearchOptimizations<TPuzzle>,
-    > IDFSearch<TPuzzle, P>
+        Optimizations: SearchOptimizations<TPuzzle>,
+    > IDFSearch<TPuzzle, Optimizations>
 {
     pub fn try_new(
         tpuzzle: TPuzzle,
         target_pattern: TPuzzle::Pattern,
-        generator_moves: Vec<&Move>, // TODO: turn this back into `Generators`
+        generator_moves: Vec<Move>, // TODO: turn this back into `Generators`
         search_logger: Arc<SearchLogger>,
         metric: &MetricEnum,
         random_start: bool,
@@ -198,7 +201,7 @@ impl<
             search_logger: search_logger.clone(),
         });
 
-        let prune_table = P::PruneTable::new(
+        let prune_table = Optimizations::PruneTable::new(
             tpuzzle,
             api_data.clone(),
             search_logger,
@@ -305,7 +308,7 @@ impl<
     ) -> SearchRecursionResult {
         let current_pattern = pattern_stack.current_pattern();
         // TODO: apply invalid checks only to intermediate state (i.e. exclude remaining_depth == 0)?
-        if !P::PatternValidityChecker::is_valid(current_pattern) {
+        if !Optimizations::PatternValidityChecker::is_valid(current_pattern) {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
 
@@ -427,8 +430,8 @@ impl<
             return SearchRecursionResult::ContinueSearchingDefault();
         }
 
-        individual_search_data.num_solutions_sofar += 1;
         let alg = Alg::from(solution_moves);
+        individual_search_data.num_solutions_sofar += 1;
         individual_search_data
             .solution_sender
             .send(Some(alg))

@@ -1,20 +1,31 @@
-use std::{env, time::Instant};
+use std::{
+    env,
+    io::{stdout, Write},
+    time::{Duration, Instant},
+};
 
 use cubing::{
     alg::{parse_alg, parse_move, Alg},
     kpuzzle::{KPattern, KPuzzle},
 };
+use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
     _internal::{
-        AlwaysValid, DefaultSearchOptimizations, IDFSearch, IndividualSearchOptions,
-        PatternValidityChecker, SearchLogger, SearchOptimizations,
+        AlwaysValid, DefaultSearchOptimizations, Depth, HashPruneTable, IDFSearch,
+        IndividualSearchOptions, PatternValidityChecker, SearchLogger, SearchOptimizations,
     },
-    scramble::randomize::{basic_parity, BasicParity},
+    scramble::{
+        puzzles::mask_pattern::mask,
+        randomize::{
+            basic_parity, randomize_orbit_naïve, BasicParity, OrbitOrientationConstraint,
+            OrbitPermutationConstraint, PieceZeroConstraint,
+        },
+        scramble_search::{move_list_from_vec, FilteredSearch},
+    },
 };
 
 use super::{
-    super::scramble_search::generators_from_vec_str,
     definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
     square1_phase1_lookup_table::{
         build_phase1_lookup_table, Square1Phase1LookupTable, Square1Phase1PruneTable,
@@ -84,43 +95,43 @@ impl PatternValidityChecker<KPuzzle> for Phase1Checker {
     }
 }
 
-// struct Phase2Checker;
+struct Phase2Checker;
 
-// impl PatternValidityChecker<KPuzzle> for Phase2Checker {
-//     fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
-//         let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
-//         assert_eq!(orbit_info.name.0, "WEDGES");
+impl PatternValidityChecker<KPuzzle> for Phase2Checker {
+    fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
+        let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
+        assert_eq!(orbit_info.name.0, "WEDGES");
 
-//         for slot in [0, 1, 2, 12, 13, 14] {
-//             let value = unsafe {
-//                 pattern
-//                     .packed_orbit_data()
-//                     .get_raw_piece_or_permutation_value(orbit_info, slot)
-//             };
-//             let wedge_type = &WEDGE_TYPE_LOOKUP[value as usize];
+        for slot in [0, 1, 2, 12, 13, 14] {
+            let value = unsafe {
+                pattern
+                    .packed_orbit_data()
+                    .get_raw_piece_or_permutation_value(orbit_info, slot)
+            };
+            let wedge_type = &WEDGE_TYPE_LOOKUP[value as usize];
 
-//             if *wedge_type == WedgeType::CornerUpper && (slot == 0 || slot == 12) {
-//                 // We can't slice.
-//                 return false;
-//             }
+            if *wedge_type == WedgeType::CornerUpper && (slot == 0 || slot == 12) {
+                // We can't slice.
+                return false;
+            }
 
-//             for slot_offset in [3, 6, 9] {
-//                 let offset_value = unsafe {
-//                     pattern
-//                         .packed_orbit_data()
-//                         .get_raw_piece_or_permutation_value(orbit_info, slot + slot_offset)
-//                 };
-//                 let offset_wedge_type = &WEDGE_TYPE_LOOKUP[offset_value as usize];
+            for slot_offset in [3, 6, 9] {
+                let offset_value = unsafe {
+                    pattern
+                        .packed_orbit_data()
+                        .get_raw_piece_or_permutation_value(orbit_info, slot + slot_offset)
+                };
+                let offset_wedge_type = &WEDGE_TYPE_LOOKUP[offset_value as usize];
 
-//                 if wedge_type != offset_wedge_type {
-//                     return false;
-//                 }
-//             }
-//         }
+                if wedge_type != offset_wedge_type {
+                    return false;
+                }
+            }
+        }
 
-//         true
-//     }
-// }
+        true
+    }
+}
 
 pub struct Square1Phase1Optimizations {}
 impl SearchOptimizations<Square1Phase1LookupTable> for Square1Phase1Optimizations {
@@ -130,6 +141,14 @@ impl SearchOptimizations<Square1Phase1LookupTable> for Square1Phase1Optimization
 
 impl DefaultSearchOptimizations<Square1Phase1LookupTable> for Square1Phase1LookupTable {
     type Optimizations = Square1Phase1Optimizations;
+}
+
+struct Square1Phase2Optimizations {}
+
+impl SearchOptimizations<KPuzzle> for Square1Phase2Optimizations {
+    type PatternValidityChecker = Phase2Checker;
+
+    type PruneTable = HashPruneTable<KPuzzle, Phase2Checker>;
 }
 
 pub fn scramble_square1() -> Alg {
@@ -144,31 +163,23 @@ pub fn scramble_square1() -> Alg {
     }
 
     let kpuzzle = square1_unbandaged_kpuzzle();
-    let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]); // TODO: cache
 
     let (square1_phase1_lookup_table, _search_generators) = build_phase1_lookup_table(
         kpuzzle.clone(),
-        &generators,
         &square1_square_square_shape_kpattern().to_owned(),
     );
 
-    let scramble_pattern = square1_phase1_lookup_table.full_pattern_to_coordinates(
-        &kpuzzle
-            .default_pattern()
-            .apply_alg(&parse_alg!("(0, 5) / (1, 4) / (5, -1) / (-3, 0) / (-2, -2) / (5, -3) / (0, -3) / (3, 0) / (5, 0) / (1, 0) / (-4, 0) / (-4, 0) /"))
-            .unwrap(),
-    );
+    let scramble_pattern = random_pattern();
+
+    let phase1_start_pattern =
+        square1_phase1_lookup_table.full_pattern_to_coordinates(&random_pattern());
     let phase1_target_pattern =
         square1_phase1_lookup_table.full_pattern_to_coordinates(&kpuzzle.default_pattern());
     let mut generic_idfs =
         IDFSearch::<Square1Phase1LookupTable, Square1Phase1Optimizations>::try_new(
             square1_phase1_lookup_table,
             phase1_target_pattern,
-            vec![
-                &parse_move!("U_SQ_"),
-                &parse_move!("D_SQ_"),
-                &parse_move!("_SLASH_"),
-            ],
+            vec![parse_move!("U_SQ_"), parse_move!("D_SQ_"), parse_move!("/")],
             SearchLogger {
                 verbosity: crate::_internal::options::VerbosityLevel::Info,
             }
@@ -179,48 +190,145 @@ pub fn scramble_square1() -> Alg {
         )
         .unwrap();
 
-    // println!(
-    //     "{}",
-
-    let start_time = Instant::now();
-    let mut last_solution: Alg = parse_alg!("/");
+    // let start_time = Instant::now();
+    // let mut last_solution: Alg = parse_alg!("/");
     let num_solutions = 1_000_000;
-    for (i, solution) in generic_idfs
-        .search(
-            &scramble_pattern,
-            IndividualSearchOptions {
-                min_num_solutions: Some(num_solutions),
-                ..Default::default()
-            },
-        )
-        .enumerate()
-    {
-        if (i + 1) % (num_solutions / 10) == 0 {
-            println!(
-                "// Phase 1 solution #{}
-{}
-",
-                i + 1,
-                solution
-            )
-        }
-        last_solution = solution;
-    }
-    println!(
-        "Elapsed time to find {} solutions for phase 1 test: {:?}
-",
-        num_solutions,
-        Instant::now() - start_time
+    let phase1_search = generic_idfs.search(
+        &phase1_start_pattern,
+        IndividualSearchOptions {
+            min_num_solutions: Some(num_solutions),
+            ..Default::default()
+        },
     );
-    last_solution
+    // for (i, solution) in phase1_search.enumerate() {
+    //     if (i + 1) % (num_solutions / 10) == 0 {
+    //         println!(
+    //             "// Phase 1 solution #{}
+    // {}
+    // ",
+    //             i + 1,
+    //             solution
+    //         )
+    //     }
+    //     last_solution = solution;
+    // }
+    // println!(
+    //     "Elapsed time to find {} solutions for phase 1 test: {:?}
+    // ",
+    //     num_solutions,
+    //     Instant::now() - start_time
     // );
 
-    // sleep(Duration::from_secs(10));
+    // todo!();
+
+    // let generators2 = generators_from_vec_str(vec!["US", "DS", "UUU", "DDD"]); // TODO: cache
+    let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "_SLASH_"]); // TODO: cache
+    let mut phase2_filtered_search = FilteredSearch::<KPuzzle, Square1Phase2Optimizations>::new(
+        kpuzzle,
+        generator_moves,
+        None, // TODO
+        kpuzzle.default_pattern(),
+    );
+
+    println!("PHASE1ING");
+
+    let start_time = Instant::now();
+    let mut num_phase2_starts = 0;
+    let mut phase1_start_time = Instant::now();
+    let mut phase1_cumulative_time = Duration::default();
+    let mut phase2_cumulative_time = Duration::default();
+    #[allow(non_snake_case)]
+    let _SLASH_ = &parse_move!("/");
+    'phase1_loop: for mut phase1_solution in phase1_search {
+        phase1_cumulative_time += Instant::now() - phase1_start_time;
+
+        // TODO: Push the candidate check into a trait for `IDFSearch`.
+        while let Some(cubing::alg::AlgNode::MoveNode(r#move)) = phase1_solution.nodes.last() {
+            if r#move == _SLASH_
+            // TODO: redundant parsing
+            {
+                break;
+            }
+            // Discard equivalent phase 1 solutions (reduces redundant phase 2 searches by a factor of 16).
+            if r#move.amount > 2 || r#move.amount < 0 {
+                phase1_start_time = Instant::now();
+                continue 'phase1_loop;
+            }
+            phase1_solution.nodes.pop();
+        }
+
+        let phase2_start_pattern = scramble_pattern.apply_alg(&phase1_solution).unwrap();
+
+        num_phase2_starts += 1;
+        // println!("\n{}", phase1_solution);
+        // println!("\nSearching for a phase2 solution");
+        let phase2_start_time = Instant::now();
+        let phase2_solution = phase2_filtered_search
+            .search(
+                &phase2_start_pattern,
+                Some(1),
+                None,
+                Some(Depth(17)), // <<< needs explanation
+            )
+            .next();
+
+        if let Some(mut phase2_solution) = phase2_solution {
+            let mut nodes = phase1_solution.nodes;
+            nodes.append(&mut phase2_solution.nodes);
+            dbg!(&phase1_start_pattern);
+
+            // <<< return Alg { nodes }.invert()
+            return Alg { nodes }; // because slash' is not a valid move we can print
+        }
+        phase2_cumulative_time += Instant::now() - phase2_start_time;
+
+        let cumulative_time = Instant::now() - start_time;
+        if num_phase2_starts % 100 == 0 {
+            println!(
+                    "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2, {:?} in phase transition\n",
+                    num_phase2_starts,
+                    phase1_cumulative_time,
+                    phase2_cumulative_time,
+                    cumulative_time - phase1_cumulative_time - phase2_cumulative_time,
+                )
+        }
+
+        phase1_start_time = Instant::now();
+    }
+
+    panic!("at the (lack of) disco(very)")
+}
+
+pub fn wedge_parity(pattern: &KPattern) -> BasicParity {
+    let wedge_orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
+    assert_eq!(wedge_orbit_info.name.0, "WEDGES");
+
+    let mut bandaged_wedges = Vec::<u8>::default();
+    for slot in 0..NUM_WEDGES {
+        let value = unsafe {
+            pattern
+                .packed_orbit_data()
+                .get_raw_piece_or_permutation_value(wedge_orbit_info, slot)
+        };
+        if WEDGE_TYPE_LOOKUP[value as usize] != WedgeType::CornerUpper {
+            bandaged_wedges.push(value);
+        }
+    }
+    basic_parity(&bandaged_wedges)
+}
+
+fn random_pattern() -> KPattern {
+    let mut rng = thread_rng();
+
+    square1_unbandaged_kpuzzle()
+        .default_pattern()
+        .apply_alg(&parse_alg!(
+            "(0, -1) / (4, -2) / (5, -1) / (4, -5) / (0, -3) / (-1, -3) / (3, 0) / (-3, 0) / (4, 0) / (4, 0) /"
+        ))
+        .unwrap()
 
     // loop {
-    //     let mut scramble_pattern = kpuzzle.default_pattern();
-
-    //     let mut rng = thread_rng();
+    //     let mut scramble_pattern = square1_unbandaged_kpuzzle().default_pattern();
 
     //     let mut deep_wedges = vec![
     //         vec![0, 1],
@@ -241,7 +349,6 @@ pub fn scramble_square1() -> Alg {
     //         vec![22, 23],
     //     ];
     //     deep_wedges.shuffle(&mut rng);
-
     //     let wedge_orbit_info = &scramble_pattern.kpuzzle().clone().data.ordered_orbit_info[0];
     //     assert_eq!(wedge_orbit_info.name.0, "WEDGES");
     //     for (i, value) in deep_wedges.into_iter().flatten().enumerate() {
@@ -261,207 +368,14 @@ pub fn scramble_square1() -> Alg {
     //         PieceZeroConstraint::KeepSolved,
     //     );
 
-    //     // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("U_SQ_3 D_SQ_ _SLASH_")).unwrap();
-    //     // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("_SLASH_ U_SQ_3 D_SQ_ _SLASH_")).unwrap();
-
-    //     // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("U_SQ_2' _SLASH_ U_SQ_5 D_SQ_2 _SLASH_ U_SQ_4 D_SQ_2' _SLASH_")).unwrap();
-    //     // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("U_SQ_3 D_SQ_2 _SLASH_ D_SQ_")).unwrap();
-    //     // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("(U_SQ_5' D_SQ_0) / (U_SQ_0 D_SQ_3) / (U_SQ_3 D_SQ_0) / (U_SQ_' D_SQ_4') / (U_SQ_4 D_SQ_2') / (U_SQ_5 D_SQ_4') / (U_SQ_2' D_SQ_0) / (U_SQ_0 D_SQ_3') / (U_SQ_' D_SQ_0) / (U_SQ_3 D_SQ_4') / (U_SQ_4 D_SQ_2') /")).unwrap();
-    //     // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("(U_SQ_4 D_SQ_3) / (U_SQ_' D_SQ_') / (U_SQ_0 D_SQ_3') / (U_SQ_3' D_SQ_3') / (U_SQ_ D_SQ_2') / (U_SQ_3' D_SQ_4') / (U_SQ_3 D_SQ_0) / (U_SQ_4' D_SQ_5') / (U_SQ_3' D_SQ_0) / (U_SQ_4' D_SQ_0) / (U_SQ_0 D_SQ_2')")).unwrap();
-    //     // <<< let scramble_pattern = scramble_pattern.apply_alg(&parse_alg!("(U_SQ_0 D_SQ_5) / (U_SQ_ D_SQ_5') / (U_SQ_0 D_SQ_3') / (U_SQ_3 D_SQ_0) / (U_SQ_4' D_SQ_') / (U_SQ_3' D_SQ_3') / (U_SQ_0 D_SQ_5') / (U_SQ_3' D_SQ_3') / (U_SQ_4' D_SQ_0) / (U_SQ_0 D_SQ_5') / (U_SQ_4 D_SQ_3') / (U_SQ_0 D_SQ_2') /")).unwrap();
-
-    //     let scramble_pattern = kpuzzle
-    //         .default_pattern()
-    //         .apply_alg(&parse_alg!(
-    //             // this is square-square
-    //             // "(0, 5) / (3, 0) / (-5, -2) / (3, -3) / (5, -4) / (0, -3) / (-3, 0) / (-3, -3)"
-
-    //             // this is not square-square
-    //             "(0, -1) / (0, -3) / (0, -3) / (-2, -2) / (-3, -4) / (-3, 0) / (0, -3) / (-5, 0) / (5, 0) / (-2, -3) / (0, -4) / (-5, 0) / (0, -2) /"
-    //         ))
-    //         .unwrap();
-
+    //     // TODO: do this check without masking.
     //     let phase1_start_pattern =
     //         mask(&scramble_pattern, square1_square_square_shape_kpattern()).unwrap();
 
-    //     if !Phase1Checker::is_valid(&phase1_start_pattern) {
-    //         println!("discarding invalid scramble"); //<<<
-    //         continue;
+    //     if Phase1Checker::is_valid(&phase1_start_pattern) {
+    //         return scramble_pattern;
     //     }
 
-    //     dbg!(&phase1_start_pattern.to_data());
-
-    //     // dbg!(
-    //     //     &phase1_start_pattern
-    //     //         .apply_alg(&parse_alg!("(3, 3) / (-1, 1)"))
-    //     //         .unwrap()
-    //     //         == square1_square_square_shape_kpattern()
-    //     // );
-    //     // <<<
-    //     dbg!(&square1_square_square_shape_kpattern().to_data());
-
-    //     // <<< if let Some(solution) = simple_filtered_search(&phase1_start_pattern, generators, 11, None) {
-
-    //     // let direct = simple_filtered_search(
-    //     //     &phase1_start_pattern,
-    //     //     generators.clone(),
-    //     //     0,
-    //     //     None,
-    //     // )
-    //     // .unwrap();
-    //     // println!("{}", direct);
-
-    //     let mut phase1_filtered_search = FilteredSearch::<Phase1Checker>::new(
-    //         kpuzzle,
-    //         generators.clone(),
-    //         None,
-    //         square1_square_square_shape_kpattern().clone(),
-    //     );
-
-    //     // let generators2 = generators_from_vec_str(vec!["US", "DS", "UUU", "DDD"]); // TODO: cache
-    //     let mut phase2_filtered_search = FilteredSearch::<Phase2Checker>::new(
-    //         kpuzzle,
-    //         generators,
-    //         None, // TODO
-    //         kpuzzle.default_pattern(),
-    //     );
-    //     // phase2_filtered_search
-    //     //     .idfs
-    //     //     .prune_table
-    //     //     .extend_for_search_depth(11, 6140878);
-
-    //     println!("PHASE1ING");
-
-    //     let start_time = Instant::now();
-    //     let mut odd_parity_counter = 0;
-    //     let mut num_phase2_starts = 0;
-    //     let mut phase1_start_time = Instant::now();
-    //     let mut phase1_cumulative_time = Duration::default();
-    //     let mut phase2_cumulative_time = Duration::default();
-    //     let mut parity_check_cumulative_time = Duration::default();
-    //     'phase1_loop: for mut phase1_solution in phase1_filtered_search.search(
-    //         &phase1_start_pattern,
-    //         Some(10_000_000), // see "le tired' below
-    //         None,
-    //         Some(Depth(18)), // Max phase 1 length
-    //     ) {
-    //         phase1_cumulative_time += Instant::now() - phase1_start_time;
-
-    //         let phase2_start_pattern_for_parity =
-    //             scramble_pattern.apply_alg(&phase1_solution).unwrap();
-
-    //         // println!("--------\n{}", phase1_solution);
-    //         let parity_check_start_time = Instant::now();
-    //         let par = wedge_parity(&phase2_start_pattern_for_parity);
-    //         // println!("{:?}", par);
-    //         // println!("{:?}", wedge_parity(&kpuzzle.default_pattern()
-    //         //     .apply_alg(&parse_alg!("(0, 5) / (3, 0) / (-5, -2) / (3, -3) / (5, -4) / (0, -3) / (-3, 0) / (-3, -3)")).unwrap()
-    //         //     .apply_alg(&phase1_solution).unwrap())
-    //         // );
-    //         // println!("{:?}", par == BasicParity::Odd);
-    //         parity_check_cumulative_time += Instant::now() - parity_check_start_time;
-    //         if par == BasicParity::Odd {
-    //             odd_parity_counter += 1;
-    //             phase1_start_time = Instant::now();
-    //             continue;
-    //         }
-
-    //         while let Some(cubing::alg::AlgNode::MoveNode(r#move)) = phase1_solution.nodes.last() {
-    //             if r#move == &parse_move!("_SLASH_'")
-    //             // TODO: redundant parsing
-    //             {
-    //                 break;
-    //             }
-    //             // Discard equivalent phase 1 solutions (reduces redundant phase 2 searches by a factor of 16).
-    //             if r#move.amount > 2 || r#move.amount < 0 {
-    //                 phase1_start_time = Instant::now();
-    //                 continue 'phase1_loop;
-    //             }
-    //             phase1_solution.nodes.pop();
-    //         }
-
-    //         let phase2_start_pattern = scramble_pattern.apply_alg(&phase1_solution).unwrap();
-
-    //         num_phase2_starts += 1;
-    //         // println!("\n{}", phase1_solution);
-    //         // println!("\nSearching for a phase2 solution");
-    //         print!(".");
-    //         let _ = stdout().flush();
-    //         let phase2_solution = phase2_filtered_search
-    //             .search(
-    //                 &phase2_start_pattern,
-    //                 Some(1),
-    //                 None,
-    //                 Some(Depth(17)), // <<< needs explanation
-    //             )
-    //             .next();
-
-    //         let phase2_start_time = Instant::now();
-    //         if let Some(mut phase2_solution) = phase2_solution {
-    //             let mut nodes = phase1_solution.nodes;
-    //             nodes.append(&mut phase2_solution.nodes);
-    //             dbg!(&scramble_pattern.to_data());
-
-    //             // <<< return Alg { nodes }.invert()
-    //             return Alg { nodes }; // because slash' is not a valid move we can print
-    //         }
-    //         phase2_cumulative_time += Instant::now() - phase2_start_time;
-
-    //         let cumulative_time = Instant::now() - start_time;
-    //         if num_phase2_starts % 100 == 0 {
-    //             println!(
-    //                 "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2, {:?} in phase transition, {:?} in parity check, {:?} odd parities\n",
-    //                 num_phase2_starts,
-    //                 phase1_cumulative_time,
-    //                 phase2_cumulative_time,
-    //                 cumulative_time - phase1_cumulative_time - phase2_cumulative_time,
-    //                 parity_check_cumulative_time,
-    //                 odd_parity_counter,
-    //             )
-    //         }
-
-    //         phase1_start_time = Instant::now();
-    //     }
-
-    //     panic!("I am le tired, I give up");
-
-    //     // <<< return Alg {
-    //     // <<<     nodes: phase1_solution.nodes,
-    //     // <<< }; //<<<
-
-    //     // <<< while let Some(cubing::alg::AlgNode::MoveNode(r#move)) = phase1_solution.nodes.last() {
-    //     // <<<     if r#move == &parse_move!("_SLASH_'")
-    //     // <<<     // TODO: redundant parsing
-    //     // <<<     {
-    //     // <<<         break;
-    //     // <<<     }
-    //     // <<<     phase1_solution.nodes.pop();
-    //     // <<< }
-    //     // <<< dbg!(&parse_move!("/")); //<<<
-
-    //     // dbg!(basic_parity(phase2_start_pattern.));
-
-    //     // if let Some(solution) = filtered_search.generate_scramble(&phase1_start_pattern, 0) {
-    //     //     //<<<
-    //     //     return solution.invert();
-    //     // }
+    //     println!("discarding invalid scramble"); //<<<}
     // }
-}
-
-pub fn wedge_parity(pattern: &KPattern) -> BasicParity {
-    let wedge_orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
-    assert_eq!(wedge_orbit_info.name.0, "WEDGES");
-
-    let mut bandaged_wedges = Vec::<u8>::default();
-    for slot in 0..NUM_WEDGES {
-        let value = unsafe {
-            pattern
-                .packed_orbit_data()
-                .get_raw_piece_or_permutation_value(wedge_orbit_info, slot)
-        };
-        if WEDGE_TYPE_LOOKUP[value as usize] != WedgeType::CornerUpper {
-            bandaged_wedges.push(value);
-        }
-    }
-    basic_parity(&bandaged_wedges)
 }

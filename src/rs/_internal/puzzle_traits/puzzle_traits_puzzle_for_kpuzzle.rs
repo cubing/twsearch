@@ -89,13 +89,14 @@ impl GroupActionPuzzle for KPuzzle {
 
     /* TGR: okay, but we need to talk about how this relates to search generators */
     /// This includes directly defined moves as well as derived moves.
-    fn puzzle_definition_all_moves(&self) -> Vec<&Move> {
+    // TODO: Are the `.cloned()` calls too costly?
+    fn puzzle_definition_all_moves(&self) -> Vec<Move> {
         let def = self.definition();
         let moves = def.moves.keys();
         if let Some(derived_moves) = &def.derived_moves {
-            moves.chain(derived_moves.keys()).collect()
+            moves.chain(derived_moves.keys()).cloned().collect()
         } else {
-            moves.collect()
+            moves.cloned().collect()
         }
     }
 

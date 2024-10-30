@@ -5,15 +5,12 @@ use crate::{
     scramble::{
         puzzles::static_move_list::{add_random_suffixes_from, static_parsed_opt_list},
         randomize::PieceZeroConstraint,
-        scramble_search::FilteredSearch,
+        scramble_search::{move_list_from_vec, FilteredSearch},
     },
 };
 
-use super::{
-    super::randomize::{
-        randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
-    },
-    super::scramble_search::generators_from_vec_str,
+use super::super::randomize::{
+    randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
 };
 
 pub fn scramble_2x2x2() -> Alg {
@@ -22,7 +19,7 @@ pub fn scramble_2x2x2() -> Alg {
     #[allow(non_snake_case)] // Move meanings are case sensitive.
     let mut filtered_search_L_B_D = <FilteredSearch>::new(
         kpuzzle,
-        generators_from_vec_str(vec!["L", "B", "D"]),
+        move_list_from_vec(vec!["L", "B", "D"]),
         None,
         kpuzzle.default_pattern(),
     );
@@ -30,7 +27,7 @@ pub fn scramble_2x2x2() -> Alg {
     #[allow(non_snake_case)] // Move meanings are case sensitive.
     let mut filtered_search_U_L_F_R = <FilteredSearch>::new(
         kpuzzle,
-        generators_from_vec_str(vec!["U", "L", "F", "R"]),
+        move_list_from_vec(vec!["U", "L", "F", "R"]),
         None,
         kpuzzle.default_pattern(),
     );

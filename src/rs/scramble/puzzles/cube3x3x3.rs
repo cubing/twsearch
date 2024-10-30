@@ -11,16 +11,13 @@ use crate::{
     scramble::{
         collapse::collapse_adjacent_moves,
         randomize::{basic_parity, BasicParity, PieceZeroConstraint},
-        scramble_search::{basic_idfs, idfs_with_target_pattern},
+        scramble_search::{move_list_from_vec, FilteredSearch},
     },
 };
 
 use super::{
-    super::{
-        randomize::{
-            randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
-        },
-        scramble_search::generators_from_vec_str,
+    super::randomize::{
+        randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
     definitions::{cube3x3x3_centerless_g1_target_kpattern, cube3x3x3_centerless_kpuzzle},
     mask_pattern::mask,
@@ -41,8 +38,8 @@ pub struct Scramble3x3x3TwoPhase {
 impl Default for Scramble3x3x3TwoPhase {
     fn default() -> Self {
         let kpuzzle = cube3x3x3_centerless_kpuzzle().clone();
-        let generators = generators_from_vec_str(vec!["U", "L", "F", "R", "B", "D"]);
-        let filtering_idfs = basic_idfs(
+        let generators = move_list_from_vec(vec!["U", "L", "F", "R", "B", "D"]);
+        let filtering_idfs = FilteredSearch::basic_idfs(
             &kpuzzle,
             generators.clone(),
             Some(32),
@@ -50,15 +47,15 @@ impl Default for Scramble3x3x3TwoPhase {
         );
 
         let phase1_target_pattern = cube3x3x3_centerless_g1_target_kpattern().clone();
-        let phase1_idfs = idfs_with_target_pattern(
+        let phase1_idfs = FilteredSearch::idfs_with_target_pattern(
             &kpuzzle,
             generators.clone(),
             phase1_target_pattern.clone(),
             Some(1 << 24),
         );
 
-        let phase2_generators = generators_from_vec_str(vec!["U", "L2", "F2", "R2", "B2", "D"]);
-        let phase2_idfs = idfs_with_target_pattern(
+        let phase2_generators = move_list_from_vec(vec!["U", "L2", "F2", "R2", "B2", "D"]);
+        let phase2_idfs = FilteredSearch::idfs_with_target_pattern(
             &kpuzzle,
             phase2_generators.clone(),
             kpuzzle.default_pattern(),

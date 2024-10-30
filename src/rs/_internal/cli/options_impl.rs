@@ -152,7 +152,7 @@ pub enum Generators {
 }
 
 impl Generators {
-    pub fn enumerate_moves_for_kpuzzle<'a>(&'a self, kpuzzle: &'a KPuzzle) -> Vec<&'a Move> {
+    pub fn enumerate_moves_for_kpuzzle(&self, kpuzzle: &KPuzzle) -> Vec<Move> {
         if let Generators::Custom(custom_generators) = self {
             if !custom_generators.algs.is_empty() {
                 eprintln!("WARNING: Alg generators are not implemented yet. Ignoring.");
@@ -161,7 +161,7 @@ impl Generators {
 
         match self {
             Generators::Default => kpuzzle.puzzle_definition_all_moves(),
-            Generators::Custom(generators) => generators.moves.iter().collect(),
+            Generators::Custom(generators) => generators.moves.clone(),
         }
     }
 }

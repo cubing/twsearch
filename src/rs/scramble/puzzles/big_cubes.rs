@@ -28,7 +28,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> ScrambleInfo<TPuzzle> {
     pub fn new(tpuzzle: &TPuzzle, moves: Vec<Move>) -> Self {
         let generators = SearchGenerators::try_new(
             tpuzzle,
-            moves.iter().collect(),
+            moves,
             &crate::_internal::options::MetricEnum::Hand,
             false,
         )

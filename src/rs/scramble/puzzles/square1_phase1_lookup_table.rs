@@ -9,11 +9,11 @@ use cubing::kpuzzle::{InvalidAlgError, InvalidMoveError, KPattern, KPuzzle};
 
 use crate::{
     _internal::{
-        options::{Generators, MetricEnum},
+        options::MetricEnum,
         puzzle_traits::{MoveCount, SemiGroupActionPuzzle},
         Depth, FlatMoveIndex, IndexedVec, PatternValidityChecker, PruneTable, SearchGenerators,
     },
-    scramble::randomize::BasicParity,
+    scramble::{randomize::BasicParity, scramble_search::move_list_from_vec},
     whole_number_newtype,
 };
 
@@ -110,14 +110,13 @@ impl Square1Phase1LookupTable {
 // TODO: turn into a static `new()` method.
 pub fn build_phase1_lookup_table(
     kpuzzle: KPuzzle,
-    generators: &Generators,
     phase_mask: &KPattern,
 ) -> (Square1Phase1LookupTable, SearchGenerators<KPuzzle>) {
     let start_time = Instant::now();
     let random_start = false; // TODO: for scrambles, we may want this to be true
     let search_generators = SearchGenerators::try_new(
         &kpuzzle,
-        generators.enumerate_moves_for_kpuzzle(&kpuzzle),
+        move_list_from_vec(vec!["U_SQ_", "D_SQ_", "_SLASH_"]),
         &MetricEnum::Hand,
         random_start,
     )
@@ -309,18 +308,15 @@ mod tests {
                 square1_phase1_lookup_table::{PhaseCoordinatesIndex, Square1Phase1Coordinates},
             },
             randomize::BasicParity,
-            scramble_search::generators_from_vec_str,
         },
     };
 
     #[test]
     fn phase_lookup_table_test() {
         let kpuzzle = square1_unbandaged_kpuzzle();
-        let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]);
 
         let (phase_lookup_table, _search_generators) = build_phase1_lookup_table(
             kpuzzle.clone(),
-            &generators,
             &square1_square_square_shape_kpattern().to_owned(),
         );
         let cube_pattern_index = PhaseCoordinatesIndex(0);

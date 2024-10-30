@@ -43,7 +43,7 @@ pub struct SearchGenerators<
 impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
     pub fn try_new(
         tpuzzle: &TPuzzle,
-        moves: Vec<&Move>,
+        moves: Vec<Move>,
         metric: &MetricEnum,
         random_start: bool,
     ) -> Result<SearchGenerators<TPuzzle>, SearchError> {
@@ -66,7 +66,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
                 seen_moves.insert(r#move.quantum.as_ref().clone(), r#move.clone());
             }
 
-            let Ok(order) = tpuzzle.move_order(r#move) else {
+            let Ok(order) = tpuzzle.move_order(&r#move) else {
                 return Err(SearchError {
                     description: format!("Could not calculate order for move quantum: {}", r#move),
                 });

@@ -1,6 +1,6 @@
 use cubing::alg::Alg;
 
-use crate::scramble::randomize::PieceZeroConstraint;
+use crate::{_internal::MoveCount, scramble::randomize::PieceZeroConstraint};
 
 use super::{
     super::randomize::{
@@ -90,7 +90,12 @@ pub fn scramble_skewb() -> Alg {
         );
 
         let generators = generators_from_vec_str(vec!["U", "L", "R", "B"]); // TODO: cache
-        if let Some(scramble) = simple_filtered_search(&scramble_pattern, generators, 7, Some(11)) {
+        if let Some(scramble) = simple_filtered_search(
+            &scramble_pattern,
+            generators,
+            MoveCount(7),
+            Some(MoveCount(11)),
+        ) {
             return scramble;
         }
     }

@@ -22,3 +22,9 @@ pub(crate) use pattern_stack::*;
 
 mod indexed_vec;
 pub use indexed_vec::*;
+
+mod index_type;
+pub use index_type::*;
+
+mod move_count;
+pub use move_count::*;

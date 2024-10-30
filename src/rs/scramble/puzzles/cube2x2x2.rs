@@ -1,9 +1,12 @@
 use cubing::{alg::Alg, puzzles::cube2x2x2_kpuzzle};
 
-use crate::scramble::{
-    puzzles::static_move_list::{add_random_suffixes_from, static_parsed_opt_list},
-    randomize::PieceZeroConstraint,
-    scramble_search::FilteredSearch,
+use crate::{
+    _internal::MoveCount,
+    scramble::{
+        puzzles::static_move_list::{add_random_suffixes_from, static_parsed_opt_list},
+        randomize::PieceZeroConstraint,
+        scramble_search::FilteredSearch,
+    },
 };
 
 use super::{
@@ -46,7 +49,9 @@ pub fn scramble_2x2x2() -> Alg {
             OrbitOrientationConstraint::OrientationsMustSumToZero,
             PieceZeroConstraint::KeepSolved,
         );
-        if let Some(filtered) = filtered_search_L_B_D.filter(&scramble_pattern_fixed_corner, 4) {
+        if let Some(filtered) =
+            filtered_search_L_B_D.filter(&scramble_pattern_fixed_corner, MoveCount(4))
+        {
             dbg!(filtered.to_string());
             continue;
         }
@@ -58,6 +63,6 @@ pub fn scramble_2x2x2() -> Alg {
             .unwrap();
 
         return filtered_search_U_L_F_R
-            .generate_scramble(&scramble_pattern_random_orientation, Some(11));
+            .generate_scramble(&scramble_pattern_random_orientation, Some(MoveCount(11)));
     }
 }

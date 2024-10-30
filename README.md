@@ -9,18 +9,23 @@ Twizzle Search is currently implemented in C++, and we are prototyping a version
 ## Project Goals
 
 1. Maintainability
-  - We want `twsearch` to serve as a foundation for the cubing software ecosystem for a long time.
-  - The project has multiple maintainers from the start, and we want to focus on a sustainable model for stewardship.
+
+- We want `twsearch` to serve as a foundation for the cubing software ecosystem for a long time.
+- The project has multiple maintainers from the start, and we want to focus on a sustainable model for stewardship.
+
 2. Ease of use
-  - Powerful APIs that are easy to get started with.
-  - Can either be used directly, or as a library in other projects.
-  - Ability to scale from mobile devices all the way to native binaries that can fully utilize high-end hardware.
-  - Can be used on any website through
+
+- Powerful APIs that are easy to get started with.
+- Can either be used directly, or as a library in other projects.
+- Ability to scale from mobile devices all the way to native binaries that can fully utilize high-end hardware.
+- Can be used on any website through
     [`cubing.js`](https://js.cubing.net/cubing/), either by running in the
     browser itself or optionally connecting to a computer.
+
 3. Performance
-  - Great performance out of the box for a wide variety of puzzles.
-  - Tunable optimizations for heavy-duty searches, including reusable prune tables for time-memory tradeoff.
+
+- Great performance out of the box for a wide variety of puzzles.
+- Tunable optimizations for heavy-duty searches, including reusable prune tables for time-memory tradeoff.
 
 ## Building and running the `twsearch` CLI
 
@@ -257,30 +262,29 @@ will be expanded with the contents of the `HOME` environment variable.
 
 What is working so far:
 
-* Parsing ksolve file
-* God's algorithm
-* Optimal solver for random positions
-* Canonical sequence data
-* Tree search using canonical sequences
-* Write pruning tables
-* Read pruning tables
-* Parse scramble file
-* Solve scramble positions
-* QTM solves/pruning tables
-* Symmetry reduction (except mirroring)
+- Parsing ksolve file
+- God's algorithm
+- Optimal solver for random positions
+- Canonical sequence data
+- Tree search using canonical sequences
+- Write pruning tables
+- Read pruning tables
+- Parse scramble file
+- Solve scramble positions
+- QTM solves/pruning tables
+- Symmetry reduction (except mirroring)
 
 Things to do:
 
-* Add algebraic support for when reading scrambles
-* Add grip information; derive moves according to SiGN
-* Print antipodes on two-bit God's algorithm
-* Coset solvers
+- Add algebraic support for when reading scrambles
+- Add grip information; derive moves according to SiGN
+- Print antipodes on two-bit God's algorithm
+- Coset solvers
 
 Things to consider:
 
-* Ignore pieces
-* Blocking moves
-
+- Ignore pieces
+- Blocking moves
 
 ## Rust implementation
 
@@ -299,7 +303,6 @@ cargo run --release -- gods-algorithm \
   --generator-moves U,F,R \
   samples/json/2x2x2/2x2x2.kpuzzle.json
 ```
-
 
 To get completions in your shell, install using one of:
 
@@ -341,7 +344,7 @@ Depending on the target:
 
 Automatically installed into the repository:
 
-- [`emsdk`](https://github.com/emscripten-core/emsdk) (automatically installed)
+- [`emsdk`](https://github.com/emscripten-core/emsdk)
 - [`wasm-pack`](https://github.com/rustwasm/wasm-pack)
 - [`cbindgen`](https://github.com/mozilla/cbindgen)
 

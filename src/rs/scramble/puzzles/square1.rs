@@ -1,7 +1,7 @@
 use std::{
     env,
     fmt::Debug,
-    io::{stdout, Write},
+    str::FromStr,
     time::{Duration, Instant},
 };
 
@@ -18,7 +18,10 @@ use crate::{
     },
     scramble::{
         puzzles::mask_pattern::mask,
-        randomize::{basic_parity, BasicParity},
+        randomize::{
+            basic_parity, randomize_orbit_naïve, BasicParity, OrbitOrientationConstraint,
+            OrbitPermutationConstraint, PieceZeroConstraint,
+        },
         scramble_search::{move_list_from_vec, FilteredSearch},
     },
 };
@@ -197,7 +200,7 @@ pub fn scramble_square1() -> Alg {
     let scramble_pattern = random_pattern();
 
     let phase1_start_pattern =
-        square1_phase1_lookup_table.full_pattern_to_coordinates(&random_pattern());
+        square1_phase1_lookup_table.full_pattern_to_coordinates(&scramble_pattern);
     let phase1_target_pattern =
         square1_phase1_lookup_table.full_pattern_to_coordinates(&kpuzzle.default_pattern());
     let mut generic_idfs = IDFSearch::<Square1Phase1Puzzle>::try_new(
@@ -216,7 +219,7 @@ pub fn scramble_square1() -> Alg {
 
     // let start_time = Instant::now();
     // let mut last_solution: Alg = parse_alg!("/");
-    let num_solutions = 1_000_000;
+    let num_solutions = 10_000_000;
     let phase1_search = generic_idfs.search(
         &phase1_start_pattern,
         IndividualSearchOptions {
@@ -341,65 +344,70 @@ pub fn wedge_parity(pattern: &KPattern) -> BasicParity {
     basic_parity(&bandaged_wedges)
 }
 
+// const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: Option<&str> = None;
+const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: Option<&str> = Some("(0, -1) / (4, -2) / (5, -1) / (4, -5) / (0, -3) / (-1, -3) / (3, 0) / (-3, 0) / (4, 0) / (4, 0) /");
+
 fn random_pattern() -> KPattern {
     let mut rng = thread_rng();
 
-    square1_unbandaged_kpuzzle()
-        .default_pattern()
-        .apply_alg(&parse_alg!(
-            "(0, -1) / (4, -2) / (5, -1) / (4, -5) / (0, -3) / (-1, -3) / (3, 0) / (-3, 0) / (4, 0) / (4, 0) /"
-        ))
-        .unwrap()
+    if let Some(static_scramble_setup_alg) = DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG {
+        eprintln!("Observed DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG");
+        eprintln!("Using static scramble setup: {}", static_scramble_setup_alg);
+        return square1_unbandaged_kpuzzle()
+            .default_pattern()
+            .apply_alg(&Alg::from_str(static_scramble_setup_alg).unwrap())
+            .unwrap();
+    }
 
-    // loop {
-    //     let mut scramble_pattern = square1_unbandaged_kpuzzle().default_pattern();
+    loop {
+        let mut scramble_pattern = square1_unbandaged_kpuzzle().default_pattern();
 
-    //     let mut deep_wedges = vec![
-    //         vec![0, 1],
-    //         vec![2],
-    //         vec![3, 4],
-    //         vec![5],
-    //         vec![6, 7],
-    //         vec![8],
-    //         vec![9, 10],
-    //         vec![11],
-    //         vec![12],
-    //         vec![13, 14],
-    //         vec![15],
-    //         vec![16, 17],
-    //         vec![18],
-    //         vec![19, 20],
-    //         vec![21],
-    //         vec![22, 23],
-    //     ];
-    //     deep_wedges.shuffle(&mut rng);
-    //     let wedge_orbit_info = &scramble_pattern.kpuzzle().clone().data.ordered_orbit_info[0];
-    //     assert_eq!(wedge_orbit_info.name.0, "WEDGES");
-    //     for (i, value) in deep_wedges.into_iter().flatten().enumerate() {
-    //         unsafe {
-    //             scramble_pattern
-    //                 .packed_orbit_data_mut()
-    //                 .set_raw_piece_or_permutation_value(wedge_orbit_info, i as u8, value);
-    //         }
-    //     }
+        let mut deep_wedges = vec![
+            vec![0, 1],
+            vec![2],
+            vec![3, 4],
+            vec![5],
+            vec![6, 7],
+            vec![8],
+            vec![9, 10],
+            vec![11],
+            vec![12],
+            vec![13, 14],
+            vec![15],
+            vec![16, 17],
+            vec![18],
+            vec![19, 20],
+            vec![21],
+            vec![22, 23],
+        ];
+        deep_wedges.shuffle(&mut rng);
+        let wedge_orbit_info = &scramble_pattern.kpuzzle().clone().data.ordered_orbit_info[0];
+        assert_eq!(wedge_orbit_info.name.0, "WEDGES");
+        for (i, value) in deep_wedges.into_iter().flatten().enumerate() {
+            unsafe {
+                scramble_pattern
+                    .packed_orbit_data_mut()
+                    .set_raw_piece_or_permutation_value(wedge_orbit_info, i as u8, value);
+            }
+        }
 
-    //     randomize_orbit_naïve(
-    //         &mut scramble_pattern,
-    //         1,
-    //         "EQUATOR",
-    //         OrbitPermutationConstraint::AnyPermutation,
-    //         OrbitOrientationConstraint::AnySum,
-    //         PieceZeroConstraint::KeepSolved,
-    //     );
+        randomize_orbit_naïve(
+            &mut scramble_pattern,
+            1,
+            "EQUATOR",
+            OrbitPermutationConstraint::AnyPermutation,
+            OrbitOrientationConstraint::AnySum,
+            PieceZeroConstraint::KeepSolved,
+        );
 
-    //     // TODO: do this check without masking.
-    //     let phase1_start_pattern =
-    //         mask(&scramble_pattern, square1_square_square_shape_kpattern()).unwrap();
+        // TODO: do this check without masking.
+        let phase1_start_pattern =
+            mask(&scramble_pattern, square1_square_square_shape_kpattern()).unwrap();
 
-    //     if Phase1Checker::is_valid(&phase1_start_pattern) {
-    //         return scramble_pattern;
-    //     }
+        if Phase1Checker::is_valid(&phase1_start_pattern) {
+            return scramble_pattern;
+        }
 
-    //     println!("discarding invalid scramble"); //<<<}
-    // }
+        println!("discarding invalid scramble"); //<<<}
+    }
 }

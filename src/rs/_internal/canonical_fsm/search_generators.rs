@@ -127,7 +127,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
         // let mut rng = thread_rng();
         if random_start {
             eprintln!(
-                "Randomization requires some code refactoring. Ignoring randomization paramter."
+                "Randomization requires some code refactoring. Ignoring randomization parameter."
             );
             // grouped.shuffle(&mut rng);
             // flat.shuffle(&mut rng); // TODO: can we shuffle this without messing up

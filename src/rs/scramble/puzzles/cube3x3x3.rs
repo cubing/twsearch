@@ -7,7 +7,7 @@ use cubing::{
 use lazy_static::lazy_static;
 
 use crate::{
-    _internal::{IDFSearch, IndividualSearchOptions},
+    _internal::{Depth, IDFSearch, IndividualSearchOptions},
     scramble::{
         collapse::collapse_adjacent_moves,
         randomize::{basic_parity, BasicParity, PieceZeroConstraint},
@@ -166,8 +166,8 @@ impl Scramble3x3x3TwoPhase {
                 pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
-                    min_depth: Some(0),
-                    max_depth: Some(2),
+                    min_depth: Some(Depth(0)),
+                    max_depth: Some(Depth(2)),
                     ..Default::default()
                 },
             )

@@ -15,9 +15,9 @@ use crate::_internal::{
     SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
-use super::{AlwaysValid, PatternStack, PatternValidityChecker, PruneTable};
+use super::{AlwaysValid, Depth, PatternStack, PatternValidityChecker, PruneTable};
 
-const MAX_SUPPORTED_SEARCH_DEPTH: usize = 500; // TODO: increase
+const MAX_SUPPORTED_SEARCH_DEPTH: Depth = Depth(500); // TODO: increase
 
 #[allow(clippy::enum_variant_names)]
 enum SearchRecursionResult {
@@ -104,8 +104,8 @@ impl Iterator for SearchSolutions {
 #[serde(rename_all = "camelCase")]
 pub struct IndividualSearchOptions {
     pub min_num_solutions: Option<usize>,
-    pub min_depth: Option<usize>, // inclusive
-    pub max_depth: Option<usize>, // exclusive
+    pub min_depth: Option<Depth>, // inclusive
+    pub max_depth: Option<Depth>, // exclusive
     pub canonical_fsm_pre_moves: Option<Vec<Move>>,
     pub canonical_fsm_post_moves: Option<Vec<Move>>,
 }
@@ -114,10 +114,10 @@ impl IndividualSearchOptions {
     pub fn get_min_num_solutions(&self) -> usize {
         self.min_num_solutions.unwrap_or(1)
     }
-    pub fn get_min_depth(&self) -> usize {
-        self.min_depth.unwrap_or(0)
+    pub fn get_min_depth(&self) -> Depth {
+        self.min_depth.unwrap_or(Depth(0))
     }
-    pub fn get_max_depth(&self) -> usize {
+    pub fn get_max_depth(&self) -> Depth {
         self.max_depth.unwrap_or(MAX_SUPPORTED_SEARCH_DEPTH)
     }
 }
@@ -229,13 +229,14 @@ impl<
 
         // TODO: combine `KPatternStack` with `SolutionMoves`?
         let mut pattern_stack = PatternStack::new(self.api_data.tpuzzle.clone(), search_pattern);
-        for remaining_depth in individual_search_data
+        for remaining_depth in *individual_search_data
             .individual_search_options
             .get_min_depth()
-            ..individual_search_data
+            ..*individual_search_data
                 .individual_search_options
                 .get_max_depth()
         {
+            let remaining_depth = Depth(remaining_depth);
             self.api_data.search_logger.write_info("----------------");
             self.prune_table.extend_for_search_depth(
                 remaining_depth,
@@ -276,7 +277,7 @@ impl<
         individual_search_data: &mut IndividualSearchData,
         pattern_stack: &mut PatternStack<TPuzzle>,
         current_state: CanonicalFSMState,
-        remaining_depth: usize,
+        remaining_depth: Depth,
         solution_moves: SolutionMoves,
     ) -> SearchRecursionResult {
         let current_pattern = pattern_stack.current_pattern();
@@ -288,7 +289,7 @@ impl<
         individual_search_data
             .recursive_work_tracker
             .record_recursive_call();
-        if remaining_depth == 0 {
+        if remaining_depth == Depth(0) {
             return self.base_case(
                 individual_search_data,
                 current_pattern,
@@ -297,7 +298,7 @@ impl<
             );
         }
         let prune_table_depth = self.prune_table.lookup(current_pattern);
-        if prune_table_depth > remaining_depth + 1 {
+        if prune_table_depth > remaining_depth + Depth(1) {
             return SearchRecursionResult::ContinueSearchingExcludingCurrentMoveClass();
         }
         if prune_table_depth > remaining_depth {
@@ -324,7 +325,7 @@ impl<
                     individual_search_data,
                     pattern_stack,
                     next_state,
-                    remaining_depth - 1,
+                    remaining_depth - Depth(1),
                     SolutionMoves(Some(&SolutionPreviousMoves {
                         latest_move: &move_transformation_info.r#move,
                         previous_moves: &solution_moves,

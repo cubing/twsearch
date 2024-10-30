@@ -12,7 +12,7 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::{
-    _internal::{AlwaysValid, IDFSearch, PatternValidityChecker, SearchLogger},
+    _internal::{AlwaysValid, Depth, IDFSearch, PatternValidityChecker, SearchLogger},
     scramble::{
         randomize::{basic_parity, BasicParity, PieceZeroConstraint},
         scramble_search::FilteredSearch,
@@ -312,7 +312,7 @@ pub fn scramble_square1() -> Alg {
             &phase1_start_pattern,
             Some(10_000_000), // see "le tired' below
             None,
-            Some(18), // Max phase 1 length
+            Some(Depth(18)), // Max phase 1 length
         ) {
             phase1_cumulative_time += Instant::now() - phase1_start_time;
 
@@ -361,7 +361,7 @@ pub fn scramble_square1() -> Alg {
                     &phase2_start_pattern,
                     Some(1),
                     None,
-                    Some(17), // <<< needs explanation
+                    Some(Depth(17)), // <<< needs explanation
                 )
                 .next();
 

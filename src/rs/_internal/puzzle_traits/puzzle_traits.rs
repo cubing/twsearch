@@ -1,9 +1,6 @@
 use std::fmt::Debug;
 
-use cubing::{
-    alg::{Alg, Move},
-    kpuzzle::InvalidAlgError,
-};
+use cubing::{alg::Move, kpuzzle::InvalidAlgError};
 
 use crate::_internal::MoveTransformationInfo;
 
@@ -57,35 +54,34 @@ pub trait SemiGroupActionPuzzle: Debug + Clone {
         transformation_to_apply: &Self::Transformation,
         into_pattern: &mut Self::Pattern,
     );
-
-    // fn pattern_puzzle(pattern: &Self::Pattern) -> &Self; // TODO: add an additional trait for this.
-    fn pattern_hash_u64(&self, pattern: &Self::Pattern) -> u64;
 }
 
 pub trait GroupActionPuzzle: SemiGroupActionPuzzle {
-    /********* Functions "defined on the puzzle". ********/
-
-    fn puzzle_transformation_from_alg(
-        &self,
-        alg: &Alg,
-    ) -> Result<Self::Transformation, InvalidAlgError>;
-    fn puzzle_identity_transformation(&self) -> Self::Transformation; // TODO: also define this on `KPuzzle` itself.
-                                                                      // TODO: should this return owned `Move`s?
+    // /********* Functions "defined on the puzzle". ********/
+    // fn puzzle_transformation_from_alg(
+    //     &self,
+    //     alg: &Alg,
+    // ) -> Result<Self::Transformation, InvalidAlgError>;
+    // fn puzzle_identity_transformation(&self) -> Self::Transformation; // TODO: also define this on `KPuzzle` itself.
+    //                                                                   // TODO: should this return owned `Move`s?
     fn puzzle_definition_all_moves(&self) -> Vec<&Move>;
 
-    /********* Functions "defined on the transformation". ********/
+    // /********* Functions "defined on the transformation". ********/
+    // // fn transformation_puzzle(transformation: &Self::Transformation) -> &Self; // TODO: add an additional trait for this.
+    // fn transformation_invert(transformation: &Self::Transformation) -> Self::Transformation;
+    // fn transformation_apply_transformation(
+    //     transformation: &Self::Transformation,
+    //     transformation_to_apply: &Self::Transformation,
+    // ) -> Self::Transformation;
+    // fn transformation_apply_transformation_into(
+    //     transformation: &Self::Transformation,
+    //     transformation_to_apply: &Self::Transformation,
+    //     into_transformation: &mut Self::Transformation,
+    // );
+    // fn transformation_hash_u64(&self, transformation: &Self::Transformation) -> u64;
+    // // TODO: efficient `order` function?
+}
 
-    // fn transformation_puzzle(transformation: &Self::Transformation) -> &Self; // TODO: add an additional trait for this.
-    fn transformation_invert(transformation: &Self::Transformation) -> Self::Transformation;
-    fn transformation_apply_transformation(
-        transformation: &Self::Transformation,
-        transformation_to_apply: &Self::Transformation,
-    ) -> Self::Transformation;
-    fn transformation_apply_transformation_into(
-        transformation: &Self::Transformation,
-        transformation_to_apply: &Self::Transformation,
-        into_transformation: &mut Self::Transformation,
-    );
-    fn transformation_hash_u64(&self, transformation: &Self::Transformation) -> u64;
-    // TODO: efficient `order` function?
+pub trait HashablePatternPuzzle: SemiGroupActionPuzzle {
+    fn pattern_hash_u64(&self, pattern: &Self::Pattern) -> u64;
 }

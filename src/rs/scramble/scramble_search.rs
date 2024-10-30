@@ -7,7 +7,7 @@ use cubing::{
 
 use crate::_internal::{
     options::{CustomGenerators, Generators, MetricEnum, VerbosityLevel},
-    AlwaysValid, IDFSearch, IndividualSearchOptions, PatternValidityChecker, SearchLogger,
+    AlwaysValid, Depth, IDFSearch, IndividualSearchOptions, PatternValidityChecker, SearchLogger,
     SearchSolutions,
 };
 
@@ -81,8 +81,8 @@ impl<TPatternValidityChecker: PatternValidityChecker<KPuzzle>>
                 scramble_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
-                    min_depth: Some(0),
-                    max_depth: Some(min_optimal_moves - 1),
+                    min_depth: Some(Depth(0)),
+                    max_depth: Some(Depth(min_optimal_moves) - Depth(1)),
                     ..Default::default()
                 },
             )
@@ -100,7 +100,7 @@ impl<TPatternValidityChecker: PatternValidityChecker<KPuzzle>>
                 scramble_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
-                    min_depth: min_scramble_moves,
+                    min_depth: min_scramble_moves.map(Depth),
                     ..Default::default()
                 },
             )
@@ -113,8 +113,8 @@ impl<TPatternValidityChecker: PatternValidityChecker<KPuzzle>>
         &mut self,
         scramble_pattern: &KPattern,
         min_num_solutions: Option<usize>,
-        min_depth: Option<usize>,
-        max_depth: Option<usize>,
+        min_depth: Option<Depth>,
+        max_depth: Option<Depth>,
     ) -> SearchSolutions {
         self.idfs.search(
             scramble_pattern,

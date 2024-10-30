@@ -5,10 +5,7 @@ use std::{
     time::Instant,
 };
 
-use cubing::{
-    alg::parse_move,
-    kpuzzle::{InvalidAlgError, InvalidMoveError, KPattern, KPuzzle},
-};
+use cubing::kpuzzle::{InvalidAlgError, InvalidMoveError, KPattern, KPuzzle};
 
 use crate::{
     _internal::{
@@ -60,7 +57,7 @@ impl Square1Phase1Coordinates {
     }
 }
 
-index_type!(PhaseCoordinatesIndex);
+index_type!(PhaseCoordinatesIndex, usize);
 
 #[derive(Debug)]
 pub struct Square1Phase1LookupTableData {
@@ -111,7 +108,7 @@ pub fn build_phase1_lookup_table(
     let mut fringe = VecDeque::<(KPattern, usize)>::new();
     fringe.push_back((kpuzzle.default_pattern(), 0));
 
-    let mut index_to_lookup_pattern =
+    let mut index_to_coordinates =
         IndexedVec::<PhaseCoordinatesIndex, Square1Phase1Coordinates>::default();
     let mut coordinates_to_index =
         HashMap::<Square1Phase1Coordinates, PhaseCoordinatesIndex>::default();
@@ -132,8 +129,8 @@ pub fn build_phase1_lookup_table(
             continue;
         }
 
-        let index = index_to_lookup_pattern.len();
-        index_to_lookup_pattern.push(lookup_pattern.clone());
+        let index = index_to_coordinates.len();
+        index_to_coordinates.push(lookup_pattern.clone());
         coordinates_to_index.insert(lookup_pattern, PhaseCoordinatesIndex(index));
         exact_prune_table.push(Depth(depth));
 
@@ -147,16 +144,13 @@ pub fn build_phase1_lookup_table(
         // Note that this is safe to do at the end of this loop because we use BFS rather than DFS.
         index_to_representative_full_pattern.push(full_pattern);
     }
-    println!(
-        "PhaseLookupTable has size {}",
-        index_to_lookup_pattern.len()
-    );
+    println!("PhaseLookupTable has size {}", index_to_coordinates.len());
 
     let mut move_application_table: IndexedVec<
         PhaseCoordinatesIndex,
         IndexedVec<FlatMoveIndex, Option<PhaseCoordinatesIndex>>,
     > = IndexedVec::default();
-    for (phase_pattern_index, _) in index_to_lookup_pattern.iter() {
+    for (phase_pattern_index, _) in index_to_coordinates.iter() {
         let representative = index_to_representative_full_pattern.at(phase_pattern_index);
         let mut table_row = IndexedVec::<FlatMoveIndex, Option<PhaseCoordinatesIndex>>::default();
         for move_transformation_info in &search_generators.flat {
@@ -183,7 +177,7 @@ pub fn build_phase1_lookup_table(
     // dbg!(exact_prune_table);
 
     let data = Arc::new(Square1Phase1LookupTableData {
-        index_to_coordinates: index_to_lookup_pattern,
+        index_to_coordinates,
         coordinates_to_index,
         move_application_table,
         exact_prune_table,
@@ -226,7 +220,7 @@ impl SemiGroupActionPuzzle for Square1Phase1LookupTable {
         move1_info: &crate::_internal::MoveTransformationInfo<Self>,
         move2_info: &crate::_internal::MoveTransformationInfo<Self>,
     ) -> bool {
-        todo!()
+        move1_info.r#move.quantum == move2_info.r#move.quantum
     }
 
     fn pattern_apply_transformation(
@@ -236,7 +230,7 @@ impl SemiGroupActionPuzzle for Square1Phase1LookupTable {
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
     ) -> Self::Pattern {
-        todo!()
+        self.apply_move(*pattern, *transformation_to_apply).unwrap()
     }
 
     fn pattern_apply_transformation_into(
@@ -247,11 +241,7 @@ impl SemiGroupActionPuzzle for Square1Phase1LookupTable {
         transformation_to_apply: &Self::Transformation,
         into_pattern: &mut Self::Pattern,
     ) {
-        todo!()
-    }
-
-    fn pattern_hash_u64(&self, pattern: &Self::Pattern) -> u64 {
-        todo!()
+        *into_pattern = self.pattern_apply_transformation(pattern, transformation_to_apply);
     }
 }
 
@@ -291,7 +281,7 @@ mod tests {
         scramble::{
             puzzles::{
                 definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
-                square1::{wedge_parity, Phase1Checker},
+                square1::wedge_parity,
                 square1_phase1_lookup_table::{PhaseCoordinatesIndex, Square1Phase1Coordinates},
             },
             randomize::BasicParity,

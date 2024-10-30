@@ -304,8 +304,7 @@ pub fn scramble_square1() -> Alg {
             nodes.append(&mut phase2_solution.nodes);
             dbg!(&phase1_start_pattern);
 
-            // <<< return Alg { nodes }.invert()
-            return Alg { nodes }; // because slash' is not a valid move we can print
+            return Alg { nodes }.invert();
         }
         phase2_cumulative_time += Instant::now() - phase2_start_time;
 

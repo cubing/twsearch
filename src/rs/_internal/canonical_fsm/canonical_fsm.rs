@@ -1,11 +1,7 @@
-use std::{
-    collections::HashMap,
-    marker::PhantomData,
-    ops::{AddAssign, BitAndAssign},
-};
+use std::{collections::HashMap, marker::PhantomData, ops::BitAndAssign};
 
 use crate::{
-    _internal::{puzzle_traits::SemiGroupActionPuzzle, SearchError, SearchGenerators},
+    _internal::{puzzle_traits::SemiGroupActionPuzzle, IndexedVec, SearchError, SearchGenerators},
     whole_number_newtype,
 };
 
@@ -22,22 +18,10 @@ impl BitAndAssign for MoveClassMask {
     }
 }
 
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
-pub struct CanonicalFSMState(pub usize);
+whole_number_newtype!(CanonicalFSMState, usize);
+
 pub(crate) const CANONICAL_FSM_START_STATE: CanonicalFSMState = CanonicalFSMState(0);
 pub(crate) const ILLEGAL_FSM_STATE: CanonicalFSMState = CanonicalFSMState(0xFFFFFFFF);
-
-impl From<CanonicalFSMState> for usize {
-    fn from(value: CanonicalFSMState) -> Self {
-        value.0
-    }
-}
-
-impl AddAssign for CanonicalFSMState {
-    fn add_assign(&mut self, rhs: Self) {
-        self.0 = self.0 + rhs.0;
-    }
-}
 
 #[derive(Default, Debug)]
 struct MaskToState(HashMap<MoveClassMask, CanonicalFSMState>);
@@ -53,11 +37,11 @@ impl MaskToState {
 }
 
 #[derive(Default, Debug)]
-struct StateToMask(Vec<MoveClassMask>);
+struct StateToMask(IndexedVec<CanonicalFSMState, MoveClassMask>);
 
 impl StateToMask {
     pub fn new(initial_value: MoveClassMask) -> StateToMask {
-        Self(vec![initial_value])
+        Self(IndexedVec::new(vec![initial_value]))
     }
 
     // Push the next value (useful while constructing in order.)
@@ -66,11 +50,11 @@ impl StateToMask {
     }
 
     pub fn set(&mut self, state: CanonicalFSMState, value: MoveClassMask) {
-        self.0[state.0] = value;
+        self.0.set(state, value);
     }
 
     pub fn get(&self, state: CanonicalFSMState) -> MoveClassMask {
-        self.0[state.0]
+        *self.0.at(state)
     }
 }
 
@@ -79,10 +63,8 @@ pub struct CanonicalFSM<TPuzzle: SemiGroupActionPuzzle> {
     // disallowed_move_classes, indexed by state ordinal, holds the set of move classes that should
     // not be made from this state.
     // disallowed_move_classes: StateToMask,
-    // Indexed by [CanonicalFSMState][MoveClassIndex]
-    pub(crate) next_state_lookup: Vec<Vec<CanonicalFSMState>>,
-    // commutes: Vec<MoveClassMask>,
-    pub(crate) move_class_indices: Vec<MoveClassIndex>,
+    pub(crate) next_state_lookup:
+        IndexedVec<CanonicalFSMState, IndexedVec<MoveClassIndex, CanonicalFSMState>>,
 
     phantom_data: PhantomData<TPuzzle>,
 }
@@ -99,8 +81,6 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
                 description: "Too many move classes!".to_owned(),
             });
         }
-        let move_class_indices: Vec<MoveClassIndex> =
-            (0..num_move_classes).map(MoveClassIndex).collect();
 
         let mut commutes: Vec<MoveClassMask> =
             vec![MoveClassMask((1 << num_move_classes) - 1); num_move_classes];
@@ -125,7 +105,10 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
             }
         }
 
-        let mut next_state_lookup: Vec<Vec<CanonicalFSMState>> = Vec::new();
+        let mut next_state_lookup: IndexedVec<
+            CanonicalFSMState,
+            IndexedVec<MoveClassIndex, CanonicalFSMState>,
+        > = IndexedVec::default();
 
         let mut mask_to_state = MaskToState::default();
         mask_to_state.insert(MoveClassMask(0), CANONICAL_FSM_START_STATE);
@@ -137,7 +120,8 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
 
         let mut queue_index: CanonicalFSMState = CANONICAL_FSM_START_STATE;
         while Into::<usize>::into(queue_index) < state_to_mask.0.len() {
-            let mut next_state: Vec<CanonicalFSMState> = vec![ILLEGAL_FSM_STATE; num_move_classes];
+            let mut next_state: IndexedVec<MoveClassIndex, CanonicalFSMState> =
+                IndexedVec::new(vec![ILLEGAL_FSM_STATE; num_move_classes]);
 
             let dequeue_move_class_mask: MoveClassMask = state_to_mask.get(queue_index);
             disallowed_move_classes.push(MoveClassMask(0));
@@ -145,30 +129,30 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
             queue_index += CanonicalFSMState(1);
             let from_state = queue_index;
 
-            for move_class_index in &move_class_indices {
+            for move_class_index in generators.by_move_class.index_iter() {
                 // If there's a greater move (multiple) in the state that
                 // commutes with this move's `move_class`, we can't move
                 // `move_class`.
-                if (dequeue_move_class_mask.0 & commutes[move_class_index.0].0)
-                    >> (move_class_index.0 + 1)
+                if (*dequeue_move_class_mask & *commutes[*move_class_index])
+                    >> (*move_class_index + 1)
                     != 0
                 {
                     let new_value = MoveClassMask(
-                        disallowed_move_classes.get(from_state).0 | (1 << move_class_index.0),
+                        *disallowed_move_classes.get(from_state) | (1 << *move_class_index),
                     );
                     disallowed_move_classes.set(from_state, new_value);
                     continue;
                 }
-                if ((dequeue_move_class_mask.0 >> move_class_index.0) & 1) != 0 {
+                if ((*dequeue_move_class_mask >> *move_class_index) & 1) != 0 {
                     let new_value = MoveClassMask(
-                        disallowed_move_classes.get(from_state).0 | (1 << move_class_index.0),
+                        *disallowed_move_classes.get(from_state) | (1 << *move_class_index),
                     );
                     disallowed_move_classes.set(from_state, new_value);
                     continue;
                 }
-                let mut next_state_bits = (dequeue_move_class_mask.0
-                    & commutes[move_class_index.0].0)
-                    | (1 << move_class_index.0);
+                // TODO implement bit arithmetic for whole number newtypes.
+                let mut next_state_bits = (*dequeue_move_class_mask & *commutes[*move_class_index])
+                    | (1 << *move_class_index);
                 // If a pair of bits are set with the same commutating moves, we
                 // can clear out the higher ones. This optimization keeps the
                 // state count from going exponential for very big cubes.
@@ -184,24 +168,24 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
 
                 let next_move_mask_class = MoveClassMask(next_state_bits);
 
-                next_state[move_class_index.0] = match mask_to_state.get(next_move_mask_class) {
-                    None => {
-                        let next_state = CanonicalFSMState(state_to_mask.0.len());
-                        mask_to_state.insert(next_move_mask_class, next_state);
-                        state_to_mask.push(next_move_mask_class);
-                        next_state
-                    }
-                    Some(state) => state,
-                };
+                next_state.set(
+                    move_class_index,
+                    match mask_to_state.get(next_move_mask_class) {
+                        None => {
+                            let next_state = CanonicalFSMState(state_to_mask.0.len());
+                            mask_to_state.insert(next_move_mask_class, next_state);
+                            state_to_mask.push(next_move_mask_class);
+                            next_state
+                        }
+                        Some(state) => state,
+                    },
+                );
             }
             next_state_lookup.push(next_state);
         }
 
         Ok(Self {
-            // disallowed_move_classes,
             next_state_lookup,
-            // commutes,
-            move_class_indices,
             phantom_data: PhantomData,
         })
     }
@@ -211,7 +195,11 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
         current_fsm_state: CanonicalFSMState,
         move_class_index: MoveClassIndex,
     ) -> Option<CanonicalFSMState> {
-        match self.next_state_lookup[current_fsm_state.0][move_class_index.0] {
+        match *self
+            .next_state_lookup
+            .at(current_fsm_state)
+            .at(move_class_index)
+        {
             ILLEGAL_FSM_STATE => None,
             state => Some(state),
         }

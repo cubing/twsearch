@@ -18,6 +18,10 @@ impl<K: From<usize> + Into<usize> + Default, V> IndexedVec<K, V> {
         &self.0[k.into()]
     }
 
+    pub fn set(&mut self, k: K, v: V) {
+        self.0[k.into()] = v;
+    }
+
     #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> usize {
         self.0.len()
@@ -29,6 +33,10 @@ impl<K: From<usize> + Into<usize> + Default, V> IndexedVec<K, V> {
             .iter()
             .enumerate()
             .map(|(i, v)| (std::convert::Into::<K>::into(i), v))
+    }
+
+    pub fn index_iter(&self) -> impl Iterator<Item = K> {
+        (0..self.len()).map(|i| i.into())
     }
 }
 

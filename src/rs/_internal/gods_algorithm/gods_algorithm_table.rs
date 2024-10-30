@@ -45,7 +45,7 @@ pub struct GodsAlgorithmSearch {
     // params
     kpuzzle: KPuzzle,
     start_pattern: Option<KPattern>,
-    search_moves: SearchGenerators<KPuzzle>,
+    search_generators: SearchGenerators<KPuzzle>,
 
     // TODO: find more elegant way to store this.
     cached_inverses: IndexedVec<FlatMoveIndex, KTransformation>,
@@ -97,7 +97,7 @@ impl GodsAlgorithmSearch {
         Ok(Self {
             kpuzzle,
             start_pattern,
-            search_moves: search_generators,
+            search_generators,
             canonical_fsm,
             table: GodsAlgorithmTable {
                 completed: false,
@@ -147,15 +147,15 @@ impl GodsAlgorithmSearch {
             progress_bar.set_prefix(current_depth.to_string());
 
             let num_to_test_at_current_depth: usize =
-                num_last_depth_patterns * self.search_moves.flat.len();
+                num_last_depth_patterns * self.search_generators.flat.len();
             let mut num_tested_at_current_depth = 0;
             let mut patterns_at_current_depth = BulkQueue::new(None);
             for queue_item in last_depth_patterns.into_iter() {
-                for move_class_index in &self.canonical_fsm.move_class_indices {
-                    let moves_in_class = self.search_moves.by_move_class.at(*move_class_index);
+                for move_class_index in self.search_generators.by_move_class.index_iter() {
+                    let moves_in_class = self.search_generators.by_move_class.at(move_class_index);
                     let next_state = self
                         .canonical_fsm
-                        .next_state(queue_item.canonical_fsm_state, *move_class_index);
+                        .next_state(queue_item.canonical_fsm_state, move_class_index);
                     let next_state = match next_state {
                         Some(next_state) => next_state,
                         None => {

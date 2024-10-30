@@ -200,9 +200,9 @@ pub fn scramble_square1() -> Alg {
     let scramble_pattern = random_pattern();
 
     let phase1_start_pattern =
-        square1_phase1_lookup_table.full_pattern_to_coordinates(&scramble_pattern);
+        square1_phase1_lookup_table.full_pattern_to_phase_coordinate(&scramble_pattern);
     let phase1_target_pattern =
-        square1_phase1_lookup_table.full_pattern_to_coordinates(&kpuzzle.default_pattern());
+        square1_phase1_lookup_table.full_pattern_to_phase_coordinate(&kpuzzle.default_pattern());
     let mut generic_idfs = IDFSearch::<Square1Phase1Puzzle>::try_new(
         square1_phase1_lookup_table,
         phase1_target_pattern,

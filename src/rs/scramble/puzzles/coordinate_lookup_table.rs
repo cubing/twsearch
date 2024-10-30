@@ -174,7 +174,7 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> PhaseCoordinatePuzzle<TSe
     }
 
     // TODO: report errors for invalid patterns
-    pub fn full_pattern_to_coordinates(&self, kpattern: &KPattern) -> PhaseCoordinateIndex {
+    pub fn full_pattern_to_phase_coordinate(&self, kpattern: &KPattern) -> PhaseCoordinateIndex {
         *self
             .data
             .semantic_coordinate_to_index

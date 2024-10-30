@@ -6,7 +6,7 @@ use std::{
 };
 
 use cubing::{
-    alg::{parse_alg, parse_move, Alg},
+    alg::{parse_alg, parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},
     kpuzzle::{KPattern, KPuzzle},
 };
 use rand::{seq::SliceRandom, thread_rng};
@@ -189,7 +189,7 @@ pub fn scramble_square1() -> Alg {
     }
 
     let kpuzzle = square1_unbandaged_kpuzzle();
-    let generator_moves = vec![parse_move!("U_SQ_"), parse_move!("D_SQ_"), parse_move!("/")];
+    let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
 
     let (square1_phase1_lookup_table, _search_generators) = Square1Phase1Puzzle::new(
         kpuzzle.clone(),
@@ -206,7 +206,7 @@ pub fn scramble_square1() -> Alg {
     let mut generic_idfs = IDFSearch::<Square1Phase1Puzzle>::try_new(
         square1_phase1_lookup_table,
         phase1_target_pattern,
-        generator_moves,
+        generator_moves.clone(),
         SearchLogger {
             verbosity: crate::_internal::options::VerbosityLevel::Info,
         }
@@ -249,7 +249,6 @@ pub fn scramble_square1() -> Alg {
     // todo!();
 
     // let generators2 = generators_from_vec_str(vec!["US", "DS", "UUU", "DDD"]); // TODO: cache
-    let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "_SLASH_"]); // TODO: cache
     let mut phase2_filtered_search = FilteredSearch::<KPuzzle, Square1Phase2Optimizations>::new(
         kpuzzle,
         generator_moves,
@@ -304,7 +303,7 @@ pub fn scramble_square1() -> Alg {
             nodes.append(&mut phase2_solution.nodes);
             dbg!(&phase1_start_pattern);
 
-            return Alg { nodes }.invert();
+            return group_square_1_tuples(Alg { nodes }.invert());
         }
         phase2_cumulative_time += Instant::now() - phase2_start_time;
 
@@ -409,4 +408,79 @@ fn random_pattern() -> KPattern {
 
         println!("discarding invalid scramble"); //<<<}
     }
+}
+
+fn flush_tuple(
+    #[allow(non_snake_case)] current_tuple_U: &mut Option<Move>,
+    #[allow(non_snake_case)] current_tuple_D: &mut Option<Move>,
+    alg_builder: &mut AlgBuilder,
+) {
+    if current_tuple_U.is_some() || current_tuple_D.is_some() {
+        let grouping = Grouping {
+            alg: Alg {
+                nodes: vec![
+                    cubing::alg::AlgNode::MoveNode(
+                        current_tuple_U
+                            .take()
+                            .unwrap_or_else(|| parse_move!("U_SQ_0")),
+                    ),
+                    cubing::alg::AlgNode::MoveNode(
+                        current_tuple_D
+                            .take()
+                            .unwrap_or_else(|| parse_move!("D_SQ_0")),
+                    ),
+                ],
+            }
+            .into(),
+            amount: 1,
+        };
+        let alg_node: AlgNode = grouping.into();
+        alg_builder.push(&alg_node);
+    };
+}
+
+fn group_square_1_tuples(alg: Alg) -> Alg {
+    #[allow(non_snake_case)]
+    let mut current_tuple_U: Option<Move> = None;
+    #[allow(non_snake_case)]
+    let mut current_tuple_D: Option<Move> = None;
+
+    let mut alg_builder = AlgBuilder::default();
+
+    #[allow(non_snake_case)]
+    let U_SQ_0: Move = parse_move!("U_SQ_0");
+    #[allow(non_snake_case)]
+    let D_SQ_0 = parse_move!("D_SQ_0");
+    #[allow(non_snake_case)]
+    let _SLASH_ = parse_move!("/");
+
+    // TODO: Push the candidate check into a trait for `IDFSearch`.
+    for node in alg.nodes {
+        let cubing::alg::AlgNode::MoveNode(r#move) = node else {
+            panic!("Invalid Square-1 scramble alg in internal code.");
+        };
+        if r#move == _SLASH_ {
+            flush_tuple(&mut current_tuple_U, &mut current_tuple_D, &mut alg_builder);
+
+            let alg_node: AlgNode = r#move.into();
+            alg_builder.push(&alg_node)
+        } else if r#move.quantum == U_SQ_0.quantum {
+            if current_tuple_U.is_some() {
+                panic!("Invalid Square-1 scramble alg in internal code.");
+            } else {
+                current_tuple_U = Some(r#move);
+            }
+        } else if r#move.quantum == D_SQ_0.quantum {
+            if current_tuple_D.is_some() {
+                panic!("Invalid Square-1 scramble alg in internal code.");
+            } else {
+                current_tuple_D = Some(r#move);
+            }
+        } else {
+            panic!("Invalid Square-1 scramble alg in internal code.");
+        }
+    }
+
+    flush_tuple(&mut current_tuple_U, &mut current_tuple_D, &mut alg_builder);
+    alg_builder.to_alg()
 }

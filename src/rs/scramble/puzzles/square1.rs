@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, time::Instant};
 
 use cubing::{
     alg::{parse_alg, parse_move, Alg},
@@ -181,18 +181,21 @@ pub fn scramble_square1() -> Alg {
 
     // println!(
     //     "{}",
+
+    let start_time = Instant::now();
     let mut last_solution: Alg = parse_alg!("/");
+    let num_solutions = 1_000_000;
     for (i, solution) in generic_idfs
         .search(
             &scramble_pattern,
             IndividualSearchOptions {
-                min_num_solutions: Some(1_000_000),
+                min_num_solutions: Some(num_solutions),
                 ..Default::default()
             },
         )
         .enumerate()
     {
-        if (i + 1) % 100_000 == 0 {
+        if (i + 1) % (num_solutions / 10) == 0 {
             println!(
                 "// Phase 1 solution #{}
 {}
@@ -203,6 +206,12 @@ pub fn scramble_square1() -> Alg {
         }
         last_solution = solution;
     }
+    println!(
+        "Elapsed time to find {} solutions for phase 1 test: {:?}
+",
+        num_solutions,
+        Instant::now() - start_time
+    );
     last_solution
     // );
 

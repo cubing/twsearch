@@ -18,7 +18,7 @@ use crate::{
 };
 
 use super::{
-    definitions::square1_unbandaged_kpuzzle,
+    definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
     mask_pattern::mask,
     square1::{wedge_parity, Phase1Checker},
 };
@@ -61,12 +61,16 @@ whole_number_newtype!(PhaseCoordinatesIndex, usize);
 
 #[derive(Debug)]
 pub struct Square1Phase1LookupTableData {
-    pub index_to_coordinates: IndexedVec<PhaseCoordinatesIndex, Square1Phase1Coordinates>, // TODO: support optimizations when the size is known ahead of time
-    pub coordinates_to_index: HashMap<Square1Phase1Coordinates, PhaseCoordinatesIndex>,
-    pub move_application_table:
+    coordinates_to_index: HashMap<Square1Phase1Coordinates, PhaseCoordinatesIndex>,
+    move_application_table:
         IndexedVec<PhaseCoordinatesIndex, IndexedVec<FlatMoveIndex, Option<PhaseCoordinatesIndex>>>,
-    pub exact_prune_table: IndexedVec<PhaseCoordinatesIndex, Depth>,
+    exact_prune_table: IndexedVec<PhaseCoordinatesIndex, Depth>,
+
     search_generators: SearchGenerators<KPuzzle>, // TODO: avoid `KPuzzle`
+
+    // This is useful for testing and debugging.
+    #[allow(unused)]
+    pub index_to_coordinates: IndexedVec<PhaseCoordinatesIndex, Square1Phase1Coordinates>, // TODO: support optimizations when the size is known ahead of time
 }
 
 #[derive(Debug)]
@@ -85,6 +89,21 @@ impl Square1Phase1LookupTable {
             .move_application_table
             .at(phase_pattern_index)
             .at(flat_move_index)
+    }
+
+    // TODO: report errors for invalid patterns
+    pub fn full_pattern_to_coordinates(&self, kpattern: &KPattern) -> PhaseCoordinatesIndex {
+        *self
+            .data
+            .coordinates_to_index
+            .get(
+                &Square1Phase1Coordinates::try_new(
+                    kpattern,
+                    square1_square_square_shape_kpattern(),
+                )
+                .unwrap(),
+            )
+            .unwrap()
     }
 }
 

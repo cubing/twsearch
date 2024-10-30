@@ -12,7 +12,10 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::{
-    _internal::{AlwaysValid, Depth, IDFSearch, PatternValidityChecker, SearchLogger},
+    _internal::{
+        AlwaysValid, Depth, IDFSearch, IndividualSearchOptions, PatternValidityChecker,
+        SearchLogger,
+    },
     scramble::{
         randomize::{basic_parity, BasicParity, PieceZeroConstraint},
         scramble_search::FilteredSearch,
@@ -29,8 +32,7 @@ use super::{
     definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
     mask_pattern::mask,
     square1_phase1_lookup_table::{
-        build_phase1_lookup_table, Square1Phase1Coordinates, Square1Phase1LookupTable,
-        Square1Phase1PruneTable,
+        build_phase1_lookup_table, Square1Phase1LookupTable, Square1Phase1PruneTable,
     },
 };
 
@@ -155,23 +157,18 @@ pub fn scramble_square1() -> Alg {
         &square1_square_square_shape_kpattern().to_owned(),
     );
 
-    let mut scramble_pattern = kpuzzle.default_pattern().apply_alg(&parse_alg!("/"));
-    let phase1_target_pattern = square1_phase1_lookup_table
-        .data
-        .coordinates_to_index
-        .get(
-            &Square1Phase1Coordinates::try_new(
-                &kpuzzle.default_pattern(),
-                square1_square_square_shape_kpattern(),
-            )
+    let scramble_pattern = square1_phase1_lookup_table.full_pattern_to_coordinates(
+        &kpuzzle
+            .default_pattern()
+            .apply_alg(&parse_alg!("/"))
             .unwrap(),
-        )
-        .unwrap()
-        .clone();
-    let generic_idfs =
+    );
+    let phase1_target_pattern =
+        square1_phase1_lookup_table.full_pattern_to_coordinates(&kpuzzle.default_pattern());
+    let mut generic_idfs =
         IDFSearch::<Square1Phase1LookupTable, AlwaysValid, Square1Phase1PruneTable>::try_new(
             square1_phase1_lookup_table,
-            phase1_target_pattern.clone(),
+            phase1_target_pattern,
             vec![
                 &parse_move!("U_SQ_"),
                 &parse_move!("D_SQ_"),
@@ -184,7 +181,19 @@ pub fn scramble_square1() -> Alg {
             &crate::_internal::options::MetricEnum::Hand,
             false,
             None,
-        );
+        )
+        .unwrap();
+
+    for solution in generic_idfs.search(
+        &scramble_pattern,
+        IndividualSearchOptions {
+            ..Default::default()
+        },
+    ) {
+        println!("SOLUTION: {}", solution);
+    }
+
+    todo!();
 
     loop {
         let mut scramble_pattern = kpuzzle.default_pattern();

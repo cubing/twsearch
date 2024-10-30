@@ -13,9 +13,8 @@ const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
 
 whole_number_newtype!(MoveClassIndex, usize);
 
-// Bit N is indexed by a `MoveClass` value of N.
-#[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
-struct MoveClassMask(u64);
+// Bit N is indexed by a `MoveClassIndex` value of N.
+whole_number_newtype!(MoveClassMask, u64);
 
 impl BitAndAssign for MoveClassMask {
     fn bitand_assign(&mut self, rhs: Self) {

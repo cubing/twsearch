@@ -1,12 +1,11 @@
 use std::{
-    env,
     fmt::Debug,
     str::FromStr,
     time::{Duration, Instant},
 };
 
 use cubing::{
-    alg::{parse_alg, parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},
+    alg::{parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},
     kpuzzle::{KPattern, KPuzzle},
 };
 use rand::{seq::SliceRandom, thread_rng};

@@ -176,16 +176,6 @@ impl SearchOptimizations<KPuzzle> for Square1Phase2Optimizations {
 }
 
 pub fn scramble_square1() -> Alg {
-    match env::var("EXPERIMENTAL_SQUARE1").as_deref() {
-        Ok("true") => {
-            eprintln!("⚠️👷 Square-1 scrambling is still under construction! The code may hang or produce invalid results at this time. 👷⚠️");
-        }
-        _ => {
-            eprintln!("⚠️👷 Square-1 scrambling is still under construction! Returning a bogus alg. Set `EXPERIMENTAL_SQUARE1=true` in the environment to run the scramble code. 👷⚠️");
-            return parse_alg!("_SLASH_");
-        }
-    }
-
     let kpuzzle = square1_unbandaged_kpuzzle();
     let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
 
@@ -340,8 +330,8 @@ pub fn wedge_parity(pattern: &KPattern) -> BasicParity {
     basic_parity(&bandaged_wedges)
 }
 
-// const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: Option<&str> = None;
-const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: Option<&str> = Some("(0, -1) / (4, -2) / (5, -1) / (4, -5) / (0, -3) / (-1, -3) / (3, 0) / (-3, 0) / (4, 0) / (4, 0) /");
+const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: Option<&str> = None;
+// const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: Option<&str> = Some("(0, -1) / (4, -2) / (5, -1) / (4, -5) / (0, -3) / (-1, -3) / (3, 0) / (-3, 0) / (4, 0) / (4, 0) /");
 
 fn random_pattern() -> KPattern {
     let mut rng = thread_rng();
@@ -401,6 +391,7 @@ fn random_pattern() -> KPattern {
             mask(&scramble_pattern, square1_square_square_shape_kpattern()).unwrap();
 
         if Phase1Checker::is_valid(&phase1_start_pattern) {
+            dbg!(&scramble_pattern);
             return scramble_pattern;
         }
 

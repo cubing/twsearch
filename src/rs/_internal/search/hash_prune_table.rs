@@ -10,9 +10,9 @@ use crate::_internal::{
 };
 
 use super::idf_search::IDFSearchAPIData;
-use super::{index_type, Depth, PatternValidityChecker, PruneTable};
+use super::{whole_number_newtype, Depth, PatternValidityChecker, PruneTable};
 
-index_type!(DepthU8, u8);
+whole_number_newtype!(DepthU8, u8);
 
 type PruneTableEntryType = DepthU8;
 // 0 is uninitialized, all other values are stored as 1+depth.

@@ -23,8 +23,8 @@ pub(crate) use pattern_stack::*;
 mod indexed_vec;
 pub use indexed_vec::*;
 
-mod index_type;
-pub use index_type::*;
+mod whole_number_newtype;
+pub use whole_number_newtype::*;
 
 mod move_count;
 pub use move_count::*;

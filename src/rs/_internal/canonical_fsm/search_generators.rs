@@ -4,12 +4,12 @@ use cubing::alg::{Move, QuantumMove};
 
 use crate::{
     _internal::{cli::options::MetricEnum, puzzle_traits::SemiGroupActionPuzzle, SearchError},
-    index_type,
+    whole_number_newtype,
 };
 
 use super::MoveClassIndex;
 
-index_type!(FlatMoveIndex, usize);
+whole_number_newtype!(FlatMoveIndex, usize);
 
 #[derive(Clone, Debug)]
 pub struct MoveTransformationInfo<

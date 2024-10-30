@@ -1,3 +1,3 @@
-use super::index_type;
+use super::whole_number_newtype;
 
-index_type!(MoveCount, usize);
+whole_number_newtype!(MoveCount, usize);

@@ -2,9 +2,9 @@ use std::sync::Arc;
 
 use crate::_internal::puzzle_traits::SemiGroupActionPuzzle;
 
-use super::{index_type, IDFSearchAPIData, SearchLogger};
+use super::{whole_number_newtype, IDFSearchAPIData, SearchLogger};
 
-index_type!(Depth, usize);
+whole_number_newtype!(Depth, usize);
 
 pub trait PruneTable<TPuzzle: SemiGroupActionPuzzle> {
     // TODO: design a proper API. The args here are currently inherited from `HashPruneTable`

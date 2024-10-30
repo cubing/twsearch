@@ -1,7 +1,11 @@
-// TODO: use inside the project without exporting.
+/// Defines a "newtype" for a whole number. This is useful to get an unsized
+/// integer type that cannot be treated as another type without explicit
+/// conversion.
+///
+/// This macro is public for development experimentation. Do not use outside `twsearch`.
 #[macro_export]
-/// Do not use outside `twsearch`.
-macro_rules! index_type {
+// TODO: use inside the project without exporting.
+macro_rules! whole_number_newtype {
     ($e: ident, $u_type: ident) => {
         #[derive(PartialEq, Eq, Copy, Clone, Debug, Hash, Default, PartialOrd, Ord, serde::Serialize, serde::Deserialize)]
         pub struct $e(pub $u_type);
@@ -55,4 +59,4 @@ macro_rules! index_type {
     };
 }
 
-pub use index_type;
+pub use whole_number_newtype;

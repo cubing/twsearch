@@ -13,8 +13,8 @@ use crate::{
         puzzle_traits::{MoveCount, SemiGroupActionPuzzle},
         Depth, FlatMoveIndex, IndexedVec, PatternValidityChecker, PruneTable, SearchGenerators,
     },
-    index_type,
     scramble::randomize::BasicParity,
+    whole_number_newtype,
 };
 
 use super::{
@@ -57,7 +57,7 @@ impl Square1Phase1Coordinates {
     }
 }
 
-index_type!(PhaseCoordinatesIndex, usize);
+whole_number_newtype!(PhaseCoordinatesIndex, usize);
 
 #[derive(Debug)]
 pub struct Square1Phase1LookupTableData {

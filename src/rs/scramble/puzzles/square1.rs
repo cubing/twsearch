@@ -1,5 +1,6 @@
 use std::{
     env,
+    fmt::Debug,
     io::{stdout, Write},
     time::{Duration, Instant},
 };
@@ -12,24 +13,19 @@ use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
     _internal::{
-        AlwaysValid, DefaultSearchOptimizations, Depth, HashPruneTable, IDFSearch,
-        IndividualSearchOptions, PatternValidityChecker, SearchLogger, SearchOptimizations,
+        Depth, HashPruneTable, IDFSearch, IndividualSearchOptions, PatternValidityChecker,
+        SearchLogger, SearchOptimizations,
     },
     scramble::{
         puzzles::mask_pattern::mask,
-        randomize::{
-            basic_parity, randomize_orbit_naïve, BasicParity, OrbitOrientationConstraint,
-            OrbitPermutationConstraint, PieceZeroConstraint,
-        },
+        randomize::{basic_parity, BasicParity},
         scramble_search::{move_list_from_vec, FilteredSearch},
     },
 };
 
 use super::{
+    coordinate_lookup_table::{PhaseCoordinatePuzzle, SemanticCoordinate},
     definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
-    square1_phase1_lookup_table::{
-        build_phase1_lookup_table, Square1Phase1LookupTable, Square1Phase1PruneTable,
-    },
 };
 
 #[derive(PartialEq, Eq)]
@@ -133,15 +129,42 @@ impl PatternValidityChecker<KPuzzle> for Phase2Checker {
     }
 }
 
-pub struct Square1Phase1Optimizations {}
-impl SearchOptimizations<Square1Phase1LookupTable> for Square1Phase1Optimizations {
-    type PatternValidityChecker = AlwaysValid;
-    type PruneTable = Square1Phase1PruneTable;
+#[derive(PartialEq, Eq, Hash, Clone)]
+pub struct Square1Phase1CompoundSemanticCoordinate {
+    masked_pattern: KPattern,
+    parity: BasicParity,
 }
 
-impl DefaultSearchOptimizations<Square1Phase1LookupTable> for Square1Phase1LookupTable {
-    type Optimizations = Square1Phase1Optimizations;
+impl Debug for Square1Phase1CompoundSemanticCoordinate {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Phase1Coordinates")
+            .field("masked_pattern", &self.masked_pattern.to_data())
+            .field("parity", &self.parity)
+            .finish()
+    }
 }
+
+impl SemanticCoordinate<KPuzzle> for Square1Phase1CompoundSemanticCoordinate {
+    fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
+        let phase_mask = &square1_square_square_shape_kpattern(); // TODO: Store this with the coordinate lookup?
+        let Ok(masked_pattern) = mask(full_pattern, phase_mask) else {
+            panic!("Mask application failed");
+        };
+
+        // TODO: this isn't a full validity check for scramble positions.
+        if !Phase1Checker::is_valid(&masked_pattern) {
+            return None;
+        }
+
+        let parity = wedge_parity(full_pattern);
+        Some(Self {
+            masked_pattern,
+            parity,
+        })
+    }
+}
+
+type Square1Phase1Puzzle = PhaseCoordinatePuzzle<Square1Phase1CompoundSemanticCoordinate>;
 
 struct Square1Phase2Optimizations {}
 
@@ -163,10 +186,12 @@ pub fn scramble_square1() -> Alg {
     }
 
     let kpuzzle = square1_unbandaged_kpuzzle();
+    let generator_moves = vec![parse_move!("U_SQ_"), parse_move!("D_SQ_"), parse_move!("/")];
 
-    let (square1_phase1_lookup_table, _search_generators) = build_phase1_lookup_table(
+    let (square1_phase1_lookup_table, _search_generators) = Square1Phase1Puzzle::new(
         kpuzzle.clone(),
-        &square1_square_square_shape_kpattern().to_owned(),
+        kpuzzle.default_pattern(),
+        generator_moves.clone(),
     );
 
     let scramble_pattern = random_pattern();
@@ -175,20 +200,19 @@ pub fn scramble_square1() -> Alg {
         square1_phase1_lookup_table.full_pattern_to_coordinates(&random_pattern());
     let phase1_target_pattern =
         square1_phase1_lookup_table.full_pattern_to_coordinates(&kpuzzle.default_pattern());
-    let mut generic_idfs =
-        IDFSearch::<Square1Phase1LookupTable, Square1Phase1Optimizations>::try_new(
-            square1_phase1_lookup_table,
-            phase1_target_pattern,
-            vec![parse_move!("U_SQ_"), parse_move!("D_SQ_"), parse_move!("/")],
-            SearchLogger {
-                verbosity: crate::_internal::options::VerbosityLevel::Info,
-            }
-            .into(),
-            &crate::_internal::options::MetricEnum::Hand,
-            false,
-            None,
-        )
-        .unwrap();
+    let mut generic_idfs = IDFSearch::<Square1Phase1Puzzle>::try_new(
+        square1_phase1_lookup_table,
+        phase1_target_pattern,
+        generator_moves,
+        SearchLogger {
+            verbosity: crate::_internal::options::VerbosityLevel::Info,
+        }
+        .into(),
+        &crate::_internal::options::MetricEnum::Hand,
+        false,
+        None,
+    )
+    .unwrap();
 
     // let start_time = Instant::now();
     // let mut last_solution: Alg = parse_alg!("/");
@@ -238,13 +262,13 @@ pub fn scramble_square1() -> Alg {
     let mut phase1_cumulative_time = Duration::default();
     let mut phase2_cumulative_time = Duration::default();
     #[allow(non_snake_case)]
-    let _SLASH_ = &parse_move!("/");
+    let _SLASH_ = parse_move!("/");
     'phase1_loop: for mut phase1_solution in phase1_search {
         phase1_cumulative_time += Instant::now() - phase1_start_time;
 
         // TODO: Push the candidate check into a trait for `IDFSearch`.
         while let Some(cubing::alg::AlgNode::MoveNode(r#move)) = phase1_solution.nodes.last() {
-            if r#move == _SLASH_
+            if r#move == &_SLASH_
             // TODO: redundant parsing
             {
                 break;

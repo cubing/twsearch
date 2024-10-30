@@ -3,7 +3,9 @@ use std::collections::HashMap;
 use cubing::alg::{Move, QuantumMove};
 
 use crate::{
-    _internal::{cli::options::MetricEnum, puzzle_traits::SemiGroupActionPuzzle, SearchError},
+    _internal::{
+        cli::options::MetricEnum, puzzle_traits::SemiGroupActionPuzzle, MoveCount, SearchError,
+    },
     whole_number_newtype,
 };
 
@@ -78,8 +80,8 @@ impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
             let amount_iterator: Vec<i32> = match (metric, order) {
                 (MetricEnum::Hand, order) => {
                     let original_amount = r#move.amount;
-                    let mod_amount = order * original_amount;
-                    let max_positive_amount = order / 2;
+                    let mod_amount = (order.0 as i32) * original_amount;
+                    let max_positive_amount = (order.0 as i32) / 2;
                     (original_amount..=mod_amount - original_amount)
                         .step_by(original_amount as usize)
                         .map(|amount| {
@@ -91,7 +93,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
                         })
                         .collect()
                 }
-                (MetricEnum::Quantum, 2 | 1) => vec![1],
+                (MetricEnum::Quantum, MoveCount(2) | MoveCount(1)) => vec![1],
                 (MetricEnum::Quantum, _) => vec![1, -1],
             };
 

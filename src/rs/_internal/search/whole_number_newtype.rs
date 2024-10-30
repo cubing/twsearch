@@ -56,6 +56,12 @@ macro_rules! whole_number_newtype {
                 Ok(Self(<$u_type as std::str::FromStr>::from_str(s)?))
             }
         }
+
+        impl std::ops::AddAssign for $e {
+            fn add_assign(&mut self, rhs: Self) {
+                self.0 = self.0 + rhs.0
+            }
+        }
     };
 }
 

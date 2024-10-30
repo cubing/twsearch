@@ -1,6 +1,5 @@
 use std::{
     fmt::Debug,
-    io::{stdout, Write},
     marker::PhantomData,
     sync::{
         mpsc::{channel, Receiver, Sender},
@@ -9,7 +8,7 @@ use std::{
 };
 
 use cubing::{
-    alg::{parse_move, Alg, AlgNode, Move},
+    alg::{Alg, AlgNode, Move},
     kpuzzle::KPuzzle,
 };
 use serde::{Deserialize, Serialize};

@@ -7,6 +7,7 @@ pub mod pyraminx;
 pub mod skewb;
 pub mod square1;
 
+pub mod coordinate_lookup_table;
 pub mod square1_phase1_lookup_table;
 
 mod definitions;

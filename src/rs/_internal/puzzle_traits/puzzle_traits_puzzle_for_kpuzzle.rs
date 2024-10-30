@@ -5,7 +5,9 @@ use cubing::{
     kpuzzle::{InvalidAlgError, KPattern, KPuzzle, KTransformation, KTransformationBuffer},
 };
 
-use super::{GroupActionPuzzle, HashablePatternPuzzle, MoveCount, SemiGroupActionPuzzle};
+use crate::_internal::MoveCount;
+
+use super::{GroupActionPuzzle, HashablePatternPuzzle, SemiGroupActionPuzzle};
 
 impl SemiGroupActionPuzzle for KPuzzle {
     type Pattern = KPattern;
@@ -18,11 +20,11 @@ impl SemiGroupActionPuzzle for KPuzzle {
     fn move_order(&self, r#move: &Move) -> Result<MoveCount, InvalidAlgError> {
         let transformation = self.puzzle_transformation_from_move(r#move)?;
         let identity_transformation = transformation.kpuzzle().identity_transformation();
-        let mut order: i32 = 1;
+        let mut order = MoveCount(1);
         let mut current_transformation = KTransformationBuffer::from(transformation.clone());
         while *current_transformation.current() != identity_transformation {
             current_transformation.apply_transformation(&transformation);
-            order += 1;
+            order += MoveCount(1);
         }
         Ok(order)
     }

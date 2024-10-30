@@ -2,9 +2,7 @@ use std::fmt::Debug;
 
 use cubing::{alg::Move, kpuzzle::InvalidAlgError};
 
-use crate::_internal::MoveTransformationInfo;
-
-pub type MoveCount = i32; // TODO: move this somewhere more appropriate.
+use crate::_internal::{MoveCount, MoveTransformationInfo};
 
 // TODO: split this into 3 related traits.
 /// The `Clone` implementation must be cheap for both the main struct as well as the `Pattern` and `Transformation` types (e.g. implemented using data shared with an `Arc` under the hood whenever any non-trivial amount of data is associated).
@@ -46,6 +44,13 @@ pub trait SemiGroupActionPuzzle: Debug + Clone {
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
     ) -> Option<Self::Pattern>;
+
+    // Must return `true`/`false` depending on whether
+    // `.pattern_apply_transformation(…)` would return `Some(…)`/`None`.
+    //
+    // If the return value is `false`, `into_pattern` may be left in a mangled
+    // state. The implementation must accept `into_pattern` values as input that
+    // were left mangled by a previous call, without affecting semantics.
     fn pattern_apply_transformation_into(
         // TODO: this is a hack to allow `Phase2Puzzle` to access its tables, ideally we would avoid this.
         // Then again, this might turn out to be necessary for similar high-performance implementations.

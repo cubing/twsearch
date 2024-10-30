@@ -33,7 +33,7 @@ whole_number_newtype!(PhaseCoordinateIndex, usize);
 pub type ExactCoordinatePruneTable = IndexedVec<PhaseCoordinateIndex, Depth>;
 
 #[derive(Debug)]
-struct PhaseCoordinateLookupTablesData<
+struct PhaseCoordinateLookupTables<
     TPuzzle: SemiGroupActionPuzzle,
     TSemanticCoordinate: SemanticCoordinate<TPuzzle>,
 > {
@@ -56,7 +56,7 @@ struct PhaseCoordinateLookupTablesData<
 // TODO: Genericize this to `TPuzzle`.
 #[derive(Clone, Debug)]
 pub struct PhaseCoordinatePuzzle<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> {
-    data: Arc<PhaseCoordinateLookupTablesData<KPuzzle, TSemanticCoordinate>>,
+    data: Arc<PhaseCoordinateLookupTables<KPuzzle, TSemanticCoordinate>>,
 }
 
 impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> PhaseCoordinatePuzzle<TSemanticCoordinate> {
@@ -160,7 +160,7 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> PhaseCoordinatePuzzle<TSe
         // dbg!(exact_prune_table);
 
         let data = Arc::new(
-            PhaseCoordinateLookupTablesData::<KPuzzle, TSemanticCoordinate> {
+            PhaseCoordinateLookupTables::<KPuzzle, TSemanticCoordinate> {
                 puzzle,
                 index_to_semantic_coordinate,
                 semantic_coordinate_to_index,

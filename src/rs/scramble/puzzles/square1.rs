@@ -27,8 +27,8 @@ use crate::{
 };
 
 use super::{
-    coordinate_lookup_table::{PhaseCoordinatePuzzle, SemanticCoordinate},
     definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
+    phase_coordinate_puzzle::{PhaseCoordinatePuzzle, SemanticCoordinate},
 };
 
 #[derive(PartialEq, Eq)]

@@ -68,9 +68,9 @@ impl SetCppArgs for CommonSearchArgs {
             is_enabled_with_default_true(&self.check_before_solve),
         );
         set_boolean_arg("--randomstart", self.random_start);
-        set_optional_arg("--mindepth", &self.min_depth);
-        set_optional_arg("-m", &self.max_depth);
-        set_optional_arg("--startprunedepth", &self.start_prune_depth);
+        set_optional_arg("--mindepth", &self.min_depth.map(|o| o.0));
+        set_optional_arg("-m", &self.max_depth.map(|o| o.0));
+        set_optional_arg("--startprunedepth", &self.start_prune_depth.map(|o| o.0));
         self.performance_args.set_cpp_args();
     }
 }
@@ -235,9 +235,9 @@ impl SetCppArgs for ServeClientArgs {
             is_enabled_with_default_true(&self.check_before_solve),
         );
         set_boolean_arg("--randomstart", self.random_start.unwrap_or(true));
-        set_optional_arg("--mindepth", &self.min_depth);
-        set_optional_arg("--maxdepth", &self.max_depth);
-        set_optional_arg("--startprunedepth", &self.start_prune_depth);
+        set_optional_arg("--mindepth", &self.min_depth.map(|o| o.0));
+        set_optional_arg("--maxdepth", &self.max_depth.map(|o| o.0));
+        set_optional_arg("--startprunedepth", &self.start_prune_depth.map(|o| o.0));
         set_optional_arg("-q", &self.quantum_metric);
         if let Some(move_subset) = &self.generator_moves {
             set_moves_arg(move_subset);

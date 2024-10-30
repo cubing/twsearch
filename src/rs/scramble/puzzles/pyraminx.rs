@@ -1,7 +1,10 @@
 use cubing::alg::{Alg, AlgNode, Move};
 use rand::{thread_rng, Rng};
 
-use crate::scramble::{randomize::PieceZeroConstraint, scramble_search::move_list_from_vec};
+use crate::{
+    _internal::MoveCount,
+    scramble::{randomize::PieceZeroConstraint, scramble_search::move_list_from_vec},
+};
 
 use super::{
     super::randomize::{
@@ -52,8 +55,8 @@ pub fn scramble_pyraminx() -> Alg {
         if let Some(scramble) = simple_filtered_search(
             &scramble_pattern,
             generators,
-            6 - alg_nodes.len(),
-            Some(11 - alg_nodes.len()),
+            MoveCount(6 - alg_nodes.len()),
+            Some(MoveCount(11 - alg_nodes.len())),
         ) {
             let mut nodes = scramble.nodes;
             nodes.append(&mut alg_nodes);

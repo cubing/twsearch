@@ -11,6 +11,7 @@ use std::process::exit;
 use std::str::FromStr;
 
 use crate::_internal::puzzle_traits::GroupActionPuzzle;
+use crate::_internal::Depth;
 
 /// twsearch-cpp-wrapper — a native Rust wrapper for `twsearch` functionality.
 #[derive(Parser, Debug)]
@@ -74,15 +75,15 @@ pub struct CommonSearchArgs {
     /// expansions that can already be anticipated by starting with a sufficient
     /// depth.
     #[clap(long/*, visible_alias = "startprunedepth" */, id = "DEPTH")]
-    pub start_prune_depth: Option<usize>,
+    pub start_prune_depth: Option<Depth>,
 
     /// Start solution search at this depth.
     #[clap(long/* , visible_alias = "mindepth" */)]
-    pub min_depth: Option<usize>,
+    pub min_depth: Option<Depth>,
 
     /// Stop solution search at this depth.
     #[clap(long/* , visible_alias = "maxdepth" */)]
-    pub max_depth: Option<usize>,
+    pub max_depth: Option<Depth>,
 
     #[command(flatten)]
     pub performance_args: PerformanceArgs,
@@ -464,9 +465,9 @@ pub struct ServeClientArgs {
     // TODO: allow the client to set performance args (with bounds checks) and prune table (if enabled by server).
     pub check_before_solve: Option<EnableAutoAlwaysNeverValueEnum>,
     pub random_start: Option<bool>,
-    pub min_depth: Option<usize>,
-    pub max_depth: Option<usize>,
-    pub start_prune_depth: Option<usize>,
+    pub min_depth: Option<Depth>,
+    pub max_depth: Option<Depth>,
+    pub start_prune_depth: Option<Depth>,
     pub quantum_metric: Option<bool>, // TODO: enum
     pub generator_moves: Option<Vec<Move>>,
 }

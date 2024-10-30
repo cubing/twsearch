@@ -12,9 +12,8 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::{
-    _internal::{FlatMoveIndex, PatternValidityChecker},
+    _internal::{AlwaysValid, Depth, IDFSearch, PatternValidityChecker, SearchLogger},
     scramble::{
-        puzzles::square1_phase_lookup_table::LookupPattern,
         randomize::{basic_parity, BasicParity, PieceZeroConstraint},
         scramble_search::FilteredSearch,
     },
@@ -29,7 +28,10 @@ use super::{
     },
     definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
     mask_pattern::mask,
-    square1_phase_lookup_table::{build_phase_lookup_table, PhasePatternIndex},
+    square1_phase1_lookup_table::{
+        build_phase1_lookup_table, Square1Phase1Coordinates, Square1Phase1LookupTable,
+        Square1Phase1PruneTable,
+    },
 };
 
 #[derive(PartialEq, Eq)]
@@ -68,7 +70,7 @@ const WEDGE_TYPE_LOOKUP: [WedgeType; NUM_WEDGES as usize] = [
     WedgeType::CornerUpper,
 ];
 
-struct Phase1Checker;
+pub struct Phase1Checker;
 
 const SLOTS_THAT_ARE_AFTER_SLICES: [u8; 4] = [0, 6, 12, 18];
 
@@ -147,62 +149,43 @@ pub fn scramble_square1() -> Alg {
     let kpuzzle = square1_unbandaged_kpuzzle();
     let generators = generators_from_vec_str(vec!["U_SQ_", "D_SQ_", "_SLASH_"]); // TODO: cache
 
-    let (phase_lookup_table, search_generators) = build_phase_lookup_table::<Phase1Checker>(
+    let (square1_phase1_lookup_table, _search_generators) = build_phase1_lookup_table(
         kpuzzle.clone(),
         &generators,
         &square1_square_square_shape_kpattern().to_owned(),
     );
-    // let idx = phase_lookup_table
-    //     .index_to_lookup_pattern
-    //     .at(PhasePatternIndex(0));
-    #[allow(non_snake_case)]
-    let U_SQ_ = phase_lookup_table.apply_move(PhasePatternIndex(0), FlatMoveIndex(22));
-    dbg!(U_SQ_);
-    dbg!(phase_lookup_table
-        .index_to_lookup_pattern
-        .at(U_SQ_.unwrap()));
-    dbg!(phase_lookup_table.apply_move(U_SQ_.unwrap(), FlatMoveIndex(10)));
-    #[allow(non_snake_case)]
-    let U_SQ_SLICE = phase_lookup_table
-        .index_to_lookup_pattern
-        .at(phase_lookup_table
-            .apply_move(U_SQ_.unwrap(), FlatMoveIndex(22))
-            .unwrap());
-    dbg!(U_SQ_SLICE);
-    dbg!(
-        U_SQ_,
-        phase_lookup_table
-            .move_application_table
-            .at(U_SQ_.unwrap())
-            .at(FlatMoveIndex(22))
-    );
-    dbg!(
-        U_SQ_,
-        phase_lookup_table
-            .index_to_lookup_pattern
-            .at(PhasePatternIndex(1))
-    );
 
-    dbg!(&search_generators.flat[10]);
-    dbg!(phase_lookup_table.lookup_pattern_to_index.get(
-        &LookupPattern::try_new::<Phase1Checker>(
-            &kpuzzle.default_pattern(),
-            square1_square_square_shape_kpattern(),
+    let mut scramble_pattern = kpuzzle.default_pattern().apply_alg(&parse_alg!("/"));
+    let phase1_target_pattern = square1_phase1_lookup_table
+        .data
+        .coordinates_to_index
+        .get(
+            &Square1Phase1Coordinates::try_new(
+                &kpuzzle.default_pattern(),
+                square1_square_square_shape_kpattern(),
+            )
+            .unwrap(),
         )
-        .unwrap(),
-    ));
+        .unwrap()
+        .clone();
+    let generic_idfs =
+        IDFSearch::<Square1Phase1LookupTable, AlwaysValid, Square1Phase1PruneTable>::try_new(
+            square1_phase1_lookup_table,
+            phase1_target_pattern.clone(),
+            vec![
+                &parse_move!("U_SQ_"),
+                &parse_move!("D_SQ_"),
+                &parse_move!("_SLASH_"),
+            ],
+            SearchLogger {
+                verbosity: crate::_internal::options::VerbosityLevel::Info,
+            }
+            .into(),
+            &crate::_internal::options::MetricEnum::Hand,
+            false,
+            None,
+        );
 
-    //     dbg!(wedge_parity(
-    //         &kpuzzle
-    //             .default_pattern()
-    //             .apply_alg(&parse_alg!(
-    //                 "(0, 5) / (3, 0) / (-5, -2) / (3, -3) / (5, -4) / (0, -3) / (-3, 0) / (-3, -3)
-    // / U_SQ_2' D_SQ_ / U_SQ_'"
-    //             ))
-    //             .unwrap()
-    //     ));
-    //     exit(1);
-    //
     loop {
         let mut scramble_pattern = kpuzzle.default_pattern();
 
@@ -329,7 +312,7 @@ pub fn scramble_square1() -> Alg {
             &phase1_start_pattern,
             Some(10_000_000), // see "le tired' below
             None,
-            Some(18), // Max phase 1 length
+            Some(Depth(18)), // Max phase 1 length
         ) {
             phase1_cumulative_time += Instant::now() - phase1_start_time;
 
@@ -378,7 +361,7 @@ pub fn scramble_square1() -> Alg {
                     &phase2_start_pattern,
                     Some(1),
                     None,
-                    Some(17), // <<< needs explanation
+                    Some(Depth(17)), // <<< needs explanation
                 )
                 .next();
 

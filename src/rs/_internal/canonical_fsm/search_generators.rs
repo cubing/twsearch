@@ -9,7 +9,7 @@ use crate::{
 
 use super::MoveClassIndex;
 
-index_type!(FlatMoveIndex);
+index_type!(FlatMoveIndex, usize);
 
 #[derive(Clone, Debug)]
 pub struct MoveTransformationInfo<

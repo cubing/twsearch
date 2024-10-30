@@ -7,8 +7,8 @@ use cubing::{
 
 use crate::_internal::{
     options::{CustomGenerators, Generators, MetricEnum, VerbosityLevel},
-    AlwaysValid, IDFSearch, IndividualSearchOptions, PatternValidityChecker, SearchLogger,
-    SearchSolutions,
+    AlwaysValid, Depth, IDFSearch, IndividualSearchOptions, MoveCount, PatternValidityChecker,
+    SearchLogger, SearchSolutions,
 };
 
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
@@ -72,8 +72,12 @@ impl<TPatternValidityChecker: PatternValidityChecker<KPuzzle>>
         Self { idfs }
     }
 
-    pub fn filter(&mut self, scramble_pattern: &KPattern, min_optimal_moves: usize) -> Option<Alg> {
-        if min_optimal_moves == 0 {
+    pub fn filter(
+        &mut self,
+        scramble_pattern: &KPattern,
+        min_optimal_moves: MoveCount,
+    ) -> Option<Alg> {
+        if min_optimal_moves == MoveCount(0) {
             return None;
         }
         self.idfs
@@ -81,8 +85,8 @@ impl<TPatternValidityChecker: PatternValidityChecker<KPuzzle>>
                 scramble_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
-                    min_depth: Some(0),
-                    max_depth: Some(min_optimal_moves - 1),
+                    min_depth: Some(Depth(0)),
+                    max_depth: Some(Depth(min_optimal_moves.0 - 1)),
                     ..Default::default()
                 },
             )
@@ -93,14 +97,14 @@ impl<TPatternValidityChecker: PatternValidityChecker<KPuzzle>>
     pub fn generate_scramble(
         &mut self,
         scramble_pattern: &KPattern,
-        min_scramble_moves: Option<usize>,
+        min_scramble_moves: Option<MoveCount>,
     ) -> Alg {
         self.idfs
             .search(
                 scramble_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
-                    min_depth: min_scramble_moves,
+                    min_depth: min_scramble_moves.map(|move_count| Depth(move_count.0)),
                     ..Default::default()
                 },
             )
@@ -113,8 +117,8 @@ impl<TPatternValidityChecker: PatternValidityChecker<KPuzzle>>
         &mut self,
         scramble_pattern: &KPattern,
         min_num_solutions: Option<usize>,
-        min_depth: Option<usize>,
-        max_depth: Option<usize>,
+        min_depth: Option<Depth>,
+        max_depth: Option<Depth>,
     ) -> SearchSolutions {
         self.idfs.search(
             scramble_pattern,
@@ -131,8 +135,8 @@ impl<TPatternValidityChecker: PatternValidityChecker<KPuzzle>>
 pub(crate) fn simple_filtered_search(
     scramble_pattern: &KPattern,
     generators: Generators,
-    min_optimal_moves: usize,
-    min_scramble_moves: Option<usize>,
+    min_optimal_moves: MoveCount,
+    min_scramble_moves: Option<MoveCount>,
 ) -> Option<Alg> {
     let kpuzzle = scramble_pattern.kpuzzle();
     let mut filtered_search =

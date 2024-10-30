@@ -119,10 +119,13 @@ impl<
             };
 
             for move_transformation_info in move_transformation_multiples {
-                let next_pattern = mutable_data.tpuzzle.pattern_apply_transformation(
+                let Some(next_pattern) = mutable_data.tpuzzle.pattern_apply_transformation(
                     current_pattern,
                     &move_transformation_info.transformation,
-                );
+                ) else {
+                    continue;
+                };
+
                 if !TPatternValidityChecker::is_valid(&next_pattern) {
                     mutable_data.set_invalid_depth(&next_pattern);
                     continue;

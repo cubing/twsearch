@@ -248,8 +248,9 @@ impl SemiGroupActionPuzzle for Square1Phase1LookupTable {
         &self,
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
-    ) -> Self::Pattern {
-        self.apply_move(*pattern, *transformation_to_apply).unwrap()
+    ) -> Option<Self::Pattern> {
+        println!("{:?}, {:?}", pattern, transformation_to_apply);
+        self.apply_move(*pattern, *transformation_to_apply)
     }
 
     fn pattern_apply_transformation_into(
@@ -259,8 +260,13 @@ impl SemiGroupActionPuzzle for Square1Phase1LookupTable {
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
         into_pattern: &mut Self::Pattern,
-    ) {
-        *into_pattern = self.pattern_apply_transformation(pattern, transformation_to_apply);
+    ) -> bool {
+        let Some(pattern) = self.pattern_apply_transformation(pattern, transformation_to_apply)
+        else {
+            return false;
+        };
+        *into_pattern = pattern;
+        true
     }
 }
 

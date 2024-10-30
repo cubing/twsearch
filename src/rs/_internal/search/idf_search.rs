@@ -1,4 +1,5 @@
 use std::{
+    fmt::Debug,
     marker::PhantomData,
     sync::{
         mpsc::{channel, Receiver, Sender},
@@ -6,13 +7,17 @@ use std::{
     },
 };
 
-use cubing::alg::{Alg, AlgNode, Move};
+use cubing::{
+    alg::{Alg, AlgNode, Move},
+    kpuzzle::KPuzzle,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::_internal::{
-    cli::options::MetricEnum, puzzle_traits::SemiGroupActionPuzzle, CanonicalFSM,
-    CanonicalFSMState, HashPruneTable, MoveClassIndex, RecursiveWorkTracker, SearchError,
-    SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
+    cli::options::MetricEnum,
+    puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
+    CanonicalFSM, CanonicalFSMState, HashPruneTable, MoveClassIndex, RecursiveWorkTracker,
+    SearchError, SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
 use super::{AlwaysValid, Depth, PatternStack, PatternValidityChecker, PruneTable};
@@ -137,22 +142,41 @@ pub struct IDFSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
     pub search_logger: Arc<SearchLogger>,
 }
 
+pub trait SearchOptimizations<TPuzzle: SemiGroupActionPuzzle> {
+    type PatternValidityChecker: PatternValidityChecker<TPuzzle>;
+    type PruneTable: PruneTable<TPuzzle>;
+}
+
+pub struct NoSearchOptimizations<TPuzzle: HashablePatternPuzzle> {
+    phantom_data: PhantomData<TPuzzle>,
+}
+impl<TPuzzle: HashablePatternPuzzle> SearchOptimizations<TPuzzle>
+    for NoSearchOptimizations<TPuzzle>
+{
+    type PatternValidityChecker = AlwaysValid;
+    type PruneTable = HashPruneTable<TPuzzle, Self::PatternValidityChecker>;
+}
+
+pub trait DefaultSearchOptimizations<TPuzzle: SemiGroupActionPuzzle> {
+    type Optimizations: SearchOptimizations<TPuzzle>;
+}
+
+impl DefaultSearchOptimizations<KPuzzle> for KPuzzle {
+    type Optimizations = NoSearchOptimizations<KPuzzle>;
+}
+
 pub struct IDFSearch<
-    TPuzzle: SemiGroupActionPuzzle, // TODO: = KPuzzle,
-    TPatternValidityChecker: PatternValidityChecker<TPuzzle> = AlwaysValid,
-    TPruneTable: PruneTable<TPuzzle> = HashPruneTable<TPuzzle, TPatternValidityChecker>,
+    TPuzzle: SemiGroupActionPuzzle + DefaultSearchOptimizations<TPuzzle> = KPuzzle,
+    P: SearchOptimizations<TPuzzle> = <TPuzzle as DefaultSearchOptimizations<TPuzzle>>::Optimizations,
 > {
     api_data: Arc<IDFSearchAPIData<TPuzzle>>,
-    pub prune_table: TPruneTable,
-
-    phantom_data: PhantomData<TPatternValidityChecker>,
+    pub prune_table: P::PruneTable,
 }
 
 impl<
-        TPuzzle: SemiGroupActionPuzzle,
-        ValidityChecker: PatternValidityChecker<TPuzzle>,
-        TPruneTable: PruneTable<TPuzzle>,
-    > IDFSearch<TPuzzle, ValidityChecker, TPruneTable>
+        TPuzzle: SemiGroupActionPuzzle + DefaultSearchOptimizations<TPuzzle>,
+        P: SearchOptimizations<TPuzzle>,
+    > IDFSearch<TPuzzle, P>
 {
     pub fn try_new(
         tpuzzle: TPuzzle,
@@ -165,6 +189,7 @@ impl<
     ) -> Result<Self, SearchError> {
         let search_generators =
             SearchGenerators::try_new(&tpuzzle, generator_moves, metric, random_start)?;
+        dbg!(&search_generators);
         let canonical_fsm = CanonicalFSM::try_new(tpuzzle.clone(), search_generators.clone())?; // TODO: avoid a clone
         let api_data = Arc::new(IDFSearchAPIData {
             search_generators,
@@ -174,7 +199,7 @@ impl<
             search_logger: search_logger.clone(),
         });
 
-        let prune_table = TPruneTable::new(
+        let prune_table = P::PruneTable::new(
             tpuzzle,
             api_data.clone(),
             search_logger,
@@ -183,7 +208,6 @@ impl<
         Ok(Self {
             api_data,
             prune_table,
-            phantom_data: PhantomData,
         })
     }
 
@@ -282,7 +306,7 @@ impl<
     ) -> SearchRecursionResult {
         let current_pattern = pattern_stack.current_pattern();
         // TODO: apply invalid checks only to intermediate state (i.e. exclude remaining_depth == 0)?
-        if !ValidityChecker::is_valid(current_pattern) {
+        if !P::PatternValidityChecker::is_valid(current_pattern) {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
 
@@ -311,6 +335,7 @@ impl<
             .iter()
             .enumerate()
         {
+            dbg!(move_class_index);
             let Some(next_state) = self
                 .api_data
                 .canonical_fsm
@@ -320,7 +345,9 @@ impl<
             };
 
             for move_transformation_info in move_transformation_multiples {
-                pattern_stack.push(&move_transformation_info.transformation);
+                if !pattern_stack.push(&move_transformation_info.transformation) {
+                    continue;
+                }
                 let recursive_result = self.recurse(
                     individual_search_data,
                     pattern_stack,

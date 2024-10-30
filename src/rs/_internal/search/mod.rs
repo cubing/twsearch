@@ -28,3 +28,5 @@ pub use whole_number_newtype::*;
 
 mod move_count;
 pub use move_count::*;
+
+pub mod coordinates;

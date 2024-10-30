@@ -7,8 +7,6 @@ pub mod pyraminx;
 pub mod skewb;
 pub mod square1;
 
-pub mod phase_coordinate_puzzle;
-
 mod definitions;
 mod mask_pattern;
 

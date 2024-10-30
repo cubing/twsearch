@@ -13,6 +13,7 @@ use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
     _internal::{
+        coordinates::phase_coordinate_puzzle::{PhaseCoordinatePuzzle, SemanticCoordinate},
         Depth, HashPruneTable, IDFSearch, IndividualSearchOptions, PatternValidityChecker,
         SearchLogger, SearchOptimizations,
     },
@@ -26,10 +27,7 @@ use crate::{
     },
 };
 
-use super::{
-    definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
-    phase_coordinate_puzzle::{PhaseCoordinatePuzzle, SemanticCoordinate},
-};
+use super::definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle};
 
 #[derive(PartialEq, Eq)]
 enum WedgeType {

@@ -7,8 +7,7 @@ use cubing::{
 
 use crate::_internal::{
     options::{CustomGenerators, Generators, MetricEnum, VerbosityLevel},
-    AlwaysValid, Depth, IDFSearch, IndividualSearchOptions, MoveCount, PatternValidityChecker,
-    SearchLogger, SearchSolutions,
+    Depth, IDFSearch, IndividualSearchOptions, MoveCount, SearchLogger,
 };
 
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
@@ -25,12 +24,12 @@ pub fn generators_from_vec_str(move_str_list: Vec<&str>) -> Generators {
     })
 }
 
-pub(crate) fn idfs_with_target_pattern<TPatternValidityChecker: PatternValidityChecker<KPuzzle>>(
+pub(crate) fn idfs_with_target_pattern(
     kpuzzle: &KPuzzle,
     generators: Generators,
     target_pattern: KPattern,
     min_prune_table_size: Option<usize>,
-) -> IDFSearch<KPuzzle, TPatternValidityChecker> {
+) -> IDFSearch {
     IDFSearch::try_new(
         kpuzzle.clone(),
         target_pattern,
@@ -46,28 +45,26 @@ pub(crate) fn idfs_with_target_pattern<TPatternValidityChecker: PatternValidityC
     .unwrap()
 }
 
-pub(crate) fn basic_idfs<TPatternValidityChecker: PatternValidityChecker<KPuzzle>>(
+pub(crate) fn basic_idfs(
     kpuzzle: &KPuzzle,
     generators: Generators,
     min_prune_table_size: Option<usize>,
     target_pattern: KPattern,
-) -> IDFSearch<KPuzzle, TPatternValidityChecker> {
+) -> IDFSearch {
     idfs_with_target_pattern(kpuzzle, generators, target_pattern, min_prune_table_size)
 }
 
-pub struct FilteredSearch<TPatternValidityChecker: PatternValidityChecker<KPuzzle> = AlwaysValid> {
-    pub(crate) idfs: IDFSearch<KPuzzle, TPatternValidityChecker>,
+pub struct FilteredSearch {
+    pub(crate) idfs: IDFSearch,
 }
 
-impl<TPatternValidityChecker: PatternValidityChecker<KPuzzle>>
-    FilteredSearch<TPatternValidityChecker>
-{
+impl FilteredSearch {
     pub fn new(
         kpuzzle: &KPuzzle,
         generators: Generators,
         min_prune_table_size: Option<usize>,
         target_pattern: KPattern,
-    ) -> FilteredSearch<TPatternValidityChecker> {
+    ) -> FilteredSearch {
         let idfs = basic_idfs(kpuzzle, generators, min_prune_table_size, target_pattern);
         Self { idfs }
     }
@@ -113,23 +110,23 @@ impl<TPatternValidityChecker: PatternValidityChecker<KPuzzle>>
             .invert()
     }
 
-    pub fn search(
-        &mut self,
-        scramble_pattern: &KPattern,
-        min_num_solutions: Option<usize>,
-        min_depth: Option<Depth>,
-        max_depth: Option<Depth>,
-    ) -> SearchSolutions {
-        self.idfs.search(
-            scramble_pattern,
-            IndividualSearchOptions {
-                min_num_solutions,
-                min_depth,
-                max_depth,
-                ..Default::default()
-            },
-        )
-    }
+    // pub fn search(
+    //     &mut self,
+    //     scramble_pattern: &KPattern,
+    //     min_num_solutions: Option<usize>,
+    //     min_depth: Option<Depth>,
+    //     max_depth: Option<Depth>,
+    // ) -> SearchSolutions {
+    //     self.idfs.search(
+    //         scramble_pattern,
+    //         IndividualSearchOptions {
+    //             min_num_solutions,
+    //             min_depth,
+    //             max_depth,
+    //             ..Default::default()
+    //         },
+    //     )
+    // }
 }
 
 pub(crate) fn simple_filtered_search(

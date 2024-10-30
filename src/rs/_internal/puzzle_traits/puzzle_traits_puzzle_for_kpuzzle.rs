@@ -51,8 +51,8 @@ impl SemiGroupActionPuzzle for KPuzzle {
         &self, // TODO
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
-    ) -> Self::Pattern {
-        pattern.apply_transformation(transformation_to_apply)
+    ) -> Option<Self::Pattern> {
+        Some(pattern.apply_transformation(transformation_to_apply)) // TODO
     }
 
     fn pattern_apply_transformation_into(
@@ -60,8 +60,9 @@ impl SemiGroupActionPuzzle for KPuzzle {
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
         into_pattern: &mut Self::Pattern,
-    ) {
+    ) -> bool {
         pattern.apply_transformation_into(transformation_to_apply, into_pattern);
+        true
     }
 }
 

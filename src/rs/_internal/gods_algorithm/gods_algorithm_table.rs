@@ -82,6 +82,7 @@ impl GodsAlgorithmSearch {
         let cached_inverses = IndexedVec::new(
             search_generators
                 .flat
+                .0
                 .iter()
                 .enumerate()
                 .map(|(i, info)| {
@@ -151,7 +152,7 @@ impl GodsAlgorithmSearch {
             let mut patterns_at_current_depth = BulkQueue::new(None);
             for queue_item in last_depth_patterns.into_iter() {
                 for move_class_index in &self.canonical_fsm.move_class_indices {
-                    let moves_in_class = &self.search_moves.by_move_class[move_class_index.0];
+                    let moves_in_class = self.search_moves.by_move_class.at(*move_class_index);
                     let next_state = self
                         .canonical_fsm
                         .next_state(queue_item.canonical_fsm_state, *move_class_index);

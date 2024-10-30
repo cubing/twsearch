@@ -30,6 +30,7 @@ pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
         .map(|_| {
             &search_generators
                 .flat
+                .0
                 .choose(&mut rng)
                 .unwrap()
                 .transformation

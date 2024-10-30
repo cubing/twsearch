@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 /// Contains some direct convenience methods. Use `.0` to access the underlying array.
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct IndexedVec<K: From<usize> + Into<usize> + Default, V>(pub Vec<V>, PhantomData<K>);
 
 impl<K: From<usize> + Into<usize> + Default, V> IndexedVec<K, V> {

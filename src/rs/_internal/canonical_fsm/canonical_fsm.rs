@@ -4,12 +4,14 @@ use std::{
     ops::{AddAssign, BitAndAssign},
 };
 
-use crate::_internal::{puzzle_traits::SemiGroupActionPuzzle, SearchError, SearchGenerators};
+use crate::{
+    _internal::{puzzle_traits::SemiGroupActionPuzzle, SearchError, SearchGenerators},
+    whole_number_newtype,
+};
 
 const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
 
-#[derive(Clone, Copy, Debug)]
-pub struct MoveClassIndex(pub usize);
+whole_number_newtype!(MoveClassIndex, usize);
 
 // Bit N is indexed by a `MoveClass` value of N.
 #[derive(Clone, Copy, PartialEq, Eq, Hash, Debug)]
@@ -111,13 +113,15 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
         // - `R2 U2` has order 6.
         // - T-perm and `(R2 U2)3` commute.
         for i in 0..num_move_classes {
+            let i = MoveClassIndex(i);
             for j in 0..num_move_classes {
+                let j = MoveClassIndex(j);
                 if !tpuzzle.do_moves_commute(
-                    &generators.by_move_class[i][0],
-                    &generators.by_move_class[j][0],
+                    &generators.by_move_class.at(i)[0],
+                    &generators.by_move_class.at(j)[0],
                 ) {
-                    commutes[i] &= MoveClassMask(!(1 << j));
-                    commutes[j] &= MoveClassMask(!(1 << i));
+                    commutes[*i] &= MoveClassMask(!(1 << *j));
+                    commutes[*j] &= MoveClassMask(!(1 << *i));
                 }
             }
         }

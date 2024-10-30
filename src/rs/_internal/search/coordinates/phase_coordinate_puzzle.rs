@@ -105,7 +105,7 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> PhaseCoordinatePuzzle<TSe
             semantic_coordinate_to_index.insert(lookup_pattern, PhaseCoordinateIndex(index));
             exact_prune_table.push(depth);
 
-            for move_transformation_info in &search_generators.flat {
+            for move_transformation_info in &search_generators.flat.0 {
                 let Some(new_pattern) = puzzle.pattern_apply_transformation(
                     &representative_pattern,
                     &move_transformation_info.transformation,
@@ -131,7 +131,7 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> PhaseCoordinatePuzzle<TSe
             let representative = index_to_representative_pattern.at(phase_pattern_index);
             let mut table_row =
                 IndexedVec::<FlatMoveIndex, Option<PhaseCoordinateIndex>>::default();
-            for move_transformation_info in &search_generators.flat {
+            for move_transformation_info in &search_generators.flat.0 {
                 let new_lookup_pattern = match puzzle.pattern_apply_transformation(
                     representative,
                     &move_transformation_info.transformation,
@@ -198,8 +198,7 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> SemiGroupActionPuzzle
         &self,
         r#move: &cubing::alg::Move,
     ) -> Result<Self::Transformation, InvalidAlgError> {
-        let Some((_, move_transformation_info)) = self.data.search_generators.by_move.get(r#move)
-        else {
+        let Some(move_transformation_info) = self.data.search_generators.by_move.get(r#move) else {
             return Err(InvalidAlgError::InvalidMove(InvalidMoveError {
                 description: format!("Invalid move: {}", r#move),
             }));

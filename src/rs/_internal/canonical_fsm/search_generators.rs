@@ -4,7 +4,8 @@ use cubing::alg::{Move, QuantumMove};
 
 use crate::{
     _internal::{
-        cli::options::MetricEnum, puzzle_traits::SemiGroupActionPuzzle, MoveCount, SearchError,
+        cli::options::MetricEnum, puzzle_traits::SemiGroupActionPuzzle, IndexedVec, MoveCount,
+        SearchError,
     },
     whole_number_newtype,
 };
@@ -25,6 +26,7 @@ pub struct MoveTransformationInfo<
     // #[allow(dead_code)] // TODO
     // pub inverse_transformation: TPuzzle::Transformation,
     pub flat_move_index: FlatMoveIndex,
+    pub move_class_index: MoveClassIndex,
 }
 
 pub type MoveTransformationMultiples<
@@ -37,9 +39,9 @@ pub struct SearchGenerators<
     TPuzzle: SemiGroupActionPuzzle, // TODO = KPuzzle
 > {
     // TODO: figure out the most reusable abstraction
-    pub by_move_class: Vec<MoveTransformationMultiples<TPuzzle>>,
-    pub flat: Vec<MoveTransformationInfo<TPuzzle>>, // TODO: avoid duplicate data
-    pub by_move: HashMap<Move, (MoveClassIndex, MoveTransformationInfo<TPuzzle>)>, // TODO: avoid duplicate data
+    pub by_move_class: IndexedVec<MoveClassIndex, MoveTransformationMultiples<TPuzzle>>,
+    pub flat: IndexedVec<FlatMoveIndex, MoveTransformationInfo<TPuzzle>>, // TODO: avoid duplicate data
+    pub by_move: HashMap<Move, MoveTransformationInfo<TPuzzle>>, // TODO: avoid duplicate data
 }
 
 impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
@@ -52,10 +54,10 @@ impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
         let mut seen_moves = HashMap::<QuantumMove, Move>::new();
 
         // TODO: actually calculate GCDs
-        let mut grouped = Vec::<MoveTransformationMultiples<TPuzzle>>::default();
-        let mut flat = Vec::<MoveTransformationInfo<TPuzzle>>::default();
-        let mut by_move =
-            HashMap::<Move, (MoveClassIndex, MoveTransformationInfo<TPuzzle>)>::default();
+        let mut by_move_class =
+            IndexedVec::<MoveClassIndex, MoveTransformationMultiples<TPuzzle>>::default();
+        let mut flat = IndexedVec::<FlatMoveIndex, MoveTransformationInfo<TPuzzle>>::default();
+        let mut by_move = HashMap::<Move, MoveTransformationInfo<TPuzzle>>::default();
         for (move_class_index, r#move) in moves.into_iter().enumerate() {
             let move_class_index = MoveClassIndex(move_class_index);
             if let Some(existing) = seen_moves.get(&r#move.quantum) {
@@ -119,12 +121,13 @@ impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
                     // metric_turns: 1, // TODO
                     transformation,
                     flat_move_index: FlatMoveIndex(flat.len()),
+                    move_class_index,
                 };
                 multiples.push(info.clone());
                 flat.push(info.clone());
-                by_move.insert(move_multiple, (move_class_index, info));
+                by_move.insert(move_multiple, info);
             }
-            grouped.push(multiples);
+            by_move_class.push(multiples);
         }
         // let mut rng = thread_rng();
         if random_start {
@@ -136,7 +139,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
         }
 
         Ok(Self {
-            by_move_class: grouped,
+            by_move_class,
             flat,
             by_move,
         })

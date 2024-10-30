@@ -16,8 +16,8 @@ use serde::{Deserialize, Serialize};
 use crate::_internal::{
     cli::options::MetricEnum,
     puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
-    CanonicalFSM, CanonicalFSMState, HashPruneTable, MoveClassIndex, RecursiveWorkTracker,
-    SearchError, SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
+    CanonicalFSM, CanonicalFSMState, HashPruneTable, RecursiveWorkTracker, SearchError,
+    SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
 use super::{AlwaysValid, Depth, PatternStack, PatternValidityChecker, PruneTable};
@@ -329,17 +329,13 @@ impl<
         if prune_table_depth > remaining_depth {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
-        for (move_class_index, move_transformation_multiples) in self
-            .api_data
-            .search_generators
-            .by_move_class
-            .iter()
-            .enumerate()
+        for (move_class_index, move_transformation_multiples) in
+            self.api_data.search_generators.by_move_class.iter()
         {
             let Some(next_state) = self
                 .api_data
                 .canonical_fsm
-                .next_state(current_state, MoveClassIndex(move_class_index))
+                .next_state(current_state, move_class_index)
             else {
                 continue;
             };
@@ -389,7 +385,7 @@ impl<
                     .by_move
                     .get(r#move)
                     .expect("move!")
-                    .0;
+                    .move_class_index;
                 current_state = match self
                     .api_data
                     .canonical_fsm

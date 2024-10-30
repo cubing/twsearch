@@ -5,8 +5,7 @@ use thousands::Separable;
 
 use crate::_internal::puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle};
 use crate::_internal::{
-    CanonicalFSMState, MoveClassIndex, RecursiveWorkTracker, SearchLogger,
-    CANONICAL_FSM_START_STATE,
+    CanonicalFSMState, RecursiveWorkTracker, SearchLogger, CANONICAL_FSM_START_STATE,
 };
 
 use super::idf_search::IDFSearchAPIData;
@@ -105,12 +104,11 @@ impl<
             .search_generators
             .by_move_class
             .iter()
-            .enumerate()
         {
             let next_state = match immutable_data
                 .search_api_data
                 .canonical_fsm
-                .next_state(current_state, MoveClassIndex(move_class_index))
+                .next_state(current_state, move_class_index)
             {
                 Some(next_state) => next_state,
                 None => {

@@ -378,9 +378,9 @@ dependencies = [
 
 [[package]]
 name = "cubing"
-version = "0.13.5"
+version = "0.13.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ce4644913cc2fa8d7fab7f6be1e63a8e14e46c67893dc428f0bcf6a3aa637971"
+checksum = "10edc131f4f5d340eb1af66fdbf259c530fef272e61c3652afccab6f42ac051e"
 dependencies = [
  "cubing_core",
  "cubing_macros",
@@ -388,9 +388,9 @@ dependencies = [
 
 [[package]]
 name = "cubing_core"
-version = "0.13.5"
+version = "0.13.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "df5a17032ea7a8190fe29c600c11bf688bf260430e69e8b028eb51956de3e658"
+checksum = "674e02996aea123998c585a681960f96f531749887b4f0340aefac45825c0d9a"
 dependencies = [
  "derive_more",
  "more-asserts",
@@ -402,9 +402,9 @@ dependencies = [
 
 [[package]]
 name = "cubing_macros"
-version = "0.13.5"
+version = "0.13.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba96c0a34fab406b954621e8b5cf1dcdaeec75830b90b50fd4cd3f862a7b6af0"
+checksum = "466e6e5225f57ea18942c7547c4d7cb2dd2ddd8746c7c14a3100938cb1f84b15"
 dependencies = [
  "cubing_core",
  "quote",

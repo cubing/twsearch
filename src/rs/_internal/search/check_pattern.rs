@@ -1,4 +1,4 @@
-use crate::_internal::puzzle_traits::SemiGroupActionPuzzle;
+use crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle;
 
 pub trait PatternValidityChecker<TPuzzle: SemiGroupActionPuzzle> {
     fn is_valid(pattern: &TPuzzle::Pattern) -> bool;

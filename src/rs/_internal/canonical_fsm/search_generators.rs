@@ -4,13 +4,15 @@ use cubing::alg::{Move, QuantumMove};
 
 use crate::{
     _internal::{
-        cli::options::MetricEnum, puzzle_traits::SemiGroupActionPuzzle, IndexedVec, MoveCount,
-        SearchError,
+        cli::options_impl::MetricEnum,
+        errors::SearchError,
+        puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
+        search::{indexed_vec::IndexedVec, move_count::MoveCount},
     },
     whole_number_newtype,
 };
 
-use super::MoveClassIndex;
+use super::canonical_fsm::MoveClassIndex;
 
 whole_number_newtype!(FlatMoveIndex, usize);
 

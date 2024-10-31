@@ -7,7 +7,10 @@ use cubing::{
 use lazy_static::lazy_static;
 
 use crate::{
-    _internal::{Depth, IDFSearch, IndividualSearchOptions},
+    _internal::search::{
+        idf_search::{IDFSearch, IndividualSearchOptions},
+        prune_table_trait::Depth,
+    },
     scramble::{
         collapse::collapse_adjacent_moves,
         randomize::{basic_parity, BasicParity, PieceZeroConstraint},

@@ -1,32 +1,12 @@
-#[allow(clippy::module_inception)]
-mod idf_search;
-pub use idf_search::*;
-
-mod hash_prune_table;
-pub(crate) use hash_prune_table::*;
-
-mod prune_table_trait;
-pub(crate) use prune_table_trait::*;
-
-mod recursive_work_tracker;
-pub(crate) use recursive_work_tracker::*;
-
-mod search_logger;
-pub use search_logger::*;
-
-mod check_pattern;
-pub use check_pattern::*;
-
-mod pattern_stack;
-pub(crate) use pattern_stack::*;
-
-mod indexed_vec;
-pub use indexed_vec::*;
-
-mod whole_number_newtype;
-pub use whole_number_newtype::*;
-
-mod move_count;
-pub use move_count::*;
-
+pub mod check_pattern;
 pub mod coordinates;
+pub(crate) mod hash_prune_table;
+#[allow(clippy::module_inception)]
+pub mod idf_search;
+pub mod indexed_vec;
+pub mod move_count;
+pub(crate) mod pattern_stack;
+pub(crate) mod prune_table_trait;
+pub(crate) mod recursive_work_tracker;
+pub mod search_logger;
+pub mod whole_number_newtype;

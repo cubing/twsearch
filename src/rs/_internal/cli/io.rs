@@ -1,7 +1,8 @@
 use std::{fs::read_to_string, path::Path};
 
-use crate::_internal::ArgumentError;
 use serde::Deserialize;
+
+use crate::_internal::errors::ArgumentError;
 
 pub fn read_to_json<T: for<'a> Deserialize<'a>>(input_file: &Path) -> Result<T, ArgumentError> {
     let input_str = read_to_string(input_file).or(Err("Could not read input file."))?;

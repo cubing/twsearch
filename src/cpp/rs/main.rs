@@ -10,7 +10,7 @@ use std::process::exit;
 use benchmark::benchmark;
 use search::main_search;
 use serve::serve;
-use twsearch::_internal::cli::options::{get_options_cpp_wrapper, CliCommand};
+use twsearch::_internal::cli::options_impl::{get_options_cpp_wrapper, CliCommand};
 
 // TODO: Figure out how to move this out of the main entry file.
 #[cxx::bridge]

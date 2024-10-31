@@ -1,11 +1,9 @@
-use twsearch::_internal::{
-    cli::options::{
-        BenchmarkArgs, CanonicalAlgsArgs, CommonSearchArgs, EnableAutoAlwaysNeverValueEnum,
-        GeneratorArgs, GodsAlgorithmArgs, InputDefAndOptionalScrambleFileArgs, MemoryArgs,
-        MetricArgs, PerformanceArgs, SchreierSimsArgs, SearchCommandArgs, SearchPersistenceArgs,
-        ServeArgsForIndividualSearch, ServeClientArgs, ServeCommandArgs, TimingTestArgs,
-    },
-    options::{Generators, MetricEnum},
+use twsearch::_internal::cli::options_impl::{
+    BenchmarkArgs, CanonicalAlgsArgs, CommonSearchArgs, EnableAutoAlwaysNeverValueEnum,
+    GeneratorArgs, Generators, GodsAlgorithmArgs, InputDefAndOptionalScrambleFileArgs, MemoryArgs,
+    MetricArgs, MetricEnum, PerformanceArgs, SchreierSimsArgs, SearchCommandArgs,
+    SearchPersistenceArgs, ServeArgsForIndividualSearch, ServeClientArgs, ServeCommandArgs,
+    TimingTestArgs,
 };
 
 use std::{fmt::Display, process::exit};

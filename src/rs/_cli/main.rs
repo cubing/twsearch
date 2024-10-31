@@ -7,17 +7,24 @@ use std::{
     sync::Arc,
 };
 
-use commands::{benchmark, canonical_algs, cli_scramble};
+use commands::{benchmark::benchmark, canonical_algs::canonical_algs, cli_scramble::cli_scramble};
 use cubing::{
     alg::Alg,
     kpuzzle::{KPattern, KPatternData, KPuzzle, KPuzzleDefinition},
 };
-use serve::serve;
 use twsearch::_internal::{
-    cli::options::{get_options, CliCommand, GodsAlgorithmArgs, SearchCommandArgs},
-    options::VerbosityLevel,
-    read_to_json, ArgumentError, CommandError, GodsAlgorithmSearch, IDFSearch,
-    IndividualSearchOptions, SearchLogger,
+    cli::{
+        io::read_to_json,
+        options_impl::{
+            get_options, CliCommand, GodsAlgorithmArgs, SearchCommandArgs, VerbosityLevel,
+        },
+    },
+    errors::{ArgumentError, CommandError},
+    gods_algorithm::gods_algorithm_table::GodsAlgorithmSearch,
+    search::{
+        idf_search::{IDFSearch, IndividualSearchOptions},
+        search_logger::SearchLogger,
+    },
 };
 
 fn main() -> Result<(), CommandError> {
@@ -28,7 +35,7 @@ fn main() -> Result<(), CommandError> {
             panic!("Completions should have been printed during options parsing, followed by program exit.");
         }
         CliCommand::Search(search_command_args) => search(search_command_args),
-        CliCommand::Serve(serve_command_args) => serve(serve_command_args),
+        CliCommand::Serve(serve_command_args) => serve::serve::serve(serve_command_args),
         // TODO: consolidate def-only arg implementations.
         CliCommand::SchreierSims(_schreier_sims_command_args) => todo!(),
         CliCommand::GodsAlgorithm(gods_algorithm_args) => gods_algorithm(gods_algorithm_args),

@@ -5,9 +5,11 @@ use cubing::{
     kpuzzle::{InvalidAlgError, KPattern, KPuzzle, KTransformation, KTransformationBuffer},
 };
 
-use crate::_internal::MoveCount;
+use crate::_internal::{
+    canonical_fsm::search_generators::MoveTransformationInfo, search::move_count::MoveCount,
+};
 
-use super::{GroupActionPuzzle, HashablePatternPuzzle, SemiGroupActionPuzzle};
+use super::puzzle_traits::{GroupActionPuzzle, HashablePatternPuzzle, SemiGroupActionPuzzle};
 
 impl SemiGroupActionPuzzle for KPuzzle {
     type Pattern = KPattern;
@@ -31,8 +33,8 @@ impl SemiGroupActionPuzzle for KPuzzle {
 
     fn do_moves_commute(
         &self,
-        move1_info: &crate::_internal::MoveTransformationInfo<Self>,
-        move2_info: &crate::_internal::MoveTransformationInfo<Self>,
+        move1_info: &MoveTransformationInfo<Self>,
+        move2_info: &MoveTransformationInfo<Self>,
     ) -> bool {
         move1_info
             .transformation

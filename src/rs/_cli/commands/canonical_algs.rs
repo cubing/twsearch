@@ -1,7 +1,8 @@
 use cubing::kpuzzle::{KPuzzle, KPuzzleDefinition};
-
 use twsearch::_internal::{
-    cli::options::CanonicalAlgsArgs, read_to_json, CanonicalFSM, CommandError, SearchGenerators,
+    canonical_fsm::{canonical_fsm::CanonicalFSM, search_generators::SearchGenerators},
+    cli::{io::read_to_json, options_impl::CanonicalAlgsArgs},
+    errors::CommandError,
 };
 
 pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), CommandError> {

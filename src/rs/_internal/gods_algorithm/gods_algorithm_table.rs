@@ -4,10 +4,14 @@ use cubing::kpuzzle::{KPattern, KPuzzle, KTransformation};
 use thousands::Separable;
 
 use crate::_internal::{
-    cli::options::{Generators, MetricEnum},
+    canonical_fsm::{
+        canonical_fsm::{CanonicalFSM, CanonicalFSMState, CANONICAL_FSM_START_STATE},
+        search_generators::{FlatMoveIndex, SearchGenerators},
+    },
+    cli::options_impl::{Generators, MetricEnum},
+    errors::SearchError,
     gods_algorithm::factor_number::factor_number,
-    CanonicalFSM, CanonicalFSMState, FlatMoveIndex, IndexedVec, SearchError, SearchGenerators,
-    CANONICAL_FSM_START_STATE,
+    search::indexed_vec::IndexedVec,
 };
 
 type SearchDepth = usize;

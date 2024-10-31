@@ -10,8 +10,8 @@ use std::path::PathBuf;
 use std::process::exit;
 use std::str::FromStr;
 
-use crate::_internal::puzzle_traits::GroupActionPuzzle;
-use crate::_internal::Depth;
+use crate::_internal::puzzle_traits::puzzle_traits::GroupActionPuzzle;
+use crate::_internal::search::prune_table_trait::Depth;
 
 /// twsearch-cpp-wrapper — a native Rust wrapper for `twsearch` functionality.
 #[derive(Parser, Debug)]

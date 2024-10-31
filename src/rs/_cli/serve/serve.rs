@@ -9,21 +9,19 @@ use rouille::Request;
 use rouille::Response;
 use serde::Deserialize;
 use serde::Serialize;
-use twsearch::_internal::SearchLogger;
+use twsearch::_internal::cli::options_impl::CustomGenerators;
+use twsearch::_internal::cli::options_impl::Generators;
+use twsearch::_internal::cli::options_impl::MetricEnum;
+use twsearch::_internal::cli::options_impl::ServeArgsForIndividualSearch;
+use twsearch::_internal::cli::options_impl::ServeClientArgs;
+use twsearch::_internal::cli::options_impl::ServeCommandArgs;
+use twsearch::_internal::errors::CommandError;
+use twsearch::_internal::search::idf_search::IDFSearch;
+use twsearch::_internal::search::idf_search::IndividualSearchOptions;
+use twsearch::_internal::search::search_logger::SearchLogger;
 
 use std::sync::Arc;
 use std::sync::Mutex;
-
-use twsearch::_internal::cli::options::CustomGenerators;
-use twsearch::_internal::CommandError;
-use twsearch::_internal::IDFSearch;
-use twsearch::_internal::IndividualSearchOptions;
-
-use twsearch::_internal::cli::options::ServeArgsForIndividualSearch;
-use twsearch::_internal::cli::options::ServeClientArgs;
-use twsearch::_internal::cli::options::ServeCommandArgs;
-use twsearch::_internal::options::Generators;
-use twsearch::_internal::options::MetricEnum;
 
 #[derive(Serialize)]
 struct ResponseAlg {

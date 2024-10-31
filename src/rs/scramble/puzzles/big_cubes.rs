@@ -6,14 +6,19 @@ use cubing::{
 };
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
-use crate::_internal::{CanonicalFSM, MoveClassIndex, SearchGenerators, CANONICAL_FSM_START_STATE};
+use crate::_internal::{
+    canonical_fsm::{
+        canonical_fsm::{CanonicalFSM, MoveClassIndex, CANONICAL_FSM_START_STATE},
+        search_generators::SearchGenerators,
+    },
+    cli::options_impl::MetricEnum,
+    puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
+};
 
 use super::{
     definitions::{cube5x5x5_kpuzzle, cube6x6x6_kpuzzle, cube7x7x7_kpuzzle},
     static_move_list::{add_random_suffixes_from, static_parsed_list, static_parsed_opt_list},
 };
-
-use crate::_internal::puzzle_traits::SemiGroupActionPuzzle;
 
 const NUM_5X5X5_RANDOM_MOVES: usize = 60;
 const NUM_6X6X6_RANDOM_MOVES: usize = 80;
@@ -26,13 +31,8 @@ struct ScrambleInfo<TPuzzle: SemiGroupActionPuzzle> {
 
 impl<TPuzzle: SemiGroupActionPuzzle> ScrambleInfo<TPuzzle> {
     pub fn new(tpuzzle: &TPuzzle, moves: Vec<Move>) -> Self {
-        let generators = SearchGenerators::try_new(
-            tpuzzle,
-            moves,
-            &crate::_internal::options::MetricEnum::Hand,
-            false,
-        )
-        .unwrap();
+        let generators =
+            SearchGenerators::try_new(tpuzzle, moves, &MetricEnum::Hand, false).unwrap();
         let canonical_fsm = CanonicalFSM::try_new(tpuzzle.clone(), generators.clone()).unwrap();
         Self {
             generators,

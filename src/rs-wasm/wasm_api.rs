@@ -3,12 +3,12 @@ use std::sync::Arc;
 use cubing::alg::Move;
 use cubing::kpuzzle::{KPattern, KPatternData, KPuzzle};
 use serde::{Deserialize, Serialize};
-use twsearch::_internal::options::{CustomGenerators, Generators, MetricEnum};
+use twsearch::_internal::cli::options_impl::{CustomGenerators, Generators, MetricEnum};
+use twsearch::_internal::search::idf_search::{IDFSearch, IndividualSearchOptions};
+use twsearch::_internal::search::search_logger::SearchLogger;
 use wasm_bindgen::prelude::*;
 
 use twsearch::scramble::{random_scramble_for_event, Event};
-
-use twsearch::_internal::{IDFSearch, IndividualSearchOptions, SearchLogger};
 
 pub fn internal_init() {
     console_error_panic_hook::set_once();

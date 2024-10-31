@@ -2,7 +2,9 @@ use cubing::kpuzzle::{KPatternBuffer, KPuzzle, KPuzzleDefinition, KTransformatio
 use instant::Instant;
 use rand::seq::SliceRandom;
 use twsearch::_internal::{
-    cli::options::BenchmarkArgs, read_to_json, CommandError, SearchGenerators,
+    canonical_fsm::search_generators::SearchGenerators,
+    cli::{io::read_to_json, options_impl::BenchmarkArgs},
+    errors::CommandError,
 };
 
 const NUM_RANDOM_MOVES: usize = 65536;

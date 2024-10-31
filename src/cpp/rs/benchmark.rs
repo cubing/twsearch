@@ -1,4 +1,4 @@
-use twsearch::_internal::cli::options::BenchmarkArgs;
+use twsearch::_internal::cli::options_impl::BenchmarkArgs;
 
 use crate::{
     rewrite::rewrite_def_file, rust_api::rust_api_main_search, wrapper_options::reset_args_from,

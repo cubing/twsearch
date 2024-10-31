@@ -12,9 +12,15 @@ use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
     _internal::{
-        coordinates::phase_coordinate_puzzle::{PhaseCoordinatePuzzle, SemanticCoordinate},
-        Depth, HashPruneTable, IDFSearch, IndividualSearchOptions, PatternValidityChecker,
-        SearchLogger, SearchOptimizations,
+        cli::options_impl::{MetricEnum, VerbosityLevel},
+        search::{
+            check_pattern::PatternValidityChecker,
+            coordinates::phase_coordinate_puzzle::{PhaseCoordinatePuzzle, SemanticCoordinate},
+            hash_prune_table::HashPruneTable,
+            idf_search::{IDFSearch, IndividualSearchOptions, SearchOptimizations},
+            prune_table_trait::Depth,
+            search_logger::SearchLogger,
+        },
     },
     scramble::{
         puzzles::mask_pattern::mask,
@@ -195,10 +201,10 @@ pub fn scramble_square1() -> Alg {
         phase1_target_pattern,
         generator_moves.clone(),
         SearchLogger {
-            verbosity: crate::_internal::options::VerbosityLevel::Info,
+            verbosity: VerbosityLevel::Info,
         }
         .into(),
-        &crate::_internal::options::MetricEnum::Hand,
+        &MetricEnum::Hand,
         false,
         None,
     )

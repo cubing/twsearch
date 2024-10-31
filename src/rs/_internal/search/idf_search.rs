@@ -14,13 +14,23 @@ use cubing::{
 use serde::{Deserialize, Serialize};
 
 use crate::_internal::{
-    cli::options::MetricEnum,
-    puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
-    CanonicalFSM, CanonicalFSMState, HashPruneTable, RecursiveWorkTracker, SearchError,
-    SearchGenerators, SearchLogger, CANONICAL_FSM_START_STATE,
+    canonical_fsm::{
+        canonical_fsm::{CanonicalFSM, CanonicalFSMState, CANONICAL_FSM_START_STATE},
+        search_generators::SearchGenerators,
+    },
+    cli::options_impl::MetricEnum,
+    errors::SearchError,
+    puzzle_traits::puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
+    search::pattern_stack::PatternStack,
 };
 
-use super::{AlwaysValid, Depth, PatternStack, PatternValidityChecker, PruneTable};
+use super::{
+    check_pattern::{AlwaysValid, PatternValidityChecker},
+    hash_prune_table::HashPruneTable,
+    prune_table_trait::{Depth, PruneTable},
+    recursive_work_tracker::RecursiveWorkTracker,
+    search_logger::SearchLogger,
+};
 
 const MAX_SUPPORTED_SEARCH_DEPTH: Depth = Depth(500); // TODO: increase
 

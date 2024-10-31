@@ -2,7 +2,9 @@ use std::fmt::Debug;
 
 use cubing::{alg::Move, kpuzzle::InvalidAlgError};
 
-use crate::_internal::{MoveCount, MoveTransformationInfo};
+use crate::_internal::{
+    canonical_fsm::search_generators::MoveTransformationInfo, search::move_count::MoveCount,
+};
 
 // TODO: split this into 3 related traits.
 /// The `Clone` implementation must be cheap for both the main struct as well as the `Pattern` and `Transformation` types (e.g. implemented using data shared with an `Arc` under the hood whenever any non-trivial amount of data is associated).

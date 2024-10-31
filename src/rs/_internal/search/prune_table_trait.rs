@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
-use crate::_internal::puzzle_traits::SemiGroupActionPuzzle;
+use crate::{_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle, whole_number_newtype};
 
-use super::{whole_number_newtype, IDFSearchAPIData, SearchLogger};
+use super::{idf_search::IDFSearchAPIData, search_logger::SearchLogger};
 
 whole_number_newtype!(Depth, usize);
 

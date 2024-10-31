@@ -64,5 +64,3 @@ macro_rules! whole_number_newtype {
         }
     };
 }
-
-pub use whole_number_newtype;

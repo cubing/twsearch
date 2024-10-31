@@ -2,7 +2,7 @@ use cubing::alg::{Alg, AlgNode, Move};
 use rand::{thread_rng, Rng};
 
 use crate::{
-    _internal::MoveCount,
+    _internal::search::move_count::MoveCount,
     scramble::{randomize::PieceZeroConstraint, scramble_search::move_list_from_vec},
 };
 

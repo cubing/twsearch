@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use crate::_internal::puzzle_traits::SemiGroupActionPuzzle;
+use crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle;
 
 pub(crate) struct PatternStack<TPuzzle: SemiGroupActionPuzzle> {
     puzzle: TPuzzle,

@@ -14,9 +14,19 @@ use cubing::{
 
 use crate::{
     _internal::{
-        options::MetricEnum, puzzle_traits::SemiGroupActionPuzzle, AlwaysValid,
-        DefaultSearchOptimizations, Depth, FlatMoveIndex, IndexedVec, MoveCount, PruneTable,
-        SearchGenerators, SearchOptimizations,
+        canonical_fsm::search_generators::{
+            FlatMoveIndex, MoveTransformationInfo, SearchGenerators,
+        },
+        cli::options_impl::MetricEnum,
+        puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
+        search::{
+            check_pattern::AlwaysValid,
+            idf_search::{DefaultSearchOptimizations, IDFSearchAPIData, SearchOptimizations},
+            indexed_vec::IndexedVec,
+            move_count::MoveCount,
+            prune_table_trait::{Depth, PruneTable},
+            search_logger::SearchLogger,
+        },
     },
     whole_number_newtype,
 };
@@ -208,8 +218,8 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> SemiGroupActionPuzzle
 
     fn do_moves_commute(
         &self,
-        move1_info: &crate::_internal::MoveTransformationInfo<Self>,
-        move2_info: &crate::_internal::MoveTransformationInfo<Self>,
+        move1_info: &MoveTransformationInfo<Self>,
+        move2_info: &MoveTransformationInfo<Self>,
     ) -> bool {
         move1_info.r#move.quantum == move2_info.r#move.quantum
     }
@@ -255,10 +265,8 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>>
 {
     fn new(
         tpuzzle: PhaseCoordinatePuzzle<TSemanticCoordinate>,
-        _search_api_data: Arc<
-            crate::_internal::IDFSearchAPIData<PhaseCoordinatePuzzle<TSemanticCoordinate>>,
-        >,
-        _search_logger: Arc<crate::_internal::SearchLogger>,
+        _search_api_data: Arc<IDFSearchAPIData<PhaseCoordinatePuzzle<TSemanticCoordinate>>>,
+        _search_logger: Arc<SearchLogger>,
         _min_size: Option<usize>,
     ) -> Self {
         Self { tpuzzle }

@@ -1,9 +1,14 @@
 use std::{collections::HashMap, marker::PhantomData, ops::BitAndAssign};
 
 use crate::{
-    _internal::{puzzle_traits::SemiGroupActionPuzzle, IndexedVec, SearchError, SearchGenerators},
+    _internal::{
+        errors::SearchError, puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
+        search::indexed_vec::IndexedVec,
+    },
     whole_number_newtype,
 };
+
+use super::search_generators::SearchGenerators;
 
 const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
 

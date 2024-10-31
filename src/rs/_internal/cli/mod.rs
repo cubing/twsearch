@@ -1,7 +1,2 @@
-mod io;
-pub use io::*;
-
-mod options_impl;
-pub mod options {
-    pub use super::options_impl::*;
-}
+pub mod io;
+pub mod options_impl;

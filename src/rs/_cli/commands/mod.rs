@@ -1,8 +1,3 @@
-mod benchmark;
-pub use benchmark::*;
-
-mod canonical_algs;
-pub use canonical_algs::*;
-
-mod cli_scramble;
-pub use cli_scramble::*;
+pub mod benchmark;
+pub mod canonical_algs;
+pub mod cli_scramble;

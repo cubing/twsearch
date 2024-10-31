@@ -6,10 +6,17 @@ use cubing::{
 };
 
 use crate::_internal::{
-    options::{MetricEnum, VerbosityLevel},
-    puzzle_traits::SemiGroupActionPuzzle,
-    DefaultSearchOptimizations, Depth, IDFSearch, IndividualSearchOptions, MoveCount, SearchLogger,
-    SearchOptimizations, SearchSolutions,
+    cli::options_impl::{MetricEnum, VerbosityLevel},
+    puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
+    search::{
+        idf_search::{
+            DefaultSearchOptimizations, IDFSearch, IndividualSearchOptions, SearchOptimizations,
+            SearchSolutions,
+        },
+        move_count::MoveCount,
+        prune_table_trait::Depth,
+        search_logger::SearchLogger,
+    },
 };
 
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {

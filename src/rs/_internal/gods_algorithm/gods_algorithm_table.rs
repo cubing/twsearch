@@ -86,14 +86,9 @@ impl GodsAlgorithmSearch {
         let cached_inverses = IndexedVec::new(
             search_generators
                 .flat
-                .0
                 .iter()
-                .enumerate()
-                .map(|(i, (flat_move_index, info))| {
-                    if flat_move_index != FlatMoveIndex(i) {
-                        panic!("Flat move indexing is out of order");
-                    }
-                    if info.flat_move_index.0 != i {
+                .map(|(flat_move_index, info)| {
+                    if info.flat_move_index != flat_move_index {
                         panic!("Flat move indexing is out of order");
                     }
                     info.transformation.invert()

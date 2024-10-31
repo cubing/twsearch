@@ -34,6 +34,7 @@ use super::{
 
 const MAX_SUPPORTED_SEARCH_DEPTH: Depth = Depth(500); // TODO: increase
 
+// TODO: use https://doc.rust-lang.org/std/ops/enum.ControlFlow.html as a wrapper instead?
 #[allow(clippy::enum_variant_names)]
 enum SearchRecursionResult {
     DoneSearching(),

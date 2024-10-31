@@ -1,6 +1,9 @@
 use std::collections::HashMap;
 
-use cubing::alg::{Move, QuantumMove};
+use cubing::{
+    alg::{Move, QuantumMove},
+    kpuzzle::InvalidAlgError,
+};
 
 use crate::{
     _internal::{
@@ -141,6 +144,36 @@ impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
         }
 
         Ok(Self {
+            by_move_class,
+            flat,
+            by_move,
+        })
+    }
+
+    pub fn transfer_move_classes<TargetTPuzzle: SemiGroupActionPuzzle>(
+        &self,
+        target_puzzle: &TargetTPuzzle,
+    ) -> Result<SearchGenerators<TargetTPuzzle>, InvalidAlgError> {
+        let mut by_move_class =
+            IndexedVec::<MoveClassIndex, MoveTransformationMultiples<TargetTPuzzle>>::default();
+        let mut flat =
+            IndexedVec::<FlatMoveIndex, MoveTransformationInfo<TargetTPuzzle>>::default();
+        let mut by_move = HashMap::<Move, MoveTransformationInfo<TargetTPuzzle>>::default();
+
+        let a = self.flat.0.iter().try_for_each(
+            |info| -> Result<MoveTransformationInfo<TargetTPuzzle>, InvalidAlgError> {
+                Ok(MoveTransformationInfo::<TargetTPuzzle> {
+                    r#move: info.r#move.clone(),
+                    transformation: target_puzzle.puzzle_transformation_from_move(&info.r#move)?,
+                    flat_move_index: info.flat_move_index,
+                    move_class_index: info.move_class_index,
+                })
+            },
+        )?;
+        let flat: IndexedVec<FlatMoveIndex, MoveTransformationInfo<TargetTPuzzle>> =
+            IndexedVec::new(a.collect());
+
+        Ok(SearchGenerators::<TargetTPuzzle> {
             by_move_class,
             flat,
             by_move,

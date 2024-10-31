@@ -91,23 +91,38 @@ impl<
     }
 
     fn pattern_apply_transformation(
-        // TODO: this is a hack to allow `Phase2Puzzle` to access its tables, ideally we would avoid this.
-        // Then again, this might turn out to be necessary for similar high-performance implementations.
         &self,
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
     ) -> Option<Self::Pattern> {
-        todo!()
+        let coordinate1 = self
+            .data
+            .puzzle1
+            .pattern_apply_transformation(&pattern.coordinate1, transformation_to_apply)?;
+        let coordinate2 = self
+            .data
+            .puzzle1
+            .pattern_apply_transformation(&pattern.coordinate1, transformation_to_apply)?;
+        Some(Self::Pattern {
+            coordinate1,
+            coordinate2,
+        })
     }
 
     fn pattern_apply_transformation_into(
-        // TODO: this is a hack to allow `Phase2Puzzle` to access its tables, ideally we would avoid this.
-        // Then again, this might turn out to be necessary for similar high-performance implementations.
         &self,
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
         into_pattern: &mut Self::Pattern,
     ) -> bool {
-        todo!()
+        self.data.puzzle1.pattern_apply_transformation_into(
+            &pattern.coordinate1,
+            transformation_to_apply,
+            &mut into_pattern.coordinate1,
+        ) && self.data.puzzle1.pattern_apply_transformation_into(
+            &pattern.coordinate2,
+            transformation_to_apply,
+            &mut into_pattern.coordinate2,
+        )
     }
 }

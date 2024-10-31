@@ -216,7 +216,7 @@ pub fn scramble_square1() -> Alg {
     );
     // for (i, solution) in phase1_search.enumerate() {
     //     if (i + 1) % (num_solutions / 10) == 0 {
-    //         println!(
+    //         eprintln!(
     //             "// Phase 1 solution #{}
     // {}
     // ",
@@ -226,7 +226,7 @@ pub fn scramble_square1() -> Alg {
     //     }
     //     last_solution = solution;
     // }
-    // println!(
+    // eprintln!(
     //     "Elapsed time to find {} solutions for phase 1 test: {:?}
     // ",
     //     num_solutions,
@@ -243,7 +243,7 @@ pub fn scramble_square1() -> Alg {
         kpuzzle.default_pattern(),
     );
 
-    println!("PHASE1ING");
+    eprintln!("PHASE1ING");
 
     let start_time = Instant::now();
     let mut num_phase2_starts = 0;
@@ -273,8 +273,8 @@ pub fn scramble_square1() -> Alg {
         let phase2_start_pattern = scramble_pattern.apply_alg(&phase1_solution).unwrap();
 
         num_phase2_starts += 1;
-        // println!("\n{}", phase1_solution);
-        // println!("\nSearching for a phase2 solution");
+        // eprintln!("\n{}", phase1_solution);
+        // eprintln!("\nSearching for a phase2 solution");
         let phase2_start_time = Instant::now();
         let phase2_solution = phase2_filtered_search
             .search(
@@ -296,7 +296,7 @@ pub fn scramble_square1() -> Alg {
 
         let cumulative_time = Instant::now() - start_time;
         if num_phase2_starts % 100 == 0 {
-            println!(
+            eprintln!(
                     "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2, {:?} in phase transition\n",
                     num_phase2_starts,
                     phase1_cumulative_time,
@@ -394,7 +394,7 @@ fn random_pattern() -> KPattern {
             return scramble_pattern;
         }
 
-        println!("discarding invalid scramble"); //<<<}
+        eprintln!("discarding invalid scramble"); //<<<}
     }
 }
 

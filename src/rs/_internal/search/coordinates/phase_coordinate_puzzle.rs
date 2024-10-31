@@ -118,7 +118,7 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> PhaseCoordinatePuzzle<TSe
             // Note that this is safe to do at the end of this loop because we use BFS rather than DFS.
             index_to_representative_pattern.push(representative_pattern);
         }
-        println!(
+        eprintln!(
             "PhaseLookupTable has size {}",
             index_to_semantic_coordinate.len()
         );
@@ -152,7 +152,7 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> PhaseCoordinatePuzzle<TSe
             move_application_table.push(table_row);
         }
 
-        println!(
+        eprintln!(
             "Built phase lookup table in: {:?}",
             Instant::now() - start_time
         );

@@ -15,7 +15,7 @@ impl SearchLogger {
             VerbosityLevel::Warning => false,
             VerbosityLevel::Info => true,
         } {
-            println!("{}", s)
+            eprintln!("{}", s)
         }
     }
 

@@ -23,7 +23,7 @@ use super::{
         randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
     definitions::{cube3x3x3_centerless_g1_target_kpattern, cube3x3x3_centerless_kpuzzle},
-    mask_pattern::mask,
+    mask_pattern::apply_mask,
     static_move_list::{add_random_suffixes_from, static_parsed_list, static_parsed_opt_list},
 };
 
@@ -124,7 +124,7 @@ impl Scramble3x3x3TwoPhase {
         };
 
         let phase1_alg = {
-            let phase1_search_pattern = mask(pattern, &self.phase1_target_pattern).unwrap();
+            let phase1_search_pattern = apply_mask(pattern, &self.phase1_target_pattern).unwrap();
             self.phase1_idfs
                 .search(
                     &phase1_search_pattern,

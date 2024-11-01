@@ -43,7 +43,7 @@ whole_number_newtype!(PhaseCoordinateIndex, usize);
 pub type ExactCoordinatePruneTable = IndexedVec<PhaseCoordinateIndex, Depth>;
 
 #[derive(Debug)]
-pub struct PhaseCoordinateLookupTables<
+pub struct PhaseCoordinateTables<
     TPuzzle: SemiGroupActionPuzzle,
     TSemanticCoordinate: SemanticCoordinate<TPuzzle>,
 > where
@@ -74,7 +74,7 @@ pub struct PhaseCoordinatePuzzle<
 > where
     Self: SemiGroupActionPuzzle,
 {
-    pub(crate) data: Arc<PhaseCoordinateLookupTables<TPuzzle, TSemanticCoordinate>>,
+    pub(crate) data: Arc<PhaseCoordinateTables<TPuzzle, TSemanticCoordinate>>,
 }
 
 impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPuzzle>>
@@ -92,7 +92,7 @@ where
         let random_start = false; // TODO: for scrambles, we may want this to be true
         let search_generators =
             SearchGenerators::try_new(&puzzle, generator_moves, &MetricEnum::Hand, random_start)
-                .expect("Couldn't build SearchGenerators while building PhaseLookupTable");
+                .expect("Couldn't build SearchGenerators while building PhaseCoordinatePuzzle");
 
         let mut fringe = VecDeque::<(TPuzzle::Pattern, Depth)>::new();
         fringe.push_back((start_pattern, Depth(0)));
@@ -138,7 +138,7 @@ where
             index_to_representative_pattern.push(representative_pattern);
         }
         eprintln!(
-            "PhaseLookupTable has size {}",
+            "PhaseCoordinatePuzzle has {} patterns.",
             index_to_semantic_coordinate.len()
         );
 
@@ -196,17 +196,15 @@ where
             .transfer_move_classes::<Self>(puzzle_transformation_from_move)
             .unwrap();
 
-        let data = Arc::new(
-            PhaseCoordinateLookupTables::<TPuzzle, TSemanticCoordinate> {
-                puzzle,
-                index_to_semantic_coordinate,
-                semantic_coordinate_to_index,
-                move_application_table,
-                exact_prune_table,
-                search_generators,
-                phantom_data: PhantomData,
-            },
-        );
+        let data = Arc::new(PhaseCoordinateTables::<TPuzzle, TSemanticCoordinate> {
+            puzzle,
+            index_to_semantic_coordinate,
+            semantic_coordinate_to_index,
+            move_application_table,
+            exact_prune_table,
+            search_generators,
+            phantom_data: PhantomData,
+        });
         Self { data }
     }
 
@@ -331,7 +329,7 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
 }
 
 // TODO: simplify the default for below.
-pub struct PhaseCoordinateLookupSearchOptimizations<
+pub struct PhaseCoordinatePuzzleSearchOptimizations<
     TPuzzle: SemiGroupActionPuzzle,
     TSemanticCoordinate: SemanticCoordinate<TPuzzle>,
 > {
@@ -340,7 +338,7 @@ pub struct PhaseCoordinateLookupSearchOptimizations<
 
 impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPuzzle>>
     SearchOptimizations<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>
-    for PhaseCoordinateLookupSearchOptimizations<TPuzzle, TSemanticCoordinate>
+    for PhaseCoordinatePuzzleSearchOptimizations<TPuzzle, TSemanticCoordinate>
 {
     type PatternValidityChecker = AlwaysValid; // TODO: reconcile this with fallible transformation application.
     type PruneTable = PhaseCoordinatePruneTable<TPuzzle, TSemanticCoordinate>;
@@ -350,5 +348,5 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
     DefaultSearchOptimizations<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>
     for PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>
 {
-    type Optimizations = PhaseCoordinateLookupSearchOptimizations<TPuzzle, TSemanticCoordinate>;
+    type Optimizations = PhaseCoordinatePuzzleSearchOptimizations<TPuzzle, TSemanticCoordinate>;
 }

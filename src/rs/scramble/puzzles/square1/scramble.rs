@@ -5,7 +5,7 @@ use std::{
 
 use cubing::{
     alg::{parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},
-    kpuzzle::{KPattern, KPuzzle},
+    kpuzzle::KPattern,
 };
 use rand::{seq::SliceRandom, thread_rng};
 
@@ -14,75 +14,28 @@ use crate::{
         cli::options_impl::{MetricEnum, VerbosityLevel},
         search::{
             check_pattern::PatternValidityChecker,
-            hash_prune_table::HashPruneTable,
-            idf_search::{IDFSearch, IndividualSearchOptions, SearchOptimizations},
+            idf_search::{IDFSearch, IndividualSearchOptions},
             prune_table_trait::Depth,
             search_logger::SearchLogger,
         },
     },
     scramble::{
         puzzles::{
-            mask_pattern::mask,
+            mask_pattern::apply_mask,
             square1::{
                 phase1::{Phase1Checker, Square1Phase1Puzzle},
-                wedges::{WedgeType, WEDGE_TYPE_LOOKUP},
+                phase2::Square1Phase2Puzzle,
             },
         },
         randomize::{
             randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
             PieceZeroConstraint,
         },
-        scramble_search::{move_list_from_vec, FilteredSearch},
+        scramble_search::move_list_from_vec,
     },
 };
 
 use super::super::definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle};
-
-struct Phase2Checker;
-
-impl PatternValidityChecker<KPuzzle> for Phase2Checker {
-    fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
-        let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
-        assert_eq!(orbit_info.name.0, "WEDGES");
-
-        for slot in [0, 1, 2, 12, 13, 14] {
-            let value = unsafe {
-                pattern
-                    .packed_orbit_data()
-                    .get_raw_piece_or_permutation_value(orbit_info, slot)
-            };
-            let wedge_type = &WEDGE_TYPE_LOOKUP[value as usize];
-
-            if *wedge_type == WedgeType::CornerUpper && (slot == 0 || slot == 12) {
-                // We can't slice.
-                return false;
-            }
-
-            for slot_offset in [3, 6, 9] {
-                let offset_value = unsafe {
-                    pattern
-                        .packed_orbit_data()
-                        .get_raw_piece_or_permutation_value(orbit_info, slot + slot_offset)
-                };
-                let offset_wedge_type = &WEDGE_TYPE_LOOKUP[offset_value as usize];
-
-                if wedge_type != offset_wedge_type {
-                    return false;
-                }
-            }
-        }
-
-        true
-    }
-}
-
-struct Square1Phase2Optimizations {}
-
-impl SearchOptimizations<KPuzzle> for Square1Phase2Optimizations {
-    type PatternValidityChecker = Phase2Checker;
-
-    type PruneTable = HashPruneTable<KPuzzle, Phase2Checker>;
-}
 
 pub(crate) fn scramble_square1() -> Alg {
     let kpuzzle = square1_unbandaged_kpuzzle();
@@ -100,7 +53,7 @@ pub(crate) fn scramble_square1() -> Alg {
         square1_phase1_puzzle.full_pattern_to_phase_coordinate(&scramble_pattern);
     let phase1_target_pattern =
         square1_phase1_puzzle.full_pattern_to_phase_coordinate(&kpuzzle.default_pattern());
-    let mut generic_idfs = IDFSearch::<Square1Phase1Puzzle>::try_new(
+    let mut phase1_idfs = IDFSearch::<Square1Phase1Puzzle>::try_new(
         square1_phase1_puzzle,
         phase1_target_pattern,
         generator_moves.clone(),
@@ -117,7 +70,7 @@ pub(crate) fn scramble_square1() -> Alg {
     // let start_time = Instant::now();
     // let mut last_solution: Alg = parse_alg!("/");
     let num_solutions = 10_000_000;
-    let phase1_search = generic_idfs.search(
+    let phase1_search = phase1_idfs.search(
         &phase1_start_pattern,
         IndividualSearchOptions {
             min_num_solutions: Some(num_solutions),
@@ -145,13 +98,26 @@ pub(crate) fn scramble_square1() -> Alg {
 
     // todo!();
 
-    // let generators2 = generators_from_vec_str(vec!["US", "DS", "UUU", "DDD"]); // TODO: cache
-    let mut phase2_filtered_search = FilteredSearch::<KPuzzle, Square1Phase2Optimizations>::new(
-        kpuzzle,
-        generator_moves,
-        None, // TODO
+    let square1_phase2_puzzle: Square1Phase2Puzzle = Square1Phase2Puzzle::new(
+        kpuzzle.clone(),
         kpuzzle.default_pattern(),
+        generator_moves.clone(),
     );
+    let phase2_target_pattern =
+        square1_phase2_puzzle.full_pattern_to_phase_coordinate(&kpuzzle.default_pattern());
+    let mut phase2_idfs = IDFSearch::<Square1Phase2Puzzle>::try_new(
+        square1_phase2_puzzle.clone(),
+        phase2_target_pattern,
+        generator_moves.clone(),
+        SearchLogger {
+            verbosity: VerbosityLevel::Info,
+        }
+        .into(),
+        &MetricEnum::Hand,
+        false,
+        None,
+    )
+    .unwrap();
 
     eprintln!("PHASE1ING");
 
@@ -180,18 +146,22 @@ pub(crate) fn scramble_square1() -> Alg {
             phase1_solution.nodes.pop();
         }
 
-        let phase2_start_pattern = scramble_pattern.apply_alg(&phase1_solution).unwrap();
+        let phase2_start_pattern = square1_phase2_puzzle.full_pattern_to_phase_coordinate(
+            &scramble_pattern.apply_alg(&phase1_solution).unwrap(),
+        );
 
         num_phase2_starts += 1;
         // eprintln!("\n{}", phase1_solution);
         // eprintln!("\nSearching for a phase2 solution");
         let phase2_start_time = Instant::now();
-        let phase2_solution = phase2_filtered_search
+        let phase2_solution = phase2_idfs
             .search(
                 &phase2_start_pattern,
-                Some(1),
-                None,
-                Some(Depth(17)), // <<< needs explanation
+                IndividualSearchOptions {
+                    min_num_solutions: Some(1),
+                    max_depth: Some(Depth(17)),
+                    ..Default::default()
+                },
             )
             .next();
 
@@ -279,7 +249,7 @@ fn random_pattern() -> KPattern {
 
         // TODO: do this check without masking.
         let phase1_start_pattern =
-            mask(&scramble_pattern, square1_square_square_shape_kpattern()).unwrap();
+            apply_mask(&scramble_pattern, square1_square_square_shape_kpattern()).unwrap();
 
         if Phase1Checker::is_valid(&phase1_start_pattern) {
             dbg!(&scramble_pattern);

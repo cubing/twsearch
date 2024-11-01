@@ -1,11 +1,18 @@
-use cubing::kpuzzle::KPuzzle;
+use cubing::kpuzzle::{KPattern, KPuzzle};
 
 use crate::{
     _internal::search::{
-        check_pattern::PatternValidityChecker, hash_prune_table::HashPruneTable,
-        idf_search::SearchOptimizations,
+        check_pattern::PatternValidityChecker,
+        coordinates::{
+            phase_coordinate_puzzle::SemanticCoordinate,
+            triple_phase_coordinate_puzzle::TriplePhaseCoordinatePuzzle,
+        },
     },
-    scramble::puzzles::square1::wedges::{WedgeType, WEDGE_TYPE_LOOKUP},
+    scramble::puzzles::{
+        definitions::{square1_corners_kpattern, square1_edges_kpattern, square1_equator_kpattern},
+        mask_pattern::apply_mask,
+        square1::wedges::{WedgeType, WEDGE_TYPE_LOOKUP},
+    },
 };
 
 struct Phase2Checker;
@@ -46,10 +53,81 @@ impl PatternValidityChecker<KPuzzle> for Phase2Checker {
     }
 }
 
-struct Square1Phase2Optimizations {}
-
-impl SearchOptimizations<KPuzzle> for Square1Phase2Optimizations {
-    type PatternValidityChecker = Phase2Checker;
-
-    type PruneTable = HashPruneTable<KPuzzle, Phase2Checker>;
+#[derive(PartialEq, Eq, Hash, Clone, Debug)]
+pub(crate) struct Phase2EdgesCoordinate {
+    edges: KPattern,
 }
+
+impl SemanticCoordinate<KPuzzle> for Phase2EdgesCoordinate {
+    fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
+        // TODO: this isn't a full validity check for scramble positions.
+        // TODO: deduplicate check across coordinates
+        if !Phase2Checker::is_valid(full_pattern) {
+            return None;
+        }
+
+        let phase_mask = square1_edges_kpattern(); // TODO: Store this with the coordinate lookup?
+        let Ok(masked_pattern) = apply_mask(full_pattern, phase_mask) else {
+            panic!("Mask application failed");
+        };
+
+        Some(Self {
+            edges: masked_pattern,
+        })
+    }
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Debug)]
+pub(crate) struct Phase2CornersCoordinate {
+    corners: KPattern,
+}
+
+impl SemanticCoordinate<KPuzzle> for Phase2CornersCoordinate {
+    fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
+        // TODO: this isn't a full validity check for scramble positions.
+        // TODO: deduplicate check across coordinates
+        if !Phase2Checker::is_valid(full_pattern) {
+            return None;
+        }
+
+        let phase_mask = square1_corners_kpattern(); // TODO: Store this with the coordinate lookup?
+        let Ok(masked_pattern) = apply_mask(full_pattern, phase_mask) else {
+            panic!("Mask application failed");
+        };
+
+        Some(Self {
+            corners: masked_pattern,
+        })
+    }
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Debug)]
+pub(crate) struct Phase2EquatorCoordinate {
+    equator: KPattern,
+}
+
+impl SemanticCoordinate<KPuzzle> for Phase2EquatorCoordinate {
+    fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
+        // TODO: this isn't a full validity check for scramble positions.
+        // TODO: deduplicate check across coordinates
+        if !Phase2Checker::is_valid(full_pattern) {
+            return None;
+        }
+
+        let phase_mask = square1_equator_kpattern(); // TODO: Store this with the coordinate lookup?
+        let Ok(masked_pattern) = apply_mask(full_pattern, phase_mask) else {
+            panic!("Mask application failed");
+        };
+
+        Some(Self {
+            equator: masked_pattern,
+        })
+    }
+}
+
+pub(crate) type Square1Phase2Puzzle = TriplePhaseCoordinatePuzzle<
+    KPuzzle,
+    Phase2EdgesCoordinate,
+    Phase2CornersCoordinate,
+    Phase2EquatorCoordinate,
+>;

@@ -137,10 +137,13 @@ where
             // Note that this is safe to do at the end of this loop because we use BFS rather than DFS.
             index_to_representative_pattern.push(representative_pattern);
         }
+
+        dbg!(&index_to_semantic_coordinate.at(PhaseCoordinateIndex(0)));
         eprintln!(
             "PhaseCoordinatePuzzle has {} patterns.",
             index_to_semantic_coordinate.len()
         );
+        // dbg!(&index_to_semantic_coordinate.at(PhaseCoordinateIndex(1)));
 
         let mut move_application_table: IndexedVec<
             PhaseCoordinateIndex,

@@ -9,7 +9,6 @@
   },
   "EQUATOR": {
     "pieces": [0, 1],
-    "orientation": [0, 0],
-    "orientationMod": [0, 0]
+    "orientation": [0, 0]
   }
 }

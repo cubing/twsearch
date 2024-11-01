@@ -9,7 +9,7 @@ use super::{
         megaminx::scramble_megaminx,
         pyraminx::scramble_pyraminx,
         skewb::scramble_skewb,
-        square1::scramble_square1,
+        square1::scramble::scramble_square1,
     },
     Event, PuzzleError,
 };

@@ -170,7 +170,7 @@ impl SemanticCoordinate<KPuzzle> for Square1Phase1CompoundSemanticCoordinate {
     }
 }
 
-type Square1Phase1Puzzle = PhaseCoordinatePuzzle<Square1Phase1CompoundSemanticCoordinate>;
+type Square1Phase1Puzzle = PhaseCoordinatePuzzle<KPuzzle, Square1Phase1CompoundSemanticCoordinate>;
 
 struct Square1Phase2Optimizations {}
 
@@ -184,7 +184,7 @@ pub fn scramble_square1() -> Alg {
     let kpuzzle = square1_unbandaged_kpuzzle();
     let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
 
-    let (square1_phase1_lookup_table, _search_generators) = Square1Phase1Puzzle::new(
+    let square1_phase1_puzzle = Square1Phase1Puzzle::new(
         kpuzzle.clone(),
         kpuzzle.default_pattern(),
         generator_moves.clone(),
@@ -193,11 +193,11 @@ pub fn scramble_square1() -> Alg {
     let scramble_pattern = random_pattern();
 
     let phase1_start_pattern =
-        square1_phase1_lookup_table.full_pattern_to_phase_coordinate(&scramble_pattern);
+        square1_phase1_puzzle.full_pattern_to_phase_coordinate(&scramble_pattern);
     let phase1_target_pattern =
-        square1_phase1_lookup_table.full_pattern_to_phase_coordinate(&kpuzzle.default_pattern());
+        square1_phase1_puzzle.full_pattern_to_phase_coordinate(&kpuzzle.default_pattern());
     let mut generic_idfs = IDFSearch::<Square1Phase1Puzzle>::try_new(
-        square1_phase1_lookup_table,
+        square1_phase1_puzzle,
         phase1_target_pattern,
         generator_moves.clone(),
         SearchLogger {

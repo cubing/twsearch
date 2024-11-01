@@ -150,28 +150,49 @@ impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
         })
     }
 
-    pub fn transfer_move_classes<TargetTPuzzle: SemiGroupActionPuzzle>(
+    #[allow(clippy::type_complexity)] // TODO
+    pub fn transfer_move_classes<
+        TargetTPuzzle: SemiGroupActionPuzzle<Transformation = FlatMoveIndex>,
+    >(
         &self,
-        target_puzzle: &TargetTPuzzle,
+        target_puzzle_transformation_from_move: fn(
+            r#move: &Move,
+            by_move: &HashMap<Move, MoveTransformationInfo<TPuzzle>>,
+        ) -> Result<
+            TargetTPuzzle::Transformation,
+            InvalidAlgError,
+        >,
     ) -> Result<SearchGenerators<TargetTPuzzle>, InvalidAlgError> {
-        let mut by_move_class =
-            IndexedVec::<MoveClassIndex, MoveTransformationMultiples<TargetTPuzzle>>::default();
-        let mut flat =
-            IndexedVec::<FlatMoveIndex, MoveTransformationInfo<TargetTPuzzle>>::default();
         let mut by_move = HashMap::<Move, MoveTransformationInfo<TargetTPuzzle>>::default();
-
-        let a = self.flat.0.iter().try_for_each(
-            |info| -> Result<MoveTransformationInfo<TargetTPuzzle>, InvalidAlgError> {
-                Ok(MoveTransformationInfo::<TargetTPuzzle> {
+        for (r#move, info) in &self.by_move {
+            let transformation =
+                target_puzzle_transformation_from_move(&info.r#move, &self.by_move)?;
+            by_move.insert(
+                r#move.clone(),
+                MoveTransformationInfo::<TargetTPuzzle> {
                     r#move: info.r#move.clone(),
-                    transformation: target_puzzle.puzzle_transformation_from_move(&info.r#move)?,
+                    transformation,
                     flat_move_index: info.flat_move_index,
                     move_class_index: info.move_class_index,
-                })
-            },
-        )?;
-        let flat: IndexedVec<FlatMoveIndex, MoveTransformationInfo<TargetTPuzzle>> =
-            IndexedVec::new(a.collect());
+                },
+            );
+        }
+
+        let mut flat =
+            IndexedVec::<FlatMoveIndex, MoveTransformationInfo<TargetTPuzzle>>::default();
+        for info in &self.flat.0 {
+            flat.push(by_move.get(&info.r#move).unwrap().clone())
+        }
+
+        let mut by_move_class =
+            IndexedVec::<MoveClassIndex, MoveTransformationMultiples<TargetTPuzzle>>::default();
+        for move_class_source in &self.by_move_class.0 {
+            let mut move_class = Vec::default();
+            for info in move_class_source {
+                move_class.push(by_move.get(&info.r#move).unwrap().clone())
+            }
+            by_move_class.push(move_class)
+        }
 
         Ok(SearchGenerators::<TargetTPuzzle> {
             by_move_class,

@@ -1,7 +1,4 @@
-use cubing::{
-    alg::Move,
-    kpuzzle::{InvalidAlgError, KPuzzle},
-};
+use cubing::{alg::Move, kpuzzle::InvalidAlgError};
 
 use crate::_internal::{
     canonical_fsm::search_generators::{FlatMoveIndex, MoveTransformationInfo},
@@ -14,33 +11,36 @@ use super::phase_coordinate_puzzle::{
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]
-struct DoublePhaseCoordinate {
+pub struct DoublePhaseCoordinate {
     coordinate1: PhaseCoordinateIndex,
     coordinate2: PhaseCoordinateIndex,
 }
 
 #[derive(Clone, Debug)]
-struct DoublePhaseCoordinatePuzzleData<
-    TSemanticCoordinate1: SemanticCoordinate<KPuzzle>,
-    TSemanticCoordinate2: SemanticCoordinate<KPuzzle>,
+pub struct DoublePhaseCoordinatePuzzleData<
+    TPuzzle: SemiGroupActionPuzzle,
+    TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
+    TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
 > {
-    puzzle1: PhaseCoordinatePuzzle<TSemanticCoordinate1>,
-    puzzle2: PhaseCoordinatePuzzle<TSemanticCoordinate2>,
+    puzzle1: PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate1>,
+    puzzle2: PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate2>,
 }
 
 #[derive(Clone, Debug)]
-struct DoublePhaseCoordinatePuzzle<
-    TSemanticCoordinate1: SemanticCoordinate<KPuzzle>,
-    TSemanticCoordinate2: SemanticCoordinate<KPuzzle>,
+pub struct DoublePhaseCoordinatePuzzle<
+    TPuzzle: SemiGroupActionPuzzle,
+    TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
+    TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
 > {
-    data: DoublePhaseCoordinatePuzzleData<TSemanticCoordinate1, TSemanticCoordinate2>,
+    data: DoublePhaseCoordinatePuzzleData<TPuzzle, TSemanticCoordinate1, TSemanticCoordinate2>,
 }
 
 impl<
-        TSemanticCoordinate1: SemanticCoordinate<KPuzzle>,
-        TSemanticCoordinate2: SemanticCoordinate<KPuzzle>,
+        TPuzzle: SemiGroupActionPuzzle,
+        TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
+        TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
     > SemiGroupActionPuzzle
-    for DoublePhaseCoordinatePuzzle<TSemanticCoordinate1, TSemanticCoordinate2>
+    for DoublePhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate1, TSemanticCoordinate2>
 {
     type Pattern = DoublePhaseCoordinate;
 
@@ -85,9 +85,22 @@ impl<
         );
         assert_eq!(
             do_moves_commute,
-            self.data.puzzle2.do_moves_commute(move1_info, move2_info)
+            self.data.puzzle2.do_moves_commute(
+                self.data
+                    .puzzle2
+                    .data
+                    .search_generators
+                    .flat
+                    .at(move1_info.flat_move_index),
+                self.data
+                    .puzzle2
+                    .data
+                    .search_generators
+                    .flat
+                    .at(move2_info.flat_move_index),
+            )
         );
-        Ok(do_moves_commute)
+        do_moves_commute
     }
 
     fn pattern_apply_transformation(

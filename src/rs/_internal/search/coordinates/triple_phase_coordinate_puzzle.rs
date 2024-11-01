@@ -177,7 +177,7 @@ impl<
                 .flat
                 .at(move2_info.flat_move_index),
         );
-        assert_eq!(
+        debug_assert_eq!(
             do_moves_commute,
             self.data.puzzle2.do_moves_commute(
                 self.data
@@ -188,6 +188,23 @@ impl<
                     .at(move1_info.flat_move_index),
                 self.data
                     .puzzle2
+                    .data
+                    .search_generators
+                    .flat
+                    .at(move2_info.flat_move_index),
+            )
+        );
+        debug_assert_eq!(
+            do_moves_commute,
+            self.data.puzzle3.do_moves_commute(
+                self.data
+                    .puzzle3
+                    .data
+                    .search_generators
+                    .flat
+                    .at(move1_info.flat_move_index),
+                self.data
+                    .puzzle3
                     .data
                     .search_generators
                     .flat
@@ -208,11 +225,11 @@ impl<
             .pattern_apply_transformation(&pattern.coordinate1, transformation_to_apply)?;
         let coordinate2 = self
             .data
-            .puzzle1
+            .puzzle2
             .pattern_apply_transformation(&pattern.coordinate2, transformation_to_apply)?;
         let coordinate3 = self
             .data
-            .puzzle1
+            .puzzle3
             .pattern_apply_transformation(&pattern.coordinate3, transformation_to_apply)?;
         Some(Self::Pattern {
             coordinate1,

@@ -139,7 +139,6 @@ where
             index_to_representative_pattern.push(representative_pattern);
         }
 
-        dbg!(&index_to_semantic_coordinate.at(PhaseCoordinateIndex(0)));
         eprintln!(
             "PhaseCoordinatePuzzle has {} patterns.",
             index_to_semantic_coordinate.len()

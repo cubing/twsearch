@@ -110,7 +110,7 @@ pub(crate) fn scramble_square1() -> Alg {
         phase2_target_pattern,
         generator_moves.clone(),
         SearchLogger {
-            verbosity: VerbosityLevel::Info,
+            verbosity: VerbosityLevel::Warning,
         }
         .into(),
         &MetricEnum::Hand,

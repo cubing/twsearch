@@ -106,6 +106,7 @@ where
         let mut index_to_representative_pattern =
             IndexedVec::<PhaseCoordinateIndex, TPuzzle::Pattern>::default();
 
+        // TODO: Reuse `GodsAlgorithmTable` to enumerate patterns?
         while let Some((representative_pattern, depth)) = fringe.pop_front() {
             let Some(lookup_pattern) =
                 TSemanticCoordinate::try_new(&puzzle, &representative_pattern)

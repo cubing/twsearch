@@ -4,7 +4,7 @@ use crate::{
     _internal::search::{
         check_pattern::PatternValidityChecker,
         coordinates::{
-            phase_coordinate_puzzle::{PhaseCoordinatePuzzle, SemanticCoordinate},
+            phase_coordinate_puzzle::SemanticCoordinate,
             triple_phase_coordinate_puzzle::TriplePhaseCoordinatePuzzle,
         },
     },

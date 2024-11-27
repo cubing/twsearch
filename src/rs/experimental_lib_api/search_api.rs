@@ -17,33 +17,19 @@ use super::common::PatternSource;
 /// Usage example:
 ///
 /// ```
-/// use cubing::{alg::parse_alg, puzzles::cube2x2x2_kpuzzle};
-/// use twsearch::{
-///     _internal::cli::args::{GeneratorArgs, GodsAlgorithmOptionalArgs}, // TODO
-///     experimental_lib_api::gods_algorithm,
-/// };
+/// use cubing::{alg::parse_alg, puzzles::cube3x3x3_kpuzzle};
+/// use twsearch::experimental_lib_api::{search};
 ///
-/// let kpuzzle = cube2x2x2_kpuzzle();
-/// let table = gods_algorithm(
-///     kpuzzle,
-///     GodsAlgorithmOptionalArgs {
-///         generator_args: GeneratorArgs {
-///             generator_moves_string: Some("U,F2,R".to_owned()), // TODO: make this semantic
-///             ..Default::default()
-///         },
-///         ..Default::default()
-///     },
-/// )
-/// .unwrap();
-///
-/// // Looking up any pattern is now O(1).
-/// let depth = table.pattern_to_depth.get(
-///     &kpuzzle
-///         .default_pattern()
-///         .apply_alg(&parse_alg!("U' F R' F' U R' U' R F2 U'"))
-///         .unwrap(),
-/// );
-/// dbg!(depth);
+/// let kpuzzle = cube3x3x3_kpuzzle();
+/// let search_pattern = kpuzzle
+///     .default_pattern()
+///     .apply_alg(&parse_alg!("R U R'"))
+///     .expect("Invalid alg for puzzle.");
+/// let solutions =
+///     search(kpuzzle, &search_pattern, Default::default()).expect("Search failed.");
+/// for solution in solutions {
+///     println!("{}", solution);
+/// }
 /// ```
 pub fn search(
     kpuzzle: &KPuzzle,

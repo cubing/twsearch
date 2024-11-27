@@ -13,25 +13,33 @@ use super::common::PatternSource;
 /// Usage example:
 ///
 /// ```
-/// use cubing::puzzles::cube3x3x3_kpuzzle;
-///
+/// use cubing::{alg::parse_alg, puzzles::cube2x2x2_kpuzzle};
 /// use twsearch::{
 ///     _internal::cli::args::{GeneratorArgs, GodsAlgorithmOptionalArgs}, // TODO
-///     experimental_lib_api::{gods_algorithm},
+///     experimental_lib_api::gods_algorithm,
 /// };
 ///
+/// let kpuzzle = cube2x2x2_kpuzzle();
 /// let table = gods_algorithm(
-///     cube3x3x3_kpuzzle(),
+///     kpuzzle,
 ///     GodsAlgorithmOptionalArgs {
 ///         generator_args: GeneratorArgs {
-///             generator_moves_string: Some("R2,U2".to_owned()), // TODO: make this semantic
+///             generator_moves_string: Some("U,F2,R".to_owned()), // TODO: make this semantic
 ///             ..Default::default()
 ///         },
 ///         ..Default::default()
 ///     },
 /// )
 /// .unwrap();
-/// dbg!(&table.pattern_to_depth);
+///
+/// // Looking up any pattern is now O(1).
+/// let depth = table.pattern_to_depth.get(
+///     &kpuzzle
+///         .default_pattern()
+///         .apply_alg(&parse_alg!("U' F R' F' U R' U' R F2 U'"))
+///         .unwrap(),
+/// );
+/// dbg!(depth);
 /// ```
 pub fn gods_algorithm(
     kpuzzle: &KPuzzle,

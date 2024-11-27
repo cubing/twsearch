@@ -12,6 +12,21 @@ use cubing::kpuzzle::KPuzzle;
 
 use super::common::{KPuzzleSource, PatternSource};
 
+/// Note: the `search_command_optional_args` argument is not yet ergonomic, and will be refactored.
+///
+/// Usage example:
+///
+/// ```
+/// use cubing::{alg::parse_alg, puzzles::cube3x3x3_kpuzzle};
+/// use twsearch::experimental_lib_api::{KPuzzleSource, PatternSource, search};
+///
+/// let definition = KPuzzleSource::KPuzzle(cube3x3x3_kpuzzle().clone());
+/// let search_pattern = PatternSource::AlgAppliedToDefaultPattern(parse_alg!("R U R'"));
+/// let solutions = search(definition, search_pattern, Default::default()).unwrap();
+/// for solution in solutions {
+///   println!("{}", solution);
+/// }
+/// ```
 pub fn search(
     definition: impl Into<KPuzzleSource>,
     search_pattern: impl Into<PatternSource>,

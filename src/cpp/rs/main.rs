@@ -37,12 +37,12 @@ fn main() {
         }
         CliCommand::Search(search_command_args) => main_search(
             &search_command_args,
-            &search_command_args.def_and_optional_scramble_args.def_args,
+            &search_command_args.def_args.def_args,
             &search_command_args
-                .def_and_optional_scramble_args
+                .def_args
                 .scramble_file,
             &search_command_args
-                .def_and_optional_scramble_args
+                .def_args
                 .experimental_target_pattern,
         ),
         CliCommand::Serve(serve_command_args) => serve(serve_command_args, true),

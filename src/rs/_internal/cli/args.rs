@@ -60,7 +60,7 @@ pub enum CliCommand {
     Completions(CompletionsArgs),
 }
 
-#[derive(Args, Debug)]
+#[derive(Args, Debug, Default)]
 pub struct CommonSearchArgs {
     /// Check that a position is valid before attempting to solve it. This may take extra time or memory for large puzzles.
     #[clap(long/*, visible_alias = "checkbeforesolve" */)]
@@ -95,6 +95,16 @@ pub struct CommonSearchArgs {
 
 #[derive(Args, Debug)]
 pub struct SearchCommandArgs {
+    #[command(flatten)]
+    pub optional: SearchCommandOptionalArgs,
+
+    // We place this last show it shows at the end of `--help` (and therefore just above the next shell prompt).
+    #[command(flatten)]
+    pub def_args: RequiredDefArgs,
+}
+
+#[derive(Args, Debug, Default)]
+pub struct SearchCommandOptionalArgs {
     #[clap(long/* , visible_short_alias = 't' */)]
     pub min_num_solutions: Option<usize>,
 
@@ -109,9 +119,8 @@ pub struct SearchCommandArgs {
     #[command(flatten)]
     pub verbosity_args: VerbosityArgs,
 
-    // We place this last show it shows at the end of `--help` (and therefore just above the next shell prompt).
     #[command(flatten)]
-    pub def_and_optional_scramble_args: DefAndOptionalScrambleArgs,
+    pub scramble_and_target_pattern_optional_args: ScrambleAndTargetPatternOptionalArgs,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum, Serialize, Deserialize)]
@@ -128,7 +137,7 @@ impl Default for VerbosityLevel {
     }
 }
 
-#[derive(Args, Debug)]
+#[derive(Args, Debug, Default)]
 pub struct VerbosityArgs {
     #[clap(long)]
     pub verbosity: Option<VerbosityLevel>,
@@ -139,8 +148,8 @@ pub struct GeneratorArgs {
     /// A comma-separated list of moves to use. All multiples of these
     /// moves are considered. For example, `--moves U,F,R2` only permits
     /// half-turns on R, and all possible turns on U and F.
-    #[clap(long)]
-    pub generator_moves: Option<String>,
+    #[clap(long = "generator-moves")]
+    pub generator_moves_string: Option<String>,
 
     /// A comma-separated list of algs to use. All multiples of these
     /// algs are considered. For example, `--algs U,F,R2` only permits
@@ -178,7 +187,7 @@ pub struct CustomGenerators {
 
 impl GeneratorArgs {
     pub fn parse(&self) -> Generators {
-        let moves = parse_comma_separated(&self.generator_moves);
+        let moves = parse_comma_separated(&self.generator_moves_string);
         let algs = parse_comma_separated(&self.generator_algs);
         match (moves, algs) {
             (None, None) => Generators::Default,
@@ -208,7 +217,7 @@ fn parse_comma_separated<T: FromStr<Err = E>, E: Display>(
     })
 }
 
-#[derive(Args, Debug)]
+#[derive(Args, Debug, Default)]
 pub struct SearchPersistenceArgs {
     #[clap(long, help_heading = "Persistence"/* , visible_alias = "writeprunetables" */)]
     pub write_prune_tables: Option<EnableAutoAlwaysNeverValueEnum>,
@@ -392,9 +401,13 @@ pub struct DefOnlyArgs {
 }
 
 #[derive(Args, Debug)]
-pub struct DefAndOptionalScrambleArgs {
+pub struct RequiredDefArgs {
     #[command(flatten)]
     pub def_args: DefOnlyArgs,
+}
+
+#[derive(Args, Debug, Default)]
+pub struct ScrambleAndTargetPatternOptionalArgs {
     /// Solve all the scrambles from the given file.
     #[clap(help_heading = "Scramble input", group = "scramble_input")]
     pub scramble_file: Option<PathBuf>,

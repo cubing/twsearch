@@ -4,7 +4,7 @@ use std::{path::PathBuf, process::exit};
 
 use crate::_internal::{
     cli::{
-        args::{DefAndOptionalScrambleArgs, DefOnlyArgs},
+        args::{DefOnlyArgs, ScrambleAndTargetPatternOptionalArgs},
         io::read_to_json,
     },
     errors::{ArgumentError, CommandError},
@@ -16,16 +16,18 @@ use cubing::{
 
 // TODO: can we afford to make these fields into references?
 #[derive(Debug, From)]
-pub enum KPuzzleDefinitionSource {
-    FilePath(PathBuf),
+pub enum KPuzzleSource {
+    KPuzzle(KPuzzle),
     KPuzzleDefinition(KPuzzleDefinition),
+    FilePath(PathBuf),
 }
 
-impl KPuzzleDefinitionSource {
+impl KPuzzleSource {
     pub fn kpuzzle(self) -> Result<KPuzzle, ArgumentError /* TODO */> {
         let def = match self {
-            KPuzzleDefinitionSource::FilePath(path_buf) => read_to_json(&path_buf)?,
-            KPuzzleDefinitionSource::KPuzzleDefinition(kpuzzle_definition) => kpuzzle_definition,
+            KPuzzleSource::KPuzzle(kpuzzle) => return Ok(kpuzzle),
+            KPuzzleSource::KPuzzleDefinition(kpuzzle_definition) => kpuzzle_definition,
+            KPuzzleSource::FilePath(path_buf) => read_to_json(&path_buf)?,
         };
 
         KPuzzle::try_from(def).map_err(|e| ArgumentError {
@@ -34,7 +36,7 @@ impl KPuzzleDefinitionSource {
     }
 }
 
-impl KPuzzleDefinitionSource {
+impl KPuzzleSource {
     // TODO
     pub fn from_clap_args(def_args: &DefOnlyArgs) -> Self {
         Self::FilePath(def_args.def_file.clone())
@@ -46,7 +48,7 @@ impl KPuzzleDefinitionSource {
 pub enum PatternSource {
     DefaultFromDefinition,
     FilePath(PathBuf),
-    Alg(Alg),
+    AlgAppliedToDefaultPattern(Alg),
 }
 
 impl PatternSource {
@@ -64,14 +66,16 @@ impl PatternSource {
                     }
                 }
             }
-            PatternSource::Alg(alg) => match kpuzzle.default_pattern().apply_alg(&alg) {
-                Ok(pattern) => pattern,
-                Err(err) => {
-                    return Err(CommandError::ArgumentError(ArgumentError {
-                        description: err.to_string(), // TODO
-                    }));
+            PatternSource::AlgAppliedToDefaultPattern(alg) => {
+                match kpuzzle.default_pattern().apply_alg(&alg) {
+                    Ok(pattern) => pattern,
+                    Err(err) => {
+                        return Err(CommandError::ArgumentError(ArgumentError {
+                            description: err.to_string(), // TODO
+                        }));
+                    }
                 }
-            },
+            }
         })
     }
 }
@@ -79,11 +83,11 @@ impl PatternSource {
 impl PatternSource {
     // TODO
     pub fn search_pattern_from_clap_args(
-        def_and_optional_scramble_args: &DefAndOptionalScrambleArgs,
+        scramble_and_target_pattern_optional_args: &ScrambleAndTargetPatternOptionalArgs,
     ) -> Result<Self, CommandError> {
         match (
-            &def_and_optional_scramble_args.scramble_alg,
-            &def_and_optional_scramble_args.scramble_file,
+            &scramble_and_target_pattern_optional_args.scramble_alg,
+            &scramble_and_target_pattern_optional_args.scramble_file,
         ) {
             (None, None) => {
                 println!("No scramble specified, exiting.");
@@ -98,7 +102,7 @@ impl PatternSource {
                         exit(1)
                     }
                 };
-                Ok(Self::Alg(alg))
+                Ok(Self::AlgAppliedToDefaultPattern(alg))
             }
             (Some(_), Some(_)) => {
                 eprintln!("Error: specified both a scramble alg and a scramble file, exiting.");

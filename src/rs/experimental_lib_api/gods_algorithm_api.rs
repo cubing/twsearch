@@ -3,11 +3,10 @@ use crate::_internal::{
     gods_algorithm::gods_algorithm_table::GodsAlgorithmSearch,
 };
 
-use super::common::{KPuzzleDefinitionSource, PatternSource};
+use super::common::{KPuzzleSource, PatternSource};
 
 pub fn gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), CommandError> {
-    let kpuzzle =
-        KPuzzleDefinitionSource::FilePath(gods_algorithm_args.def_args.def_file).kpuzzle()?;
+    let kpuzzle = KPuzzleSource::FilePath(gods_algorithm_args.def_args.def_file).kpuzzle()?;
     let start_pattern = match gods_algorithm_args
         .optional
         .start_pattern_args

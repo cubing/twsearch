@@ -3,7 +3,7 @@
 // accidentally export more).
 
 mod common;
-pub use common::KPuzzleDefinitionSource; // TODO
+pub use common::KPuzzleSource; // TODO
 pub use common::PatternSource; // TODO
 
 mod search_api;

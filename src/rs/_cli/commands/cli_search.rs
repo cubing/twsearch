@@ -5,13 +5,15 @@ use twsearch::{
 
 pub fn cli_search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
     let search_start_time: std::time::Instant = instant::Instant::now();
-    let definition = KPuzzleSource::from_clap_args(&search_command_args.def_args.def_args);
+    let kpuzzle =
+        KPuzzleSource::from_clap_args(&search_command_args.def_args.def_args).kpuzzle()?;
     let search_pattern = PatternSource::search_pattern_from_clap_args(
         &search_command_args
             .optional
             .scramble_and_target_pattern_optional_args,
-    )?;
-    let solutions = search(definition, search_pattern, search_command_args.optional)?;
+    )?
+    .pattern(&kpuzzle)?;
+    let solutions = search(&kpuzzle, &search_pattern, search_command_args.optional)?;
     let mut solution_index = 0;
     for solution in solutions {
         solution_index += 1;

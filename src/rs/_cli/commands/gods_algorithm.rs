@@ -5,7 +5,7 @@ use twsearch::{
 
 pub fn cli_gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), CommandError> {
     gods_algorithm(
-        KPuzzleSource::from_clap_args(&gods_algorithm_args.def_args),
+        &KPuzzleSource::from_clap_args(&gods_algorithm_args.def_args).kpuzzle()?,
         gods_algorithm_args.optional,
     )?;
     Ok(())

@@ -1,12 +1,14 @@
+use cubing::kpuzzle::KPuzzle;
+
 use crate::_internal::{
     cli::args::GodsAlgorithmOptionalArgs,
     errors::CommandError,
     gods_algorithm::gods_algorithm_table::{GodsAlgorithmSearch, GodsAlgorithmTable},
 };
 
-use super::common::{KPuzzleSource, PatternSource};
+use super::common::PatternSource;
 
-/// Note: the `search_command_optional_args` argument is not yet ergonomic, and will be refactored.
+/// Note: the `gods_algorithm_optional_args` argument is not yet ergonomic, and will be refactored.
 ///
 /// Usage example:
 ///
@@ -15,12 +17,11 @@ use super::common::{KPuzzleSource, PatternSource};
 ///
 /// use twsearch::{
 ///     _internal::cli::args::{GeneratorArgs, GodsAlgorithmOptionalArgs}, // TODO
-///     experimental_lib_api::{gods_algorithm, KPuzzleSource},
+///     experimental_lib_api::{gods_algorithm},
 /// };
 ///
-/// let definition = KPuzzleSource::KPuzzle(cube3x3x3_kpuzzle().clone());
 /// let table = gods_algorithm(
-///     definition,
+///     cube3x3x3_kpuzzle(),
 ///     GodsAlgorithmOptionalArgs {
 ///         generator_args: GeneratorArgs {
 ///             generator_moves_string: Some("R2,U2".to_owned()), // TODO: make this semantic
@@ -33,19 +34,18 @@ use super::common::{KPuzzleSource, PatternSource};
 /// dbg!(&table.pattern_to_depth);
 /// ```
 pub fn gods_algorithm(
-    definition: impl Into<KPuzzleSource>,
+    kpuzzle: &KPuzzle,
     gods_algorithm_optional_args: GodsAlgorithmOptionalArgs,
 ) -> Result<GodsAlgorithmTable, CommandError> {
-    let kpuzzle = definition.into().kpuzzle()?;
     let start_pattern = match gods_algorithm_optional_args
         .start_pattern_args
         .start_pattern
     {
-        Some(path_buf) => Some(PatternSource::FilePath(path_buf).pattern(&kpuzzle)?),
+        Some(path_buf) => Some(PatternSource::FilePath(path_buf).pattern(kpuzzle)?),
         None => None,
     };
     let mut gods_algorithm_search = GodsAlgorithmSearch::try_new(
-        kpuzzle,
+        kpuzzle.clone(),
         start_pattern,
         &gods_algorithm_optional_args.generator_args.parse(),
         &gods_algorithm_optional_args.metric_args.metric,
@@ -60,14 +60,13 @@ mod tests {
 
     use crate::{
         _internal::cli::args::{GeneratorArgs, GodsAlgorithmOptionalArgs},
-        experimental_lib_api::{gods_algorithm, KPuzzleSource},
+        experimental_lib_api::gods_algorithm,
     };
 
     #[test]
     fn gods_algorithm_api_test() {
-        let definition = KPuzzleSource::KPuzzle(cube3x3x3_kpuzzle().clone());
         let table = gods_algorithm(
-            definition,
+            cube3x3x3_kpuzzle(),
             GodsAlgorithmOptionalArgs {
                 generator_args: GeneratorArgs {
                     generator_moves_string: Some("R2,U2".to_owned()), // TODO: make this semantic

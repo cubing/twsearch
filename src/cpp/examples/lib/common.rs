@@ -42,7 +42,7 @@ impl CliCommand {
             CliCommand::Cpp() => &[],
             CliCommand::Rust() => &[
                 "search",
-                "--debug-print-serialized-json",
+                // "--debug-print-serialized-json",
                 "--num-threads",
                 "1",
             ],

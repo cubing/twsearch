@@ -96,11 +96,10 @@ pub struct CommonSearchArgs {
 #[derive(Args, Debug)]
 pub struct SearchCommandArgs {
     #[command(flatten)]
-    pub optional: SearchCommandOptionalArgs,
-
-    // We place this last show it shows at the end of `--help` (and therefore just above the next shell prompt).
-    #[command(flatten)]
     pub def_args: RequiredDefArgs,
+
+    #[command(flatten)]
+    pub optional: SearchCommandOptionalArgs,
 }
 
 #[derive(Args, Debug, Default)]
@@ -119,6 +118,7 @@ pub struct SearchCommandOptionalArgs {
     #[command(flatten)]
     pub verbosity_args: VerbosityArgs,
 
+    // We place this last show it shows at the end of `--help` (and therefore just above the next shell prompt).
     #[command(flatten)]
     pub scramble_and_target_pattern_optional_args: ScrambleAndTargetPatternOptionalArgs,
 }

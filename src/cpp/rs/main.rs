@@ -39,10 +39,12 @@ fn main() {
             &search_command_args,
             &search_command_args.def_args.def_args,
             &search_command_args
-                .def_args
+                .optional
+                .scramble_and_target_pattern_optional_args
                 .scramble_file,
             &search_command_args
-                .def_args
+                .optional
+                .scramble_and_target_pattern_optional_args
                 .experimental_target_pattern,
         ),
         CliCommand::Serve(serve_command_args) => serve(serve_command_args, true),

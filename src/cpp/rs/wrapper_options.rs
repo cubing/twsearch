@@ -1,7 +1,8 @@
 use twsearch::_internal::cli::args::{
     BenchmarkArgs, CanonicalAlgsArgs, CommonSearchArgs, EnableAutoAlwaysNeverValueEnum,
     GeneratorArgs, Generators, GodsAlgorithmArgs, MemoryArgs, MetricArgs, MetricEnum,
-    PerformanceArgs, RequiredDefArgs, SchreierSimsArgs, SearchCommandArgs, SearchPersistenceArgs,
+    PerformanceArgs, RequiredDefArgs, SchreierSimsArgs, ScrambleAndTargetPatternOptionalArgs,
+    SearchCommandArgs, SearchCommandOptionalArgs, SearchPersistenceArgs,
     ServeArgsForIndividualSearch, ServeClientArgs, ServeCommandArgs, TimingTestArgs,
 };
 
@@ -75,12 +76,18 @@ impl SetCppArgs for CommonSearchArgs {
 
 impl SetCppArgs for SearchCommandArgs {
     fn set_cpp_args(&self) {
+        self.optional.set_cpp_args();
+        self.def_args.set_cpp_args();
+    }
+}
+
+impl SetCppArgs for SearchCommandOptionalArgs {
+    fn set_cpp_args(&self) {
         set_optional_arg("-c", &self.min_num_solutions);
 
         self.generator_args.set_cpp_args();
         self.search_args.set_cpp_args();
         self.search_persistence_args.set_cpp_args();
-        self.def_args.set_cpp_args();
         self.metric_args.set_cpp_args();
     }
 }
@@ -140,17 +147,17 @@ impl SetCppArgs for SchreierSimsArgs {
 
 impl SetCppArgs for GodsAlgorithmArgs {
     fn set_cpp_args(&self) {
-        if self.start_pattern_args.start_pattern.is_some() {
+        if self.optional.start_pattern_args.start_pattern.is_some() {
             eprintln!("Unsupported flag for twsearch-cpp-wrapper: --start-pattern");
             exit(1);
         }
-        self.generator_args.set_cpp_args();
+        self.optional.generator_args.set_cpp_args();
         set_boolean_arg("-g", true);
-        set_boolean_arg("-F", self.force_arrays);
-        set_boolean_arg("-H", self.hash_patterns);
-        set_arg("-a", &self.num_antipodes);
-        self.performance_args.set_cpp_args();
-        self.metric_args.set_cpp_args();
+        set_boolean_arg("-F", self.optional.force_arrays);
+        set_boolean_arg("-H", self.optional.hash_patterns);
+        set_arg("-a", &self.optional.num_antipodes);
+        self.optional.performance_args.set_cpp_args();
+        self.optional.metric_args.set_cpp_args();
     }
 }
 
@@ -194,6 +201,10 @@ impl SetCppArgs for MetricArgs {
 }
 
 impl SetCppArgs for RequiredDefArgs {
+    fn set_cpp_args(&self) {}
+}
+
+impl SetCppArgs for ScrambleAndTargetPatternOptionalArgs {
     fn set_cpp_args(&self) {
         if let Some(scramble_alg) = &self.scramble_alg {
             let parsed_alg = match scramble_alg.parse::<Alg>() {

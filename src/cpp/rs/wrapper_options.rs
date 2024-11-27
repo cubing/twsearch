@@ -1,4 +1,4 @@
-use twsearch::_internal::cli::options_impl::{
+use twsearch::_internal::cli::args::{
     BenchmarkArgs, CanonicalAlgsArgs, CommonSearchArgs, EnableAutoAlwaysNeverValueEnum,
     GeneratorArgs, Generators, GodsAlgorithmArgs, InputDefAndOptionalScrambleFileArgs, MemoryArgs,
     MetricArgs, MetricEnum, PerformanceArgs, SchreierSimsArgs, SearchCommandArgs,

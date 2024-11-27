@@ -18,7 +18,7 @@ use crate::_internal::{
         canonical_fsm::{CanonicalFSM, CanonicalFSMState, CANONICAL_FSM_START_STATE},
         search_generators::SearchGenerators,
     },
-    cli::options_impl::MetricEnum,
+    cli::args::MetricEnum,
     errors::SearchError,
     puzzle_traits::puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
     search::pattern_stack::PatternStack,

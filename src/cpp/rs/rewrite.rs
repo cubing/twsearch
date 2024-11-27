@@ -7,7 +7,7 @@ use std::{
 use cubing::kpuzzle::{KPatternData, KPuzzleDefinition};
 use serde::Deserialize;
 use tempfile::NamedTempFile;
-use twsearch::_internal::cli::options_impl::InputDefFileOnlyArgs;
+use twsearch::_internal::cli::args::InputDefFileOnlyArgs;
 
 use crate::serialize::{
     serialize_kpuzzle_definition, serialize_scramble_kpattern_data, serialize_scramble_list,

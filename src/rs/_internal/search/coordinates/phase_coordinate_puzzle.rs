@@ -17,7 +17,7 @@ use crate::{
         canonical_fsm::search_generators::{
             FlatMoveIndex, MoveTransformationInfo, SearchGenerators,
         },
-        cli::options_impl::MetricEnum,
+        cli::args::MetricEnum,
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{
             check_pattern::AlwaysValid,

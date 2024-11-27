@@ -8,7 +8,7 @@ use crate::_internal::{
         canonical_fsm::{CanonicalFSM, CanonicalFSMState, CANONICAL_FSM_START_STATE},
         search_generators::{FlatMoveIndex, SearchGenerators},
     },
-    cli::options_impl::{Generators, MetricEnum},
+    cli::args::{Generators, MetricEnum},
     errors::SearchError,
     gods_algorithm::factor_number::factor_number,
     search::indexed_vec::IndexedVec,

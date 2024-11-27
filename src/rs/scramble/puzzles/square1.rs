@@ -12,7 +12,7 @@ use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
     _internal::{
-        cli::options_impl::{MetricEnum, VerbosityLevel},
+        cli::args::{MetricEnum, VerbosityLevel},
         search::{
             check_pattern::PatternValidityChecker,
             coordinates::phase_coordinate_puzzle::{PhaseCoordinatePuzzle, SemanticCoordinate},

@@ -4,7 +4,7 @@ use cubing::alg::{Move, QuantumMove};
 
 use crate::{
     _internal::{
-        cli::options_impl::MetricEnum,
+        cli::args::MetricEnum,
         errors::SearchError,
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{indexed_vec::IndexedVec, move_count::MoveCount},

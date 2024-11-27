@@ -14,6 +14,30 @@
   "files.associations": {
     "*.html": "html",
     "twsearch-ffi.h": "c",
-    "libtwsearch_ffi.h": "c"
+    "libtwsearch_ffi.h": "c",
+    "__config": "cpp",
+    "iosfwd": "cpp",
+    "queue": "cpp",
+    "random": "cpp",
+    "vector": "cpp",
+    "version": "cpp",
+    "__locale": "cpp",
+    "__verbose_abort": "cpp",
+    "bitset": "cpp",
+    "chrono": "cpp",
+    "cstdlib": "cpp",
+    "filesystem": "cpp",
+    "format": "cpp",
+    "fstream": "cpp",
+    "iomanip": "cpp",
+    "ios": "cpp",
+    "locale": "cpp",
+    "ostream": "cpp",
+    "print": "cpp",
+    "stdexcept": "cpp",
+    "string": "cpp",
+    "string_view": "cpp",
+    "system_error": "cpp",
+    "typeinfo": "cpp"
   }
 }

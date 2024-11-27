@@ -6,7 +6,7 @@ use cubing::{
 };
 
 use crate::_internal::{
-    cli::options_impl::{MetricEnum, VerbosityLevel},
+    cli::args::{MetricEnum, VerbosityLevel},
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
         idf_search::{

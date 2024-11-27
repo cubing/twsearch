@@ -1,4 +1,4 @@
-use crate::_internal::cli::options_impl::VerbosityLevel;
+use crate::_internal::cli::args::VerbosityLevel;
 
 // TODO: replace this with something less custom (ideally from the stdlib?)
 #[derive(Clone, Default)]

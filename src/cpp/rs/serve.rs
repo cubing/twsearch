@@ -8,9 +8,9 @@ use rouille::Request;
 use rouille::Response;
 use serde::Deserialize;
 use serde::Serialize;
-use twsearch::_internal::cli::options_impl::ServeArgsForIndividualSearch;
-use twsearch::_internal::cli::options_impl::ServeClientArgs;
-use twsearch::_internal::cli::options_impl::ServeCommandArgs;
+use twsearch::_internal::cli::args::ServeArgsForIndividualSearch;
+use twsearch::_internal::cli::args::ServeClientArgs;
+use twsearch::_internal::cli::args::ServeCommandArgs;
 
 use std::sync::Mutex;
 

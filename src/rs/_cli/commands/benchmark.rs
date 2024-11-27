@@ -3,7 +3,7 @@ use instant::Instant;
 use rand::seq::SliceRandom;
 use twsearch::_internal::{
     canonical_fsm::search_generators::SearchGenerators,
-    cli::{io::read_to_json, options_impl::BenchmarkArgs},
+    cli::{io::read_to_json, args::BenchmarkArgs},
     errors::CommandError,
 };
 

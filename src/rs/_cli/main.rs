@@ -14,10 +14,8 @@ use cubing::{
 };
 use twsearch::_internal::{
     cli::{
+        args::{get_options, CliCommand, GodsAlgorithmArgs, SearchCommandArgs, VerbosityLevel},
         io::read_to_json,
-        options_impl::{
-            get_options, CliCommand, GodsAlgorithmArgs, SearchCommandArgs, VerbosityLevel,
-        },
     },
     errors::{ArgumentError, CommandError},
     gods_algorithm::gods_algorithm_table::GodsAlgorithmSearch,

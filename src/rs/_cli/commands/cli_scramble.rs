@@ -1,5 +1,5 @@
 use twsearch::{
-    _internal::{cli::options_impl::ScrambleArgs, errors::CommandError},
+    _internal::{cli::args::ScrambleArgs, errors::CommandError},
     scramble::{random_scramble_for_event, Event},
 };
 

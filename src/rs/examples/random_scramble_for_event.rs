@@ -21,7 +21,7 @@ pub fn main() {
         Event::Cube3x3x3MultiBlind,
         Event::ClockSpeedsolving,
         Event::SkewbSpeedsolving,
-        Event::Square1Speedsolving,
+        // Event::Square1Speedsolving, // TODO: re-enable after we are performant enough.
         Event::Cube3x3x3FewestMoves,
         Event::Cube3x3x3FewestMoves,
         Event::Cube3x3x3FewestMoves,

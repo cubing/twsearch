@@ -3,7 +3,7 @@ use instant::Instant;
 use rand::seq::SliceRandom;
 use twsearch::_internal::{
     canonical_fsm::search_generators::SearchGenerators,
-    cli::{io::read_to_json, args::BenchmarkArgs},
+    cli::{args::BenchmarkArgs, io::read_to_json},
     errors::CommandError,
 };
 
@@ -13,7 +13,7 @@ const ONE_MILLION: u32 = 1_000_000;
 
 pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
     let def: KPuzzleDefinition =
-        read_to_json(&benchmark_args.input_args.def_file).expect("Invalid definition"); // TODO: automatic error conversion.
+        read_to_json(&benchmark_args.def_args.def_file).expect("Invalid definition"); // TODO: automatic error conversion.
     let kpuzzle = KPuzzle::try_new(def).expect("Invalid definition"); // TODO: automatic error conversion.
 
     let search_generators = SearchGenerators::try_new(

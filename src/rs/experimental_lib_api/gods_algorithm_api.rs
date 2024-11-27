@@ -3,18 +3,24 @@ use crate::_internal::{
     gods_algorithm::gods_algorithm_table::GodsAlgorithmSearch,
 };
 
-use super::common::parse_def_file_and_start_or_target_pattern_file;
+use super::common::{KPuzzleDefinitionSource, PatternSource};
 
 pub fn gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), CommandError> {
-    let (kpuzzle, start_pattern) = parse_def_file_and_start_or_target_pattern_file(
-        &gods_algorithm_args.input_args.def_file,
-        &gods_algorithm_args.start_pattern_args.start_pattern,
-    )?;
+    let kpuzzle =
+        KPuzzleDefinitionSource::FilePath(gods_algorithm_args.def_args.def_file).kpuzzle()?;
+    let start_pattern = match gods_algorithm_args
+        .optional
+        .start_pattern_args
+        .start_pattern
+    {
+        Some(path_buf) => Some(PatternSource::FilePath(path_buf).pattern(&kpuzzle)?),
+        None => None,
+    };
     let mut gods_algorithm_table = GodsAlgorithmSearch::try_new(
         kpuzzle,
         start_pattern,
-        &gods_algorithm_args.generator_args.parse(),
-        &gods_algorithm_args.metric_args.metric,
+        &gods_algorithm_args.optional.generator_args.parse(),
+        &gods_algorithm_args.optional.metric_args.metric,
     )?;
     gods_algorithm_table.fill();
     Ok(())

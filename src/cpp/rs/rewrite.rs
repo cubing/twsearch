@@ -7,7 +7,7 @@ use std::{
 use cubing::kpuzzle::{KPatternData, KPuzzleDefinition};
 use serde::Deserialize;
 use tempfile::NamedTempFile;
-use twsearch::_internal::cli::args::InputDefFileOnlyArgs;
+use twsearch::_internal::cli::args::DefOnlyArgs;
 
 use crate::serialize::{
     serialize_kpuzzle_definition, serialize_scramble_kpattern_data, serialize_scramble_list,
@@ -98,7 +98,7 @@ fn must_rewrite_input_file_with_optional_second_file<
 }
 
 pub fn rewrite_def_file(
-    input_args: &InputDefFileOnlyArgs,
+    input_args: &DefOnlyArgs,
     target_pattern_file: &Option<PathBuf>,
 ) -> Result<(String, TempFileScopeHandle), String> {
     match input_args.def_file.extension().and_then(|ext| ext.to_str()) {
@@ -133,7 +133,7 @@ pub fn rewrite_def_file(
                     );
                     def.map_err(|e| e.to_string())
                 },
-                input_args.debug_print_serialized_json,
+                false,
             ))
         }
     }

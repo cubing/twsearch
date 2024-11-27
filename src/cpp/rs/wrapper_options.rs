@@ -1,6 +1,6 @@
 use twsearch::_internal::cli::args::{
-    BenchmarkArgs, CanonicalAlgsArgs, CommonSearchArgs, EnableAutoAlwaysNeverValueEnum,
-    GeneratorArgs, Generators, GodsAlgorithmArgs, InputDefAndOptionalScrambleFileArgs, MemoryArgs,
+    BenchmarkArgs, CanonicalAlgsArgs, CommonSearchArgs, DefAndOptionalScrambleArgs,
+    EnableAutoAlwaysNeverValueEnum, GeneratorArgs, Generators, GodsAlgorithmArgs, MemoryArgs,
     MetricArgs, MetricEnum, PerformanceArgs, SchreierSimsArgs, SearchCommandArgs,
     SearchPersistenceArgs, ServeArgsForIndividualSearch, ServeClientArgs, ServeCommandArgs,
     TimingTestArgs,
@@ -81,8 +81,7 @@ impl SetCppArgs for SearchCommandArgs {
         self.generator_args.set_cpp_args();
         self.search_args.set_cpp_args();
         self.search_persistence_args.set_cpp_args();
-        self.input_def_and_optional_scramble_file_args
-            .set_cpp_args();
+        self.def_and_optional_scramble_args.set_cpp_args();
         self.metric_args.set_cpp_args();
     }
 }
@@ -195,7 +194,7 @@ impl SetCppArgs for MetricArgs {
     }
 }
 
-impl SetCppArgs for InputDefAndOptionalScrambleFileArgs {
+impl SetCppArgs for DefAndOptionalScrambleArgs {
     fn set_cpp_args(&self) {
         if let Some(scramble_alg) = &self.scramble_alg {
             let parsed_alg = match scramble_alg.parse::<Alg>() {

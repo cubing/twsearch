@@ -37,14 +37,12 @@ fn main() {
         }
         CliCommand::Search(search_command_args) => main_search(
             &search_command_args,
+            &search_command_args.def_and_optional_scramble_args.def_args,
             &search_command_args
-                .input_def_and_optional_scramble_file_args
-                .def_file_wrapper_args,
-            &search_command_args
-                .input_def_and_optional_scramble_file_args
+                .def_and_optional_scramble_args
                 .scramble_file,
             &search_command_args
-                .input_def_and_optional_scramble_file_args
+                .def_and_optional_scramble_args
                 .experimental_target_pattern,
         ),
         CliCommand::Serve(serve_command_args) => serve(serve_command_args, true),
@@ -54,26 +52,26 @@ fn main() {
 
             main_search(
                 &schreier_sims_command_args,
-                &schreier_sims_command_args.input_args,
+                &schreier_sims_command_args.def_args,
                 &None,
                 &None, // TODO: allow custom target pattern?
             )
         }
         CliCommand::GodsAlgorithm(gods_algorithm_args) => main_search(
             &gods_algorithm_args,
-            &gods_algorithm_args.input_args,
+            &gods_algorithm_args.def_args,
             &None,
             &None, // TODO: allow custom target pattern?
         ),
         CliCommand::TimingTest(args) => main_search(
             &args,
-            &args.input_args,
+            &args.def_args,
             &None,
             &None, // TODO: allow custom target pattern?
         ),
         CliCommand::CanonicalAlgs(args) => main_search(
             &args,
-            &args.input_args,
+            &args.def_args,
             &None,
             &None, // TODO: allow custom target pattern?
         ),

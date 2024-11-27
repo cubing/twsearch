@@ -111,7 +111,7 @@ pub struct SearchCommandArgs {
 
     // We place this last show it shows at the end of `--help` (and therefore just above the next shell prompt).
     #[command(flatten)]
-    pub input_def_and_optional_scramble_file_args: InputDefAndOptionalScrambleFileArgs,
+    pub def_and_optional_scramble_args: DefAndOptionalScrambleArgs,
 }
 
 #[derive(Debug, Clone, Copy, ValueEnum, Serialize, Deserialize)]
@@ -134,7 +134,7 @@ pub struct VerbosityArgs {
     pub verbosity: Option<VerbosityLevel>,
 }
 
-#[derive(Args, Debug)]
+#[derive(Args, Debug, Default)]
 pub struct GeneratorArgs {
     /// A comma-separated list of moves to use. All multiples of these
     /// moves are considered. For example, `--moves U,F,R2` only permits
@@ -245,7 +245,7 @@ impl Display for EnableAutoAlwaysNeverValueEnum {
     }
 }
 
-#[derive(Args, Debug)]
+#[derive(Args, Debug, Default)]
 pub struct PerformanceArgs {
     /// Defaults to the number of logical CPU cores available.
     #[clap(long, help_heading = "Performance"/* , visible_short_alias = 't' */)]
@@ -255,7 +255,7 @@ pub struct PerformanceArgs {
     pub memory_args: MemoryArgs,
 }
 
-#[derive(Args, Debug)]
+#[derive(Args, Debug, Default)]
 pub struct MemoryArgs {
     /// Memory to use in MiB. See `README.md` for advice on how to tune memory usage.
     #[clap(long = "memory-MiB", help_heading = "Performance"/* , visible_short_alias = 'm' */, id = "MEBIBYTES")]
@@ -277,7 +277,7 @@ pub struct CompletionsArgs {
 #[derive(Args, Debug)]
 pub struct SchreierSimsArgs {
     #[command(flatten)]
-    pub input_args: InputDefFileOnlyArgs,
+    pub def_args: DefOnlyArgs,
 
     #[command(flatten)]
     pub performance_args: PerformanceArgs,
@@ -286,8 +286,14 @@ pub struct SchreierSimsArgs {
 #[derive(Args, Debug)]
 pub struct GodsAlgorithmArgs {
     #[command(flatten)]
-    pub input_args: InputDefFileOnlyArgs,
+    pub def_args: DefOnlyArgs,
 
+    #[command(flatten)]
+    pub optional: GodsAlgorithmOptionalArgs,
+}
+
+#[derive(Args, Debug, Default)]
+pub struct GodsAlgorithmOptionalArgs {
     // TODO: move this to a shared place.
     #[command(flatten)]
     pub start_pattern_args: StartPatternArgs,
@@ -316,7 +322,7 @@ pub struct GodsAlgorithmArgs {
 #[derive(Args, Debug)]
 pub struct TimingTestArgs {
     #[command(flatten)]
-    pub input_args: InputDefFileOnlyArgs,
+    pub def_args: DefOnlyArgs,
 
     #[command(flatten)]
     pub metric_args: MetricArgs,
@@ -328,7 +334,7 @@ pub struct TimingTestArgs {
 #[derive(Args, Debug)]
 pub struct CanonicalAlgsArgs {
     #[command(flatten)]
-    pub input_args: InputDefFileOnlyArgs,
+    pub def_args: DefOnlyArgs,
 
     #[command(flatten)]
     pub generator_args: GeneratorArgs,
@@ -344,6 +350,14 @@ pub struct CanonicalAlgsArgs {
 pub struct MetricArgs {
     #[clap(long, default_value_t = MetricEnum::Hand)]
     pub metric: MetricEnum,
+}
+
+impl Default for MetricArgs {
+    fn default() -> Self {
+        Self {
+            metric: MetricEnum::Hand,
+        }
+    }
 }
 
 #[derive(Debug, Clone, ValueEnum, Serialize, Deserialize)]
@@ -369,18 +383,18 @@ pub struct ScrambleArgs {
 }
 
 #[derive(Args, Debug)]
-pub struct InputDefFileOnlyArgs {
+pub struct DefOnlyArgs {
     #[clap()]
     pub def_file: PathBuf,
     // TODO: remove this
-    #[clap(long)]
-    pub debug_print_serialized_json: bool,
+    // #[clap(long)]
+    // pub debug_print_serialized_json: bool,
 }
 
 #[derive(Args, Debug)]
-pub struct InputDefAndOptionalScrambleFileArgs {
+pub struct DefAndOptionalScrambleArgs {
     #[command(flatten)]
-    pub def_file_wrapper_args: InputDefFileOnlyArgs,
+    pub def_args: DefOnlyArgs,
     /// Solve all the scrambles from the given file.
     #[clap(help_heading = "Scramble input", group = "scramble_input")]
     pub scramble_file: Option<PathBuf>,
@@ -395,7 +409,7 @@ pub struct InputDefAndOptionalScrambleFileArgs {
     pub experimental_target_pattern: Option<PathBuf>,
 }
 
-#[derive(Args, Debug)]
+#[derive(Args, Debug, Default)]
 pub struct StartPatternArgs {
     #[clap(long)]
     pub start_pattern: Option<PathBuf>,
@@ -404,7 +418,7 @@ pub struct StartPatternArgs {
 #[derive(Args, Debug)]
 pub struct BenchmarkArgs {
     #[command(flatten)]
-    pub input_args: InputDefFileOnlyArgs,
+    pub def_args: DefOnlyArgs,
 
     #[command(flatten)]
     pub memory_args: MemoryArgs,

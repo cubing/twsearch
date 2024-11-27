@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use twsearch::_internal::cli::args::InputDefFileOnlyArgs;
+use twsearch::_internal::cli::args::DefOnlyArgs;
 
 use crate::{
     rewrite::{rewrite_def_file, rewrite_scramble_file},
@@ -10,7 +10,7 @@ use crate::{
 
 pub fn main_search(
     args_for_reset: &dyn SetCppArgs,
-    input_args: &InputDefFileOnlyArgs,
+    input_args: &DefOnlyArgs,
     scramble_file: &Option<PathBuf>,
     target_pattern_file: &Option<PathBuf>,
 ) -> Result<(), String> {

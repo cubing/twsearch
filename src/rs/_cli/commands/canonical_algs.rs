@@ -1,12 +1,12 @@
 use cubing::kpuzzle::{KPuzzle, KPuzzleDefinition};
 use twsearch::_internal::{
     canonical_fsm::{canonical_fsm::CanonicalFSM, search_generators::SearchGenerators},
-    cli::{io::read_to_json, args::CanonicalAlgsArgs},
+    cli::{args::CanonicalAlgsArgs, io::read_to_json},
     errors::CommandError,
 };
 
 pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), CommandError> {
-    let def: KPuzzleDefinition = read_to_json(&args.input_args.def_file)?;
+    let def: KPuzzleDefinition = read_to_json(&args.def_args.def_file)?;
     let kpuzzle = KPuzzle::try_new(def).unwrap();
 
     let search_generators = SearchGenerators::try_new(

@@ -1,6 +1,6 @@
 import type {
-  KPuzzle,
   KPatternData,
+  KPuzzle,
   KTransformationData,
 } from "cubing/kpuzzle";
 
@@ -77,9 +77,8 @@ export function serializeDefToTws(
   function include(moveName: string): boolean {
     if (options?.moveSubset) {
       return options.moveSubset.includes(moveName);
-    } else {
-      return true;
     }
+    return true;
   }
 
   for (const [moveName, moveDef] of Object.entries(def.moves)) {

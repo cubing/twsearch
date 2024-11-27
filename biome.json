@@ -1,8 +1,11 @@
 {
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "files": {
+    "ignore": ["./.temp", "./build", "./dist", "./emsdk", "./target"]
+  },
   "formatter": {
     "indentStyle": "space",
-    "indentWidth": 2,
-    "ignore": ["./emsdk"]
+    "indentWidth": 2
   },
   "linter": {
     "enabled": true,
@@ -14,7 +17,6 @@
       "suspicious": {
         "noExplicitAny": "off"
       }
-    },
-    "ignore": ["./emsdk"]
+    }
   }
 }

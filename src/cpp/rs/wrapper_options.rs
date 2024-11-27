@@ -66,6 +66,7 @@ impl SetCppArgs for CommonSearchArgs {
             is_enabled_with_default_true(&self.check_before_solve),
         );
         set_boolean_arg("--randomstart", self.random_start);
+        set_boolean_arg("--alloptimal", self.all_optimal);
         set_optional_arg("--mindepth", &self.min_depth.map(|o| o.0));
         set_optional_arg("-m", &self.max_depth.map(|o| o.0));
         set_optional_arg("--startprunedepth", &self.start_prune_depth.map(|o| o.0));

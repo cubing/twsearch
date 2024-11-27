@@ -90,6 +90,10 @@ fn gods_algorithm(gods_algorithm_args: GodsAlgorithmArgs) -> Result<(), CommandE
 }
 
 fn search(search_command_args: SearchCommandArgs) -> Result<(), CommandError> {
+    if search_command_args.search_args.all_optimal {
+        eprintln!("⚠️ --all-optimal was specified, but is not currently implemented. Ignoring.");
+    }
+
     let (kpuzzle, target_pattern) = common(
         &search_command_args
             .input_def_and_optional_scramble_file_args

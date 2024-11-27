@@ -71,6 +71,10 @@ pub struct CommonSearchArgs {
     #[clap(long/*, visible_alias = "randomstart"`*/)]
     pub random_start: bool,
 
+    /// Print all optimal solutions.
+    #[clap(long)]
+    pub all_optimal: bool,
+
     /// Depth to start the pruning table. This can avoid multiple pruning table
     /// expansions that can already be anticipated by starting with a sufficient
     /// depth.

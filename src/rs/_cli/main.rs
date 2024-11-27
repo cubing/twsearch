@@ -1,13 +1,16 @@
 mod commands;
 mod serve;
 
-use commands::{benchmark::benchmark, canonical_algs::canonical_algs, cli_scramble::cli_scramble};
+use commands::{
+    benchmark::benchmark, canonical_algs::canonical_algs, cli_scramble::cli_scramble,
+    cli_search::cli_search,
+};
 use twsearch::{
     _internal::{
         cli::args::{get_options, CliCommand},
         errors::CommandError,
     },
-    experimental_lib_api::{gods_algorithm, search},
+    experimental_lib_api::gods_algorithm,
 };
 
 fn main() -> Result<(), CommandError> {
@@ -17,7 +20,7 @@ fn main() -> Result<(), CommandError> {
         CliCommand::Completions(_completions_args) => {
             panic!("Completions should have been printed during options parsing, followed by program exit.");
         }
-        CliCommand::Search(search_command_args) => search(search_command_args),
+        CliCommand::Search(search_command_args) => cli_search(search_command_args),
         CliCommand::Serve(serve_command_args) => serve::serve::serve(serve_command_args),
         // TODO: consolidate def-only arg implementations.
         CliCommand::SchreierSims(_schreier_sims_command_args) => todo!(),

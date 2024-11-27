@@ -3,14 +3,11 @@ mod serve;
 
 use commands::{
     benchmark::benchmark, canonical_algs::canonical_algs, cli_scramble::cli_scramble,
-    cli_search::cli_search,
+    cli_search::cli_search, gods_algorithm::cli_gods_algorithm,
 };
-use twsearch::{
-    _internal::{
-        cli::args::{get_options, CliCommand},
-        errors::CommandError,
-    },
-    experimental_lib_api::gods_algorithm,
+use twsearch::_internal::{
+    cli::args::{get_options, CliCommand},
+    errors::CommandError,
 };
 
 fn main() -> Result<(), CommandError> {
@@ -24,7 +21,7 @@ fn main() -> Result<(), CommandError> {
         CliCommand::Serve(serve_command_args) => serve::serve::serve(serve_command_args),
         // TODO: consolidate def-only arg implementations.
         CliCommand::SchreierSims(_schreier_sims_command_args) => todo!(),
-        CliCommand::GodsAlgorithm(gods_algorithm_args) => gods_algorithm(gods_algorithm_args),
+        CliCommand::GodsAlgorithm(gods_algorithm_args) => cli_gods_algorithm(gods_algorithm_args),
         CliCommand::TimingTest(_args) => todo!(),
         CliCommand::CanonicalAlgs(args) => canonical_algs(&args),
         CliCommand::Scramble(scramble_args) => cli_scramble(&scramble_args),

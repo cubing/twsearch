@@ -24,7 +24,7 @@ use super::common::{KPuzzleSource, PatternSource};
 /// let search_pattern = PatternSource::AlgAppliedToDefaultPattern(parse_alg!("R U R'"));
 /// let solutions = search(definition, search_pattern, Default::default()).unwrap();
 /// for solution in solutions {
-///   println!("{}", solution);
+///     println!("{}", solution);
 /// }
 /// ```
 pub fn search(

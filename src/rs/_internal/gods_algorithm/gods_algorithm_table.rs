@@ -22,7 +22,7 @@ use super::bulk_queue::BulkQueue;
 
 pub struct GodsAlgorithmTable {
     completed: bool, // "completed" instead of "complete" to make an unambiguous adjective
-    pattern_to_depth: HashMap<KPattern, /* depth */ SearchDepth>,
+    pub pattern_to_depth: HashMap<KPattern, /* depth */ SearchDepth>,
 }
 
 impl GodsAlgorithmTable {
@@ -55,7 +55,7 @@ pub struct GodsAlgorithmSearch {
     cached_inverses: IndexedVec<FlatMoveIndex, KTransformation>,
     // state
     canonical_fsm: CanonicalFSM<KPuzzle>,
-    table: GodsAlgorithmTable,
+    pub(crate) table: GodsAlgorithmTable,
     bulk_queues: Vec<BulkQueue<QueueItem>>, // TODO: `HashMap` instead of `Vec` for the other layer for sparse rep?
 
     multi_progress_bar: MultiProgress,

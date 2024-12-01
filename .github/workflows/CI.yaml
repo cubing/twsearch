@@ -112,3 +112,8 @@ jobs:
       - uses: actions/checkout@v4
       - run: make build-rust
       - run: make benchmark-rust
+      - uses: actions/upload-artifact@v4
+        with:
+          name: twsearch-rust-windows
+          path: target/release/twsearch.exe
+

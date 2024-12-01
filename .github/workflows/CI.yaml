@@ -41,10 +41,10 @@ jobs:
       - if: "!cancelled() && steps.wasmer.conclusion == 'failure'"
         run: cargo install wasmer-cli --features singlepass,cranelift # add --features=llvm for LLVM compilation support
       - run: make emsdk
-      - run: make build/wasm-test/twsearch-test.wasm
-      - run: make build/wasm-single-file/twsearch.mjs
-      - run: make test-wasm
-      - run: make test-wasm-js
+      - run: make build/emscripten/wasm-test/twsearch-test.wasm
+      - run: make build/emscripten/wasm-single-file/twsearch.mjs
+      - run: make test-cpp-wasm
+      - run: make test-cpp-wasm-js
       - run: make lint-js
 
   cpp-wrapper-cli:

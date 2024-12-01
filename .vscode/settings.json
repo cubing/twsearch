@@ -13,6 +13,7 @@
   },
   "files.associations": {
     "*.html": "html",
+    "*.Makefile": "makefile",
     "twsearch-ffi.h": "c",
     "libtwsearch_ffi.h": "c",
     "__config": "cpp",

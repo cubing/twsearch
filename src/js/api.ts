@@ -8,8 +8,9 @@ interface EmscriptenModule {
 }
 
 async function importOnce(): Promise<EmscriptenModule> {
-  const fn = (await import("../../build/wasm-single-file/twsearch.mjs"))
-    .default;
+  const fn = (
+    await import("../../build/emscripten/wasm-single-file/twsearch.mjs")
+  ).default;
   return await fn();
 }
 

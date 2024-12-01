@@ -5,7 +5,7 @@ build: build/bin/twsearch
 all: build/bin/twsearch build/esm build-rust
 
 .PHONY: setup
-setup: node_modules
+setup: update-js-deps
 	cargo install cargo-run-bin
 	@wasmer -V > /dev/null || echo "\nEnsure \`wasmer\` is installed: https://docs.wasmer.io/install\n"
 
@@ -181,8 +181,9 @@ build/wasm-single-file/twsearch.mjs: $(WASMSOURCE) $(HSOURCE) build/wasm-single-
 
 # JS
 
-node_modules:
-	bun install
+.PHONY: update-js-deps
+update-js-deps:
+	bun install --no-save
 
 ESBUILD_COMMON_ARGS = \
 		--format=esm --target=es2020 \
@@ -191,14 +192,14 @@ ESBUILD_COMMON_ARGS = \
 		--external:node:* \
 
 .PHONY: dev
-dev: build/wasm-single-file/twsearch.mjs node_modules
+dev: update-js-deps build/wasm-single-file/twsearch.mjs
 	bun x esbuild ${ESBUILD_COMMON_ARGS} \
 		--sourcemap \
 		--servedir=src/js/dev \
 		src/js/dev/*.ts
 
 .PHONY: build/esm
-build/esm: build/wasm-single-file/twsearch.mjs node_modules
+build/esm: update-js-deps build/wasm-single-file/twsearch.mjs
 	bun x esbuild ${ESBUILD_COMMON_ARGS} \
 		--external:cubing \
 		--outdir=build/esm src/js/index.ts
@@ -208,7 +209,7 @@ build/esm: build/wasm-single-file/twsearch.mjs node_modules
 	cat "./.temp/index.js" >> build/esm/index.js
 
 .PHONY: build/esm-test
-build/esm-test: build/wasm-single-file/twsearch.mjs node_modules
+build/esm-test: update-js-deps build/wasm-single-file/twsearch.mjs
 	bun x esbuild ${ESBUILD_COMMON_ARGS} \
 		--external:cubing \
 		--outdir=build/esm-test \
@@ -223,11 +224,11 @@ test-wasm-js: build/esm-test
 	bun build/esm-test/test.js
 
 .PHONY: lint-js
-lint-js:
+lint-js: update-js-deps
 	bun x @biomejs/biome check
 
 .PHONY: format-js
-format-js:
+format-js: update-js-deps
 	bun x @biomejs/biome check --apply
 
 # Rust
@@ -286,7 +287,7 @@ test-rust-ffi-rs: build-rust-ffi
 	cargo test --package twsearch-ffi
 
 .PHONY: test-rust-ffi-js
-test-rust-ffi-js: build-rust-ffi
+test-rust-ffi-js: update-js-deps build-rust-ffi
 	bun run "src/rs-ffi/test/js_test.ts"
 
 .PHONY: test-rust-ffi-c

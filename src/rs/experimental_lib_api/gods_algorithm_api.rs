@@ -24,7 +24,7 @@ use super::common::PatternSource;
 ///     kpuzzle,
 ///     GodsAlgorithmOptionalArgs {
 ///         generator_args: GeneratorArgs {
-///             generator_moves_string: Some("U,F2,R".to_owned()), // TODO: make this semantic
+///             generator_moves_string: Some("U,R".to_owned()), // TODO: make this semantic
 ///             ..Default::default()
 ///         },
 ///         ..Default::default()
@@ -36,7 +36,7 @@ use super::common::PatternSource;
 /// let depth = table.pattern_to_depth.get(
 ///     &kpuzzle
 ///         .default_pattern()
-///         .apply_alg(&parse_alg!("U' F R' F' U R' U' R F2 U'"))
+///         .apply_alg(&parse_alg!("F2 B2 D2 L' D L' D L2 F' U2 F' B2 R2 U2 F' D2 F"))
 ///         .unwrap(),
 /// );
 /// dbg!(depth);

@@ -30,3 +30,6 @@ path = "./_cli/main.rs"
 [lib]
 path = "./mod.rs"
 crate-type = ["cdylib", "rlib"]
+
+[build-dependencies]
+static_vcruntime = "2.0"

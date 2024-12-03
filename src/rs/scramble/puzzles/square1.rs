@@ -1,11 +1,12 @@
 use std::{
+    cmp::min,
     fmt::Debug,
     str::FromStr,
     time::{Duration, Instant},
 };
 
 use cubing::{
-    alg::{parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},
+    alg::{parse_alg, parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},
     kpuzzle::{KPattern, KPuzzle},
 };
 use rand::{seq::SliceRandom, thread_rng};
@@ -190,7 +191,12 @@ pub fn scramble_square1() -> Alg {
         generator_moves.clone(),
     );
 
-    let scramble_pattern = random_pattern();
+    // <<< let scramble_pattern = random_pattern();
+    // min2phase in cubing.js spent 616ms in phase2 with 3_163_233 phase2 starts to generate this scramble.
+    // our stats for this:
+    // harcoded phase2 limit of 17: 2213 phase 2 starts so far, 7.382448605s in phase 1, 19.087837085s in phase 2, 31.451841ms in phase transition
+    // dynamic phase2 limit: 261457 phase 2 starts so far, 7.604756116s in phase 1, 348.524944295s in phase 2, 3.086706692s in phase transition
+    let scramble_pattern = kpuzzle.default_pattern().apply_alg(&parse_alg!("(0, -4) / (-2, -2) / (0, -1) / (-3, 0) / (5, -3) / (1, 0) / (-4, 0) / (4, 0) / (-2, 0) / (-2, 0) / (-4, 0) / (3, -2) / (0, -3) / (-3, 0)")).unwrap(); //<<<
 
     let phase1_start_pattern =
         square1_phase1_lookup_table.full_pattern_to_phase_coordinate(&scramble_pattern);
@@ -213,6 +219,8 @@ pub fn scramble_square1() -> Alg {
     // let start_time = Instant::now();
     // let mut last_solution: Alg = parse_alg!("/");
     let num_solutions = 10_000_000;
+    let start_time = Instant::now();
+    let mut phase1_start_time = Instant::now();
     let phase1_search = generic_idfs.search(
         &phase1_start_pattern,
         IndividualSearchOptions {
@@ -251,9 +259,7 @@ pub fn scramble_square1() -> Alg {
 
     eprintln!("PHASE1ING");
 
-    let start_time = Instant::now();
     let mut num_phase2_starts = 0;
-    let mut phase1_start_time = Instant::now();
     let mut phase1_cumulative_time = Duration::default();
     let mut phase2_cumulative_time = Duration::default();
     #[allow(non_snake_case)]
@@ -287,20 +293,28 @@ pub fn scramble_square1() -> Alg {
                 &phase2_start_pattern,
                 Some(1),
                 None,
-                Some(Depth(17)), // <<< needs explanation
+                // <<< Some(Depth(17)), // <<< needs explanation
+                Some(Depth(min(31 - phase1_solution.nodes.len(), 17))), //<<< also needs explanation
             )
             .next();
+
+        phase2_cumulative_time += Instant::now() - phase2_start_time;
+        let cumulative_time = Instant::now() - start_time;
 
         if let Some(mut phase2_solution) = phase2_solution {
             let mut nodes = phase1_solution.nodes;
             nodes.append(&mut phase2_solution.nodes);
             dbg!(&phase1_start_pattern);
 
+            eprintln!(
+                    "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2, {:?} in phase transition\n",
+                    num_phase2_starts,
+                    phase1_cumulative_time,
+                    phase2_cumulative_time,
+                    cumulative_time - phase1_cumulative_time - phase2_cumulative_time,
+                );
             return group_square_1_tuples(Alg { nodes }.invert());
         }
-        phase2_cumulative_time += Instant::now() - phase2_start_time;
-
-        let cumulative_time = Instant::now() - start_time;
         if num_phase2_starts % 100 == 0 {
             eprintln!(
                     "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2, {:?} in phase transition\n",
@@ -400,7 +414,7 @@ fn random_pattern() -> KPattern {
             return scramble_pattern;
         }
 
-        eprintln!("discarding invalid scramble"); //<<<}
+        eprintln!("discarding invalid scramble"); //<<<
     }
 }
 

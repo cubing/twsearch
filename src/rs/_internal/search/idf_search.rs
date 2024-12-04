@@ -1,14 +1,12 @@
 use std::{
-    fmt::Debug,
-    marker::PhantomData,
-    sync::{
+    backtrace, fmt::Debug, marker::PhantomData, process::exit, sync::{
         mpsc::{channel, Receiver, Sender},
         Arc,
-    },
+    }
 };
 
 use cubing::{
-    alg::{Alg, AlgNode, Move},
+    alg::{parse_alg, Alg, AlgNode, Move},
     kpuzzle::KPuzzle,
 };
 use serde::{Deserialize, Serialize};
@@ -47,6 +45,7 @@ struct SolutionPreviousMoves<'a> {
     previous_moves: &'a SolutionMoves<'a>,
 }
 
+#[derive(Clone)]
 struct SolutionMoves<'a>(Option<&'a SolutionPreviousMoves<'a>>);
 
 impl<'a> From<SolutionMoves<'a>> for Alg {
@@ -182,7 +181,7 @@ pub struct IDFSearch<
         TPuzzle,
     >>::Optimizations,
 > {
-    api_data: Arc<IDFSearchAPIData<TPuzzle>>,
+    pub api_data: Arc<IDFSearchAPIData<TPuzzle>>,
     pub prune_table: Optimizations::PruneTable,
 }
 

@@ -1,26 +1,23 @@
 use std::{
-    fmt::Debug,
-    str::FromStr,
-    time::{Duration, Instant},
+    fmt::Debug, process::exit, str::FromStr, time::{Duration, Instant}
 };
 
 use cubing::{
-    alg::{parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},
+    alg::{parse_alg, parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},
     kpuzzle::{KPattern, KPuzzle},
 };
 use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
     _internal::{
-        cli::args::{MetricEnum, VerbosityLevel},
-        search::{
+        canonical_fsm::canonical_fsm::CANONICAL_FSM_START_STATE, cli::args::{MetricEnum, VerbosityLevel}, search::{
             check_pattern::PatternValidityChecker,
             coordinates::phase_coordinate_puzzle::{PhaseCoordinatePuzzle, SemanticCoordinate},
             hash_prune_table::HashPruneTable,
             idf_search::{IDFSearch, IndividualSearchOptions, SearchOptimizations},
             prune_table_trait::Depth,
             search_logger::SearchLogger,
-        },
+        }
     },
     scramble::{
         puzzles::mask_pattern::mask,
@@ -190,7 +187,8 @@ pub fn scramble_square1() -> Alg {
         generator_moves.clone(),
     );
 
-    let scramble_pattern = random_pattern();
+    // <<< let scramble_pattern = random_pattern();
+    let scramble_pattern = kpuzzle.default_pattern().apply_alg(&parse_alg!("(-5, -3) / (0, -3) / (-1, 5) / (-2, -2) / (3, 0) / (0, -3) / (2, 0) / (0, -3) / (0, -6) / (-5, 0) / (-2, -4) / (-2, 0)")).unwrap();//<<<
 
     let phase1_start_pattern =
         square1_phase1_lookup_table.full_pattern_to_phase_coordinate(&scramble_pattern);
@@ -279,7 +277,7 @@ pub fn scramble_square1() -> Alg {
         let phase2_start_pattern = scramble_pattern.apply_alg(&phase1_solution).unwrap();
 
         num_phase2_starts += 1;
-        // eprintln!("\n{}", phase1_solution);
+        eprintln!("\n{}", phase1_solution);
         // eprintln!("\nSearching for a phase2 solution");
         let phase2_start_time = Instant::now();
         let phase2_solution = phase2_filtered_search

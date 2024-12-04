@@ -8,15 +8,15 @@ use std::{
 };
 
 use cubing::{
-    alg::Move,
+    alg::{parse_move, Move},
     kpuzzle::{InvalidAlgError, InvalidMoveError, KPattern, KPuzzle},
 };
 
 use crate::{
     _internal::{
-        canonical_fsm::search_generators::{
+        canonical_fsm::{canonical_fsm::CanonicalFSM, search_generators::{
             FlatMoveIndex, MoveTransformationInfo, SearchGenerators,
-        },
+        }},
         cli::args::MetricEnum,
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{
@@ -83,7 +83,7 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> PhaseCoordinatePuzzle<TSe
         let random_start = false; // TODO: for scrambles, we may want this to be true
         let search_generators =
             SearchGenerators::try_new(&puzzle, generator_moves, &MetricEnum::Hand, random_start)
-                .expect("Couldn't build SearchGenerators while building PhaseLookupTable");
+                .expect("Couldn't build SearchGenerators while building PhaseCoordinatePuzzle");
 
         let mut fringe = VecDeque::<(KPattern, Depth)>::new();
         fringe.push_back((start_pattern, Depth(0)));
@@ -129,7 +129,7 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> PhaseCoordinatePuzzle<TSe
             index_to_representative_pattern.push(representative_pattern);
         }
         eprintln!(
-            "PhaseLookupTable has size {}",
+            "PhaseCoordinatePuzzle has size {}",
             index_to_semantic_coordinate.len()
         );
 
@@ -221,7 +221,9 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> SemiGroupActionPuzzle
         move1_info: &MoveTransformationInfo<Self>,
         move2_info: &MoveTransformationInfo<Self>,
     ) -> bool {
-        move1_info.r#move.quantum == move2_info.r#move.quantum
+        let move1_info = self.data.search_generators.by_move.get(&move1_info.r#move).expect("Cannot translate move between KPuzzle and TPuzzle");
+        let move2_info = self.data.search_generators.by_move.get(&move2_info.r#move).expect("Cannot translate move between KPuzzle and TPuzzle");
+        self.data.puzzle.do_moves_commute(move1_info, move2_info)
     }
 
     fn pattern_apply_transformation(

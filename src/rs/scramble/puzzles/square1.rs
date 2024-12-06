@@ -1,5 +1,8 @@
 use std::{
-    fmt::Debug, process::exit, str::FromStr, time::{Duration, Instant}
+    fmt::Debug,
+    process::exit,
+    str::FromStr,
+    time::{Duration, Instant},
 };
 
 use cubing::{
@@ -10,14 +13,16 @@ use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
     _internal::{
-        canonical_fsm::canonical_fsm::CANONICAL_FSM_START_STATE, cli::args::{MetricEnum, VerbosityLevel}, search::{
+        canonical_fsm::canonical_fsm::CANONICAL_FSM_START_STATE,
+        cli::args::{MetricEnum, VerbosityLevel},
+        search::{
             check_pattern::PatternValidityChecker,
             coordinates::phase_coordinate_puzzle::{PhaseCoordinatePuzzle, SemanticCoordinate},
             hash_prune_table::HashPruneTable,
             idf_search::{IDFSearch, IndividualSearchOptions, SearchOptimizations},
             prune_table_trait::Depth,
             search_logger::SearchLogger,
-        }
+        },
     },
     scramble::{
         puzzles::mask_pattern::mask,
@@ -187,8 +192,8 @@ pub fn scramble_square1() -> Alg {
         generator_moves.clone(),
     );
 
-    // <<< let scramble_pattern = random_pattern();
-    let scramble_pattern = kpuzzle.default_pattern().apply_alg(&parse_alg!("(-5, -3) / (0, -3) / (-1, 5) / (-2, -2) / (3, 0) / (0, -3) / (2, 0) / (0, -3) / (0, -6) / (-5, 0) / (-2, -4) / (-2, 0)")).unwrap();//<<<
+    let scramble_pattern = random_pattern();
+    // <<< let scramble_pattern = kpuzzle.default_pattern().apply_alg(&parse_alg!("(-5, -3) / (0, -3) / (-1, 5) / (-2, -2) / (3, 0) / (0, -3) / (2, 0) / (0, -3) / (0, -6) / (-5, 0) / (-2, -4) / (-2, 0)")).unwrap();//<<<
 
     let phase1_start_pattern =
         square1_phase1_lookup_table.full_pattern_to_phase_coordinate(&scramble_pattern);
@@ -208,38 +213,6 @@ pub fn scramble_square1() -> Alg {
     )
     .unwrap();
 
-    // let start_time = Instant::now();
-    // let mut last_solution: Alg = parse_alg!("/");
-    let num_solutions = 10_000_000;
-    let phase1_search = generic_idfs.search(
-        &phase1_start_pattern,
-        IndividualSearchOptions {
-            min_num_solutions: Some(num_solutions),
-            ..Default::default()
-        },
-    );
-    // for (i, solution) in phase1_search.enumerate() {
-    //     if (i + 1) % (num_solutions / 10) == 0 {
-    //         eprintln!(
-    //             "// Phase 1 solution #{}
-    // {}
-    // ",
-    //             i + 1,
-    //             solution
-    //         )
-    //     }
-    //     last_solution = solution;
-    // }
-    // eprintln!(
-    //     "Elapsed time to find {} solutions for phase 1 test: {:?}
-    // ",
-    //     num_solutions,
-    //     Instant::now() - start_time
-    // );
-
-    // todo!();
-
-    // let generators2 = generators_from_vec_str(vec!["US", "DS", "UUU", "DDD"]); // TODO: cache
     let mut phase2_filtered_search = FilteredSearch::<KPuzzle, Square1Phase2Optimizations>::new(
         kpuzzle,
         generator_moves,
@@ -247,69 +220,104 @@ pub fn scramble_square1() -> Alg {
         kpuzzle.default_pattern(),
     );
 
-    eprintln!("PHASE1ING");
+        // let mut last_solution: Alg = parse_alg!("/");
+    let mut num_solutions = 2000;
+    loop {
+        // let start_time = Instant::now();
+        num_solutions *= 2;
+        let phase1_search = generic_idfs.search(
+            &phase1_start_pattern,
+            IndividualSearchOptions {
+                min_num_solutions: Some(num_solutions),
+                ..Default::default()
+            },
+        );
+        // for (i, solution) in phase1_search.enumerate() {
+        //     if (i + 1) % (num_solutions / 10) == 0 {
+        //         eprintln!(
+        //             "// Phase 1 solution #{}
+        // {}
+        // ",
+        //             i + 1,
+        //             solution
+        //         )
+        //     }
+        //     last_solution = solution;
+        // }
+        // eprintln!(
+        //     "Elapsed time to find {} solutions for phase 1 test: {:?}
+        // ",
+        //     num_solutions,
+        //     Instant::now() - start_time
+        // );
 
-    let start_time = Instant::now();
-    let mut num_phase2_starts = 0;
-    let mut phase1_start_time = Instant::now();
-    let mut phase1_cumulative_time = Duration::default();
-    let mut phase2_cumulative_time = Duration::default();
-    #[allow(non_snake_case)]
-    let _SLASH_ = parse_move!("/");
-    'phase1_loop: for mut phase1_solution in phase1_search {
-        phase1_cumulative_time += Instant::now() - phase1_start_time;
+        // todo!();
 
-        // TODO: Push the candidate check into a trait for `IDFSearch`.
-        while let Some(cubing::alg::AlgNode::MoveNode(r#move)) = phase1_solution.nodes.last() {
-            if r#move == &_SLASH_
-            // TODO: redundant parsing
-            {
-                break;
+        // let generators2 = generators_from_vec_str(vec!["US", "DS", "UUU", "DDD"]); // TODO: cache
+        eprintln!("PHASE1ING {}", num_solutions);
+
+        let start_time = Instant::now();
+        let mut num_phase2_starts = 0;
+        let mut phase1_start_time = Instant::now();
+        let mut phase1_cumulative_time = Duration::default();
+        let mut phase2_cumulative_time = Duration::default();
+        #[allow(non_snake_case)]
+        let _SLASH_ = parse_move!("/");
+        'phase1_loop: for mut phase1_solution in phase1_search {
+            phase1_cumulative_time += Instant::now() - phase1_start_time;
+
+            // TODO: Push the candidate check into a trait for `IDFSearch`.
+            while let Some(cubing::alg::AlgNode::MoveNode(r#move)) = phase1_solution.nodes.last() {
+                if r#move == &_SLASH_
+                // TODO: redundant parsing
+                {
+                    break;
+                }
+                // Discard equivalent phase 1 solutions (reduces redundant phase 2 searches by a factor of 16).
+                if r#move.amount > 2 || r#move.amount < 0 {
+                    phase1_start_time = Instant::now();
+                    continue 'phase1_loop;
+                }
+                phase1_solution.nodes.pop();
             }
-            // Discard equivalent phase 1 solutions (reduces redundant phase 2 searches by a factor of 16).
-            if r#move.amount > 2 || r#move.amount < 0 {
-                phase1_start_time = Instant::now();
-                continue 'phase1_loop;
+
+            let phase2_start_pattern = scramble_pattern.apply_alg(&phase1_solution).unwrap();
+
+            num_phase2_starts += 1;
+            // <<< eprintln!("\n{}", phase1_solution);
+            // eprintln!("\nSearching for a phase2 solution");
+            let phase2_start_time = Instant::now();
+            let phase2_solution = phase2_filtered_search
+                .search(
+                    &phase2_start_pattern,
+                    Some(1),
+                    None,
+                    Some(Depth(17)), // <<< needs explanation
+                )
+                .next();
+
+            if let Some(mut phase2_solution) = phase2_solution {
+                let mut nodes = phase1_solution.nodes;
+                nodes.append(&mut phase2_solution.nodes);
+                dbg!(&phase1_start_pattern);
+
+                return group_square_1_tuples(Alg { nodes }.invert());
             }
-            phase1_solution.nodes.pop();
-        }
+            phase2_cumulative_time += Instant::now() - phase2_start_time;
 
-        let phase2_start_pattern = scramble_pattern.apply_alg(&phase1_solution).unwrap();
-
-        num_phase2_starts += 1;
-        eprintln!("\n{}", phase1_solution);
-        // eprintln!("\nSearching for a phase2 solution");
-        let phase2_start_time = Instant::now();
-        let phase2_solution = phase2_filtered_search
-            .search(
-                &phase2_start_pattern,
-                Some(1),
-                None,
-                Some(Depth(17)), // <<< needs explanation
-            )
-            .next();
-
-        if let Some(mut phase2_solution) = phase2_solution {
-            let mut nodes = phase1_solution.nodes;
-            nodes.append(&mut phase2_solution.nodes);
-            dbg!(&phase1_start_pattern);
-
-            return group_square_1_tuples(Alg { nodes }.invert());
-        }
-        phase2_cumulative_time += Instant::now() - phase2_start_time;
-
-        let cumulative_time = Instant::now() - start_time;
-        if num_phase2_starts % 100 == 0 {
-            eprintln!(
+            let cumulative_time = Instant::now() - start_time;
+            if num_phase2_starts % 100 == 0 {
+                eprintln!(
                     "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2, {:?} in phase transition\n",
                     num_phase2_starts,
                     phase1_cumulative_time,
                     phase2_cumulative_time,
                     cumulative_time - phase1_cumulative_time - phase2_cumulative_time,
                 )
-        }
+            }
 
-        phase1_start_time = Instant::now();
+            phase1_start_time = Instant::now();
+        }
     }
 
     panic!("at the (lack of) disco(very)")

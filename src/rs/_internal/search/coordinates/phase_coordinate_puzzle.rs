@@ -14,9 +14,10 @@ use cubing::{
 
 use crate::{
     _internal::{
-        canonical_fsm::{canonical_fsm::CanonicalFSM, search_generators::{
-            FlatMoveIndex, MoveTransformationInfo, SearchGenerators,
-        }},
+        canonical_fsm::{
+            canonical_fsm::CanonicalFSM,
+            search_generators::{FlatMoveIndex, MoveTransformationInfo, SearchGenerators},
+        },
         cli::args::MetricEnum,
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{
@@ -221,8 +222,18 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> SemiGroupActionPuzzle
         move1_info: &MoveTransformationInfo<Self>,
         move2_info: &MoveTransformationInfo<Self>,
     ) -> bool {
-        let move1_info = self.data.search_generators.by_move.get(&move1_info.r#move).expect("Cannot translate move between KPuzzle and TPuzzle");
-        let move2_info = self.data.search_generators.by_move.get(&move2_info.r#move).expect("Cannot translate move between KPuzzle and TPuzzle");
+        let move1_info = self
+            .data
+            .search_generators
+            .by_move
+            .get(&move1_info.r#move)
+            .expect("Cannot translate move between KPuzzle and TPuzzle");
+        let move2_info = self
+            .data
+            .search_generators
+            .by_move
+            .get(&move2_info.r#move)
+            .expect("Cannot translate move between KPuzzle and TPuzzle");
         self.data.puzzle.do_moves_commute(move1_info, move2_info)
     }
 

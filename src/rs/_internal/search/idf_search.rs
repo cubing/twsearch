@@ -1,8 +1,12 @@
 use std::{
-    backtrace, fmt::Debug, marker::PhantomData, process::exit, sync::{
+    backtrace,
+    fmt::Debug,
+    marker::PhantomData,
+    process::exit,
+    sync::{
         mpsc::{channel, Receiver, Sender},
         Arc,
-    }
+    },
 };
 
 use cubing::{

@@ -192,8 +192,8 @@ pub fn scramble_square1() -> Alg {
         generator_moves.clone(),
     );
 
-    let scramble_pattern = random_pattern();
-    // <<< let scramble_pattern = kpuzzle.default_pattern().apply_alg(&parse_alg!("(-5, -3) / (0, -3) / (-1, 5) / (-2, -2) / (3, 0) / (0, -3) / (2, 0) / (0, -3) / (0, -6) / (-5, 0) / (-2, -4) / (-2, 0)")).unwrap();//<<<
+    // let scramble_pattern = random_pattern();
+    let scramble_pattern = kpuzzle.default_pattern().apply_alg(&parse_alg!("(-2, 3) / (-1, 2) / (-5, -2) / (3, -3) / (-4, 5) / (0, -2) / (0, -3) / (-2, -3) / (0, -4) / (2, 0) / (-3, 2) / (0, 2)")).unwrap();//<<<
 
     let phase1_start_pattern =
         square1_phase1_lookup_table.full_pattern_to_phase_coordinate(&scramble_pattern);
@@ -300,6 +300,16 @@ pub fn scramble_square1() -> Alg {
                 let mut nodes = phase1_solution.nodes;
                 nodes.append(&mut phase2_solution.nodes);
                 dbg!(&phase1_start_pattern);
+
+                phase2_cumulative_time += Instant::now() - phase2_start_time;
+                let cumulative_time = Instant::now() - start_time;
+                eprintln!(
+                    "\nTotal: {} phase 2 starts, {:?} in phase 1, {:?} in phase 2, {:?} in phase transition\n",
+                    num_phase2_starts,
+                    phase1_cumulative_time,
+                    phase2_cumulative_time,
+                    cumulative_time - phase1_cumulative_time - phase2_cumulative_time,
+                );
 
                 return group_square_1_tuples(Alg { nodes }.invert());
             }

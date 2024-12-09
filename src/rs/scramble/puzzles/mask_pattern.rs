@@ -4,7 +4,7 @@ use cubing::kpuzzle::{KPattern, OrientationWithMod};
 
 use crate::scramble::PuzzleError;
 
-pub(crate) fn mask(
+pub(crate) fn apply_mask(
     source_pattern: &KPattern,
     mask_pattern: &KPattern,
 ) -> Result<KPattern, PuzzleError> {

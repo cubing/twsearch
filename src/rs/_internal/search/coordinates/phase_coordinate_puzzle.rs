@@ -43,41 +43,50 @@ whole_number_newtype!(PhaseCoordinateIndex, usize);
 pub type ExactCoordinatePruneTable = IndexedVec<PhaseCoordinateIndex, Depth>;
 
 #[derive(Debug)]
-struct PhaseCoordinateLookupTables<
+pub struct PhaseCoordinateTables<
     TPuzzle: SemiGroupActionPuzzle,
     TSemanticCoordinate: SemanticCoordinate<TPuzzle>,
-> {
-    puzzle: TPuzzle,
+> where
+    PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>: SemiGroupActionPuzzle,
+{
+    pub(crate) puzzle: TPuzzle,
 
-    semantic_coordinate_to_index: HashMap<TSemanticCoordinate, PhaseCoordinateIndex>,
-    move_application_table:
+    pub(crate) semantic_coordinate_to_index: HashMap<TSemanticCoordinate, PhaseCoordinateIndex>,
+    pub(crate) move_application_table:
         IndexedVec<PhaseCoordinateIndex, IndexedVec<FlatMoveIndex, Option<PhaseCoordinateIndex>>>,
-    exact_prune_table: ExactCoordinatePruneTable,
+    pub(crate) exact_prune_table: ExactCoordinatePruneTable,
 
-    search_generators: SearchGenerators<TPuzzle>, // TODO: avoid `KPuzzle`
+    pub(crate) search_generators:
+        SearchGenerators<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>,
 
     // This is useful for testing and debugging.
     #[allow(unused)]
-    pub index_to_semantic_coordinate: IndexedVec<PhaseCoordinateIndex, TSemanticCoordinate>, // TODO: support optimizations when the size is known ahead of time
+    pub(crate) index_to_semantic_coordinate: IndexedVec<PhaseCoordinateIndex, TSemanticCoordinate>, // TODO: support optimizations when the size is known ahead of time
 
-    phantom_data: PhantomData<TSemanticCoordinate>,
+    pub(crate) phantom_data: PhantomData<TSemanticCoordinate>,
 }
 
 // TODO: Genericize this to `TPuzzle`.
 #[derive(Clone, Debug)]
-pub struct PhaseCoordinatePuzzle<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> {
-    data: Arc<PhaseCoordinateLookupTables<KPuzzle, TSemanticCoordinate>>,
+pub struct PhaseCoordinatePuzzle<
+    TPuzzle: SemiGroupActionPuzzle,
+    TSemanticCoordinate: SemanticCoordinate<TPuzzle>,
+> where
+    Self: SemiGroupActionPuzzle,
+{
+    pub(crate) data: Arc<PhaseCoordinateTables<TPuzzle, TSemanticCoordinate>>,
 }
 
-impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> PhaseCoordinatePuzzle<TSemanticCoordinate> {
+impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPuzzle>>
+    PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>
+where
+    Self: SemiGroupActionPuzzle<Transformation = FlatMoveIndex>,
+{
     pub fn new(
-        puzzle: KPuzzle,
-        start_pattern: KPattern,
+        puzzle: TPuzzle,
+        start_pattern: TPuzzle::Pattern,
         generator_moves: Vec<Move>,
-    ) -> (
-        PhaseCoordinatePuzzle<TSemanticCoordinate>,
-        SearchGenerators<KPuzzle>,
-    ) {
+    ) -> Self {
         let start_time = Instant::now();
 
         let random_start = false; // TODO: for scrambles, we may want this to be true
@@ -85,7 +94,7 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> PhaseCoordinatePuzzle<TSe
             SearchGenerators::try_new(&puzzle, generator_moves, &MetricEnum::Hand, random_start)
                 .expect("Couldn't build SearchGenerators while building PhaseCoordinatePuzzle");
 
-        let mut fringe = VecDeque::<(KPattern, Depth)>::new();
+        let mut fringe = VecDeque::<(TPuzzle::Pattern, Depth)>::new();
         fringe.push_back((start_pattern, Depth(0)));
 
         let mut index_to_semantic_coordinate =
@@ -95,8 +104,9 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> PhaseCoordinatePuzzle<TSe
         let mut exact_prune_table = IndexedVec::<PhaseCoordinateIndex, Depth>::default();
 
         let mut index_to_representative_pattern =
-            IndexedVec::<PhaseCoordinateIndex, KPattern>::default();
+            IndexedVec::<PhaseCoordinateIndex, TPuzzle::Pattern>::default();
 
+        // TODO: Reuse `GodsAlgorithmTable` to enumerate patterns?
         while let Some((representative_pattern, depth)) = fringe.pop_front() {
             let Some(lookup_pattern) =
                 TSemanticCoordinate::try_new(&puzzle, &representative_pattern)
@@ -128,10 +138,12 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> PhaseCoordinatePuzzle<TSe
             // Note that this is safe to do at the end of this loop because we use BFS rather than DFS.
             index_to_representative_pattern.push(representative_pattern);
         }
+
         eprintln!(
-            "PhaseCoordinatePuzzle has size {}",
+            "PhaseCoordinatePuzzle has {} patterns.",
             index_to_semantic_coordinate.len()
         );
+        // dbg!(&index_to_semantic_coordinate.at(PhaseCoordinateIndex(1)));
 
         let mut move_application_table: IndexedVec<
             PhaseCoordinateIndex,
@@ -167,34 +179,67 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> PhaseCoordinatePuzzle<TSe
             Instant::now() - start_time
         );
 
-        // dbg!(exact_prune_table);
+        // TODO: Why can't we reuse the static `puzzle_transformation_from_move`?
+        // TODO: come up with a cleaner way for `SearchGenerators` to share the same move classes.
+        fn puzzle_transformation_from_move<TPuzzle: SemiGroupActionPuzzle>(
+            r#move: &cubing::alg::Move,
+            by_move: &HashMap<Move, MoveTransformationInfo<TPuzzle>>,
+        ) -> Result<FlatMoveIndex, InvalidAlgError> {
+            let Some(move_transformation_info) = by_move.get(r#move) else {
+                return Err(InvalidAlgError::InvalidMove(InvalidMoveError {
+                    description: format!("Invalid move: {}", r#move),
+                }));
+            };
+            Ok(move_transformation_info.flat_move_index)
+        }
 
-        let data = Arc::new(
-            PhaseCoordinateLookupTables::<KPuzzle, TSemanticCoordinate> {
-                puzzle,
-                index_to_semantic_coordinate,
-                semantic_coordinate_to_index,
-                move_application_table,
-                exact_prune_table,
-                search_generators: search_generators.clone(),
-                phantom_data: PhantomData,
-            },
-        );
-        (Self { data }, search_generators)
+        let search_generators: SearchGenerators<
+            PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>,
+        > = search_generators
+            .transfer_move_classes::<Self>(puzzle_transformation_from_move)
+            .unwrap();
+
+        let data = Arc::new(PhaseCoordinateTables::<TPuzzle, TSemanticCoordinate> {
+            puzzle,
+            index_to_semantic_coordinate,
+            semantic_coordinate_to_index,
+            move_application_table,
+            exact_prune_table,
+            search_generators,
+            phantom_data: PhantomData,
+        });
+        Self { data }
     }
 
     // TODO: report errors for invalid patterns
-    pub fn full_pattern_to_phase_coordinate(&self, kpattern: &KPattern) -> PhaseCoordinateIndex {
+    pub fn full_pattern_to_phase_coordinate(
+        &self,
+        pattern: &TPuzzle::Pattern,
+    ) -> PhaseCoordinateIndex {
         *self
             .data
             .semantic_coordinate_to_index
-            .get(&TSemanticCoordinate::try_new(&self.data.puzzle, kpattern).unwrap())
+            .get(&TSemanticCoordinate::try_new(&self.data.puzzle, pattern).unwrap())
             .unwrap()
     }
 }
 
-impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> SemiGroupActionPuzzle
-    for PhaseCoordinatePuzzle<TSemanticCoordinate>
+fn puzzle_transformation_from_move<
+    TPuzzle: SemiGroupActionPuzzle<Transformation = FlatMoveIndex>,
+>(
+    r#move: &cubing::alg::Move,
+    by_move: &HashMap<Move, MoveTransformationInfo<TPuzzle>>,
+) -> Result<FlatMoveIndex, InvalidAlgError> {
+    let Some(move_transformation_info) = by_move.get(r#move) else {
+        return Err(InvalidAlgError::InvalidMove(InvalidMoveError {
+            description: format!("Invalid move: {}", r#move),
+        }));
+    };
+    Ok(move_transformation_info.flat_move_index)
+}
+
+impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPuzzle>>
+    SemiGroupActionPuzzle for PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>
 {
     type Pattern = PhaseCoordinateIndex;
 
@@ -208,12 +253,7 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> SemiGroupActionPuzzle
         &self,
         r#move: &cubing::alg::Move,
     ) -> Result<Self::Transformation, InvalidAlgError> {
-        let Some(move_transformation_info) = self.data.search_generators.by_move.get(r#move) else {
-            return Err(InvalidAlgError::InvalidMove(InvalidMoveError {
-                description: format!("Invalid move: {}", r#move),
-            }));
-        };
-        Ok(move_transformation_info.flat_move_index)
+        puzzle_transformation_from_move(r#move, &self.data.search_generators.by_move)
     }
 
     fn do_moves_commute(
@@ -221,7 +261,7 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> SemiGroupActionPuzzle
         move1_info: &MoveTransformationInfo<Self>,
         move2_info: &MoveTransformationInfo<Self>,
     ) -> bool {
-        let move1_info = self
+        let move1_info: &MoveTransformationInfo<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>> = self
             .data
             .search_generators
             .by_move
@@ -267,26 +307,31 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> SemiGroupActionPuzzle
     }
 }
 
-pub struct PhaseCoordinatePruneTable<TSemanticCoordinate: SemanticCoordinate<KPuzzle>> {
-    tpuzzle: PhaseCoordinatePuzzle<TSemanticCoordinate>, // TODO: store just the prune table here
+pub struct PhaseCoordinatePruneTable<
+    TPuzzle: SemiGroupActionPuzzle,
+    TSemanticCoordinate: SemanticCoordinate<TPuzzle>,
+> {
+    tpuzzle: PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>, // TODO: store just the prune table here
 }
 
-impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>>
-    PruneTable<PhaseCoordinatePuzzle<TSemanticCoordinate>>
-    for PhaseCoordinatePruneTable<TSemanticCoordinate>
+impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPuzzle>>
+    PruneTable<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>
+    for PhaseCoordinatePruneTable<TPuzzle, TSemanticCoordinate>
 {
     fn new(
-        tpuzzle: PhaseCoordinatePuzzle<TSemanticCoordinate>,
-        _search_api_data: Arc<IDFSearchAPIData<PhaseCoordinatePuzzle<TSemanticCoordinate>>>,
+        puzzle: PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>,
+        _search_api_data: Arc<
+            IDFSearchAPIData<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>,
+        >,
         _search_logger: Arc<SearchLogger>,
         _min_size: Option<usize>,
     ) -> Self {
-        Self { tpuzzle }
+        Self { tpuzzle: puzzle }
     }
 
     fn lookup(
         &self,
-        pattern: &<PhaseCoordinatePuzzle<TSemanticCoordinate> as SemiGroupActionPuzzle>::Pattern,
+        pattern: &<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate> as SemiGroupActionPuzzle>::Pattern,
     ) -> Depth {
         *self.tpuzzle.data.exact_prune_table.at(*pattern)
     }
@@ -297,23 +342,24 @@ impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>>
 }
 
 // TODO: simplify the default for below.
-pub struct PhaseCoordinateLookupSearchOptimizations<
-    TSemanticCoordinate: SemanticCoordinate<KPuzzle>,
+pub struct PhaseCoordinatePuzzleSearchOptimizations<
+    TPuzzle: SemiGroupActionPuzzle,
+    TSemanticCoordinate: SemanticCoordinate<TPuzzle>,
 > {
-    phantom_data: PhantomData<TSemanticCoordinate>,
+    phantom_data: PhantomData<(TPuzzle, TSemanticCoordinate)>,
 }
 
-impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>>
-    SearchOptimizations<PhaseCoordinatePuzzle<TSemanticCoordinate>>
-    for PhaseCoordinateLookupSearchOptimizations<TSemanticCoordinate>
+impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPuzzle>>
+    SearchOptimizations<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>
+    for PhaseCoordinatePuzzleSearchOptimizations<TPuzzle, TSemanticCoordinate>
 {
     type PatternValidityChecker = AlwaysValid; // TODO: reconcile this with fallible transformation application.
-    type PruneTable = PhaseCoordinatePruneTable<TSemanticCoordinate>;
+    type PruneTable = PhaseCoordinatePruneTable<TPuzzle, TSemanticCoordinate>;
 }
 
-impl<TSemanticCoordinate: SemanticCoordinate<KPuzzle>>
-    DefaultSearchOptimizations<PhaseCoordinatePuzzle<TSemanticCoordinate>>
-    for PhaseCoordinatePuzzle<TSemanticCoordinate>
+impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPuzzle>>
+    DefaultSearchOptimizations<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>
+    for PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>
 {
-    type Optimizations = PhaseCoordinateLookupSearchOptimizations<TSemanticCoordinate>;
+    type Optimizations = PhaseCoordinatePuzzleSearchOptimizations<TPuzzle, TSemanticCoordinate>;
 }

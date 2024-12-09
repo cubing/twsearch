@@ -1,19 +1,17 @@
 use std::{
     fmt::Debug,
-    process::exit,
     str::FromStr,
     time::{Duration, Instant},
 };
 
 use cubing::{
-    alg::{parse_alg, parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},
+    alg::{ parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},
     kpuzzle::{KPattern, KPuzzle},
 };
 use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
     _internal::{
-        canonical_fsm::canonical_fsm::CANONICAL_FSM_START_STATE,
         cli::args::{MetricEnum, VerbosityLevel},
         search::{
             check_pattern::PatternValidityChecker,
@@ -192,8 +190,7 @@ pub fn scramble_square1() -> Alg {
         generator_moves.clone(),
     );
 
-    // let scramble_pattern = random_pattern();
-    let scramble_pattern = kpuzzle.default_pattern().apply_alg(&parse_alg!("(-2, 3) / (-1, 2) / (-5, -2) / (3, -3) / (-4, 5) / (0, -2) / (0, -3) / (-2, -3) / (0, -4) / (2, 0) / (-3, 2) / (0, 2)")).unwrap();//<<<
+    let scramble_pattern = random_pattern();
 
     let phase1_start_pattern =
         square1_phase1_lookup_table.full_pattern_to_phase_coordinate(&scramble_pattern);
@@ -330,7 +327,8 @@ pub fn scramble_square1() -> Alg {
         }
     }
 
-    panic!("at the (lack of) disco(very)")
+    // #[allow(unreachable_code)] // TODO
+    // panic!("at the (lack of) disco(very)")
 }
 
 pub fn wedge_parity(pattern: &KPattern) -> BasicParity {
@@ -351,8 +349,8 @@ pub fn wedge_parity(pattern: &KPattern) -> BasicParity {
     basic_parity(&bandaged_wedges)
 }
 
-const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: Option<&str> = None;
-// const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: Option<&str> = Some("(0, -1) / (4, -2) / (5, -1) / (4, -5) / (0, -3) / (-1, -3) / (3, 0) / (-3, 0) / (4, 0) / (4, 0) /");
+// const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: Option<&str> = None;
+const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: Option<&str> = Some("(-2, 3) / (-1, 2) / (-5, -2) / (3, -3) / (-4, 5) / (0, -2) / (0, -3) / (-2, -3) / (0, -4) / (2, 0) / (-3, 2) / (0, 2)");
 
 fn random_pattern() -> KPattern {
     let mut rng = thread_rng();

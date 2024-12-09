@@ -1,8 +1,6 @@
 use std::{
-    backtrace,
     fmt::Debug,
     marker::PhantomData,
-    process::exit,
     sync::{
         mpsc::{channel, Receiver, Sender},
         Arc,
@@ -10,7 +8,7 @@ use std::{
 };
 
 use cubing::{
-    alg::{parse_alg, Alg, AlgNode, Move},
+    alg::{ Alg, AlgNode, Move},
     kpuzzle::KPuzzle,
 };
 use serde::{Deserialize, Serialize};

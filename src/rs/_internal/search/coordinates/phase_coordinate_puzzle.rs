@@ -8,16 +8,15 @@ use std::{
 };
 
 use cubing::{
-    alg::{parse_move, Move},
+    alg:: Move,
     kpuzzle::{InvalidAlgError, InvalidMoveError, KPattern, KPuzzle},
 };
 
 use crate::{
     _internal::{
-        canonical_fsm::{
-            canonical_fsm::CanonicalFSM,
-            search_generators::{FlatMoveIndex, MoveTransformationInfo, SearchGenerators},
-        },
+        canonical_fsm::
+            search_generators::{FlatMoveIndex, MoveTransformationInfo, SearchGenerators}
+        ,
         cli::args::MetricEnum,
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{

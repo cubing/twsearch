@@ -19,13 +19,13 @@ use crate::{
         },
     },
     scramble::{
-        puzzles::square1::{phase1::Square1Phase1Puzzle, phase2::Square1Phase2Puzzle},
-        scramble_search::move_list_from_vec,
+        puzzles::square1::phase1::Square1Phase1Puzzle, scramble_search::move_list_from_vec,
     },
 };
 
 use super::super::definitions::square1_unbandaged_kpuzzle;
 use super::phase1::Square1Phase1Coordinate;
+use super::phase2::Square1Phase2Puzzle;
 
 pub(crate) struct Square1Solver {
     square1_phase1_puzzle: Square1Phase1Puzzle,

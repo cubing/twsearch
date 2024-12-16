@@ -52,6 +52,13 @@ pub(crate) fn scramble_square1() -> Alg {
     square1_solver.scramble_square1()
 }
 
+pub(crate) fn scramble_square1_n_times(n: usize) {
+    let mut square1_solver = Square1Solver::new();
+    for _ in 0..n {
+        square1_solver.scramble_square1();
+    }
+}
+
 fn random_pattern() -> KPattern {
     let mut rng = thread_rng();
 

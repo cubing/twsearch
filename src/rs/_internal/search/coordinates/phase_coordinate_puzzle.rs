@@ -56,7 +56,8 @@ pub struct PhaseCoordinateTables<
         IndexedVec<PhaseCoordinateIndex, IndexedVec<FlatMoveIndex, Option<PhaseCoordinateIndex>>>,
     pub(crate) exact_prune_table: ExactCoordinatePruneTable,
 
-    pub(crate) search_generators:
+    pub(crate) search_generators_for_tpuzzle: SearchGenerators<TPuzzle>, // TODO: avoid the need for this
+    pub(crate) search_generators_for_phase_coordinate_puzzle:
         SearchGenerators<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>,
 
     // This is useful for testing and debugging.
@@ -193,7 +194,7 @@ where
             Ok(move_transformation_info.flat_move_index)
         }
 
-        let search_generators: SearchGenerators<
+        let search_generators_for_coordinate: SearchGenerators<
             PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>,
         > = search_generators
             .transfer_move_classes::<Self>(puzzle_transformation_from_move)
@@ -205,7 +206,8 @@ where
             semantic_coordinate_to_index,
             move_application_table,
             exact_prune_table,
-            search_generators,
+            search_generators_for_tpuzzle: search_generators,
+            search_generators_for_phase_coordinate_puzzle: search_generators_for_coordinate,
             phantom_data: PhantomData,
         });
         Self { data }
@@ -253,11 +255,31 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
         &self,
         r#move: &cubing::alg::Move,
     ) -> Result<Self::Transformation, InvalidAlgError> {
-        puzzle_transformation_from_move(r#move, &self.data.search_generators.by_move)
+        puzzle_transformation_from_move(
+            r#move,
+            &self
+                .data
+                .search_generators_for_phase_coordinate_puzzle
+                .by_move,
+        )
     }
 
-    fn do_moves_commute(&self, move1: &Move, move2: &Move) -> bool {
-        self.data.tpuzzle.do_moves_commute(move1, move2)
+    fn do_moves_commute(
+        &self,
+        move1_info: &MoveTransformationInfo<Self>,
+        move2_info: &MoveTransformationInfo<Self>,
+    ) -> bool {
+        let move1_info = self
+            .data
+            .search_generators_for_tpuzzle
+            .flat
+            .at(move1_info.flat_move_index);
+        let move2_info = self
+            .data
+            .search_generators_for_tpuzzle
+            .flat
+            .at(move2_info.flat_move_index);
+        self.data.tpuzzle.do_moves_commute(move1_info, move2_info)
     }
 
     fn pattern_apply_transformation(

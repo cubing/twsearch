@@ -5,7 +5,9 @@ use cubing::{
     kpuzzle::{InvalidAlgError, KPattern, KPuzzle, KTransformation, KTransformationBuffer},
 };
 
-use crate::_internal::search::move_count::MoveCount;
+use crate::_internal::{
+    canonical_fsm::search_generators::MoveTransformationInfo, search::move_count::MoveCount,
+};
 
 use super::puzzle_traits::{GroupActionPuzzle, HashablePatternPuzzle, SemiGroupActionPuzzle};
 
@@ -29,15 +31,17 @@ impl SemiGroupActionPuzzle for KPuzzle {
         Ok(order)
     }
 
-    fn do_moves_commute(&self, move1: &Move, move2: &Move) -> bool {
-        let Ok(transformation1) = self.transformation_from_move(move1) else {
-            return false; // TODO
-        };
-        let Ok(transformation2) = self.transformation_from_move(move2) else {
-            return false; // TODO
-        };
-        transformation1.apply_transformation(&transformation2)
-            == transformation2.apply_transformation(&transformation1)
+    fn do_moves_commute(
+        &self,
+        move1_info: &MoveTransformationInfo<Self>,
+        move2_info: &MoveTransformationInfo<Self>,
+    ) -> bool {
+        move1_info
+            .transformation
+            .apply_transformation(&move2_info.transformation)
+            == move2_info
+                .transformation
+                .apply_transformation(&move1_info.transformation)
     }
 
     fn puzzle_transformation_from_move(

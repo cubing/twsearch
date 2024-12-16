@@ -2,7 +2,7 @@ use std::{
     fmt::Debug,
     marker::PhantomData,
     sync::{
-        mpsc::{channel, Receiver, Sender},
+        mpsc::{sync_channel, Receiver, SyncSender},
         Arc,
     },
 };
@@ -78,9 +78,9 @@ pub struct SearchSolutions {
 }
 
 impl SearchSolutions {
-    pub fn construct() -> (Sender<Option<Alg>>, Self) {
+    pub fn construct() -> (SyncSender<Option<Alg>>, Self) {
         // TODO: use `sync_channel` to control resumption?
-        let (sender, receiver) = channel::<Option<Alg>>();
+        let (sender, receiver) = sync_channel::<Option<Alg>>(10);
         (
             sender,
             Self {
@@ -95,6 +95,7 @@ impl Iterator for SearchSolutions {
     type Item = Alg;
 
     fn next(&mut self) -> Option<Self::Item> {
+        println!("nexting!");
         if self.done {
             None
         } else {
@@ -106,6 +107,7 @@ impl Iterator for SearchSolutions {
                     return None;
                 }
             };
+            println!("received!");
             match received {
                 Some(alg) => Some(alg),
                 None => {
@@ -143,7 +145,7 @@ struct IndividualSearchData {
     individual_search_options: IndividualSearchOptions,
     recursive_work_tracker: RecursiveWorkTracker,
     num_solutions_sofar: usize,
-    solution_sender: Sender<Option<Alg>>,
+    solution_sender: SyncSender<Option<Alg>>,
 }
 
 pub struct IDFSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
@@ -439,6 +441,7 @@ impl<
 
         let alg = Alg::from(solution_moves);
         individual_search_data.num_solutions_sofar += 1;
+        println!("Sending a phase solution!");
         individual_search_data
             .solution_sender
             .send(Some(alg))

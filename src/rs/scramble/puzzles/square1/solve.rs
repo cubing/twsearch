@@ -1,5 +1,7 @@
 use std::time::{Duration, Instant};
 
+use std::cmp::min;
+
 use cubing::{
     alg::{parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},
     kpuzzle::KPattern,
@@ -140,7 +142,7 @@ pub(crate) fn solve_square1(pattern: &KPattern) -> Alg {
                 &phase2_start_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
-                    max_depth: Some(Depth(17)),
+                    max_depth: Some(Depth(min(31 - phase1_solution.nodes.len(), 17))),
                     ..Default::default()
                 },
             )

@@ -47,6 +47,7 @@ struct SolutionPreviousMoves<'a> {
     previous_moves: &'a SolutionMoves<'a>,
 }
 
+#[derive(Clone)]
 struct SolutionMoves<'a>(Option<&'a SolutionPreviousMoves<'a>>);
 
 impl<'a> From<SolutionMoves<'a>> for Alg {
@@ -182,7 +183,7 @@ pub struct IDFSearch<
         TPuzzle,
     >>::Optimizations,
 > {
-    api_data: Arc<IDFSearchAPIData<TPuzzle>>,
+    pub api_data: Arc<IDFSearchAPIData<TPuzzle>>,
     pub prune_table: Optimizations::PruneTable,
 }
 

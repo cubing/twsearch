@@ -54,7 +54,7 @@ impl<
             generator_moves,
             Arc::new(SearchLogger {
                 verbosity: VerbosityLevel::Silent,
-                // verbosity: VerbosityLevel::Info, //<<<
+                // verbosity: VerbosityLevel::Info,
             }),
             &MetricEnum::Hand,
             true,

@@ -458,6 +458,7 @@ pub fn get_options() -> TwsearchArgs {
 
     args
 }
+
 fn completions_for_shell_cpp_wrapper(cmd: &mut clap::Command, generator: impl Generator) {
     generate(generator, cmd, "twsearch-cpp-wrapper", &mut stdout());
 }

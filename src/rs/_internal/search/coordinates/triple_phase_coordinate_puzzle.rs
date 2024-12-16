@@ -222,19 +222,21 @@ impl<
         let coordinate1 = self
             .data
             .puzzle1
-            .pattern_apply_transformation(&pattern.coordinate1, transformation_to_apply)?;
+            .pattern_apply_transformation(&pattern.coordinate1, transformation_to_apply);
         let coordinate2 = self
             .data
             .puzzle2
-            .pattern_apply_transformation(&pattern.coordinate2, transformation_to_apply)?;
+            .pattern_apply_transformation(&pattern.coordinate2, transformation_to_apply);
         let coordinate3 = self
             .data
             .puzzle3
-            .pattern_apply_transformation(&pattern.coordinate3, transformation_to_apply)?;
+            .pattern_apply_transformation(&pattern.coordinate3, transformation_to_apply);
+
+        eprintln!("{coordinate1:?} {coordinate2:?} {coordinate3:?}");//<<<
         Some(Self::Pattern {
-            coordinate1,
-            coordinate2,
-            coordinate3,
+            coordinate1: coordinate1?,
+            coordinate2: coordinate2?,
+            coordinate3: coordinate3?,
         })
     }
 

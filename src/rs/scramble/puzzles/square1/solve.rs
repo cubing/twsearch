@@ -75,7 +75,8 @@ impl Square1Solver {
             phase2_target_pattern,
             generator_moves.clone(),
             SearchLogger {
-                verbosity: VerbosityLevel::Warning,
+                // <<< verbosity: VerbosityLevel::Warning,
+                verbosity: VerbosityLevel::Info, //<<<
             }
             .into(),
             &MetricEnum::Hand,
@@ -100,7 +101,7 @@ impl Square1Solver {
         // let mut last_solution: Alg = parse_alg!("/");
         let start_time = Instant::now();
         let mut phase1_start_time = Instant::now();
-        let num_solutions = 10_000_000;
+        let num_solutions = 1;
         let phase1_search = self.phase1_idfs.search(
             &phase1_start_pattern,
             IndividualSearchOptions {
@@ -168,7 +169,8 @@ impl Square1Solver {
                     &phase2_start_pattern,
                     IndividualSearchOptions {
                         min_num_solutions: Some(1),
-                        max_depth: Some(Depth(min(31 - phase1_solution.nodes.len(), 17))),
+                        // <<< max_depth: Some(Depth(min(31 - phase1_solution.nodes.len(), 17))),
+                        max_depth: None, //<<<
                         ..Default::default()
                     },
                 )

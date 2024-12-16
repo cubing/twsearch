@@ -20,7 +20,14 @@ use super::{
 };
 
 // const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: &str = "(-2, 3) / (-1, 2) / (-5, -2) / (3, -3) / (-4, 5) / (0, -2) / (0, -3) / (-2, -3) / (0, -4) / (2, 0) / (-3, 2) / (0, 2)";
+// we don't see a lot of recursive calls here?
 const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: &str = "(-2, 3) / (-1, 2) / (-5, -2)";
+// hangs going deep to solve
+// <<< const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: &str = "(-2, 3) / (-1, 2) /";
+// solves quickly
+// <<< const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: &str = "(-2, 3) / (-1, 0)";
+// "Unexpected leaf node in IDF search"
+// <<< const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: &str = "(-2, 3) / (-1, 2)";
 
 impl Square1Solver {
     pub(crate) fn scramble_square1(&mut self) -> Alg {

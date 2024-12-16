@@ -210,6 +210,7 @@ where
             search_generators_for_phase_coordinate_puzzle: search_generators_for_coordinate,
             phantom_data: PhantomData,
         });
+
         Self { data }
     }
 
@@ -289,6 +290,7 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
     ) -> Option<Self::Pattern> {
+        // <<< println!("{:?}", self.data.move_application_table.at(*pattern)); //<<<
         *self
             .data
             .move_application_table

@@ -23,7 +23,12 @@ use super::{
 const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: &str = "(-2, 3) / (-1, 2) / (-5, -2)";
 
 pub(crate) fn scramble_square1() -> Alg {
-    let pattern = if var("USE_STATIC_SQUARE1_SCRAMBLE_SETUP").unwrap() == "true" {
+    let use_static = match var("USE_STATIC_SQUARE1_SCRAMBLE_SETUP") {
+        Ok(value) => value == "true",
+        _ => false,
+    };
+
+    let pattern = if use_static {
         eprintln!("Observed USE_STATIC_SQUARE1_SCRAMBLE_SETUP");
         eprintln!(
             "Using static scramble setup: {}",

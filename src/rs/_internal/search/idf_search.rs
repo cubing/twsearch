@@ -8,7 +8,7 @@ use std::{
 };
 
 use cubing::{
-    alg::{ Alg, AlgNode, Move},
+    alg::{Alg, AlgNode, Move},
     kpuzzle::KPuzzle,
 };
 use serde::{Deserialize, Serialize};

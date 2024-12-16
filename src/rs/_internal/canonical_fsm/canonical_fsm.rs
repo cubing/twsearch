@@ -101,8 +101,8 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
             for j in 0..num_move_classes {
                 let j = MoveClassIndex(j);
                 if !tpuzzle.do_moves_commute(
-                    &generators.by_move_class.at(i)[0],
-                    &generators.by_move_class.at(j)[0],
+                    &generators.by_move_class.at(i)[0].r#move,
+                    &generators.by_move_class.at(j)[0].r#move,
                 ) {
                     commutes[*i] &= MoveClassMask(!(1 << *j));
                     commutes[*j] &= MoveClassMask(!(1 << *i));

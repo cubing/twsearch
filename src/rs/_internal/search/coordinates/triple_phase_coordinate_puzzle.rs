@@ -3,7 +3,7 @@ use std::{cmp::max, marker::PhantomData, sync::Arc};
 use cubing::{alg::Move, kpuzzle::InvalidAlgError};
 
 use crate::_internal::{
-    canonical_fsm::search_generators::{FlatMoveIndex, MoveTransformationInfo},
+    canonical_fsm::search_generators::FlatMoveIndex,
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
         check_pattern::AlwaysValid,
@@ -158,58 +158,15 @@ impl<
         Ok(transformation)
     }
 
-    fn do_moves_commute(
-        &self,
-        move1_info: &MoveTransformationInfo<Self>,
-        move2_info: &MoveTransformationInfo<Self>,
-    ) -> bool {
-        let do_moves_commute = self.data.puzzle1.do_moves_commute(
-            self.data
-                .puzzle1
-                .data
-                .search_generators
-                .flat
-                .at(move1_info.flat_move_index),
-            self.data
-                .puzzle1
-                .data
-                .search_generators
-                .flat
-                .at(move2_info.flat_move_index),
+    fn do_moves_commute(&self, move1: &Move, move2: &Move) -> bool {
+        let do_moves_commute = self.data.puzzle1.do_moves_commute(move1, move2);
+        debug_assert_eq!(
+            do_moves_commute,
+            self.data.puzzle2.do_moves_commute(move1, move2)
         );
         debug_assert_eq!(
             do_moves_commute,
-            self.data.puzzle2.do_moves_commute(
-                self.data
-                    .puzzle2
-                    .data
-                    .search_generators
-                    .flat
-                    .at(move1_info.flat_move_index),
-                self.data
-                    .puzzle2
-                    .data
-                    .search_generators
-                    .flat
-                    .at(move2_info.flat_move_index),
-            )
-        );
-        debug_assert_eq!(
-            do_moves_commute,
-            self.data.puzzle3.do_moves_commute(
-                self.data
-                    .puzzle3
-                    .data
-                    .search_generators
-                    .flat
-                    .at(move1_info.flat_move_index),
-                self.data
-                    .puzzle3
-                    .data
-                    .search_generators
-                    .flat
-                    .at(move2_info.flat_move_index),
-            )
+            self.data.puzzle3.do_moves_commute(move1, move2)
         );
         do_moves_commute
     }

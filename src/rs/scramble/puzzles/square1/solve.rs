@@ -7,7 +7,7 @@ use cubing::{
 
 use crate::{
     _internal::{
-        cli::options_impl::{MetricEnum, VerbosityLevel},
+        cli::args::{MetricEnum, VerbosityLevel},
         search::{
             idf_search::{IDFSearch, IndividualSearchOptions},
             prune_table_trait::Depth,

@@ -8,15 +8,15 @@ use std::{
 };
 
 use cubing::{
-    alg:: Move,
-    kpuzzle::{InvalidAlgError, InvalidMoveError, KPattern, KPuzzle},
+    alg::Move,
+    kpuzzle::{InvalidAlgError, InvalidMoveError},
 };
 
 use crate::{
     _internal::{
-        canonical_fsm::
-            search_generators::{FlatMoveIndex, MoveTransformationInfo, SearchGenerators}
-        ,
+        canonical_fsm::search_generators::{
+            FlatMoveIndex, MoveTransformationInfo, SearchGenerators,
+        },
         cli::args::MetricEnum,
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{
@@ -49,7 +49,7 @@ pub struct PhaseCoordinateTables<
 > where
     PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>: SemiGroupActionPuzzle,
 {
-    pub(crate) puzzle: TPuzzle,
+    pub(crate) tpuzzle: TPuzzle,
 
     pub(crate) semantic_coordinate_to_index: HashMap<TSemanticCoordinate, PhaseCoordinateIndex>,
     pub(crate) move_application_table:
@@ -200,7 +200,7 @@ where
             .unwrap();
 
         let data = Arc::new(PhaseCoordinateTables::<TPuzzle, TSemanticCoordinate> {
-            puzzle,
+            tpuzzle: puzzle,
             index_to_semantic_coordinate,
             semantic_coordinate_to_index,
             move_application_table,
@@ -219,7 +219,7 @@ where
         *self
             .data
             .semantic_coordinate_to_index
-            .get(&TSemanticCoordinate::try_new(&self.data.puzzle, pattern).unwrap())
+            .get(&TSemanticCoordinate::try_new(&self.data.tpuzzle, pattern).unwrap())
             .unwrap()
     }
 }
@@ -246,7 +246,7 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
     type Transformation = FlatMoveIndex;
 
     fn move_order(&self, r#move: &cubing::alg::Move) -> Result<MoveCount, InvalidAlgError> {
-        self.data.puzzle.move_order(r#move)
+        self.data.tpuzzle.move_order(r#move)
     }
 
     fn puzzle_transformation_from_move(
@@ -256,24 +256,8 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
         puzzle_transformation_from_move(r#move, &self.data.search_generators.by_move)
     }
 
-    fn do_moves_commute(
-        &self,
-        move1_info: &MoveTransformationInfo<Self>,
-        move2_info: &MoveTransformationInfo<Self>,
-    ) -> bool {
-        let move1_info: &MoveTransformationInfo<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>> = self
-            .data
-            .search_generators
-            .by_move
-            .get(&move1_info.r#move)
-            .expect("Cannot translate move between KPuzzle and TPuzzle");
-        let move2_info = self
-            .data
-            .search_generators
-            .by_move
-            .get(&move2_info.r#move)
-            .expect("Cannot translate move between KPuzzle and TPuzzle");
-        self.data.puzzle.do_moves_commute(move1_info, move2_info)
+    fn do_moves_commute(&self, move1: &Move, move2: &Move) -> bool {
+        self.data.tpuzzle.do_moves_commute(move1, move2)
     }
 
     fn pattern_apply_transformation(

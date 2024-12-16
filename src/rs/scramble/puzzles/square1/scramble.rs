@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use cubing::{alg::Alg, kpuzzle::KPattern};
 use rand::{seq::SliceRandom, thread_rng};
 
@@ -17,8 +19,24 @@ use super::{
     solve::solve_square1,
 };
 
+// const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: Option<&str> = None;
+// const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: Option<&str> = Some("(-2, 3) / (-1, 2) / (-5, -2) / (3, -3) / (-4, 5) / (0, -2) / (0, -3) / (-2, -3) / (0, -4) / (2, 0) / (-3, 2) / (0, 2)");
+const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: Option<&str> = Some("(-2, 3) / (-1, 2) / (-5, -2)");
+
 pub(crate) fn scramble_square1() -> Alg {
-    solve_square1(&random_pattern())
+    let pattern = if let Some(static_scramble_setup_alg) = DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG
+    {
+        eprintln!("Observed DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG");
+        eprintln!("Using static scramble setup: {}", static_scramble_setup_alg);
+        square1_unbandaged_kpuzzle()
+            .default_pattern()
+            .apply_alg(&Alg::from_str(static_scramble_setup_alg).unwrap())
+            .unwrap()
+    } else {
+        random_pattern()
+    };
+
+    solve_square1(&pattern)
 }
 
 fn random_pattern() -> KPattern {

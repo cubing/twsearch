@@ -2,11 +2,13 @@ use std::time::{Duration, Instant};
 
 use std::cmp::min;
 
+use cubing::kpuzzle::KPuzzle;
 use cubing::{
     alg::{parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},
     kpuzzle::KPattern,
 };
 
+use crate::_internal::search::coordinates::phase_coordinate_puzzle::PhaseCoordinatePuzzle;
 use crate::{
     _internal::{
         cli::args::{MetricEnum, VerbosityLevel},
@@ -23,156 +25,181 @@ use crate::{
 };
 
 use super::super::definitions::square1_unbandaged_kpuzzle;
+use super::phase1::Square1Phase1Coordinate;
 
-pub(crate) fn solve_square1(pattern: &KPattern) -> Alg {
-    let kpuzzle = square1_unbandaged_kpuzzle();
-    let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
+pub(crate) struct Square1Solver {
+    square1_phase1_puzzle: Square1Phase1Puzzle,
+    phase1_idfs: IDFSearch<Square1Phase1Puzzle>,
+    square1_phase2_puzzle: Square1Phase2Puzzle,
+    phase2_idfs: IDFSearch<Square1Phase2Puzzle>,
+}
 
-    let square1_phase1_puzzle = Square1Phase1Puzzle::new(
-        kpuzzle.clone(),
-        kpuzzle.default_pattern(),
-        generator_moves.clone(),
-    );
+impl Square1Solver {
+    pub(crate) fn new() -> Self {
+        let kpuzzle = square1_unbandaged_kpuzzle();
+        let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
 
-    let phase1_start_pattern = square1_phase1_puzzle.full_pattern_to_phase_coordinate(pattern);
-    let phase1_target_pattern =
-        square1_phase1_puzzle.full_pattern_to_phase_coordinate(&kpuzzle.default_pattern());
-    let mut phase1_idfs = IDFSearch::<Square1Phase1Puzzle>::try_new(
-        square1_phase1_puzzle,
-        phase1_target_pattern,
-        generator_moves.clone(),
-        SearchLogger {
-            verbosity: VerbosityLevel::Info,
-        }
-        .into(),
-        &MetricEnum::Hand,
-        false,
-        None,
-    )
-    .unwrap();
+        let square1_phase1_puzzle: PhaseCoordinatePuzzle<KPuzzle, Square1Phase1Coordinate> =
+            Square1Phase1Puzzle::new(
+                kpuzzle.clone(),
+                kpuzzle.default_pattern(),
+                generator_moves.clone(),
+            );
+        let phase1_target_pattern =
+            square1_phase1_puzzle.full_pattern_to_phase_coordinate(&kpuzzle.default_pattern());
 
-    // let start_time = Instant::now();
-    // let mut last_solution: Alg = parse_alg!("/");
-    let start_time = Instant::now();
-    let mut phase1_start_time = Instant::now();
-    let num_solutions = 10_000_000;
-    let phase1_search = phase1_idfs.search(
-        &phase1_start_pattern,
-        IndividualSearchOptions {
-            min_num_solutions: Some(num_solutions),
-            ..Default::default()
-        },
-    );
-    // for (i, solution) in phase1_search.enumerate() {
-    //     if (i + 1) % (num_solutions / 10) == 0 {
-    //         eprintln!(
-    //             "// Phase 1 solution #{}
-    // {}
-    // ",
-    //             i + 1,
-    //             solution
-    //         )
-    //     }
-    //     last_solution = solution;
-    // }
-    // eprintln!(
-    //     "Elapsed time to find {} solutions for phase 1 test: {:?}
-    // ",
-    //     num_solutions,
-    //     Instant::now() - start_time
-    // );
-
-    // todo!();
-
-    let square1_phase2_puzzle: Square1Phase2Puzzle = Square1Phase2Puzzle::new(
-        kpuzzle.clone(),
-        kpuzzle.default_pattern(),
-        generator_moves.clone(),
-    );
-    let phase2_target_pattern =
-        square1_phase2_puzzle.full_pattern_to_phase_coordinate(&kpuzzle.default_pattern());
-    let mut phase2_idfs = IDFSearch::<Square1Phase2Puzzle>::try_new(
-        square1_phase2_puzzle.clone(),
-        phase2_target_pattern,
-        generator_moves.clone(),
-        SearchLogger {
-            verbosity: VerbosityLevel::Warning,
-        }
-        .into(),
-        &MetricEnum::Hand,
-        false,
-        None,
-    )
-    .unwrap();
-
-    eprintln!("PHASE1ING");
-
-    let mut num_phase2_starts = 0;
-    let mut phase1_cumulative_time = Duration::default();
-    let mut phase2_cumulative_time = Duration::default();
-    #[allow(non_snake_case)]
-    let _SLASH_ = parse_move!("/");
-    'phase1_loop: for mut phase1_solution in phase1_search {
-        phase1_cumulative_time += Instant::now() - phase1_start_time;
-
-        // TODO: Push the candidate check into a trait for `IDFSearch`.
-        while let Some(cubing::alg::AlgNode::MoveNode(r#move)) = phase1_solution.nodes.last() {
-            if r#move == &_SLASH_
-            // TODO: redundant parsing
-            {
-                break;
+        let phase1_idfs = IDFSearch::<Square1Phase1Puzzle>::try_new(
+            square1_phase1_puzzle.clone(),
+            phase1_target_pattern,
+            generator_moves.clone(),
+            SearchLogger {
+                verbosity: VerbosityLevel::Info,
             }
-            // Discard equivalent phase 1 solutions (reduces redundant phase 2 searches by a factor of 16).
-            if r#move.amount > 2 || r#move.amount < 0 {
-                phase1_start_time = Instant::now();
-                continue 'phase1_loop;
+            .into(),
+            &MetricEnum::Hand,
+            false,
+            None,
+        )
+        .unwrap();
+
+        let square1_phase2_puzzle: Square1Phase2Puzzle = Square1Phase2Puzzle::new(
+            kpuzzle.clone(),
+            kpuzzle.default_pattern(),
+            generator_moves.clone(),
+        );
+        let phase2_target_pattern =
+            square1_phase2_puzzle.full_pattern_to_phase_coordinate(&kpuzzle.default_pattern());
+
+        let phase2_idfs = IDFSearch::<Square1Phase2Puzzle>::try_new(
+            square1_phase2_puzzle.clone(),
+            phase2_target_pattern,
+            generator_moves.clone(),
+            SearchLogger {
+                verbosity: VerbosityLevel::Warning,
             }
-            phase1_solution.nodes.pop();
+            .into(),
+            &MetricEnum::Hand,
+            false,
+            None,
+        )
+        .unwrap();
+        Self {
+            square1_phase1_puzzle,
+            phase1_idfs,
+            square1_phase2_puzzle,
+            phase2_idfs,
         }
+    }
 
-        let phase2_start_pattern = square1_phase2_puzzle
-            .full_pattern_to_phase_coordinate(&pattern.apply_alg(&phase1_solution).unwrap());
+    pub(crate) fn solve_square1(&mut self, pattern: &KPattern) -> Alg {
+        let phase1_start_pattern = self
+            .square1_phase1_puzzle
+            .full_pattern_to_phase_coordinate(pattern);
 
-        num_phase2_starts += 1;
-        // eprintln!("\n{}", phase1_solution);
-        // eprintln!("\nSearching for a phase2 solution");
-        let phase2_start_time = Instant::now();
-        let phase2_solution = phase2_idfs
-            .search(
-                &phase2_start_pattern,
-                IndividualSearchOptions {
-                    min_num_solutions: Some(1),
-                    max_depth: Some(Depth(min(31 - phase1_solution.nodes.len(), 17))),
-                    ..Default::default()
-                },
-            )
-            .next();
+        // let start_time = Instant::now();
+        // let mut last_solution: Alg = parse_alg!("/");
+        let start_time = Instant::now();
+        let mut phase1_start_time = Instant::now();
+        let num_solutions = 10_000_000;
+        let phase1_search = self.phase1_idfs.search(
+            &phase1_start_pattern,
+            IndividualSearchOptions {
+                min_num_solutions: Some(num_solutions),
+                ..Default::default()
+            },
+        );
+        // for (i, solution) in phase1_search.enumerate() {
+        //     if (i + 1) % (num_solutions / 10) == 0 {
+        //         eprintln!(
+        //             "// Phase 1 solution #{}
+        // {}
+        // ",
+        //             i + 1,
+        //             solution
+        //         )
+        //     }
+        //     last_solution = solution;
+        // }
+        // eprintln!(
+        //     "Elapsed time to find {} solutions for phase 1 test: {:?}
+        // ",
+        //     num_solutions,
+        //     Instant::now() - start_time
+        // );
 
-        phase2_cumulative_time += Instant::now() - phase2_start_time;
-        let cumulative_time = Instant::now() - start_time;
+        // todo!();
 
-        if let Some(mut phase2_solution) = phase2_solution {
-            let mut nodes = phase1_solution.nodes;
-            nodes.append(&mut phase2_solution.nodes);
-            dbg!(&phase1_start_pattern);
+        eprintln!("PHASE1ING");
 
-            return group_square_1_tuples(Alg { nodes }.invert());
-        }
+        let mut num_phase2_starts = 0;
+        let mut phase1_cumulative_time = Duration::default();
+        let mut phase2_cumulative_time = Duration::default();
+        #[allow(non_snake_case)]
+        let _SLASH_ = parse_move!("/");
+        'phase1_loop: for mut phase1_solution in phase1_search {
+            phase1_cumulative_time += Instant::now() - phase1_start_time;
 
-        if num_phase2_starts % 100 == 0 {
-            eprintln!(
+            // TODO: Push the candidate check into a trait for `IDFSearch`.
+            while let Some(cubing::alg::AlgNode::MoveNode(r#move)) = phase1_solution.nodes.last() {
+                if r#move == &_SLASH_
+                // TODO: redundant parsing
+                {
+                    break;
+                }
+                // Discard equivalent phase 1 solutions (reduces redundant phase 2 searches by a factor of 16).
+                if r#move.amount > 2 || r#move.amount < 0 {
+                    phase1_start_time = Instant::now();
+                    continue 'phase1_loop;
+                }
+                phase1_solution.nodes.pop();
+            }
+
+            let phase2_start_pattern = self
+                .square1_phase2_puzzle
+                .full_pattern_to_phase_coordinate(&pattern.apply_alg(&phase1_solution).unwrap());
+
+            num_phase2_starts += 1;
+            // eprintln!("\n{}", phase1_solution);
+            // eprintln!("\nSearching for a phase2 solution");
+            let phase2_start_time = Instant::now();
+            let phase2_solution = self
+                .phase2_idfs
+                .search(
+                    &phase2_start_pattern,
+                    IndividualSearchOptions {
+                        min_num_solutions: Some(1),
+                        max_depth: Some(Depth(min(31 - phase1_solution.nodes.len(), 17))),
+                        ..Default::default()
+                    },
+                )
+                .next();
+
+            phase2_cumulative_time += Instant::now() - phase2_start_time;
+            let cumulative_time = Instant::now() - start_time;
+
+            if let Some(mut phase2_solution) = phase2_solution {
+                let mut nodes = phase1_solution.nodes;
+                nodes.append(&mut phase2_solution.nodes);
+                dbg!(&phase1_start_pattern);
+
+                return group_square_1_tuples(Alg { nodes }.invert());
+            }
+
+            if num_phase2_starts % 100 == 0 {
+                eprintln!(
                     "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2, {:?} in phase transition\n",
                     num_phase2_starts,
                     phase1_cumulative_time,
                     phase2_cumulative_time,
                     cumulative_time - phase1_cumulative_time - phase2_cumulative_time,
                 )
+            }
+
+            phase1_start_time = Instant::now();
         }
 
-        phase1_start_time = Instant::now();
+        panic!("at the (lack of) disco(very)")
     }
-
-    panic!("at the (lack of) disco(very)")
 }
 
 fn flush_tuple(

@@ -51,6 +51,8 @@ pub(crate) fn solve_square1(pattern: &KPattern) -> Alg {
 
     // let start_time = Instant::now();
     // let mut last_solution: Alg = parse_alg!("/");
+    let start_time = Instant::now();
+    let mut phase1_start_time = Instant::now();
     let num_solutions = 10_000_000;
     let phase1_search = phase1_idfs.search(
         &phase1_start_pattern,
@@ -103,9 +105,7 @@ pub(crate) fn solve_square1(pattern: &KPattern) -> Alg {
 
     eprintln!("PHASE1ING");
 
-    let start_time = Instant::now();
     let mut num_phase2_starts = 0;
-    let mut phase1_start_time = Instant::now();
     let mut phase1_cumulative_time = Duration::default();
     let mut phase2_cumulative_time = Duration::default();
     #[allow(non_snake_case)]
@@ -146,6 +146,9 @@ pub(crate) fn solve_square1(pattern: &KPattern) -> Alg {
             )
             .next();
 
+        phase2_cumulative_time += Instant::now() - phase2_start_time;
+        let cumulative_time = Instant::now() - start_time;
+
         if let Some(mut phase2_solution) = phase2_solution {
             let mut nodes = phase1_solution.nodes;
             nodes.append(&mut phase2_solution.nodes);
@@ -153,9 +156,7 @@ pub(crate) fn solve_square1(pattern: &KPattern) -> Alg {
 
             return group_square_1_tuples(Alg { nodes }.invert());
         }
-        phase2_cumulative_time += Instant::now() - phase2_start_time;
 
-        let cumulative_time = Instant::now() - start_time;
         if num_phase2_starts % 100 == 0 {
             eprintln!(
                     "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2, {:?} in phase transition\n",

@@ -1,13 +1,19 @@
+use std::panic;
+use std::process::exit;
 use std::time::{Duration, Instant};
 
 use std::cmp::min;
 
+use cubing::alg::parse_alg;
 use cubing::kpuzzle::KPuzzle;
 use cubing::{
     alg::{parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},
     kpuzzle::KPattern,
 };
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 
+use crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle;
 use crate::_internal::search::coordinates::phase_coordinate_puzzle::PhaseCoordinatePuzzle;
 use crate::{
     _internal::{
@@ -101,7 +107,7 @@ impl Square1Solver {
         // let mut last_solution: Alg = parse_alg!("/");
         let start_time = Instant::now();
         let mut phase1_start_time = Instant::now();
-        let num_solutions = 1;
+        let num_solutions = 100;
         let phase1_search = self.phase1_idfs.search(
             &phase1_start_pattern,
             IndividualSearchOptions {
@@ -139,6 +145,14 @@ impl Square1Solver {
         let _SLASH_ = parse_move!("/");
         'phase1_loop: for mut phase1_solution in phase1_search {
             phase1_cumulative_time += Instant::now() - phase1_start_time;
+            eprintln!("alg: {:?}", &phase1_solution.to_string());
+
+            // TODO: move below the while loop
+            self.sanity_checker(pattern.apply_alg(&phase1_solution).unwrap());
+            let phase2_start_pattern = self
+                .square1_phase2_puzzle
+                .full_pattern_to_phase_coordinate(&pattern.apply_alg(&phase1_solution).unwrap());
+            eprintln!("coordinates: {:?}", phase2_start_pattern); //<<<
 
             // TODO: Push the candidate check into a trait for `IDFSearch`.
             while let Some(cubing::alg::AlgNode::MoveNode(r#move)) = phase1_solution.nodes.last() {
@@ -155,9 +169,6 @@ impl Square1Solver {
                 phase1_solution.nodes.pop();
             }
 
-            let phase2_start_pattern = self
-                .square1_phase2_puzzle
-                .full_pattern_to_phase_coordinate(&pattern.apply_alg(&phase1_solution).unwrap());
 
             num_phase2_starts += 1;
             // eprintln!("\n{}", phase1_solution);
@@ -201,6 +212,41 @@ impl Square1Solver {
         }
 
         panic!("at the (lack of) disco(very)")
+    }
+
+    fn sanity_checker(&mut self, mut pattern: KPattern) {
+        let mut coordinate = self
+            .square1_phase2_puzzle
+            .full_pattern_to_phase_coordinate(&pattern);
+
+        for _ in 1..1000 {
+            let info = self.phase2_idfs.api_data.search_generators.flat.0.choose(&mut thread_rng()).unwrap();
+
+            let next_pattern = pattern.apply_move(&info.r#move).unwrap();
+            let Ok(next_pattern_as_coordinate) = panic::catch_unwind(|| {
+                self
+                    .square1_phase2_puzzle
+                    .full_pattern_to_phase_coordinate(&next_pattern)
+            }) else {
+                continue;
+            };
+
+            let next_coordinate = self.square1_phase2_puzzle.pattern_apply_transformation(&coordinate, &info.transformation).unwrap();
+
+            dbg!(&next_pattern_as_coordinate);
+            dbg!(&next_coordinate);
+            if next_coordinate != next_pattern_as_coordinate {
+                panic!("\t\t\t\t*************** LOKKEEE HEEREEEEEEEEEEEE ***************");
+            }
+
+            pattern = next_pattern;
+            coordinate = next_coordinate;
+            // <<< if next_pattern_as_coordinate != next_coordinate {
+            // <<<     eprintln!("asdf");
+            // <<< }
+    
+            // <<< eprintln!("{:?} -- {} --> {:?}", coordinate, info.r#move, next_coordinate);
+        }
     }
 }
 

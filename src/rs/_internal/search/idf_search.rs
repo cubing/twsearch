@@ -249,9 +249,9 @@ impl<
             }
         }
 
-        assert!(
-            individual_search_options.get_max_depth() > individual_search_options.get_min_depth()
-        );
+        // <<< assert!(
+        // <<<     individual_search_options.get_max_depth() > individual_search_options.get_min_depth()
+        // <<< );
 
         let (solution_sender, search_solutions) = SearchSolutions::construct();
         let mut individual_search_data = IndividualSearchData {

@@ -15,7 +15,7 @@ use crate::_internal::{
 };
 
 use super::phase_coordinate_puzzle::{
-    PhaseCoordinateIndex, PhaseCoordinatePuzzle, SemanticCoordinate,
+    PhaseCoordinateConversionError, PhaseCoordinateIndex, PhaseCoordinatePuzzle, SemanticCoordinate,
 };
 
 // TODO: modify the `DoublePhaseCoordinate` implementation so that `TriplePhaseCoordinate` can nest it.
@@ -106,15 +106,24 @@ impl<
     pub fn full_pattern_to_phase_coordinate(
         &self,
         pattern: &TPuzzle::Pattern,
-    ) -> TriplePhaseCoordinate {
-        let coordinate1 = self.data.puzzle1.full_pattern_to_phase_coordinate(pattern);
-        let coordinate2 = self.data.puzzle2.full_pattern_to_phase_coordinate(pattern);
-        let coordinate3 = self.data.puzzle3.full_pattern_to_phase_coordinate(pattern);
-        TriplePhaseCoordinate {
+    ) -> Result<TriplePhaseCoordinate, PhaseCoordinateConversionError> {
+        let coordinate1 = self
+            .data
+            .puzzle1
+            .full_pattern_to_phase_coordinate(pattern)?;
+        let coordinate2 = self
+            .data
+            .puzzle2
+            .full_pattern_to_phase_coordinate(pattern)?;
+        let coordinate3 = self
+            .data
+            .puzzle3
+            .full_pattern_to_phase_coordinate(pattern)?;
+        Ok(TriplePhaseCoordinate {
             coordinate1,
             coordinate2,
             coordinate3,
-        }
+        })
     }
 }
 

@@ -42,7 +42,7 @@ pub(crate) fn scramble_square1() -> Alg {
         random_pattern()
     };
 
-    solve_square1(&pattern)
+    solve_square1(&pattern).unwrap()
 }
 
 fn random_pattern() -> KPattern {

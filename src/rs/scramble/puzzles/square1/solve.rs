@@ -10,6 +10,7 @@ use cubing::{
 use crate::{
     _internal::{
         cli::args::{MetricEnum, VerbosityLevel},
+        errors::SearchError,
         search::{
             idf_search::{IDFSearch, IndividualSearchOptions},
             prune_table_trait::Depth,
@@ -24,7 +25,7 @@ use crate::{
 
 use super::super::definitions::square1_unbandaged_kpuzzle;
 
-pub(crate) fn solve_square1(pattern: &KPattern) -> Alg {
+pub(crate) fn solve_square1(pattern: &KPattern) -> Result<Alg, SearchError> {
     let kpuzzle = square1_unbandaged_kpuzzle();
     let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
 
@@ -34,9 +35,15 @@ pub(crate) fn solve_square1(pattern: &KPattern) -> Alg {
         generator_moves.clone(),
     );
 
-    let phase1_start_pattern = square1_phase1_puzzle.full_pattern_to_phase_coordinate(pattern);
-    let phase1_target_pattern =
-        square1_phase1_puzzle.full_pattern_to_phase_coordinate(&kpuzzle.default_pattern());
+    let Ok(phase1_start_pattern) = square1_phase1_puzzle.full_pattern_to_phase_coordinate(pattern)
+    else {
+        return Err(SearchError {
+            description: "Could not convert pattern into phase 1 coordinate".to_owned(),
+        });
+    };
+    let phase1_target_pattern = square1_phase1_puzzle
+        .full_pattern_to_phase_coordinate(&kpuzzle.default_pattern())
+        .unwrap();
     let mut phase1_idfs = IDFSearch::<Square1Phase1Puzzle>::try_new(
         square1_phase1_puzzle,
         phase1_target_pattern,
@@ -89,8 +96,9 @@ pub(crate) fn solve_square1(pattern: &KPattern) -> Alg {
         kpuzzle.default_pattern(),
         generator_moves.clone(),
     );
-    let phase2_target_pattern =
-        square1_phase2_puzzle.full_pattern_to_phase_coordinate(&kpuzzle.default_pattern());
+    let phase2_target_pattern = square1_phase2_puzzle
+        .full_pattern_to_phase_coordinate(&kpuzzle.default_pattern())
+        .unwrap();
     let mut phase2_idfs = IDFSearch::<Square1Phase2Puzzle>::try_new(
         square1_phase2_puzzle.clone(),
         phase2_target_pattern,
@@ -130,8 +138,13 @@ pub(crate) fn solve_square1(pattern: &KPattern) -> Alg {
             phase1_solution.nodes.pop();
         }
 
-        let phase2_start_pattern = square1_phase2_puzzle
-            .full_pattern_to_phase_coordinate(&pattern.apply_alg(&phase1_solution).unwrap());
+        let Ok(phase2_start_pattern) = square1_phase2_puzzle
+            .full_pattern_to_phase_coordinate(&pattern.apply_alg(&phase1_solution).unwrap())
+        else {
+            return Err(SearchError {
+                description: "Could not convert pattern into phase 2 coordinate".to_owned(),
+            });
+        };
 
         num_phase2_starts += 1;
         // eprintln!("\n{}", phase1_solution);
@@ -156,7 +169,7 @@ pub(crate) fn solve_square1(pattern: &KPattern) -> Alg {
             nodes.append(&mut phase2_solution.nodes);
             dbg!(&phase1_start_pattern);
 
-            return group_square_1_tuples(Alg { nodes }.invert());
+            return Ok(group_square_1_tuples(Alg { nodes }.invert()));
         }
 
         if num_phase2_starts % 100 == 0 {

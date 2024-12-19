@@ -4,12 +4,11 @@ build: build/bin/twsearch
 .PHONY: all
 all: \
 	build/bin/twsearch \
-	build/emscripten/esm \
 	build-rust \
 	build-rust-wasm
 
 .PHONY: setup
-setup: update-js-deps setup-rust check-wasmer
+setup: update-js-deps setup-rust
 
 .PHONY: test
 test: \
@@ -24,7 +23,6 @@ test: \
 test-cpp: \
 	test-cpp-cli \
 	test-twsearch-cpp-wrapper-cli \
-	test-cpp-wasm \
 	lint-cpp
 
 .PHONY: test-warning
@@ -50,7 +48,6 @@ publish: test-rust publish-rust
 
 TWSEARCH_VERSION=$(shell git describe --tags)
 
-include ./Makefiles/cpp-wasm.Makefile
 include ./Makefiles/cpp.Makefile
 include ./Makefiles/js.Makefile
 include ./Makefiles/rust-ffi.Makefile

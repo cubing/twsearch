@@ -6,12 +6,10 @@ use crate::{
     _internal::search::{
         check_pattern::PatternValidityChecker,
         coordinates::phase_coordinate_puzzle::{PhaseCoordinatePuzzle, SemanticCoordinate},
+        mask_pattern::apply_mask,
     },
     scramble::{
-        puzzles::{
-            mask_pattern::apply_mask,
-            square1::wedges::{WedgeType, WEDGE_TYPE_LOOKUP},
-        },
+        puzzles::square1::wedges::{WedgeType, WEDGE_TYPE_LOOKUP},
         randomize::BasicParity,
     },
 };

@@ -7,10 +7,10 @@ use crate::{
             phase_coordinate_puzzle::SemanticCoordinate,
             triple_phase_coordinate_puzzle::TriplePhaseCoordinatePuzzle,
         },
+        mask_pattern::apply_mask,
     },
     scramble::puzzles::{
         definitions::{square1_corners_kpattern, square1_edges_kpattern, square1_equator_kpattern},
-        mask_pattern::apply_mask,
         square1::wedges::{WedgeType, WEDGE_TYPE_LOOKUP},
     },
 };

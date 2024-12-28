@@ -7,7 +7,10 @@ use cubing::{
     alg::{parse_alg, parse_move},
     kpuzzle::{kpattern_from_json_file, kpuzzle_from_json_file},
 };
-use twsearch::experimental_lib_api::{SimpleMaskMultiphaseSearch, SimpleMaskPhaseInfo};
+use twsearch::{
+    _internal::{cli::args::VerbosityLevel, search::search_logger::SearchLogger},
+    experimental_lib_api::{SimpleMaskMultiphaseSearch, SimpleMaskPhaseInfo},
+};
 
 kpuzzle_from_json_file!(pub(crate), cube3x3x3_centerless, "../scramble/puzzles/definitions/3x3x3-centerless.kpuzzle.json");
 kpattern_from_json_file!(pub(crate), cube3x3x3_centerless_g1_target, "../scramble/puzzles/definitions/3x3x3-G1-centerless.target-pattern.json", cube3x3x3_centerless_kpuzzle());
@@ -48,6 +51,9 @@ impl KociembaTwoPhase {
                         individual_search_options: None,
                     },
                 ],
+                Some(SearchLogger {
+                    verbosity: VerbosityLevel::Info,
+                }),
             )
             .unwrap(),
         )

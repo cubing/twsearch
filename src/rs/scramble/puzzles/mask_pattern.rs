@@ -17,7 +17,8 @@ pub(crate) fn apply_mask(
 
             let source_orientation_with_mod =
                 source_pattern.get_orientation_with_mod(orbit_info, i);
-            let mask_orientation_with_mod = mask_pattern.get_orientation_with_mod(orbit_info, i);
+            let mask_orientation_with_mod =
+                mask_pattern.get_orientation_with_mod(orbit_info, old_piece_mapped);
 
             if mask_orientation_with_mod.orientation != 0 {
                 return Err(PuzzleError {

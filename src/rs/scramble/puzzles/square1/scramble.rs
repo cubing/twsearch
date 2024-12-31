@@ -8,8 +8,7 @@ use crate::{
     scramble::{
         puzzles::{mask_pattern::apply_mask, square1::phase1::Phase1Checker},
         randomize::{
-            randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
-            PieceZeroConstraint,
+            randomize_orbit_naïve, ConstraintForFirstPiece, OrbitRandomizationConstraints,
         },
     },
 };
@@ -84,9 +83,10 @@ fn random_pattern() -> KPattern {
             &mut scramble_pattern,
             1,
             "EQUATOR",
-            OrbitPermutationConstraint::AnyPermutation,
-            OrbitOrientationConstraint::AnySum,
-            PieceZeroConstraint::KeepSolved,
+            OrbitRandomizationConstraints {
+                first_piece: Some(ConstraintForFirstPiece::KeepSolved),
+                ..Default::default()
+            },
         );
 
         // TODO: do this check without masking.

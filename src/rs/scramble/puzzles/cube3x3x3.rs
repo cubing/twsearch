@@ -13,7 +13,7 @@ use crate::{
     },
     scramble::{
         collapse::collapse_adjacent_moves,
-        randomize::{basic_parity, BasicParity, PieceZeroConstraint},
+        randomize::{basic_parity, BasicParity, OrbitRandomizationConstraints},
         scramble_search::{move_list_from_vec, FilteredSearch},
     },
 };
@@ -84,21 +84,24 @@ pub fn random_3x3x3_pattern() -> KPattern {
         &mut scramble_pattern,
         0,
         "EDGES",
-        OrbitPermutationConstraint::AnyPermutation,
-        OrbitOrientationConstraint::OrientationsMustSumToZero,
-        PieceZeroConstraint::AnyPositionAndOrientation,
+        OrbitRandomizationConstraints {
+            orientation: Some(OrbitOrientationConstraint::SumToZero),
+            ..Default::default()
+        },
     );
     let each_orbit_parity = basic_parity(&edge_order);
     randomize_orbit_naïve(
         &mut scramble_pattern,
         1,
         "CORNERS",
-        match each_orbit_parity {
-            BasicParity::Even => OrbitPermutationConstraint::SingleOrbitEvenParity,
-            BasicParity::Odd => OrbitPermutationConstraint::SingleOrbitOddParity,
+        OrbitRandomizationConstraints {
+            permutation: Some(match each_orbit_parity {
+                BasicParity::Even => OrbitPermutationConstraint::EvenParity,
+                BasicParity::Odd => OrbitPermutationConstraint::OddParity,
+            }),
+            orientation: Some(OrbitOrientationConstraint::SumToZero),
+            ..Default::default()
         },
-        OrbitOrientationConstraint::OrientationsMustSumToZero,
-        PieceZeroConstraint::AnyPositionAndOrientation,
     );
     scramble_pattern
 }

@@ -9,6 +9,7 @@ use lazy_static::lazy_static;
 use crate::{
     _internal::search::{
         idf_search::{IDFSearch, IndividualSearchOptions},
+        mask_pattern::apply_mask,
         prune_table_trait::Depth,
     },
     scramble::{
@@ -23,7 +24,6 @@ use super::{
         randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
     definitions::{cube3x3x3_centerless_g1_target_kpattern, cube3x3x3_centerless_kpuzzle},
-    mask_pattern::apply_mask,
     static_move_list::{add_random_suffixes_from, static_parsed_list, static_parsed_opt_list},
 };
 

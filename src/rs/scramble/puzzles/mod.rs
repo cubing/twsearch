@@ -9,6 +9,5 @@ pub mod skewb;
 pub mod square1;
 
 mod definitions;
-mod mask_pattern;
 
 mod static_move_list;

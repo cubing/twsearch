@@ -4,9 +4,9 @@ use cubing::{alg::Alg, kpuzzle::KPattern};
 use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
-    _internal::search::check_pattern::PatternValidityChecker,
+    _internal::search::{check_pattern::PatternValidityChecker, mask_pattern::apply_mask},
     scramble::{
-        puzzles::{mask_pattern::apply_mask, square1::phase1::Phase1Checker},
+        puzzles::square1::phase1::Phase1Checker,
         randomize::{
             randomize_orbit_naïve, ConstraintForFirstPiece, OrbitRandomizationConstraints,
         },

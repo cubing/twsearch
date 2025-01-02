@@ -1,11 +1,8 @@
-use cubing::{
-    alg::{parse_alg, parse_move},
-    kpuzzle::kpattern_from_json_file,
-    puzzles::cube2x2x2_kpuzzle,
-};
+use cubing::{alg::parse_move, kpuzzle::kpattern_from_json_file, puzzles::cube2x2x2_kpuzzle};
 use twsearch::{
     _internal::{cli::args::VerbosityLevel, search::search_logger::SearchLogger},
     experimental_lib_api::{SimpleMaskMultiphaseSearch, SimpleMaskPhaseInfo},
+    scramble::{random_scramble_for_event, Event},
 };
 
 kpattern_from_json_file!(
@@ -19,13 +16,6 @@ kpattern_from_json_file!(
     pub(crate),
     phase2,
     "./2x2x2_three_phase/phase2-U-orientation.kpattern.json",
-    cube2x2x2_kpuzzle()
-);
-
-kpattern_from_json_file!(
-    pub(crate),
-    phase3,
-    "./2x2x2_three_phase/phase3-PBL.kpattern.json",
     cube2x2x2_kpuzzle()
 );
 
@@ -58,7 +48,7 @@ pub fn main() {
             },
             SimpleMaskPhaseInfo {
                 name: "PBL".to_owned(),
-                mask: phase3_kpattern().clone(),
+                mask: kpuzzle.default_pattern().clone(),
                 generator_moves: vec![
                     parse_move!("U"),
                     parse_move!("R2"),
@@ -75,13 +65,12 @@ pub fn main() {
     )
     .unwrap();
 
-    // let scramble = random_scramble_for_event(Event::Cube2x2x2Speedsolving).unwrap();
-    let scramble = kpuzzle
-        .default_pattern()
-        .apply_alg(&parse_alg!("U2 F2 R' U' L F2 U R2 F' R' F'"))
-        .unwrap();
+    let scramble_alg = random_scramble_for_event(Event::Cube2x2x2Speedsolving).unwrap();
+    let scramble = kpuzzle.default_pattern().apply_alg(&scramble_alg).unwrap();
     println!(
-        "{}",
+        "{} // scramble alg
+{} // solution",
+        scramble_alg,
         search
             .chain_first_solution_for_each_phase(&scramble)
             .unwrap()

@@ -57,7 +57,7 @@ impl<'a> From<SolutionMoves<'a>> for Alg {
     }
 }
 
-impl<'a> SolutionMoves<'a> {
+impl SolutionMoves<'_> {
     fn get_alg_nodes(&self) -> Vec<AlgNode> {
         match self.0 {
             Some(solution_previous_moves) => {

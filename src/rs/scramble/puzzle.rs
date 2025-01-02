@@ -22,6 +22,7 @@ pub enum Puzzle {
     MasterTetraminx,
     Kilominx,
     RediCube,
+    BabyFTO,
 }
 
 impl Puzzle {
@@ -42,6 +43,7 @@ impl Puzzle {
             Self::MasterTetraminx => "master_tetraminx",
             Self::Kilominx => "kilominx",
             Self::RediCube => "redi_cube",
+            Self::BabyFTO => "baby_fto",
         }
     }
 
@@ -62,6 +64,7 @@ impl Puzzle {
             "master_tetraminx" => Self::MasterTetraminx,
             "kilominx" => Self::Kilominx,
             "redi_cube" => Self::RediCube,
+            "baby_fto" => Self::BabyFTO,
             _ => {
                 return Err(PuzzleError {
                     description: format!("Unknown puzzle ID: {}", puzzle_id_str),
@@ -87,6 +90,7 @@ impl Puzzle {
             Self::MasterTetraminx => Event::MasterTetraminxSpeedsolving,
             Self::Kilominx => Event::KilominxSpeedsolving,
             Self::RediCube => Event::RediCubeSpeedsolving,
+            Self::BabyFTO => Event::BabyFTOSpeedsolving,
         }
     }
 }

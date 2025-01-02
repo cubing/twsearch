@@ -2,6 +2,7 @@ use cubing::alg::Alg;
 
 use super::{
     puzzles::{
+        baby_fto::scramble_baby_fto,
         big_cubes::{scramble_5x5x5, scramble_5x5x5_bld, scramble_6x6x6, scramble_7x7x7},
         clock::scramble_clock,
         cube2x2x2::scramble_2x2x2,
@@ -40,5 +41,6 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
         Event::MasterTetraminxSpeedsolving => err,
         Event::KilominxSpeedsolving => err,
         Event::RediCubeSpeedsolving => err,
+        Event::BabyFTOSpeedsolving => Ok(scramble_baby_fto()),
     }
 }

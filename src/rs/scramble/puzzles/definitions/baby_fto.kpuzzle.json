@@ -1,0 +1,251 @@
+{
+  "name": "baby_fto",
+  "orbits": [
+    {
+      "orbitName": "CENTERS",
+      "numPieces": 8,
+      "numOrientations": 3
+    },
+    {
+      "orbitName": "C4RNER",
+      "numPieces": 6,
+      "numOrientations": 4
+    }
+  ],
+  "defaultPattern": {
+    "CENTERS": {
+      "pieces": [0, 1, 2, 3, 4, 5, 6, 7],
+      "orientation": [0, 0, 0, 0, 0, 0, 0, 0],
+      "orientationMod": [1, 1, 1, 1, 1, 1, 1, 1]
+    },
+    "C4RNER": {
+      "pieces": [0, 1, 2, 3, 4, 5],
+      "orientation": [0, 0, 0, 0, 0, 0]
+    }
+  },
+  "moves": {
+    "F": {
+      "CENTERS": {
+        "permutation": [0, 1, 2, 5, 3, 4, 6, 7],
+        "orientationDelta": [1, 0, 0, 1, 1, 1, 0, 0]
+      },
+      "C4RNER": {
+        "permutation": [3, 0, 2, 1, 4, 5],
+        "orientationDelta": [3, 3, 0, 2, 0, 0]
+      }
+    },
+    "B": {
+      "CENTERS": {
+        "permutation": [0, 2, 7, 3, 4, 5, 6, 1],
+        "orientationDelta": [0, 1, 1, 0, 0, 0, 1, 1]
+      },
+      "C4RNER": {
+        "permutation": [0, 1, 4, 3, 5, 2],
+        "orientationDelta": [0, 0, 3, 0, 3, 2]
+      }
+    },
+    "Fv": {
+      "CENTERS": {
+        "permutation": [0, 7, 1, 5, 3, 4, 6, 2],
+        "orientationDelta": [1, 2, 2, 1, 1, 1, 2, 2]
+      },
+      "C4RNER": {
+        "permutation": [3, 0, 5, 1, 2, 4],
+        "orientationDelta": [3, 3, 2, 2, 1, 1]
+      }
+    },
+    "D": {
+      "CENTERS": {
+        "permutation": [2, 0, 1, 3, 4, 5, 6, 7],
+        "orientationDelta": [0, 0, 0, 0, 1, 0, 0, 0]
+      },
+      "C4RNER": {
+        "permutation": [0, 3, 2, 4, 1, 5],
+        "orientationDelta": [0, 0, 0, 0, 0, 0]
+      }
+    },
+    "U": {
+      "CENTERS": {
+        "permutation": [0, 1, 2, 6, 4, 3, 5, 7],
+        "orientationDelta": [0, 0, 0, 0, 0, 0, 0, 1]
+      },
+      "C4RNER": {
+        "permutation": [2, 1, 5, 3, 4, 0],
+        "orientationDelta": [0, 0, 0, 0, 0, 0]
+      }
+    },
+    "Dv": {
+      "CENTERS": {
+        "permutation": [2, 0, 1, 5, 4, 6, 3, 7],
+        "orientationDelta": [0, 0, 0, 0, 1, 0, 0, 2]
+      },
+      "C4RNER": {
+        "permutation": [5, 3, 0, 4, 1, 2],
+        "orientationDelta": [0, 0, 0, 0, 0, 0]
+      }
+    },
+    "L": {
+      "CENTERS": {
+        "permutation": [7, 1, 0, 3, 4, 5, 6, 2],
+        "orientationDelta": [2, 0, 1, 0, 0, 1, 0, 0]
+      },
+      "C4RNER": {
+        "permutation": [5, 1, 2, 0, 4, 3],
+        "orientationDelta": [2, 0, 0, 3, 0, 3]
+      }
+    },
+    "BR": {
+      "CENTERS": {
+        "permutation": [0, 1, 2, 4, 6, 5, 3, 7],
+        "orientationDelta": [0, 1, 0, 0, 2, 0, 1, 0]
+      },
+      "C4RNER": {
+        "permutation": [0, 4, 1, 3, 2, 5],
+        "orientationDelta": [0, 2, 3, 0, 3, 0]
+      }
+    },
+    "Lv": {
+      "CENTERS": {
+        "permutation": [7, 1, 0, 6, 3, 5, 4, 2],
+        "orientationDelta": [2, 2, 1, 2, 0, 1, 1, 0]
+      },
+      "C4RNER": {
+        "permutation": [5, 2, 4, 0, 1, 3],
+        "orientationDelta": [2, 1, 1, 3, 2, 3]
+      }
+    },
+    "BL": {
+      "CENTERS": {
+        "permutation": [0, 1, 2, 3, 5, 6, 4, 7],
+        "orientationDelta": [0, 0, 1, 0, 0, 1, 2, 0]
+      },
+      "C4RNER": {
+        "permutation": [0, 1, 2, 5, 3, 4],
+        "orientationDelta": [0, 0, 0, 3, 2, 3]
+      }
+    },
+    "R": {
+      "CENTERS": {
+        "permutation": [1, 7, 2, 3, 4, 5, 6, 0],
+        "orientationDelta": [1, 0, 0, 1, 0, 0, 0, 2]
+      },
+      "C4RNER": {
+        "permutation": [1, 2, 0, 3, 4, 5],
+        "orientationDelta": [3, 3, 2, 0, 0, 0]
+      }
+    },
+    "BLv": {
+      "CENTERS": {
+        "permutation": [7, 0, 2, 3, 5, 6, 4, 1],
+        "orientationDelta": [1, 2, 1, 2, 0, 1, 2, 0]
+      },
+      "C4RNER": {
+        "permutation": [2, 0, 1, 5, 3, 4],
+        "orientationDelta": [2, 1, 1, 3, 2, 3]
+      }
+    },
+    "D_BR_R_Fv": {
+      "CENTERS": {
+        "permutation": [4, 3, 6, 0, 1, 2, 7, 5],
+        "orientationDelta": [2, 2, 1, 2, 0, 1, 1, 0]
+      },
+      "C4RNER": {
+        "permutation": [3, 1, 0, 4, 2, 5],
+        "orientationDelta": [2, 1, 1, 3, 2, 3]
+      }
+    },
+    "D_F_L_BLv": {
+      "CENTERS": {
+        "permutation": [5, 3, 4, 7, 0, 2, 1, 6],
+        "orientationDelta": [2, 1, 0, 0, 2, 2, 1, 1]
+      },
+      "C4RNER": {
+        "permutation": [5, 0, 2, 3, 1, 4],
+        "orientationDelta": [1, 2, 3, 1, 3, 2]
+      }
+    },
+    "D_BL_B_BRv": {
+      "CENTERS": {
+        "permutation": [5, 4, 6, 0, 2, 7, 1, 3],
+        "orientationDelta": [1, 1, 2, 1, 1, 2, 2, 2]
+      },
+      "C4RNER": {
+        "permutation": [0, 3, 1, 5, 4, 2],
+        "orientationDelta": [3, 3, 2, 2, 1, 1]
+      }
+    },
+    "F_Dv": {
+      "CENTERS": {
+        "permutation": [4, 5, 3, 2, 0, 1, 7, 6],
+        "orientationDelta": [0, 2, 1, 2, 0, 1, 0, 0]
+      },
+      "C4RNER": {
+        "permutation": [4, 3, 5, 1, 0, 2],
+        "orientationDelta": [2, 1, 1, 3, 2, 3]
+      }
+    },
+    "F_Lv": {
+      "CENTERS": {
+        "permutation": [5, 6, 3, 2, 7, 0, 1, 4],
+        "orientationDelta": [0, 0, 0, 0, 1, 0, 0, 2]
+      },
+      "C4RNER": {
+        "permutation": [3, 5, 4, 0, 2, 1],
+        "orientationDelta": [0, 0, 0, 0, 0, 0]
+      }
+    },
+    "BL_Dv": {
+      "CENTERS": {
+        "permutation": [6, 5, 4, 7, 2, 1, 0, 3],
+        "orientationDelta": [2, 1, 1, 2, 2, 2, 1, 1]
+      },
+      "C4RNER": {
+        "permutation": [2, 5, 0, 4, 3, 1],
+        "orientationDelta": [1, 2, 3, 1, 3, 2]
+      }
+    },
+    "F_Rv": {
+      "CENTERS": {
+        "permutation": [3, 5, 6, 0, 7, 1, 2, 4],
+        "orientationDelta": [0, 0, 0, 0, 2, 0, 0, 1]
+      },
+      "C4RNER": {
+        "permutation": [1, 0, 3, 2, 5, 4],
+        "orientationDelta": [0, 0, 0, 0, 0, 0]
+      }
+    },
+    "U_Lv": {
+      "CENTERS": {
+        "permutation": [6, 4, 3, 2, 1, 7, 0, 5],
+        "orientationDelta": [1, 2, 2, 1, 1, 1, 2, 2]
+      },
+      "C4RNER": {
+        "permutation": [5, 4, 3, 2, 1, 0],
+        "orientationDelta": [3, 3, 2, 2, 1, 1]
+      }
+    },
+    "BL_Lv": {
+      "CENTERS": {
+        "permutation": [6, 3, 5, 1, 7, 2, 0, 4],
+        "orientationDelta": [0, 0, 0, 0, 0, 0, 0, 0]
+      },
+      "C4RNER": {
+        "permutation": [4, 2, 1, 5, 0, 3],
+        "orientationDelta": [0, 0, 0, 0, 0, 0]
+      }
+    }
+  },
+  "experimentalPuzzleDescription": {
+    "shape": "o",
+    "cuts": [
+      {
+        "cutType": "f",
+        "distance": 0
+      }
+    ]
+  },
+  "derivedMoves": {
+    "Uv": "U D'",
+    "Rv": "BL"
+  }
+}

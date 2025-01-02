@@ -1,3 +1,4 @@
+pub mod baby_fto;
 pub mod big_cubes;
 pub mod clock;
 pub mod cube2x2x2;

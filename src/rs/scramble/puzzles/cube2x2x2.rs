@@ -4,14 +4,12 @@ use crate::{
     _internal::search::move_count::MoveCount,
     scramble::{
         puzzles::static_move_list::{add_random_suffixes_from, static_parsed_opt_list},
-        randomize::PieceZeroConstraint,
+        randomize::{ConstraintForFirstPiece, OrbitRandomizationConstraints},
         scramble_search::{move_list_from_vec, FilteredSearch},
     },
 };
 
-use super::super::randomize::{
-    randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
-};
+use super::super::randomize::{randomize_orbit_naïve, OrbitOrientationConstraint};
 
 pub fn scramble_2x2x2() -> Alg {
     let kpuzzle = cube2x2x2_kpuzzle();
@@ -42,9 +40,11 @@ pub fn scramble_2x2x2() -> Alg {
             &mut scramble_pattern_fixed_corner,
             0,
             "CORNERS",
-            OrbitPermutationConstraint::AnyPermutation,
-            OrbitOrientationConstraint::OrientationsMustSumToZero,
-            PieceZeroConstraint::KeepSolved,
+            OrbitRandomizationConstraints {
+                orientation: Some(OrbitOrientationConstraint::SumToZero),
+                first_piece: Some(ConstraintForFirstPiece::KeepSolved),
+                ..Default::default()
+            },
         );
         if let Some(filtered) =
             filtered_search_L_B_D.filter(&scramble_pattern_fixed_corner, MoveCount(4))

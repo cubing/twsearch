@@ -15,7 +15,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::_internal::{
     canonical_fsm::{
-        canonical_fsm::{CanonicalFSM, CanonicalFSMState, CANONICAL_FSM_START_STATE},
+        canonical_fsm::{
+            CanonicalFSM, CanonicalFSMConstructionOptions, CanonicalFSMState,
+            CANONICAL_FSM_START_STATE,
+        },
         search_generators::SearchGenerators,
     },
     cli::args::MetricEnum,
@@ -192,6 +195,7 @@ pub struct IDFSearchConstructionOptions {
     pub metric: MetricEnum,
     pub random_start: bool,
     pub min_prune_table_size: Option<usize>,
+    pub canonical_fsm_construction_options: CanonicalFSMConstructionOptions,
 }
 
 impl Default for IDFSearchConstructionOptions {
@@ -201,6 +205,7 @@ impl Default for IDFSearchConstructionOptions {
             metric: MetricEnum::Hand,
             random_start: Default::default(),
             min_prune_table_size: Default::default(),
+            canonical_fsm_construction_options: Default::default(),
         }
     }
 }
@@ -225,7 +230,7 @@ impl<
         let canonical_fsm = CanonicalFSM::try_new(
             tpuzzle.clone(),
             search_generators.clone(),
-            Default::default(),
+            options.canonical_fsm_construction_options,
         )?; // TODO: avoid a clone
         let api_data = Arc::new(IDFSearchAPIData {
             search_generators,

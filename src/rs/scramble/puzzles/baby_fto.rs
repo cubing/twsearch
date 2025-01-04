@@ -1,11 +1,16 @@
-use cubing::alg::{parse_alg, Alg};
+use std::collections::HashSet;
+
+use cubing::alg::{parse_alg, Alg, QuantumMove};
 use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
-    _internal::search::{
-        idf_search::{IDFSearch, IndividualSearchOptions},
-        move_count::MoveCount,
-        prune_table_trait::Depth,
+    _internal::{
+        canonical_fsm::canonical_fsm::CanonicalFSMConstructionOptions,
+        search::{
+            idf_search::{IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions},
+            move_count::MoveCount,
+            prune_table_trait::Depth,
+        },
     },
     scramble::{
         randomize::OrbitRandomizationConstraints,
@@ -39,7 +44,15 @@ pub fn scramble_baby_fto() -> Alg {
             kpuzzle.clone(),
             generator_moves,
             kpuzzle.default_pattern(),
-            Default::default(),
+            IDFSearchConstructionOptions {
+                canonical_fsm_construction_options: CanonicalFSMConstructionOptions {
+                    forbid_transitions_by_quantums_either_direction: HashSet::from([(
+                        QuantumMove::new("U", None),
+                        QuantumMove::new("D", None),
+                    )]),
+                },
+                ..Default::default()
+            },
         )
         .unwrap(),
     );
@@ -74,8 +87,6 @@ pub fn scramble_baby_fto() -> Alg {
                 },
             );
         }
-
-        dbg!(&scramble_pattern);
 
         if let Some(alg) = filtered_search.filter(&scramble_pattern, MoveCount(5)) {
             eprintln!("Skipping due to short solution: {}", alg);

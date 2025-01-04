@@ -1,6 +1,9 @@
-use std::{collections::HashMap, marker::PhantomData, ops::BitAndAssign};
+use std::{
+    collections::{HashMap, HashSet},
+    marker::PhantomData,
+    ops::BitAndAssign,
+};
 
-use cityhasher::HashSet;
 use cubing::alg::QuantumMove;
 
 use crate::{
@@ -79,7 +82,7 @@ pub struct CanonicalFSM<TPuzzle: SemiGroupActionPuzzle> {
 
 #[derive(Debug, Default)]
 pub struct CanonicalFSMConstructionOptions {
-    forbid_transitions_by_quantums_either_direction: HashSet<(QuantumMove, QuantumMove)>,
+    pub forbid_transitions_by_quantums_either_direction: HashSet<(QuantumMove, QuantumMove)>,
 }
 
 impl CanonicalFSMConstructionOptions {
@@ -131,11 +134,9 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
             for j in 0..num_move_classes {
                 let j = MoveClassIndex(j);
                 let move1_info = &generators.by_move_class.at(i)[0];
-                let move2_info = &generators.by_move_class.at(i)[1];
-                if !tpuzzle.do_moves_commute(
-                    &generators.by_move_class.at(i)[0],
-                    &generators.by_move_class.at(j)[0],
-                ) || options.is_transition_forbidden(move1_info, move2_info)
+                let move2_info = &generators.by_move_class.at(j)[0];
+                if !tpuzzle.do_moves_commute(move1_info, move2_info)
+                    || options.is_transition_forbidden(move1_info, move2_info)
                 {
                     commutes[*i] &= MoveClassMask(!(1 << *j));
                     commutes[*j] &= MoveClassMask(!(1 << *i));

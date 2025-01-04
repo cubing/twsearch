@@ -2,7 +2,9 @@ use cubing::alg::{parse_alg, Alg};
 use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
-    _internal::search::{move_count::MoveCount, prune_table_trait::Depth},
+    _internal::search::{
+        idf_search::IndividualSearchOptions, move_count::MoveCount, prune_table_trait::Depth,
+    },
     scramble::{
         randomize::OrbitRandomizationConstraints,
         scramble_search::{move_list_from_vec, FilteredSearch},
@@ -92,7 +94,15 @@ pub fn scramble_baby_fto() -> Alg {
             )
             .unwrap();
         if let Some(solution) = search
-            .search(&scramble_pattern, Some(1), Some(Depth(10)), None)
+            .idfs
+            .search(
+                &scramble_pattern,
+                IndividualSearchOptions {
+                    min_num_solutions: Some(1),
+                    min_depth: Some(Depth(10)),
+                    ..Default::default()
+                },
+            )
             .next()
         {
             return solution.invert();

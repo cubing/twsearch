@@ -11,7 +11,6 @@ use crate::_internal::{
     search::{
         idf_search::{
             DefaultSearchOptimizations, IDFSearch, IndividualSearchOptions, SearchOptimizations,
-            SearchSolutions,
         },
         move_count::MoveCount,
         prune_table_trait::Depth,
@@ -122,33 +121,18 @@ impl<
         scramble_pattern: &TPuzzle::Pattern,
         min_scramble_moves: Option<MoveCount>,
     ) -> Alg {
-        self.search(
-            scramble_pattern,
-            Some(1),
-            min_scramble_moves.map(|move_count| Depth(move_count.0)),
-            None,
-        )
-        .next()
-        .unwrap()
-        .invert()
-    }
-
-    pub fn search(
-        &mut self,
-        scramble_pattern: &TPuzzle::Pattern,
-        min_num_solutions: Option<usize>,
-        min_depth: Option<Depth>,
-        max_depth: Option<Depth>,
-    ) -> SearchSolutions {
-        self.idfs.search(
-            scramble_pattern,
-            IndividualSearchOptions {
-                min_num_solutions,
-                min_depth,
-                max_depth,
-                ..Default::default()
-            },
-        )
+        self.idfs
+            .search(
+                scramble_pattern,
+                IndividualSearchOptions {
+                    min_num_solutions: Some(1),
+                    min_depth: min_scramble_moves.map(|move_count| Depth(move_count.0)),
+                    ..Default::default()
+                },
+            )
+            .next()
+            .unwrap()
+            .invert()
     }
 }
 

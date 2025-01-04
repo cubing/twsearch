@@ -1,7 +1,7 @@
 use std::{
     collections::{HashMap, HashSet},
     marker::PhantomData,
-    ops::BitAndAssign,
+    ops::{BitAndAssign, BitOrAssign},
 };
 
 use cubing::alg::QuantumMove;
@@ -26,6 +26,12 @@ whole_number_newtype!(MoveClassMask, u64);
 impl BitAndAssign for MoveClassMask {
     fn bitand_assign(&mut self, rhs: Self) {
         self.0 = self.0 & rhs.0
+    }
+}
+
+impl BitOrAssign for MoveClassMask {
+    fn bitor_assign(&mut self, rhs: Self) {
+        self.0 = self.0 | rhs.0
     }
 }
 
@@ -122,6 +128,8 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
 
         let mut commutes: Vec<MoveClassMask> =
             vec![MoveClassMask((1 << num_move_classes) - 1); num_move_classes];
+        let mut forbidden_transitions: Vec<MoveClassMask> =
+            vec![MoveClassMask(0); num_move_classes];
 
         // Written this way so if we later iterate over all moves instead of
         // all move classes. This is because multiples can commute differently than their quantum values.
@@ -135,11 +143,13 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
                 let j = MoveClassIndex(j);
                 let move1_info = &generators.by_move_class.at(i)[0];
                 let move2_info = &generators.by_move_class.at(j)[0];
-                if !tpuzzle.do_moves_commute(move1_info, move2_info)
-                    || options.is_transition_forbidden(move1_info, move2_info)
-                {
+                if !tpuzzle.do_moves_commute(move1_info, move2_info) {
                     commutes[*i] &= MoveClassMask(!(1 << *j));
                     commutes[*j] &= MoveClassMask(!(1 << *i));
+                }
+                if options.is_transition_forbidden(move1_info, move2_info) {
+                    forbidden_transitions[*i] |= MoveClassMask(1 << *j);
+                    forbidden_transitions[*j] |= MoveClassMask(1 << *i);
                 }
             }
         }
@@ -169,20 +179,16 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
             let from_state = queue_index;
 
             for move_class_index in generators.by_move_class.index_iter() {
+                let mut skip = false;
                 // If there's a greater move (multiple) in the state that
                 // commutes with this move's `move_class`, we can't move
                 // `move_class`.
-                if (*dequeue_move_class_mask & *commutes[*move_class_index])
+                skip |= (*dequeue_move_class_mask & *commutes[*move_class_index])
                     >> (*move_class_index + 1)
-                    != 0
-                {
-                    let new_value = MoveClassMask(
-                        *disallowed_move_classes.get(from_state) | (1 << *move_class_index),
-                    );
-                    disallowed_move_classes.set(from_state, new_value);
-                    continue;
-                }
-                if ((*dequeue_move_class_mask >> *move_class_index) & 1) != 0 {
+                    != 0;
+                skip |= (*dequeue_move_class_mask & *forbidden_transitions[*move_class_index]) != 0;
+                skip |= ((*dequeue_move_class_mask >> *move_class_index) & 1) != 0;
+                if skip {
                     let new_value = MoveClassMask(
                         *disallowed_move_classes.get(from_state) | (1 << *move_class_index),
                     );

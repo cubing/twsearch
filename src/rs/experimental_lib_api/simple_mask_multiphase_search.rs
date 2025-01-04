@@ -8,7 +8,7 @@ use cubing::{
 use crate::_internal::{
     errors::SearchError,
     search::{
-        idf_search::{IDFSearch, IndividualSearchOptions},
+        idf_search::{IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions},
         mask_pattern::apply_mask,
         search_logger::SearchLogger,
     },
@@ -52,12 +52,12 @@ impl SimpleMaskMultiphaseSearch {
                 };
                 let Ok(idfs) = IDFSearch::<KPuzzle>::try_new(
                     kpuzzle.clone(),
-                    target_pattern,
                     phase_info.generator_moves.clone(),
-                    search_logger.clone(),
-                    &crate::_internal::cli::args::MetricEnum::Hand,
-                    false,
-                    None,
+                    target_pattern,
+                    IDFSearchConstructionOptions {
+                        search_logger: search_logger.clone(),
+                        ..Default::default()
+                    },
                 ) else {
                     return Err(SearchError {
                         description: format!(

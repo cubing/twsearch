@@ -7,9 +7,10 @@ use cubing::{
     kpuzzle::KPattern,
 };
 
+use crate::_internal::search::idf_search::IDFSearchConstructionOptions;
 use crate::{
     _internal::{
-        cli::args::{MetricEnum, VerbosityLevel},
+        cli::args::VerbosityLevel,
         errors::SearchError,
         search::{
             idf_search::{IDFSearch, IndividualSearchOptions},
@@ -45,16 +46,16 @@ pub(crate) fn solve_square1(pattern: &KPattern) -> Result<Alg, SearchError> {
         .full_pattern_to_phase_coordinate(&kpuzzle.default_pattern())
         .unwrap();
     let mut phase1_idfs = IDFSearch::<Square1Phase1Puzzle>::try_new(
-        square1_phase1_puzzle,
-        phase1_target_pattern,
+        square1_phase1_puzzle.clone(),
         generator_moves.clone(),
-        SearchLogger {
-            verbosity: VerbosityLevel::Info,
-        }
-        .into(),
-        &MetricEnum::Hand,
-        false,
-        None,
+        phase1_target_pattern,
+        IDFSearchConstructionOptions {
+            search_logger: SearchLogger {
+                verbosity: VerbosityLevel::Info,
+            }
+            .into(),
+            ..Default::default()
+        },
     )
     .unwrap();
 
@@ -101,15 +102,9 @@ pub(crate) fn solve_square1(pattern: &KPattern) -> Result<Alg, SearchError> {
         .unwrap();
     let mut phase2_idfs = IDFSearch::<Square1Phase2Puzzle>::try_new(
         square1_phase2_puzzle.clone(),
-        phase2_target_pattern,
         generator_moves.clone(),
-        SearchLogger {
-            verbosity: VerbosityLevel::Warning,
-        }
-        .into(),
-        &MetricEnum::Hand,
-        false,
-        None,
+        phase2_target_pattern,
+        Default::default(),
     )
     .unwrap();
 

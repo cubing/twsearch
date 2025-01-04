@@ -1,7 +1,7 @@
 use cubing::{alg::Alg, puzzles::cube2x2x2_kpuzzle};
 
 use crate::{
-    _internal::search::move_count::MoveCount,
+    _internal::search::{idf_search::IDFSearch, move_count::MoveCount},
     scramble::{
         puzzles::static_move_list::{add_random_suffixes_from, static_parsed_opt_list},
         randomize::{ConstraintForFirstPiece, OrbitRandomizationConstraints},
@@ -16,20 +16,25 @@ pub fn scramble_2x2x2() -> Alg {
 
     #[allow(non_snake_case)] // Move meanings are case sensitive.
     let mut filtered_search_L_B_D = <FilteredSearch>::new(
-        kpuzzle,
-        move_list_from_vec(vec!["L", "B", "D"]),
-        None,
-        kpuzzle.default_pattern(),
+        IDFSearch::try_new(
+            kpuzzle.clone(),
+            move_list_from_vec(vec!["L", "B", "D"]),
+            kpuzzle.default_pattern(),
+            Default::default(),
+        )
+        .unwrap(),
     );
 
     #[allow(non_snake_case)] // Move meanings are case sensitive.
     let mut filtered_search_U_L_F_R = <FilteredSearch>::new(
-        kpuzzle,
-        move_list_from_vec(vec!["U", "L", "F", "R"]),
-        None,
-        kpuzzle.default_pattern(),
+        IDFSearch::try_new(
+            kpuzzle.clone(),
+            move_list_from_vec(vec!["U", "L", "F", "R"]),
+            kpuzzle.default_pattern(),
+            Default::default(),
+        )
+        .unwrap(),
     );
-
     loop {
         /* TODO: Since we don't yet have an API to solve to any orientation,
          * we perform the filtering search with a fixed orientation and then randomize the orientation for the returned scramble.

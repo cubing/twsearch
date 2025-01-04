@@ -1,9 +1,16 @@
-use cubing::alg::{parse_alg, Alg};
+use std::collections::HashSet;
+
+use cubing::alg::{parse_alg, Alg, QuantumMove};
 use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
-    _internal::search::{
-        idf_search::IndividualSearchOptions, move_count::MoveCount, prune_table_trait::Depth,
+    _internal::{
+        canonical_fsm::canonical_fsm::CanonicalFSMConstructionOptions,
+        search::{
+            idf_search::{IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions},
+            move_count::MoveCount,
+            prune_table_trait::Depth,
+        },
     },
     scramble::{
         randomize::OrbitRandomizationConstraints,
@@ -22,15 +29,33 @@ pub fn scramble_baby_fto() -> Alg {
     let kpuzzle = baby_fto_kpuzzle();
     let filter_generator_moves = move_list_from_vec(vec!["U", "L", "F", "R"]);
     let mut filtered_search = <FilteredSearch>::new(
-        kpuzzle,
-        filter_generator_moves,
-        None,
-        kpuzzle.default_pattern(),
+        IDFSearch::try_new(
+            kpuzzle.clone(),
+            filter_generator_moves,
+            kpuzzle.default_pattern(),
+            Default::default(),
+        )
+        .unwrap(),
     );
 
     let generator_moves = move_list_from_vec(vec!["U", "L", "F", "R", "D"]);
-    let mut search =
-        <FilteredSearch>::new(kpuzzle, generator_moves, None, kpuzzle.default_pattern());
+    let mut search = <FilteredSearch>::new(
+        IDFSearch::try_new(
+            kpuzzle.clone(),
+            generator_moves,
+            kpuzzle.default_pattern(),
+            IDFSearchConstructionOptions {
+                canonical_fsm_construction_options: CanonicalFSMConstructionOptions {
+                    forbid_transitions_by_quantums_either_direction: HashSet::from([(
+                        QuantumMove::new("U", None),
+                        QuantumMove::new("D", None),
+                    )]),
+                },
+                ..Default::default()
+            },
+        )
+        .unwrap(),
+    );
 
     loop {
         let mut scramble_pattern = kpuzzle.default_pattern();
@@ -62,8 +87,6 @@ pub fn scramble_baby_fto() -> Alg {
                 },
             );
         }
-
-        dbg!(&scramble_pattern);
 
         if let Some(alg) = filtered_search.filter(&scramble_pattern, MoveCount(5)) {
             eprintln!("Skipping due to short solution: {}", alg);

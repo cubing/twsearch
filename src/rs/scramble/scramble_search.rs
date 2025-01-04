@@ -1,4 +1,4 @@
-use std::{default::Default, marker::PhantomData, sync::Arc};
+use std::{default::Default, marker::PhantomData};
 
 use cubing::{
     alg::{Alg, Move},
@@ -6,7 +6,6 @@ use cubing::{
 };
 
 use crate::_internal::{
-    cli::args::{MetricEnum, VerbosityLevel},
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
         idf_search::{
@@ -14,7 +13,6 @@ use crate::_internal::{
         },
         move_count::MoveCount,
         prune_table_trait::Depth,
-        search_logger::SearchLogger,
     },
 };
 
@@ -41,53 +39,7 @@ impl<
         Optimizations: SearchOptimizations<TPuzzle>,
     > FilteredSearch<TPuzzle, Optimizations>
 {
-    pub(crate) fn idfs_with_target_pattern(
-        puzzle: &TPuzzle,
-        generator_moves: Vec<Move>,
-        target_pattern: TPuzzle::Pattern,
-        min_prune_table_size: Option<usize>,
-    ) -> IDFSearch<TPuzzle, Optimizations> {
-        IDFSearch::<TPuzzle, Optimizations>::try_new(
-            puzzle.clone(),
-            target_pattern,
-            generator_moves,
-            Arc::new(SearchLogger {
-                verbosity: VerbosityLevel::Silent,
-                // verbosity: VerbosityLevel::Info,
-            }),
-            &MetricEnum::Hand,
-            true,
-            min_prune_table_size,
-        )
-        .unwrap()
-    }
-
-    pub(crate) fn basic_idfs(
-        puzzle: &TPuzzle,
-        generator_moves: Vec<Move>,
-        min_prune_table_size: Option<usize>,
-        target_pattern: TPuzzle::Pattern,
-    ) -> IDFSearch<TPuzzle, Optimizations> {
-        Self::idfs_with_target_pattern(
-            puzzle,
-            generator_moves,
-            target_pattern,
-            min_prune_table_size,
-        )
-    }
-
-    pub fn new(
-        puzzle: &TPuzzle,
-        generator_moves: Vec<Move>,
-        min_prune_table_size: Option<usize>,
-        target_pattern: TPuzzle::Pattern,
-    ) -> Self {
-        let idfs = Self::basic_idfs(
-            puzzle,
-            generator_moves,
-            min_prune_table_size,
-            target_pattern,
-        );
+    pub fn new(idfs: IDFSearch<TPuzzle, Optimizations>) -> Self {
         Self {
             idfs,
             phantom_data: PhantomData,
@@ -143,8 +95,15 @@ pub(crate) fn simple_filtered_search(
     min_scramble_moves: Option<MoveCount>,
 ) -> Option<Alg> {
     let kpuzzle = scramble_pattern.kpuzzle();
-    let mut filtered_search =
-        <FilteredSearch>::new(kpuzzle, generator_moves, None, kpuzzle.default_pattern());
+    let mut filtered_search = <FilteredSearch>::new(
+        IDFSearch::try_new(
+            kpuzzle.clone(),
+            generator_moves,
+            kpuzzle.default_pattern(),
+            Default::default(),
+        )
+        .unwrap(),
+    );
     if filtered_search
         .filter(scramble_pattern, min_optimal_moves)
         .is_some()

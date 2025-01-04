@@ -187,6 +187,24 @@ pub struct IDFSearch<
     pub prune_table: Optimizations::PruneTable,
 }
 
+pub struct IDFSearchConstructionOptions {
+    pub search_logger: Arc<SearchLogger>,
+    pub metric: MetricEnum,
+    pub random_start: bool,
+    pub min_prune_table_size: Option<usize>,
+}
+
+impl Default for IDFSearchConstructionOptions {
+    fn default() -> Self {
+        Self {
+            search_logger: Default::default(),
+            metric: MetricEnum::Hand,
+            random_start: Default::default(),
+            min_prune_table_size: Default::default(),
+        }
+    }
+}
+
 impl<
         TPuzzle: SemiGroupActionPuzzle + DefaultSearchOptimizations<TPuzzle>,
         Optimizations: SearchOptimizations<TPuzzle>,
@@ -194,15 +212,16 @@ impl<
 {
     pub fn try_new(
         tpuzzle: TPuzzle,
-        target_pattern: TPuzzle::Pattern,
         generator_moves: Vec<Move>, // TODO: turn this back into `Generators`
-        search_logger: Arc<SearchLogger>,
-        metric: &MetricEnum,
-        random_start: bool,
-        min_prune_table_size: Option<usize>,
+        target_pattern: TPuzzle::Pattern,
+        options: IDFSearchConstructionOptions,
     ) -> Result<Self, SearchError> {
-        let search_generators =
-            SearchGenerators::try_new(&tpuzzle, generator_moves, metric, random_start)?;
+        let search_generators = SearchGenerators::try_new(
+            &tpuzzle,
+            generator_moves,
+            &options.metric,
+            options.random_start,
+        )?;
         let canonical_fsm = CanonicalFSM::try_new(
             tpuzzle.clone(),
             search_generators.clone(),
@@ -213,14 +232,14 @@ impl<
             canonical_fsm,
             tpuzzle: tpuzzle.clone(),
             target_pattern,
-            search_logger: search_logger.clone(),
+            search_logger: options.search_logger.clone(),
         });
 
         let prune_table = Optimizations::PruneTable::new(
             tpuzzle,
             api_data.clone(),
-            search_logger,
-            min_prune_table_size,
+            options.search_logger,
+            options.min_prune_table_size,
         ); // TODO: make the prune table reusable across searches.
         Ok(Self {
             api_data,

@@ -115,7 +115,7 @@ impl<
             .next()
     }
 
-    // This function depends on the caller to have passed parameters that will always result in an alg.
+    /// This function depends on the caller to pass parameters that will always result in an alg.
     pub fn generate_scramble(
         &mut self,
         scramble_pattern: &TPuzzle::Pattern,

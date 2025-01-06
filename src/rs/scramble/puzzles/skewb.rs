@@ -2,7 +2,10 @@ use cubing::alg::Alg;
 
 use crate::{
     _internal::search::move_count::MoveCount,
-    scramble::{randomize::PieceZeroConstraint, scramble_search::move_list_from_vec},
+    scramble::{
+        randomize::{ConstraintForFirstPiece, OrbitRandomizationConstraints},
+        scramble_search::move_list_from_vec,
+    },
 };
 
 use super::{
@@ -69,27 +72,33 @@ pub fn scramble_skewb() -> Alg {
             &mut scramble_pattern,
             0,
             "CORNERS1",
-            OrbitPermutationConstraint::SingleOrbitEvenParity,
-            OrbitOrientationConstraint::AnySum,
-            PieceZeroConstraint::IgnoredOrientation,
+            OrbitRandomizationConstraints {
+                permutation: Some(OrbitPermutationConstraint::EvenParity),
+                first_piece: Some(ConstraintForFirstPiece::IgnoredOrientation),
+                ..Default::default()
+            },
         );
 
         randomize_orbit_naïve(
             &mut scramble_pattern,
             1,
             "CORNERS2",
-            OrbitPermutationConstraint::SingleOrbitEvenParity,
-            OrbitOrientationConstraint::AnySum,
-            PieceZeroConstraint::IgnoredOrientation,
+            OrbitRandomizationConstraints {
+                permutation: Some(OrbitPermutationConstraint::EvenParity),
+                first_piece: Some(ConstraintForFirstPiece::IgnoredOrientation),
+                ..Default::default()
+            },
         );
 
         randomize_orbit_naïve(
             &mut scramble_pattern,
             2,
             "CENTERS",
-            OrbitPermutationConstraint::SingleOrbitEvenParity,
-            OrbitOrientationConstraint::OrientationsMustSumToZero,
-            PieceZeroConstraint::AnyPositionAndOrientation,
+            OrbitRandomizationConstraints {
+                permutation: Some(OrbitPermutationConstraint::EvenParity),
+                orientation: Some(OrbitOrientationConstraint::SumToZero),
+                ..Default::default()
+            },
         );
 
         let generators = move_list_from_vec(vec!["U", "L", "R", "B"]); // TODO: cache

@@ -8,12 +8,13 @@ use lazy_static::lazy_static;
 
 use crate::{
     _internal::search::{
-        idf_search::{IDFSearch, IndividualSearchOptions},
-        prune_table_trait::Depth,
+        idf_search::{IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions},
+        mask_pattern::apply_mask,
+        move_count::MoveCount,
     },
     scramble::{
         collapse::collapse_adjacent_moves,
-        randomize::{basic_parity, BasicParity, PieceZeroConstraint},
+        randomize::{basic_parity, BasicParity, OrbitRandomizationConstraints},
         scramble_search::{move_list_from_vec, FilteredSearch},
     },
 };
@@ -23,14 +24,13 @@ use super::{
         randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
     definitions::{cube3x3x3_centerless_g1_target_kpattern, cube3x3x3_centerless_kpuzzle},
-    mask_pattern::apply_mask,
     static_move_list::{add_random_suffixes_from, static_parsed_list, static_parsed_opt_list},
 };
 
 pub struct Scramble3x3x3TwoPhase {
     kpuzzle: KPuzzle,
 
-    filtering_idfs: IDFSearch<KPuzzle>,
+    filtered_search: FilteredSearch<KPuzzle>,
 
     phase1_target_pattern: KPattern,
     phase1_idfs: IDFSearch<KPuzzle>,
@@ -42,32 +42,46 @@ impl Default for Scramble3x3x3TwoPhase {
     fn default() -> Self {
         let kpuzzle = cube3x3x3_centerless_kpuzzle().clone();
         let generators = move_list_from_vec(vec!["U", "L", "F", "R", "B", "D"]);
-        let filtering_idfs = FilteredSearch::basic_idfs(
-            &kpuzzle,
-            generators.clone(),
-            Some(32),
-            kpuzzle.default_pattern(),
+        let filtered_search = FilteredSearch::new(
+            IDFSearch::try_new(
+                kpuzzle.clone(),
+                generators.clone(),
+                kpuzzle.default_pattern(),
+                IDFSearchConstructionOptions {
+                    min_prune_table_size: Some(32),
+                    ..Default::default()
+                },
+            )
+            .unwrap(),
         );
 
         let phase1_target_pattern = cube3x3x3_centerless_g1_target_kpattern().clone();
-        let phase1_idfs = FilteredSearch::idfs_with_target_pattern(
-            &kpuzzle,
+        let phase1_idfs = IDFSearch::try_new(
+            kpuzzle.clone(),
             generators.clone(),
             phase1_target_pattern.clone(),
-            Some(1 << 24),
-        );
+            IDFSearchConstructionOptions {
+                min_prune_table_size: Some(32),
+                ..Default::default()
+            },
+        )
+        .unwrap();
 
         let phase2_generators = move_list_from_vec(vec!["U", "L2", "F2", "R2", "B2", "D"]);
-        let phase2_idfs = FilteredSearch::idfs_with_target_pattern(
-            &kpuzzle,
+        let phase2_idfs = IDFSearch::try_new(
+            kpuzzle.clone(),
             phase2_generators.clone(),
             kpuzzle.default_pattern(),
-            Some(1 << 24),
-        );
+            IDFSearchConstructionOptions {
+                min_prune_table_size: Some(1 << 24),
+                ..Default::default()
+            },
+        )
+        .unwrap();
 
         Self {
             kpuzzle,
-            filtering_idfs,
+            filtered_search,
 
             phase1_target_pattern,
             phase1_idfs,
@@ -84,21 +98,24 @@ pub fn random_3x3x3_pattern() -> KPattern {
         &mut scramble_pattern,
         0,
         "EDGES",
-        OrbitPermutationConstraint::AnyPermutation,
-        OrbitOrientationConstraint::OrientationsMustSumToZero,
-        PieceZeroConstraint::AnyPositionAndOrientation,
+        OrbitRandomizationConstraints {
+            orientation: Some(OrbitOrientationConstraint::SumToZero),
+            ..Default::default()
+        },
     );
     let each_orbit_parity = basic_parity(&edge_order);
     randomize_orbit_naïve(
         &mut scramble_pattern,
         1,
         "CORNERS",
-        match each_orbit_parity {
-            BasicParity::Even => OrbitPermutationConstraint::SingleOrbitEvenParity,
-            BasicParity::Odd => OrbitPermutationConstraint::SingleOrbitOddParity,
+        OrbitRandomizationConstraints {
+            permutation: Some(match each_orbit_parity {
+                BasicParity::Even => OrbitPermutationConstraint::EvenParity,
+                BasicParity::Odd => OrbitPermutationConstraint::OddParity,
+            }),
+            orientation: Some(OrbitOrientationConstraint::SumToZero),
+            ..Default::default()
         },
-        OrbitOrientationConstraint::OrientationsMustSumToZero,
-        PieceZeroConstraint::AnyPositionAndOrientation,
     );
     scramble_pattern
 }
@@ -161,18 +178,7 @@ impl Scramble3x3x3TwoPhase {
 
     // TODO: rely on the main search to find patterns at a low depth?
     pub fn is_valid_scramble_pattern(&mut self, pattern: &KPattern) -> bool {
-        self.filtering_idfs
-            .search(
-                pattern,
-                IndividualSearchOptions {
-                    min_num_solutions: Some(1),
-                    min_depth: Some(Depth(0)),
-                    max_depth: Some(Depth(2)),
-                    ..Default::default()
-                },
-            )
-            .next()
-            .is_none()
+        self.filtered_search.filter(pattern, MoveCount(2)).is_none()
     }
 
     pub(crate) fn scramble_3x3x3(&mut self, constraints: PrefixOrSuffixConstraints) -> Alg {

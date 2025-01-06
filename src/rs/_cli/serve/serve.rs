@@ -11,12 +11,12 @@ use serde::Deserialize;
 use serde::Serialize;
 use twsearch::_internal::cli::args::CustomGenerators;
 use twsearch::_internal::cli::args::Generators;
-use twsearch::_internal::cli::args::MetricEnum;
 use twsearch::_internal::cli::args::ServeArgsForIndividualSearch;
 use twsearch::_internal::cli::args::ServeClientArgs;
 use twsearch::_internal::cli::args::ServeCommandArgs;
 use twsearch::_internal::errors::CommandError;
 use twsearch::_internal::search::idf_search::IDFSearch;
+use twsearch::_internal::search::idf_search::IDFSearchConstructionOptions;
 use twsearch::_internal::search::idf_search::IndividualSearchOptions;
 use twsearch::_internal::search::search_logger::SearchLogger;
 
@@ -87,19 +87,20 @@ fn solve_pattern(
     };
     let mut search = match <IDFSearch<KPuzzle>>::try_new(
         kpuzzle.clone(),
-        target_pattern,
         Generators::Custom(CustomGenerators {
             moves: move_list.clone(),
             algs: vec![],
         })
         .enumerate_moves_for_kpuzzle(&kpuzzle),
-        search_logger,
-        &MetricEnum::Hand, // TODO
-        match args_for_individual_search.client_args {
-            Some(client_args) => client_args.random_start == Some(true),
-            None => false,
+        target_pattern,
+        IDFSearchConstructionOptions {
+            search_logger,
+            random_start: match args_for_individual_search.client_args {
+                Some(client_args) => client_args.random_start == Some(true),
+                None => false,
+            },
+            ..Default::default()
         },
-        None,
     ) {
         Ok(search) => search,
         Err(e) => return Response::text(e.description).with_status_code(400),

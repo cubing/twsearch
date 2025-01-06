@@ -4,12 +4,11 @@ use cubing::{alg::Alg, kpuzzle::KPattern};
 use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
-    _internal::search::check_pattern::PatternValidityChecker,
+    _internal::search::{check_pattern::PatternValidityChecker, mask_pattern::apply_mask},
     scramble::{
-        puzzles::{mask_pattern::apply_mask, square1::phase1::Phase1Checker},
+        puzzles::square1::phase1::Phase1Checker,
         randomize::{
-            randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
-            PieceZeroConstraint,
+            randomize_orbit_naïve, ConstraintForFirstPiece, OrbitRandomizationConstraints,
         },
     },
 };
@@ -50,7 +49,7 @@ impl Square1Solver {
             random_pattern()
         };
 
-        self.solve_square1(&pattern)
+        self.solve_square1(&pattern).unwrap()
     }
 }
 
@@ -105,9 +104,10 @@ fn random_pattern() -> KPattern {
             &mut scramble_pattern,
             1,
             "EQUATOR",
-            OrbitPermutationConstraint::AnyPermutation,
-            OrbitOrientationConstraint::AnySum,
-            PieceZeroConstraint::KeepSolved,
+            OrbitRandomizationConstraints {
+                first_piece: Some(ConstraintForFirstPiece::KeepSolved),
+                ..Default::default()
+            },
         );
 
         // TODO: do this check without masking.

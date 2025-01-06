@@ -1,4 +1,10 @@
-use std::{collections::HashMap, marker::PhantomData, ops::BitAndAssign};
+use std::{
+    collections::{HashMap, HashSet},
+    marker::PhantomData,
+    ops::{BitAndAssign, BitOrAssign},
+};
+
+use cubing::alg::QuantumMove;
 
 use crate::{
     _internal::{
@@ -8,7 +14,7 @@ use crate::{
     whole_number_newtype,
 };
 
-use super::search_generators::SearchGenerators;
+use super::search_generators::{MoveTransformationInfo, SearchGenerators};
 
 const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
 
@@ -20,6 +26,12 @@ whole_number_newtype!(MoveClassMask, u64);
 impl BitAndAssign for MoveClassMask {
     fn bitand_assign(&mut self, rhs: Self) {
         self.0 = self.0 & rhs.0
+    }
+}
+
+impl BitOrAssign for MoveClassMask {
+    fn bitor_assign(&mut self, rhs: Self) {
+        self.0 = self.0 | rhs.0
     }
 }
 
@@ -74,11 +86,38 @@ pub struct CanonicalFSM<TPuzzle: SemiGroupActionPuzzle> {
     phantom_data: PhantomData<TPuzzle>,
 }
 
+#[derive(Debug, Default)]
+pub struct CanonicalFSMConstructionOptions {
+    pub forbid_transitions_by_quantums_either_direction: HashSet<(QuantumMove, QuantumMove)>,
+}
+
+impl CanonicalFSMConstructionOptions {
+    fn is_transition_forbidden<TPuzzle: SemiGroupActionPuzzle>(
+        &self,
+        move1_info: &MoveTransformationInfo<TPuzzle>,
+        move2_info: &MoveTransformationInfo<TPuzzle>,
+    ) -> bool {
+        self.forbid_transitions_by_quantums_either_direction
+            .contains(&(
+                move1_info.r#move.quantum.as_ref().clone(),
+                move2_info.r#move.quantum.as_ref().clone(),
+            ))
+            || self
+                .forbid_transitions_by_quantums_either_direction
+                .contains(&(
+                    move2_info.r#move.quantum.as_ref().clone(),
+                    move1_info.r#move.quantum.as_ref().clone(),
+                ))
+    }
+}
+
 impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
     // TODO: Return a more specific error.
+    /// Pass `Default::default()` as for `options` when no options are needed.
     pub fn try_new(
         tpuzzle: TPuzzle,
-        generators: SearchGenerators<TPuzzle>,
+        generators: SearchGenerators<TPuzzle>, // TODO: make this a field in the options?
+        options: CanonicalFSMConstructionOptions,
     ) -> Result<CanonicalFSM<TPuzzle>, SearchError> {
         let num_move_classes = generators.by_move_class.len();
         if num_move_classes > MAX_NUM_MOVE_CLASSES {
@@ -89,6 +128,8 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
 
         let mut commutes: Vec<MoveClassMask> =
             vec![MoveClassMask((1 << num_move_classes) - 1); num_move_classes];
+        let mut forbidden_transitions: Vec<MoveClassMask> =
+            vec![MoveClassMask(0); num_move_classes];
 
         // Written this way so if we later iterate over all moves instead of
         // all move classes. This is because multiples can commute differently than their quantum values.
@@ -100,12 +141,15 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
             let i = MoveClassIndex(i);
             for j in 0..num_move_classes {
                 let j = MoveClassIndex(j);
-                if !tpuzzle.do_moves_commute(
-                    &generators.by_move_class.at(i)[0],
-                    &generators.by_move_class.at(j)[0],
-                ) {
+                let move1_info = &generators.by_move_class.at(i)[0];
+                let move2_info = &generators.by_move_class.at(j)[0];
+                if !tpuzzle.do_moves_commute(move1_info, move2_info) {
                     commutes[*i] &= MoveClassMask(!(1 << *j));
                     commutes[*j] &= MoveClassMask(!(1 << *i));
+                }
+                if options.is_transition_forbidden(move1_info, move2_info) {
+                    forbidden_transitions[*i] |= MoveClassMask(1 << *j);
+                    forbidden_transitions[*j] |= MoveClassMask(1 << *i);
                 }
             }
         }
@@ -135,20 +179,16 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
             let from_state = queue_index;
 
             for move_class_index in generators.by_move_class.index_iter() {
+                let mut skip = false;
                 // If there's a greater move (multiple) in the state that
                 // commutes with this move's `move_class`, we can't move
                 // `move_class`.
-                if (*dequeue_move_class_mask & *commutes[*move_class_index])
+                skip |= (*dequeue_move_class_mask & *commutes[*move_class_index])
                     >> (*move_class_index + 1)
-                    != 0
-                {
-                    let new_value = MoveClassMask(
-                        *disallowed_move_classes.get(from_state) | (1 << *move_class_index),
-                    );
-                    disallowed_move_classes.set(from_state, new_value);
-                    continue;
-                }
-                if ((*dequeue_move_class_mask >> *move_class_index) & 1) != 0 {
+                    != 0;
+                skip |= (*dequeue_move_class_mask & *forbidden_transitions[*move_class_index]) != 0;
+                skip |= ((*dequeue_move_class_mask >> *move_class_index) & 1) != 0;
+                if skip {
                     let new_value = MoveClassMask(
                         *disallowed_move_classes.get(from_state) | (1 << *move_class_index),
                     );

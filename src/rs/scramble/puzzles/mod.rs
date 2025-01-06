@@ -1,3 +1,4 @@
+pub mod baby_fto;
 pub mod big_cubes;
 pub mod clock;
 pub mod cube2x2x2;
@@ -8,6 +9,5 @@ pub mod skewb;
 pub mod square1;
 
 mod definitions;
-mod mask_pattern;
 
 mod static_move_list;

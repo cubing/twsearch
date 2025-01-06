@@ -3,7 +3,7 @@ use rand::{thread_rng, Rng};
 
 use crate::{
     _internal::search::move_count::MoveCount,
-    scramble::{randomize::PieceZeroConstraint, scramble_search::move_list_from_vec},
+    scramble::{randomize::OrbitRandomizationConstraints, scramble_search::move_list_from_vec},
 };
 
 use super::{
@@ -23,18 +23,21 @@ pub fn scramble_pyraminx() -> Alg {
             &mut scramble_pattern,
             0,
             "EDGES",
-            OrbitPermutationConstraint::SingleOrbitEvenParity,
-            OrbitOrientationConstraint::OrientationsMustSumToZero,
-            PieceZeroConstraint::AnyPositionAndOrientation,
+            OrbitRandomizationConstraints {
+                permutation: Some(OrbitPermutationConstraint::EvenParity),
+                orientation: Some(OrbitOrientationConstraint::SumToZero),
+                ..Default::default()
+            },
         );
 
         randomize_orbit_naïve(
             &mut scramble_pattern,
             1,
             "CORNERS",
-            OrbitPermutationConstraint::IdentityPermutation,
-            OrbitOrientationConstraint::AnySum,
-            PieceZeroConstraint::AnyPositionAndOrientation,
+            OrbitRandomizationConstraints {
+                permutation: Some(OrbitPermutationConstraint::IdentityPermutation),
+                ..Default::default()
+            },
         );
 
         let tip_moves = move_list_from_vec(vec!["u", "l", "r", "b"]); // TODO: cache

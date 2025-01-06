@@ -346,7 +346,6 @@ Depending on the target:
 
 Automatically installed into the repository:
 
-- [`emsdk`](https://github.com/emscripten-core/emsdk)
 - [`wasm-pack`](https://github.com/rustwasm/wasm-pack)
 - [`cbindgen`](https://github.com/mozilla/cbindgen)
 

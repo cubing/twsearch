@@ -33,6 +33,7 @@ pub enum Event {
     MasterTetraminxSpeedsolving,
     KilominxSpeedsolving,
     RediCubeSpeedsolving,
+    BabyFTOSpeedsolving,
 }
 
 impl TryFrom<&str> for Event {
@@ -61,6 +62,7 @@ impl TryFrom<&str> for Event {
             "master_tetraminx" => Self::MasterTetraminxSpeedsolving,
             "kilominx" => Self::KilominxSpeedsolving,
             "redi_cube" => Self::RediCubeSpeedsolving,
+            "baby_fto" => Self::BabyFTOSpeedsolving,
             _ => {
                 return Err(EventError {
                     description: format!("Unknown event ID: {}", event_str),
@@ -94,6 +96,7 @@ impl Event {
             Self::MasterTetraminxSpeedsolving => "master_tetraminx",
             Self::KilominxSpeedsolving => "kilominx",
             Self::RediCubeSpeedsolving => "redi_cube",
+            Self::BabyFTOSpeedsolving => "baby_fto",
         }
     }
 
@@ -120,6 +123,7 @@ impl Event {
             Self::MasterTetraminxSpeedsolving => Puzzle::MasterTetraminx,
             Self::KilominxSpeedsolving => Puzzle::Kilominx,
             Self::RediCubeSpeedsolving => Puzzle::RediCube,
+            Self::BabyFTOSpeedsolving => Puzzle::BabyFTO,
         }
     }
 
@@ -146,6 +150,7 @@ impl Event {
             Self::MasterTetraminxSpeedsolving => "Master Tetraminx",
             Self::KilominxSpeedsolving => "Kilominx",
             Self::RediCubeSpeedsolving => "Redi Cube",
+            Self::BabyFTOSpeedsolving => "Baby FTO",
         }
     }
 }

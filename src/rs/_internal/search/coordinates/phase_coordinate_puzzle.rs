@@ -78,6 +78,12 @@ pub struct PhaseCoordinatePuzzle<
     pub(crate) data: Arc<PhaseCoordinateTables<TPuzzle, TSemanticCoordinate>>,
 }
 
+#[derive(Debug)]
+pub enum PhaseCoordinateConversionError {
+    InvalidSemanticCoordinate,
+    InvalidPhaseCoordinate,
+}
+
 impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPuzzle>>
     PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>
 where
@@ -218,12 +224,19 @@ where
     pub fn full_pattern_to_phase_coordinate(
         &self,
         pattern: &TPuzzle::Pattern,
-    ) -> PhaseCoordinateIndex {
-        *self
+    ) -> Result<PhaseCoordinateIndex, PhaseCoordinateConversionError> {
+        let Some(semantic_coordinate) = TSemanticCoordinate::try_new(&self.data.tpuzzle, pattern)
+        else {
+            return Err(PhaseCoordinateConversionError::InvalidSemanticCoordinate);
+        };
+        let Some(phase_coordinate_index) = self
             .data
             .semantic_coordinate_to_index
-            .get(&TSemanticCoordinate::try_new(&self.data.tpuzzle, pattern).unwrap())
-            .unwrap()
+            .get(&semantic_coordinate)
+        else {
+            return Err(PhaseCoordinateConversionError::InvalidPhaseCoordinate);
+        };
+        Ok(*phase_coordinate_index)
     }
 }
 

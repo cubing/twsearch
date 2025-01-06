@@ -33,7 +33,8 @@ impl<TPuzzle: SemiGroupActionPuzzle> ScrambleInfo<TPuzzle> {
     pub fn new(tpuzzle: &TPuzzle, moves: Vec<Move>) -> Self {
         let generators =
             SearchGenerators::try_new(tpuzzle, moves, &MetricEnum::Hand, false).unwrap();
-        let canonical_fsm = CanonicalFSM::try_new(tpuzzle.clone(), generators.clone()).unwrap();
+        let canonical_fsm =
+            CanonicalFSM::try_new(tpuzzle.clone(), generators.clone(), Default::default()).unwrap();
         Self {
             generators,
             canonical_fsm,

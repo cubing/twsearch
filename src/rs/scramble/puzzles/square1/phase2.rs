@@ -55,7 +55,7 @@ impl PatternValidityChecker<KPuzzle> for Phase2Checker {
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub(crate) struct Phase2EdgesCoordinate {
-    edges: KPattern,
+    pub edges: KPattern,
 }
 
 impl SemanticCoordinate<KPuzzle> for Phase2EdgesCoordinate {
@@ -78,7 +78,7 @@ impl SemanticCoordinate<KPuzzle> for Phase2EdgesCoordinate {
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub(crate) struct Phase2CornersCoordinate {
-    corners: KPattern,
+    pub corners: KPattern,
 }
 
 impl SemanticCoordinate<KPuzzle> for Phase2CornersCoordinate {
@@ -101,7 +101,7 @@ impl SemanticCoordinate<KPuzzle> for Phase2CornersCoordinate {
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub(crate) struct Phase2EquatorCoordinate {
-    equator: KPattern,
+    pub equator: KPattern,
 }
 
 impl SemanticCoordinate<KPuzzle> for Phase2EquatorCoordinate {

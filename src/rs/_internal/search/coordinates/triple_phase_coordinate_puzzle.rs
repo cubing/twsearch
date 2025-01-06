@@ -22,9 +22,9 @@ use super::phase_coordinate_puzzle::{
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct TriplePhaseCoordinate {
-    coordinate1: PhaseCoordinateIndex,
-    coordinate2: PhaseCoordinateIndex,
-    coordinate3: PhaseCoordinateIndex,
+    pub coordinate1: PhaseCoordinateIndex,
+    pub coordinate2: PhaseCoordinateIndex,
+    pub coordinate3: PhaseCoordinateIndex,
 }
 
 #[derive(Clone, Debug)]
@@ -34,9 +34,9 @@ pub struct TriplePhaseCoordinatePuzzleData<
     TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
     TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
 > {
-    puzzle1: PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate1>,
-    puzzle2: PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate2>,
-    puzzle3: PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate3>,
+    pub puzzle1: PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate1>,
+    pub puzzle2: PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate2>,
+    pub puzzle3: PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate3>,
 }
 
 #[derive(Clone, Debug)]
@@ -46,7 +46,7 @@ pub struct TriplePhaseCoordinatePuzzle<
     TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
     TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
 > {
-    data: Arc<
+    pub data: Arc<
         TriplePhaseCoordinatePuzzleData<
             TPuzzle,
             TSemanticCoordinate1,

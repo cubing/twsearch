@@ -14,7 +14,9 @@ use rand::seq::SliceRandom;
 use rand::thread_rng;
 
 use crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle;
+use crate::_internal::search::check_pattern;
 use crate::_internal::search::coordinates::phase_coordinate_puzzle::PhaseCoordinatePuzzle;
+use crate::_internal::search::pattern_stack::PatternStack;
 use crate::{
     _internal::{
         cli::args::{MetricEnum, VerbosityLevel},
@@ -148,10 +150,54 @@ impl Square1Solver {
             eprintln!("alg: {:?}", &phase1_solution.to_string());
 
             // TODO: move below the while loop
-            self.sanity_checker(pattern.apply_alg(&phase1_solution).unwrap());
+            // <<< self.sanity_checker(pattern.apply_alg(&phase1_solution).unwrap());
             let phase2_start_pattern = self
                 .square1_phase2_puzzle
                 .full_pattern_to_phase_coordinate(&pattern.apply_alg(&phase1_solution).unwrap());
+
+            let edges_coord = self.square1_phase2_puzzle.data.puzzle1.data.index_to_semantic_coordinate.at(phase2_start_pattern.coordinate1);
+            let corners_coord = self.square1_phase2_puzzle.data.puzzle2.data.index_to_semantic_coordinate.at(phase2_start_pattern.coordinate2);
+            let equator_coord = self.square1_phase2_puzzle.data.puzzle3.data.index_to_semantic_coordinate.at(phase2_start_pattern.coordinate3);
+            let edges = edges_coord.edges.clone();
+            let mut corners = corners_coord.corners.clone();
+            let mut equator = equator_coord.equator.clone();
+            let mut full_pattern = edges.clone();
+            for i in 0..24 {
+                unsafe {
+                    let wedge_orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
+                    assert_eq!(wedge_orbit_info.name.0, "WEDGES");
+
+                    if 0 == edges.packed_orbit_data().get_raw_piece_or_permutation_value(wedge_orbit_info, i) {
+                        let corner_value = corners.packed_orbit_data_mut().get_raw_piece_or_permutation_value(wedge_orbit_info, i);
+                        full_pattern.packed_orbit_data_mut().set_raw_piece_or_permutation_value(wedge_orbit_info, i, corner_value);
+                    }
+                }
+            }
+            let equator_orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[1];
+            assert_eq!(equator_orbit_info.name.0, "EQUATOR");
+            for i in 0..equator_orbit_info.num_pieces {
+                let value = equator.get_piece(equator_orbit_info, i);
+                full_pattern.set_piece(equator_orbit_info, i, value);
+
+                let value = equator.get_orientation_with_mod(equator_orbit_info, i);
+                full_pattern.set_orientation_with_mod(equator_orbit_info, i, value);
+            }
+
+            let alt_pattern = &pattern.apply_alg(&phase1_solution).unwrap();
+
+            if *alt_pattern == full_pattern {
+                println!("They match!");
+            } else {
+                println!("They do not match!");
+                dbg!(full_pattern);
+                dbg!(alt_pattern);
+            }
+
+            // <<< dbg!(full_pattern);
+            // <<< dbg!(corners);
+            // <<< dbg!(equator);
+            // <<< dbg!(&pattern.apply_alg(&phase1_solution).unwrap());
+
             eprintln!("coordinates: {:?}", phase2_start_pattern); //<<<
 
             // TODO: Push the candidate check into a trait for `IDFSearch`.
@@ -219,8 +265,12 @@ impl Square1Solver {
             .square1_phase2_puzzle
             .full_pattern_to_phase_coordinate(&pattern);
 
-        for _ in 1..1000 {
+        let mut pattern_stack = PatternStack::new(self.square1_phase2_puzzle.clone(), coordinate.clone());
+
+        for _ in 1..100000 {
             let info = self.phase2_idfs.api_data.search_generators.flat.0.choose(&mut thread_rng()).unwrap();
+
+            let success = pattern_stack.push(&info.transformation);
 
             let next_pattern = pattern.apply_move(&info.r#move).unwrap();
             let Ok(next_pattern_as_coordinate) = panic::catch_unwind(|| {
@@ -228,15 +278,22 @@ impl Square1Solver {
                     .square1_phase2_puzzle
                     .full_pattern_to_phase_coordinate(&next_pattern)
             }) else {
+                assert!(!success);
                 continue;
             };
 
+            assert!(success);
+
             let next_coordinate = self.square1_phase2_puzzle.pattern_apply_transformation(&coordinate, &info.transformation).unwrap();
 
-            dbg!(&next_pattern_as_coordinate);
-            dbg!(&next_coordinate);
+            // <<< dbg!(&next_pattern_as_coordinate);
+            // <<< dbg!(&next_coordinate);
             if next_coordinate != next_pattern_as_coordinate {
-                panic!("\t\t\t\t*************** LOKKEEE HEEREEEEEEEEEEEE ***************");
+                panic!("\t\t\t\t*************** LOKKEEE HEEREEEEEEEEEEEE 1 ***************");
+            }
+            let stack_coordinate = pattern_stack.current_pattern();
+            if next_coordinate != *stack_coordinate {
+                panic!("\t\t\t\t*************** LOKKEEE HEEREEEEEEEEEEEE 2 ***************");
             }
 
             pattern = next_pattern;
@@ -246,6 +303,10 @@ impl Square1Solver {
             // <<< }
     
             // <<< eprintln!("{:?} -- {} --> {:?}", coordinate, info.r#move, next_coordinate);
+        }
+        println!("current_idx: {}", pattern_stack.current_idx);//<<<
+        if pattern_stack.current_idx < 100 {
+            panic!("\t\t\t\t*************** LOKKEEE HEEREEEEEEEEEEEE 3 ***************");
         }
     }
 }

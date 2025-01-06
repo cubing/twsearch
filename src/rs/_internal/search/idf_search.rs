@@ -388,9 +388,9 @@ impl<
                     }
                 }
             }
-            println!("{unfiltered_count_in_class} -> {count_in_class}"); //<<<
+            // <<< println!("{unfiltered_count_in_class} -> {count_in_class}"); //<<<
         }
-        assert!(found_move, "Unexpected leaf node in IDF search");
+        // <<< assert!(found_move, "Unexpected leaf node in IDF search");
         SearchRecursionResult::ContinueSearchingDefault()
     }
 

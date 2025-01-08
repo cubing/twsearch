@@ -259,7 +259,7 @@ impl<
             &pattern.coordinate1,
             transformation_to_apply,
             &mut into_pattern.coordinate1,
-        ) && self.data.puzzle1.pattern_apply_transformation_into(
+        ) && self.data.puzzle2.pattern_apply_transformation_into(
             &pattern.coordinate2,
             transformation_to_apply,
             &mut into_pattern.coordinate2,

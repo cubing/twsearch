@@ -25,7 +25,7 @@ impl KociembaTwoPhase {
                 kpuzzle,
                 vec![
                     SimpleMaskPhaseInfo {
-                        name: "G1 redution".to_owned(),
+                        name: "G1 reduction".to_owned(),
                         mask: cube3x3x3_centerless_g1_target_kpattern().clone(),
                         generator_moves: vec![
                             parse_move!("U"),

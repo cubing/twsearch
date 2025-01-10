@@ -27,7 +27,7 @@ use crate::{
             search_logger::SearchLogger,
         },
     },
-    whole_number_newtype,
+    whole_number_newtype_generic,
 };
 
 pub trait SemanticCoordinate<TPuzzle: SemiGroupActionPuzzle>: Eq + Hash + Clone + Debug
@@ -37,9 +37,10 @@ where
     fn try_new(puzzle: &TPuzzle, pattern: &TPuzzle::Pattern) -> Option<Self>;
 }
 
-whole_number_newtype!(PhaseCoordinateIndex, usize);
+whole_number_newtype_generic!(PhaseCoordinateIndex, usize, SemiGroupActionPuzzle);
 
-pub type ExactCoordinatePruneTable = IndexedVec<PhaseCoordinateIndex, Depth>;
+// TODO: `U` should have the constraint `U: SemiGroupActionPuzzle`, but this cannot be enforced by the type checker.
+pub type ExactCoordinatePruneTable<U> = IndexedVec<PhaseCoordinateIndex<U>, Depth>;
 
 #[derive(Debug)]
 pub struct PhaseCoordinateTables<
@@ -50,10 +51,20 @@ pub struct PhaseCoordinateTables<
 {
     pub(crate) tpuzzle: TPuzzle,
 
-    pub(crate) semantic_coordinate_to_index: HashMap<TSemanticCoordinate, PhaseCoordinateIndex>,
-    pub(crate) move_application_table:
-        IndexedVec<PhaseCoordinateIndex, IndexedVec<FlatMoveIndex, Option<PhaseCoordinateIndex>>>,
-    pub(crate) exact_prune_table: ExactCoordinatePruneTable,
+    pub(crate) semantic_coordinate_to_index: HashMap<
+        TSemanticCoordinate,
+        PhaseCoordinateIndex<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>,
+    >,
+    #[allow(clippy::type_complexity)] // Can this even be simplified?
+    pub(crate) move_application_table: IndexedVec<
+        PhaseCoordinateIndex<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>,
+        IndexedVec<
+            FlatMoveIndex,
+            Option<PhaseCoordinateIndex<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>>,
+        >,
+    >,
+    pub(crate) exact_prune_table:
+        ExactCoordinatePruneTable<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>,
 
     pub(crate) search_generators_for_tpuzzle: SearchGenerators<TPuzzle>, // TODO: avoid the need for this
     pub(crate) search_generators_for_phase_coordinate_puzzle:
@@ -61,7 +72,10 @@ pub struct PhaseCoordinateTables<
 
     // This is useful for testing and debugging.
     #[allow(unused)]
-    pub(crate) index_to_semantic_coordinate: IndexedVec<PhaseCoordinateIndex, TSemanticCoordinate>, // TODO: support optimizations when the size is known ahead of time
+    pub(crate) index_to_semantic_coordinate: IndexedVec<
+        PhaseCoordinateIndex<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>,
+        TSemanticCoordinate,
+    >, // TODO: support optimizations when the size is known ahead of time
 
     pub(crate) phantom_data: PhantomData<TSemanticCoordinate>,
 }
@@ -102,13 +116,13 @@ where
         fringe.push_back((start_pattern, Depth(0)));
 
         let mut index_to_semantic_coordinate =
-            IndexedVec::<PhaseCoordinateIndex, TSemanticCoordinate>::default();
+            IndexedVec::<PhaseCoordinateIndex<Self>, TSemanticCoordinate>::default();
         let mut semantic_coordinate_to_index =
-            HashMap::<TSemanticCoordinate, PhaseCoordinateIndex>::default();
-        let mut exact_prune_table = IndexedVec::<PhaseCoordinateIndex, Depth>::default();
+            HashMap::<TSemanticCoordinate, PhaseCoordinateIndex<Self>>::default();
+        let mut exact_prune_table = IndexedVec::<PhaseCoordinateIndex<Self>, Depth>::default();
 
         let mut index_to_representative_pattern =
-            IndexedVec::<PhaseCoordinateIndex, TPuzzle::Pattern>::default();
+            IndexedVec::<PhaseCoordinateIndex<Self>, TPuzzle::Pattern>::default();
 
         // TODO: Reuse `GodsAlgorithmTable` to enumerate patterns?
         while let Some((representative_pattern, depth)) = fringe.pop_front() {
@@ -126,7 +140,7 @@ where
 
             let index = index_to_semantic_coordinate.len();
             index_to_semantic_coordinate.push(lookup_pattern.clone());
-            semantic_coordinate_to_index.insert(lookup_pattern, PhaseCoordinateIndex(index));
+            semantic_coordinate_to_index.insert(lookup_pattern, PhaseCoordinateIndex::from(index));
             exact_prune_table.push(depth);
 
             for move_transformation_info in &search_generators.flat.0 {
@@ -149,13 +163,13 @@ where
         // );
 
         let mut move_application_table: IndexedVec<
-            PhaseCoordinateIndex,
-            IndexedVec<FlatMoveIndex, Option<PhaseCoordinateIndex>>,
+            PhaseCoordinateIndex<Self>,
+            IndexedVec<FlatMoveIndex, Option<PhaseCoordinateIndex<Self>>>,
         > = IndexedVec::default();
         for (phase_pattern_index, _) in index_to_semantic_coordinate.iter() {
             let representative = index_to_representative_pattern.at(phase_pattern_index);
             let mut table_row =
-                IndexedVec::<FlatMoveIndex, Option<PhaseCoordinateIndex>>::default();
+                IndexedVec::<FlatMoveIndex, Option<PhaseCoordinateIndex<Self>>>::default();
             for move_transformation_info in &search_generators.flat.0 {
                 let new_lookup_pattern = match puzzle.pattern_apply_transformation(
                     representative,
@@ -220,7 +234,7 @@ where
     pub fn full_pattern_to_phase_coordinate(
         &self,
         pattern: &TPuzzle::Pattern,
-    ) -> Result<PhaseCoordinateIndex, PhaseCoordinateConversionError> {
+    ) -> Result<PhaseCoordinateIndex<Self>, PhaseCoordinateConversionError> {
         let Some(semantic_coordinate) = TSemanticCoordinate::try_new(&self.data.tpuzzle, pattern)
         else {
             return Err(PhaseCoordinateConversionError::InvalidSemanticCoordinate);
@@ -253,7 +267,7 @@ fn puzzle_transformation_from_move<
 impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPuzzle>>
     SemiGroupActionPuzzle for PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>
 {
-    type Pattern = PhaseCoordinateIndex;
+    type Pattern = PhaseCoordinateIndex<Self>;
 
     type Transformation = FlatMoveIndex;
 

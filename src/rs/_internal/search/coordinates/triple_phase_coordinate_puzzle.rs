@@ -20,11 +20,53 @@ use super::phase_coordinate_puzzle::{
 
 // TODO: modify the `DoublePhaseCoordinate` implementation so that `TriplePhaseCoordinate` can nest it.
 
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct TriplePhaseCoordinate {
-    pub coordinate1: PhaseCoordinateIndex,
-    pub coordinate2: PhaseCoordinateIndex,
-    pub coordinate3: PhaseCoordinateIndex,
+#[derive(Clone, Debug)]
+pub struct TriplePhaseCoordinate<
+    TPuzzle: SemiGroupActionPuzzle,
+    TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
+    TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
+    TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
+> {
+    pub coordinate1: PhaseCoordinateIndex<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate1>>,
+    pub coordinate2: PhaseCoordinateIndex<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate2>>,
+    pub coordinate3: PhaseCoordinateIndex<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate3>>,
+}
+
+// TODO: why can't this be derived?
+impl<
+        TPuzzle: SemiGroupActionPuzzle,
+        TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
+        TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
+        TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
+    > PartialEq
+    for TriplePhaseCoordinate<
+        TPuzzle,
+        TSemanticCoordinate1,
+        TSemanticCoordinate2,
+        TSemanticCoordinate3,
+    >
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.coordinate1 == other.coordinate1
+            && self.coordinate2 == other.coordinate2
+            && self.coordinate3 == other.coordinate3
+    }
+}
+
+// TODO: why can't this be derived?
+impl<
+        TPuzzle: SemiGroupActionPuzzle,
+        TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
+        TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
+        TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
+    > Eq
+    for TriplePhaseCoordinate<
+        TPuzzle,
+        TSemanticCoordinate1,
+        TSemanticCoordinate2,
+        TSemanticCoordinate3,
+    >
+{
 }
 
 #[derive(Clone, Debug)]
@@ -106,7 +148,15 @@ impl<
     pub fn full_pattern_to_phase_coordinate(
         &self,
         pattern: &TPuzzle::Pattern,
-    ) -> Result<TriplePhaseCoordinate, PhaseCoordinateConversionError> {
+    ) -> Result<
+        TriplePhaseCoordinate<
+            TPuzzle,
+            TSemanticCoordinate1,
+            TSemanticCoordinate2,
+            TSemanticCoordinate3,
+        >,
+        PhaseCoordinateConversionError,
+    > {
         let coordinate1 = self
             .data
             .puzzle1
@@ -140,7 +190,12 @@ impl<
         TSemanticCoordinate3,
     >
 {
-    type Pattern = TriplePhaseCoordinate;
+    type Pattern = TriplePhaseCoordinate<
+        TPuzzle,
+        TSemanticCoordinate1,
+        TSemanticCoordinate2,
+        TSemanticCoordinate3,
+    >;
 
     type Transformation = FlatMoveIndex;
 

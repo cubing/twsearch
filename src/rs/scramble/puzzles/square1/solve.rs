@@ -1,4 +1,4 @@
-use std::time::{Duration, Instant};
+// use std::time::{Duration, Instant};
 
 use cubing::kpuzzle::KPuzzle;
 use cubing::{
@@ -91,8 +91,8 @@ impl Square1Solver {
             });
         };
 
-        let start_time = Instant::now();
-        let mut phase1_start_time = Instant::now();
+        // let start_time = Instant::now();
+        // let mut phase1_start_time = Instant::now();
         let num_solutions = 100;
         let phase1_search = self.phase1_idfs.search(
             &phase1_start_pattern,
@@ -102,13 +102,13 @@ impl Square1Solver {
             },
         );
 
-        let mut num_phase2_starts = 0;
-        let mut phase1_cumulative_time = Duration::default();
-        let mut phase2_cumulative_time = Duration::default();
+        // let mut num_phase2_starts = 0;
+        // let mut phase1_cumulative_time = Duration::default();
+        // let mut phase2_cumulative_time = Duration::default();
         #[allow(non_snake_case)]
         let _SLASH_ = parse_move!("/");
         'phase1_loop: for mut phase1_solution in phase1_search {
-            phase1_cumulative_time += Instant::now() - phase1_start_time;
+            // phase1_cumulative_time += Instant::now() - phase1_start_time;
 
             let Ok(phase2_start_pattern) = self
                 .square1_phase2_puzzle
@@ -181,14 +181,14 @@ impl Square1Solver {
                 }
                 // Discard equivalent phase 1 solutions (reduces redundant phase 2 searches by a factor of 16).
                 if r#move.amount > 2 || r#move.amount < 0 {
-                    phase1_start_time = Instant::now();
+                    // phase1_start_time = Instant::now();
                     continue 'phase1_loop;
                 }
                 phase1_solution.nodes.pop();
             }
 
-            num_phase2_starts += 1;
-            let phase2_start_time = Instant::now();
+            // num_phase2_starts += 1;
+            // let phase2_start_time = Instant::now();
             let phase2_solution = self
                 .phase2_idfs
                 .search(
@@ -202,8 +202,8 @@ impl Square1Solver {
                 )
                 .next();
 
-            phase2_cumulative_time += Instant::now() - phase2_start_time;
-            let cumulative_time = Instant::now() - start_time;
+            // phase2_cumulative_time += Instant::now() - phase2_start_time;
+            // let cumulative_time = Instant::now() - start_time;
 
             if let Some(mut phase2_solution) = phase2_solution {
                 let mut nodes = phase1_solution.nodes;
@@ -211,17 +211,17 @@ impl Square1Solver {
                 return Ok(group_square_1_tuples(Alg { nodes }.invert()));
             }
 
-            if num_phase2_starts % 100 == 0 {
-                eprintln!(
-                    "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2, {:?} in phase transition\n",
-                    num_phase2_starts,
-                    phase1_cumulative_time,
-                    phase2_cumulative_time,
-                    cumulative_time - phase1_cumulative_time - phase2_cumulative_time,
-                )
-            }
+            // if num_phase2_starts % 100 == 0 {
+            //     eprintln!(
+            //         "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2, {:?} in phase transition\n",
+            //         num_phase2_starts,
+            //         phase1_cumulative_time,
+            //         phase2_cumulative_time,
+            //         cumulative_time - phase1_cumulative_time - phase2_cumulative_time,
+            //     )
+            // }
 
-            phase1_start_time = Instant::now();
+            // phase1_start_time = Instant::now();
         }
 
         panic!("at the (lack of) disco(very)")

@@ -15,33 +15,39 @@ use crate::{
 
 use super::{
     super::definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
-    solve::solve_square1,
+    solve::Square1Solver,
 };
 
-// const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: &str = "(-2, 3) / (-1, 2) / (-5, -2) / (3, -3) / (-4, 5) / (0, -2) / (0, -3) / (-2, -3) / (0, -4) / (2, 0) / (-3, 2) / (0, 2)";
-const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: &str = "(-2, 3) / (-1, 2) / (-5, -2)";
+const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: &str = "(-2, 3) / (-1, 2) / (-5, -2) / (3, -3) / (-4, 5) / (0, -2) / (0, -3) / (-2, -3) / (0, -4) / (2, 0) / (-3, 2) / (0, 2)";
+
+impl Square1Solver {
+    pub(crate) fn scramble_square1(&mut self) -> Alg {
+        let use_static = match var("USE_STATIC_SQUARE1_SCRAMBLE_SETUP") {
+            Ok(value) => value == "true",
+            _ => false,
+        };
+
+        let pattern = if use_static {
+            eprintln!("Observed USE_STATIC_SQUARE1_SCRAMBLE_SETUP");
+            eprintln!(
+                "Using static scramble setup: {}",
+                DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG
+            );
+            square1_unbandaged_kpuzzle()
+                .default_pattern()
+                .apply_alg(&Alg::from_str(DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG).unwrap())
+                .unwrap()
+        } else {
+            random_pattern()
+        };
+
+        self.solve_square1(&pattern).unwrap()
+    }
+}
 
 pub(crate) fn scramble_square1() -> Alg {
-    let use_static = match var("USE_STATIC_SQUARE1_SCRAMBLE_SETUP") {
-        Ok(value) => value == "true",
-        _ => false,
-    };
-
-    let pattern = if use_static {
-        eprintln!("Observed USE_STATIC_SQUARE1_SCRAMBLE_SETUP");
-        eprintln!(
-            "Using static scramble setup: {}",
-            DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG
-        );
-        square1_unbandaged_kpuzzle()
-            .default_pattern()
-            .apply_alg(&Alg::from_str(DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG).unwrap())
-            .unwrap()
-    } else {
-        random_pattern()
-    };
-
-    solve_square1(&pattern).unwrap()
+    let mut square1_solver = Square1Solver::new();
+    square1_solver.scramble_square1()
 }
 
 fn random_pattern() -> KPattern {
@@ -94,10 +100,7 @@ fn random_pattern() -> KPattern {
             apply_mask(&scramble_pattern, square1_square_square_shape_kpattern()).unwrap();
 
         if Phase1Checker::is_valid(&phase1_start_pattern) {
-            dbg!(&scramble_pattern);
             return scramble_pattern;
         }
-
-        eprintln!("discarding invalid scramble"); //<<<}
     }
 }

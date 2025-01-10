@@ -35,6 +35,8 @@ use super::{
     search_logger::SearchLogger,
 };
 
+// TODO: right now we return 0 solutions if we blow past this, should we return an explicit error,
+// or panic instead?
 const MAX_SUPPORTED_SEARCH_DEPTH: Depth = Depth(500); // TODO: increase
 
 // TODO: use https://doc.rust-lang.org/std/ops/enum.ControlFlow.html as a wrapper instead?
@@ -275,10 +277,6 @@ impl<
             }
         }
 
-        assert!(
-            individual_search_options.get_max_depth() > individual_search_options.get_min_depth()
-        );
-
         let (solution_sender, search_solutions) = SearchSolutions::construct();
         let mut individual_search_data = IndividualSearchData {
             individual_search_options,
@@ -369,6 +367,7 @@ impl<
         if prune_table_depth > remaining_depth {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
+
         for (move_class_index, move_transformation_multiples) in
             self.api_data.search_generators.by_move_class.iter()
         {
@@ -384,6 +383,7 @@ impl<
                 if !pattern_stack.push(&move_transformation_info.transformation) {
                     continue;
                 }
+
                 let recursive_result = self.recurse(
                     individual_search_data,
                     pattern_stack,

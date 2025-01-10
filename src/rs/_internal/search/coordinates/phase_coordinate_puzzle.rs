@@ -4,7 +4,6 @@ use std::{
     hash::Hash,
     marker::PhantomData,
     sync::Arc,
-    time::Instant,
 };
 
 use cubing::{
@@ -94,8 +93,6 @@ where
         start_pattern: TPuzzle::Pattern,
         generator_moves: Vec<Move>,
     ) -> Self {
-        let start_time = Instant::now();
-
         let random_start = false; // TODO: for scrambles, we may want this to be true
         let search_generators =
             SearchGenerators::try_new(&puzzle, generator_moves, &MetricEnum::Hand, random_start)
@@ -146,11 +143,10 @@ where
             index_to_representative_pattern.push(representative_pattern);
         }
 
-        eprintln!(
-            "PhaseCoordinatePuzzle has {} patterns.",
-            index_to_semantic_coordinate.len()
-        );
-        // dbg!(&index_to_semantic_coordinate.at(PhaseCoordinateIndex(1)));
+        // eprintln!(
+        //     "PhaseCoordinatePuzzle has {} patterns.",
+        //     index_to_semantic_coordinate.len()
+        // );
 
         let mut move_application_table: IndexedVec<
             PhaseCoordinateIndex,
@@ -181,10 +177,10 @@ where
             move_application_table.push(table_row);
         }
 
-        eprintln!(
-            "Built phase lookup table in: {:?}",
-            Instant::now() - start_time
-        );
+        // eprintln!(
+        //     "Built phase lookup table in: {:?}",
+        //     Instant::now() - start_time
+        // );
 
         // TODO: Why can't we reuse the static `puzzle_transformation_from_move`?
         // TODO: come up with a cleaner way for `SearchGenerators` to share the same move classes.
@@ -216,6 +212,7 @@ where
             search_generators_for_phase_coordinate_puzzle: search_generators_for_coordinate,
             phantom_data: PhantomData,
         });
+
         Self { data }
     }
 

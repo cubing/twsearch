@@ -5,8 +5,7 @@ use crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle;
 pub(crate) struct PatternStack<TPuzzle: SemiGroupActionPuzzle> {
     puzzle: TPuzzle,
     stack: Vec<TPuzzle::Pattern>,
-    // <<< current_idx: usize,
-    pub current_idx: usize,
+    current_idx: usize,
 }
 
 impl<TPuzzle: SemiGroupActionPuzzle> Debug for PatternStack<TPuzzle> {

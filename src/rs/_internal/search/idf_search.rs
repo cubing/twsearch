@@ -277,10 +277,6 @@ impl<
             }
         }
 
-        // <<< assert!(
-        // <<<     individual_search_options.get_max_depth() > individual_search_options.get_min_depth()
-        // <<< );
-
         let (solution_sender, search_solutions) = SearchSolutions::construct();
         let mut individual_search_data = IndividualSearchData {
             individual_search_options,
@@ -372,12 +368,9 @@ impl<
             return SearchRecursionResult::ContinueSearchingDefault();
         }
 
-        let mut found_move = false;
         for (move_class_index, move_transformation_multiples) in
             self.api_data.search_generators.by_move_class.iter()
         {
-            let mut count_in_class = 0;
-            let mut unfiltered_count_in_class = 0;
             let Some(next_state) = self
                 .api_data
                 .canonical_fsm
@@ -387,12 +380,9 @@ impl<
             };
 
             for move_transformation_info in move_transformation_multiples {
-                unfiltered_count_in_class += 1;
                 if !pattern_stack.push(&move_transformation_info.transformation) {
                     continue;
                 }
-                found_move = true;
-                count_in_class += 1;
 
                 let recursive_result = self.recurse(
                     individual_search_data,
@@ -416,9 +406,7 @@ impl<
                     }
                 }
             }
-            // <<< println!("{unfiltered_count_in_class} -> {count_in_class}"); //<<<
         }
-        // <<< assert!(found_move, "Unexpected leaf node in IDF search");
         SearchRecursionResult::ContinueSearchingDefault()
     }
 

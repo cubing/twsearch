@@ -8,7 +8,7 @@ all: \
 	build-rust-wasm
 
 .PHONY: setup
-setup: update-js-deps setup-rust
+setup: setup-js setup-rust
 
 .PHONY: test
 test: \

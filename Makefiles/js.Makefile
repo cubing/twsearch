@@ -1,11 +1,11 @@
-.PHONY: update-js-deps
-update-js-deps:
+.PHONY: setup-js
+setup-js:
 	bun install --no-save
 
 .PHONY: lint-js
-lint-js: update-js-deps
+lint-js: setup-js
 	bun x @biomejs/biome check
 
 .PHONY: format-js
-format-js: update-js-deps
-	bun x @biomejs/biome check --apply
+format-js: setup-js
+	bun x @biomejs/biome check --write

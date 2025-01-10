@@ -1,9 +1,6 @@
 import assert from "node:assert";
 import { cube2x2x2 } from "cubing/puzzles";
-import {
-  wasmRandomScrambleForEvent,
-  wasmTwsearch,
-} from "../dist/wasm/index.js";
+import { wasmRandomScrambleForEvent, wasmTwsearch } from "../dist/wasm/index";
 
 for (const eventID of [
   "222",

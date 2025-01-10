@@ -4,6 +4,7 @@ import assert from "node:assert";
 import { mkdir } from "node:fs/promises";
 import { env } from "node:process";
 import { fileURLToPath } from "node:url";
+import { file } from "bun";
 import { build } from "esbuild";
 
 const distDir = fileURLToPath(new URL("../dist/wasm/", import.meta.url));
@@ -17,7 +18,7 @@ function secondsToDownloadUsing3G(numBytes: number): number {
   return numBytes / mobile3GConnectionBytesPerSecond;
 }
 
-const wasmSize = Bun.file(
+const wasmSize = file(
   new URL("../.temp/rust-wasm/twsearch_wasm_bg.wasm", import.meta.url),
 ).size;
 console.log(

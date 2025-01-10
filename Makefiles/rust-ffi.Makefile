@@ -16,7 +16,7 @@ test-rust-ffi-rs: build-rust-ffi
 	cargo test --package twsearch-ffi
 
 .PHONY: test-rust-ffi-js
-test-rust-ffi-js: update-js-deps build-rust-ffi
+test-rust-ffi-js: setup-js build-rust-ffi
 	bun run "src/rs-ffi/test/js_test.ts"
 
 .PHONY: test-rust-ffi-c

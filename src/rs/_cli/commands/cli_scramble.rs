@@ -8,8 +8,10 @@ pub fn cli_scramble(args: &ScrambleArgs) -> Result<(), CommandError> {
     let a = Event::try_from(l);
     let event = a?;
 
-    let scramble = random_scramble_for_event(event)?;
-    println!("{}", scramble);
+    for _ in 0..args.amount {
+        let scramble = random_scramble_for_event(event)?;
+        println!("{}", scramble);
+    }
 
     Ok(())
 }

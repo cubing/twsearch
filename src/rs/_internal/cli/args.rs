@@ -390,6 +390,10 @@ impl Display for MetricEnum {
 pub struct ScrambleArgs {
     /// Event ID (WCA or unofficial)
     pub event_id: String,
+
+    /// Amount of scrambles
+    #[clap(long, default_value = "1")]
+    pub amount: usize,
 }
 
 #[derive(Args, Debug)]

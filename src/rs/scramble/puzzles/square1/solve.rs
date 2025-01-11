@@ -23,6 +23,8 @@ use super::super::definitions::square1_unbandaged_kpuzzle;
 use super::phase1::Square1Phase1Coordinate;
 use super::phase2::Square1Phase2Puzzle;
 
+const DEV_DEBUG_SQUARE1: bool = false;
+
 pub(crate) struct Square1Solver {
     square1_phase1_puzzle: Square1Phase1Puzzle,
     phase1_idfs: IDFSearch<Square1Phase1Puzzle>,
@@ -101,7 +103,7 @@ impl Square1Solver {
                 IndividualSearchOptions {
                     min_num_solutions: Some(num_solutions),
                     min_depth: Some(Depth(current_depth)),
-                    max_depth: Some(Depth(current_depth+1)),
+                    max_depth: Some(Depth(current_depth + 1)),
                     ..Default::default()
                 },
             );
@@ -110,75 +112,24 @@ impl Square1Solver {
             // let mut phase2_cumulative_time = Duration::default();
             #[allow(non_snake_case)]
             let _SLASH_ = parse_move!("/");
-            let mut returnedsols = 0;
-            let mut checkedsols = 0;
+            let mut found_phase1_solutions = 0;
+            let mut checked_phase1_solutions = 0;
             'phase1_loop: for mut phase1_solution in phase1_search {
-                returnedsols += 1;
+                found_phase1_solutions += 1;
                 // phase1_cumulative_time += Instant::now() - phase1_start_time;
-                let Ok(phase2_start_pattern) = self
-                    .square1_phase2_puzzle
-                    .full_pattern_to_phase_coordinate(&pattern.apply_alg(&phase1_solution).unwrap())
+                let Ok(phase2_start_pattern) =
+                    self.square1_phase2_puzzle.full_pattern_to_phase_coordinate(
+                        &pattern.apply_alg(&phase1_solution).unwrap(),
+                    )
                 else {
                     return Err(SearchError {
                         description: "Could not convert pattern into phase 2 coordinate".to_owned(),
                     });
                 };
-    /*
-                let edges_coord = self
-                    .square1_phase2_puzzle
-                    .data
-                    .puzzle1
-                    .data
-                    .index_to_semantic_coordinate
-                    .at(phase2_start_pattern.coordinate1);
-                let corners_coord = self
-                    .square1_phase2_puzzle
-                    .data
-                    .puzzle2
-                    .data
-                    .index_to_semantic_coordinate
-                    .at(phase2_start_pattern.coordinate2);
-                let equator_coord = self
-                    .square1_phase2_puzzle
-                    .data
-                    .puzzle3
-                    .data
-                    .index_to_semantic_coordinate
-                    .at(phase2_start_pattern.coordinate3);
-                let edges = edges_coord.edges.clone();
-                let corners = corners_coord.corners.clone();
-                let equator = equator_coord.equator.clone();
-                let mut full_pattern = edges.clone();
-                for i in 0..24 {
-                    unsafe {
-                        let wedge_orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
-                        assert_eq!(wedge_orbit_info.name.0, "WEDGES");
-
-                        if 0 == edges
-                            .packed_orbit_data()
-                            .get_raw_piece_or_permutation_value(wedge_orbit_info, i)
-                        {
-                            let corner_value = corners
-                                .packed_orbit_data()
-                                .get_raw_piece_or_permutation_value(wedge_orbit_info, i);
-                            full_pattern
-                                .packed_orbit_data_mut()
-                                .set_raw_piece_or_permutation_value(wedge_orbit_info, i, corner_value);
-                        }
-                    }
-                }
-                let equator_orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[1];
-                assert_eq!(equator_orbit_info.name.0, "EQUATOR");
-                for i in 0..equator_orbit_info.num_pieces {
-                    let value = equator.get_piece(equator_orbit_info, i);
-                    full_pattern.set_piece(equator_orbit_info, i, value);
-
-                    let value = equator.get_orientation_with_mod(equator_orbit_info, i);
-                    full_pattern.set_orientation_with_mod(equator_orbit_info, i, value);
-                }
-    */
                 // TODO: Push the candidate check into a trait for `IDFSearch`.
-                while let Some(cubing::alg::AlgNode::MoveNode(r#move)) = phase1_solution.nodes.last() {
+                while let Some(cubing::alg::AlgNode::MoveNode(r#move)) =
+                    phase1_solution.nodes.last()
+                {
                     if r#move == &_SLASH_
                     // TODO: redundant parsing
                     {
@@ -191,7 +142,7 @@ impl Square1Solver {
                     }
                     phase1_solution.nodes.pop();
                 }
-                checkedsols += 1;
+                checked_phase1_solutions += 1;
                 // num_phase2_starts += 1;
                 // let phase2_start_time = Instant::now();
                 let phase2_solution = self
@@ -213,7 +164,12 @@ impl Square1Solver {
                 if let Some(mut phase2_solution) = phase2_solution {
                     let mut nodes = phase1_solution.nodes;
                     nodes.append(&mut phase2_solution.nodes);
-                    println!("-- depth {} returned sols {} checked sols {}", current_depth, returnedsols, checkedsols);
+                    if DEV_DEBUG_SQUARE1 {
+                        println!(
+                            "-- depth {} returned sols {} checked sols {}",
+                            current_depth, found_phase1_solutions, checked_phase1_solutions
+                        );
+                    }
                     return Ok(group_square_1_tuples(Alg { nodes }.invert()));
                 }
 
@@ -228,8 +184,11 @@ impl Square1Solver {
                 // }
             }
             // phase1_start_time = Instant::now();
-            if returnedsols > 0 {
-                println!("At depth {} returned sols {} checked sols {}", current_depth, returnedsols, checkedsols);
+            if DEV_DEBUG_SQUARE1 && found_phase1_solutions > 0 {
+                println!(
+                    "At depth {} returned sols {} checked sols {}",
+                    current_depth, found_phase1_solutions, checked_phase1_solutions
+                );
             }
         }
         panic!("at the (lack of) disco(very)")

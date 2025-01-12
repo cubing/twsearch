@@ -30,6 +30,7 @@ use super::{
     super::{
         pattern_validity_checker::PatternValidityChecker,
         prune_table_trait::{Depth, PruneTable},
+        recursion_filter_trait::RecursionFilter,
         recursive_work_tracker::RecursiveWorkTracker,
         search_logger::SearchLogger,
     },
@@ -359,6 +360,13 @@ impl<
             };
 
             for move_transformation_info in move_transformation_multiples {
+                if !Optimizations::RecursionFilter::keep_move(
+                    move_transformation_info,
+                    remaining_depth,
+                ) {
+                    continue;
+                }
+
                 if !pattern_stack.push(&move_transformation_info.transformation) {
                     continue;
                 }

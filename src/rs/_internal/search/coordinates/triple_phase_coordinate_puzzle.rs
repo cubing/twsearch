@@ -6,13 +6,14 @@ use crate::_internal::{
     canonical_fsm::search_generators::{FlatMoveIndex, MoveTransformationInfo},
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
-        pattern_validity_checker::AlwaysValid,
         idf_search::{
             idf_search::IDFSearchAPIData,
             search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
         },
         move_count::MoveCount,
+        pattern_validity_checker::AlwaysValid,
         prune_table_trait::{Depth, PruneTable},
+        recursion_filter_trait::RecursionFilterNoOp,
         search_logger::SearchLogger,
     },
 };
@@ -466,6 +467,7 @@ impl<
         TSemanticCoordinate2,
         TSemanticCoordinate3,
     >;
+    type RecursionFilter = RecursionFilterNoOp;
 }
 
 impl<

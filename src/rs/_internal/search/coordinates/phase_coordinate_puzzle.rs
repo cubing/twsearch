@@ -27,6 +27,7 @@ use crate::{
             move_count::MoveCount,
             pattern_validity_checker::AlwaysValid,
             prune_table_trait::{Depth, PruneTable},
+            recursion_filter_trait::RecursionFilterNoOp,
             search_logger::SearchLogger,
         },
     },
@@ -388,6 +389,7 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
 {
     type PatternValidityChecker = AlwaysValid; // TODO: reconcile this with fallible transformation application.
     type PruneTable = PhaseCoordinatePruneTable<TPuzzle, TSemanticCoordinate>;
+    type RecursionFilter = RecursionFilterNoOp;
 }
 
 impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPuzzle>>

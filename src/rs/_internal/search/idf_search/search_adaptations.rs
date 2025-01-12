@@ -2,8 +2,9 @@ use std::marker::PhantomData;
 
 use cubing::kpuzzle::KPuzzle;
 
-use crate::_internal::puzzle_traits::puzzle_traits::{
-    HashablePatternPuzzle, SemiGroupActionPuzzle,
+use crate::_internal::{
+    puzzle_traits::puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
+    search::recursion_filter_trait::{RecursionFilter, RecursionFilterNoOp},
 };
 
 use super::super::{
@@ -51,6 +52,7 @@ use super::super::{
 pub trait SearchAdaptations<TPuzzle: SemiGroupActionPuzzle> {
     type PatternValidityChecker: PatternValidityChecker<TPuzzle>;
     type PruneTable: PruneTable<TPuzzle>;
+    type RecursionFilter: RecursionFilter<TPuzzle>;
 }
 
 pub struct SearchAdaptationsHashPruneTableOnly<TPuzzle: HashablePatternPuzzle> {
@@ -62,6 +64,7 @@ impl<TPuzzle: HashablePatternPuzzle> SearchAdaptations<TPuzzle>
 {
     type PatternValidityChecker = AlwaysValid;
     type PruneTable = HashPruneTable<TPuzzle, Self::PatternValidityChecker>;
+    type RecursionFilter = RecursionFilterNoOp;
 }
 
 pub trait DefaultSearchAdaptations<TPuzzle: SemiGroupActionPuzzle> {

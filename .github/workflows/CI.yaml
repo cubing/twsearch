@@ -45,6 +45,7 @@ jobs:
           bun-version: latest
       - run: make build-rust
       - run: make test-rust-lib
+      - run: make test-rust-examples
       - run: make lint-rust
       - run: make benchmark-rust
 

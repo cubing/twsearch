@@ -20,12 +20,15 @@ use super::super::{
 /// [`IDFSearch`](super::idf_search::IDFSearch) types rather unwieldy. So
 /// instead of this:
 ///
-///    IDFSearch<TPuzzle: …, PatternValidityChecker: …, PruneTable: …, (more in
-///    the future…)>
+/// ```text
+/// IDFSearch<TPuzzle: …, PatternValidityChecker: …, PruneTable: …, (more in the future…)>
+/// ```
 ///
 /// we have this:
 ///
-///    IDFSearch<TPuzzle: …, Adaptations: …>
+/// ```text
+/// IDFSearch<TPuzzle: …, Adaptations: …>
+/// ```
 ///
 /// In addition, the [`DefaultSearchAdaptations`] trait can be implemented for
 /// any given [`SemiGroupActionPuzzle`]. This allows us to avoid specifying the
@@ -33,7 +36,9 @@ use super::super::{
 /// in common situations. For example, the type for a [`KPuzzle`] search will
 /// often just be:
 ///
-///     IDFSearch<KPuzzle>
+/// ```ignore
+/// IDFSearch<KPuzzle>
+/// ```
 ///
 /// Note: the main reason that these are traits is that it enables "zero-cost"
 /// abstraction in code that is run tens of millions of times per second. If you

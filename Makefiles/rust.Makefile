@@ -32,12 +32,15 @@ setup-rust:
 # Rust testing
 
 .PHONY: test-rust
-test-rust: test-rust-lib test-rust-wasm test-rust-ffi
+test-rust: test-rust-lib test-rust-examples test-rust-wasm test-rust-ffi
 
 .PHONY: test-rust-lib
 test-rust-lib:
 	cargo test
 	cargo doc
+
+.PHONY: test-rust-examples
+test-rust-examples:
 	cargo run --release --example kociemba_multiphase
 	cargo run --release --example scramble_all_events
 

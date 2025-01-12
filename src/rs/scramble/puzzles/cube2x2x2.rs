@@ -51,10 +51,10 @@ pub fn scramble_2x2x2() -> Alg {
                 ..Default::default()
             },
         );
-        if let Some(filtered) =
-            filtered_search_L_B_D.filter(&scramble_pattern_fixed_corner, MoveCount(4))
+        if filtered_search_L_B_D
+            .filter(&scramble_pattern_fixed_corner, MoveCount(4))
+            .is_some()
         {
-            dbg!(filtered.to_string());
             continue;
         }
 

@@ -19,13 +19,13 @@ use crate::{
         cli::args::MetricEnum,
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{
-            check_pattern::AlwaysValid,
             idf_search::{
                 idf_search::IDFSearchAPIData,
                 search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
             },
             indexed_vec::IndexedVec,
             move_count::MoveCount,
+            pattern_validity_checker::AlwaysValid,
             prune_table_trait::{Depth, PruneTable},
             search_logger::SearchLogger,
         },

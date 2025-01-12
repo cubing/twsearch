@@ -1,4 +1,4 @@
-pub mod check_pattern;
+pub mod pattern_validity_checker;
 pub mod coordinates;
 pub(crate) mod hash_prune_table;
 #[allow(clippy::module_inception)]

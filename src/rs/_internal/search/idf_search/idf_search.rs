@@ -28,7 +28,7 @@ use crate::_internal::{
 
 use super::{
     super::{
-        check_pattern::PatternValidityChecker,
+        pattern_validity_checker::PatternValidityChecker,
         prune_table_trait::{Depth, PruneTable},
         recursive_work_tracker::RecursiveWorkTracker,
         search_logger::SearchLogger,

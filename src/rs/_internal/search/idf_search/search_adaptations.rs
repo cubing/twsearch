@@ -7,7 +7,7 @@ use crate::_internal::puzzle_traits::puzzle_traits::{
 };
 
 use super::super::{
-    check_pattern::{AlwaysValid, PatternValidityChecker},
+    pattern_validity_checker::{AlwaysValid, PatternValidityChecker},
     hash_prune_table::HashPruneTable,
     prune_table_trait::PruneTable,
 };

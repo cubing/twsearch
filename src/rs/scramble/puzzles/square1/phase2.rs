@@ -2,7 +2,7 @@ use cubing::kpuzzle::{KPattern, KPuzzle};
 
 use crate::{
     _internal::search::{
-        check_pattern::PatternValidityChecker,
+        pattern_validity_checker::PatternValidityChecker,
         coordinates::{
             phase_coordinate_puzzle::SemanticCoordinate,
             triple_phase_coordinate_puzzle::TriplePhaseCoordinatePuzzle,

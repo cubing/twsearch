@@ -6,7 +6,7 @@ use crate::_internal::{
     canonical_fsm::search_generators::{FlatMoveIndex, MoveTransformationInfo},
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
-        check_pattern::AlwaysValid,
+        pattern_validity_checker::AlwaysValid,
         idf_search::{
             idf_search::IDFSearchAPIData,
             search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},

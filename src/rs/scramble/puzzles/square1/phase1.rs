@@ -4,7 +4,7 @@ use cubing::kpuzzle::{KPattern, KPuzzle};
 
 use crate::{
     _internal::search::{
-        check_pattern::PatternValidityChecker,
+        pattern_validity_checker::PatternValidityChecker,
         coordinates::phase_coordinate_puzzle::{PhaseCoordinatePuzzle, SemanticCoordinate},
         mask_pattern::apply_mask,
     },

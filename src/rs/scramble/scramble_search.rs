@@ -10,7 +10,7 @@ use crate::_internal::{
     search::{
         idf_search::{
             idf_search::{IDFSearch, IndividualSearchOptions},
-            optimizations::{DefaultSearchOptimizations, SearchOptimizations},
+            search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
         },
         move_count::MoveCount,
         prune_table_trait::Depth,
@@ -25,10 +25,10 @@ pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
 }
 
 pub struct FilteredSearch<
-    TPuzzle: SemiGroupActionPuzzle + DefaultSearchOptimizations<TPuzzle> = KPuzzle,
-    Optimizations: SearchOptimizations<TPuzzle> = <TPuzzle as DefaultSearchOptimizations<
+    TPuzzle: SemiGroupActionPuzzle + DefaultSearchAdaptations<TPuzzle> = KPuzzle,
+    Optimizations: SearchAdaptations<TPuzzle> = <TPuzzle as DefaultSearchAdaptations<
         TPuzzle,
-    >>::Optimizations,
+    >>::Adaptations,
 > {
     pub(crate) idfs: IDFSearch<TPuzzle, Optimizations>,
 
@@ -36,8 +36,8 @@ pub struct FilteredSearch<
 }
 
 impl<
-        TPuzzle: SemiGroupActionPuzzle + DefaultSearchOptimizations<TPuzzle>,
-        Optimizations: SearchOptimizations<TPuzzle>,
+        TPuzzle: SemiGroupActionPuzzle + DefaultSearchAdaptations<TPuzzle>,
+        Optimizations: SearchAdaptations<TPuzzle>,
     > FilteredSearch<TPuzzle, Optimizations>
 {
     pub fn new(idfs: IDFSearch<TPuzzle, Optimizations>) -> Self {

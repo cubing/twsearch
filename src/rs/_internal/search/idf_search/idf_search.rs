@@ -33,7 +33,7 @@ use super::{
         recursive_work_tracker::RecursiveWorkTracker,
         search_logger::SearchLogger,
     },
-    optimizations::{DefaultSearchOptimizations, SearchOptimizations},
+    search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
 };
 
 // TODO: right now we return 0 solutions if we blow past this, should we return an explicit error,
@@ -154,20 +154,21 @@ struct IndividualSearchData {
 
 pub struct IDFSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
     pub search_generators: SearchGenerators<TPuzzle>,
-    pub canonical_fsm: CanonicalFSM<TPuzzle>,
+    pub canonical_fsm: CanonicalFSM<TPuzzle>, // TODO: move this into `SearchAdaptations`
     pub tpuzzle: TPuzzle,
     pub target_pattern: TPuzzle::Pattern,
     pub search_logger: Arc<SearchLogger>,
 }
 
+/// For information on [`SearchAdaptations`], see the documentation for that trait.
 pub struct IDFSearch<
-    TPuzzle: SemiGroupActionPuzzle + DefaultSearchOptimizations<TPuzzle> = KPuzzle,
-    Optimizations: SearchOptimizations<TPuzzle> = <TPuzzle as DefaultSearchOptimizations<
+    TPuzzle: SemiGroupActionPuzzle + DefaultSearchAdaptations<TPuzzle> = KPuzzle,
+    Adaptations: SearchAdaptations<TPuzzle> = <TPuzzle as DefaultSearchAdaptations<
         TPuzzle,
-    >>::Optimizations,
+    >>::Adaptations,
 > {
     pub api_data: Arc<IDFSearchAPIData<TPuzzle>>,
-    pub prune_table: Optimizations::PruneTable,
+    pub prune_table: Adaptations::PruneTable, // TODO: push this into the associated data for the adaptations.
 }
 
 pub struct IDFSearchConstructionOptions {
@@ -191,8 +192,8 @@ impl Default for IDFSearchConstructionOptions {
 }
 
 impl<
-        TPuzzle: SemiGroupActionPuzzle + DefaultSearchOptimizations<TPuzzle>,
-        Optimizations: SearchOptimizations<TPuzzle>,
+        TPuzzle: SemiGroupActionPuzzle + DefaultSearchAdaptations<TPuzzle>,
+        Optimizations: SearchAdaptations<TPuzzle>,
     > IDFSearch<TPuzzle, Optimizations>
 {
     pub fn try_new(

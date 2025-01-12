@@ -9,7 +9,7 @@ use crate::_internal::{
         check_pattern::AlwaysValid,
         idf_search::{
             idf_search::IDFSearchAPIData,
-            optimizations::{DefaultSearchOptimizations, SearchOptimizations},
+            search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
         },
         move_count::MoveCount,
         prune_table_trait::{Depth, PruneTable},
@@ -444,7 +444,7 @@ impl<
         TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
         TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
     >
-    SearchOptimizations<
+    SearchAdaptations<
         TriplePhaseCoordinatePuzzle<
             TPuzzle,
             TSemanticCoordinate1,
@@ -474,7 +474,7 @@ impl<
         TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
         TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
     >
-    DefaultSearchOptimizations<
+    DefaultSearchAdaptations<
         TriplePhaseCoordinatePuzzle<
             TPuzzle,
             TSemanticCoordinate1,
@@ -489,7 +489,7 @@ impl<
         TSemanticCoordinate3,
     >
 {
-    type Optimizations = TriplePhaseCoordinateSearchOptimizations<
+    type Adaptations = TriplePhaseCoordinateSearchOptimizations<
         TPuzzle,
         TSemanticCoordinate1,
         TSemanticCoordinate2,

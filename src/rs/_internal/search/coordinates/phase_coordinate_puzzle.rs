@@ -22,7 +22,7 @@ use crate::{
             check_pattern::AlwaysValid,
             idf_search::{
                 idf_search::IDFSearchAPIData,
-                optimizations::{DefaultSearchOptimizations, SearchOptimizations},
+                search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
             },
             indexed_vec::IndexedVec,
             move_count::MoveCount,
@@ -383,7 +383,7 @@ pub struct PhaseCoordinatePuzzleSearchOptimizations<
 }
 
 impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPuzzle>>
-    SearchOptimizations<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>
+    SearchAdaptations<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>
     for PhaseCoordinatePuzzleSearchOptimizations<TPuzzle, TSemanticCoordinate>
 {
     type PatternValidityChecker = AlwaysValid; // TODO: reconcile this with fallible transformation application.
@@ -391,8 +391,8 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
 }
 
 impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPuzzle>>
-    DefaultSearchOptimizations<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>
+    DefaultSearchAdaptations<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>
     for PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>
 {
-    type Optimizations = PhaseCoordinatePuzzleSearchOptimizations<TPuzzle, TSemanticCoordinate>;
+    type Adaptations = PhaseCoordinatePuzzleSearchOptimizations<TPuzzle, TSemanticCoordinate>;
 }

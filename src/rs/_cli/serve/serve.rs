@@ -1,24 +1,18 @@
-use cubing::kpuzzle::KPattern;
-use cubing::kpuzzle::KPatternData;
-use cubing::kpuzzle::KPuzzle;
-use cubing::kpuzzle::KPuzzleDefinition;
+use cubing::kpuzzle::{KPattern, KPatternData, KPuzzle, KPuzzleDefinition};
 
-use rouille::router;
-use rouille::try_or_400;
-use rouille::Request;
-use rouille::Response;
-use serde::Deserialize;
-use serde::Serialize;
-use twsearch::_internal::cli::args::CustomGenerators;
-use twsearch::_internal::cli::args::Generators;
-use twsearch::_internal::cli::args::ServeArgsForIndividualSearch;
-use twsearch::_internal::cli::args::ServeClientArgs;
-use twsearch::_internal::cli::args::ServeCommandArgs;
-use twsearch::_internal::errors::CommandError;
-use twsearch::_internal::search::idf_search::IDFSearch;
-use twsearch::_internal::search::idf_search::IDFSearchConstructionOptions;
-use twsearch::_internal::search::idf_search::IndividualSearchOptions;
-use twsearch::_internal::search::search_logger::SearchLogger;
+use rouille::{router, try_or_400, Request, Response};
+use serde::{Deserialize, Serialize};
+use twsearch::_internal::{
+    cli::args::{
+        CustomGenerators, Generators, ServeArgsForIndividualSearch, ServeClientArgs,
+        ServeCommandArgs,
+    },
+    errors::CommandError,
+    search::idf_search::idf_search::{
+        IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions,
+    },
+    search::search_logger::SearchLogger,
+};
 
 use std::sync::Arc;
 use std::sync::Mutex;

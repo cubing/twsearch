@@ -8,7 +8,9 @@ use lazy_static::lazy_static;
 
 use crate::{
     _internal::search::{
-        idf_search::{IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions},
+        idf_search::idf_search::{
+            IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions,
+        },
         mask_pattern::apply_mask,
         move_count::MoveCount,
     },

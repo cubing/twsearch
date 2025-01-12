@@ -7,7 +7,9 @@ use crate::{
     _internal::{
         canonical_fsm::canonical_fsm::CanonicalFSMConstructionOptions,
         search::{
-            idf_search::{IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions},
+            idf_search::idf_search::{
+                IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions,
+            },
             move_count::MoveCount,
             prune_table_trait::Depth,
         },

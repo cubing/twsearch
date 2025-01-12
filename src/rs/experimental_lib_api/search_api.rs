@@ -4,7 +4,7 @@ use crate::_internal::{
     cli::args::{SearchCommandOptionalArgs, VerbosityLevel},
     errors::CommandError,
     search::{
-        idf_search::{
+        idf_search::idf_search::{
             IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions, SearchSolutions,
         },
         search_logger::SearchLogger,

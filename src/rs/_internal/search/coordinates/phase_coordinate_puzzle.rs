@@ -20,7 +20,9 @@ use crate::{
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{
             check_pattern::AlwaysValid,
-            idf_search::{DefaultSearchOptimizations, IDFSearchAPIData, SearchOptimizations},
+            idf_search::idf_search::{
+                DefaultSearchOptimizations, IDFSearchAPIData, SearchOptimizations,
+            },
             indexed_vec::IndexedVec,
             move_count::MoveCount,
             prune_table_trait::{Depth, PruneTable},

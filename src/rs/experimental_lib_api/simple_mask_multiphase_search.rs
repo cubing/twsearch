@@ -8,7 +8,9 @@ use cubing::{
 use crate::_internal::{
     errors::SearchError,
     search::{
-        idf_search::{IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions},
+        idf_search::idf_search::{
+            IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions,
+        },
         mask_pattern::apply_mask,
         search_logger::SearchLogger,
     },

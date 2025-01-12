@@ -27,7 +27,7 @@ use crate::_internal::{
     search::pattern_stack::PatternStack,
 };
 
-use super::{
+use super::super::{
     check_pattern::{AlwaysValid, PatternValidityChecker},
     hash_prune_table::HashPruneTable,
     prune_table_trait::{Depth, PruneTable},

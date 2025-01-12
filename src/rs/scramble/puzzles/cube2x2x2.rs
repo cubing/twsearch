@@ -1,7 +1,7 @@
 use cubing::{alg::Alg, puzzles::cube2x2x2_kpuzzle};
 
 use crate::{
-    _internal::search::{idf_search::IDFSearch, move_count::MoveCount},
+    _internal::search::{idf_search::idf_search::IDFSearch, move_count::MoveCount},
     scramble::{
         puzzles::static_move_list::{add_random_suffixes_from, static_parsed_opt_list},
         randomize::{ConstraintForFirstPiece, OrbitRandomizationConstraints},

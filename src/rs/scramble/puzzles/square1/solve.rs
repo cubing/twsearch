@@ -6,13 +6,14 @@ use cubing::{
     kpuzzle::KPattern,
 };
 
-use crate::_internal::search::coordinates::phase_coordinate_puzzle::PhaseCoordinatePuzzle;
-use crate::_internal::search::idf_search::IDFSearchConstructionOptions;
-use crate::_internal::search::prune_table_trait::Depth;
 use crate::{
+    _internal::search::{
+        coordinates::phase_coordinate_puzzle::PhaseCoordinatePuzzle,
+        idf_search::idf_search::IDFSearchConstructionOptions, prune_table_trait::Depth,
+    },
     _internal::{
         errors::SearchError,
-        search::idf_search::{IDFSearch, IndividualSearchOptions},
+        search::idf_search::idf_search::{IDFSearch, IndividualSearchOptions},
     },
     scramble::{
         puzzles::square1::phase1::Square1Phase1Puzzle, scramble_search::move_list_from_vec,

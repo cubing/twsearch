@@ -8,7 +8,7 @@ use cubing::{
 use crate::_internal::{
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
-        idf_search::{
+        idf_search::idf_search::{
             DefaultSearchOptimizations, IDFSearch, IndividualSearchOptions, SearchOptimizations,
         },
         move_count::MoveCount,

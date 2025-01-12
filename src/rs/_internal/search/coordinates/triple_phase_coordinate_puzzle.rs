@@ -7,7 +7,9 @@ use crate::_internal::{
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
         check_pattern::AlwaysValid,
-        idf_search::{DefaultSearchOptimizations, IDFSearchAPIData, SearchOptimizations},
+        idf_search::idf_search::{
+            DefaultSearchOptimizations, IDFSearchAPIData, SearchOptimizations,
+        },
         move_count::MoveCount,
         prune_table_trait::{Depth, PruneTable},
         search_logger::SearchLogger,

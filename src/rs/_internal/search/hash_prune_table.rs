@@ -12,7 +12,7 @@ use crate::_internal::puzzle_traits::puzzle_traits::{
 use crate::whole_number_newtype;
 
 use super::check_pattern::PatternValidityChecker;
-use super::idf_search::IDFSearchAPIData;
+use super::idf_search::idf_search::IDFSearchAPIData;
 use super::prune_table_trait::{Depth, PruneTable};
 use super::recursive_work_tracker::RecursiveWorkTracker;
 use super::search_logger::SearchLogger;

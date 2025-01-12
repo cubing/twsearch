@@ -37,6 +37,7 @@ test-rust: test-rust-lib test-rust-wasm test-rust-ffi
 .PHONY: test-rust-lib
 test-rust-lib:
 	cargo test
+	cargo doc
 	cargo run --release --example kociemba_multiphase
 	cargo run --release --example scramble_all_events
 

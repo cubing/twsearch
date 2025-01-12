@@ -1,6 +1,5 @@
 use std::{
     fmt::Debug,
-    marker::PhantomData,
     sync::{
         mpsc::{channel, Receiver, Sender},
         Arc,
@@ -23,16 +22,18 @@ use crate::_internal::{
     },
     cli::args::MetricEnum,
     errors::SearchError,
-    puzzle_traits::puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
+    puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::pattern_stack::PatternStack,
 };
 
-use super::super::{
-    check_pattern::{AlwaysValid, PatternValidityChecker},
-    hash_prune_table::HashPruneTable,
-    prune_table_trait::{Depth, PruneTable},
-    recursive_work_tracker::RecursiveWorkTracker,
-    search_logger::SearchLogger,
+use super::{
+    super::{
+        check_pattern::PatternValidityChecker,
+        prune_table_trait::{Depth, PruneTable},
+        recursive_work_tracker::RecursiveWorkTracker,
+        search_logger::SearchLogger,
+    },
+    optimizations::{DefaultSearchOptimizations, SearchOptimizations},
 };
 
 // TODO: right now we return 0 solutions if we blow past this, should we return an explicit error,
@@ -157,29 +158,6 @@ pub struct IDFSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
     pub tpuzzle: TPuzzle,
     pub target_pattern: TPuzzle::Pattern,
     pub search_logger: Arc<SearchLogger>,
-}
-
-pub trait SearchOptimizations<TPuzzle: SemiGroupActionPuzzle> {
-    type PatternValidityChecker: PatternValidityChecker<TPuzzle>;
-    type PruneTable: PruneTable<TPuzzle>;
-}
-
-pub struct NoSearchOptimizations<TPuzzle: HashablePatternPuzzle> {
-    phantom_data: PhantomData<TPuzzle>,
-}
-impl<TPuzzle: HashablePatternPuzzle> SearchOptimizations<TPuzzle>
-    for NoSearchOptimizations<TPuzzle>
-{
-    type PatternValidityChecker = AlwaysValid;
-    type PruneTable = HashPruneTable<TPuzzle, Self::PatternValidityChecker>;
-}
-
-pub trait DefaultSearchOptimizations<TPuzzle: SemiGroupActionPuzzle> {
-    type Optimizations: SearchOptimizations<TPuzzle>;
-}
-
-impl DefaultSearchOptimizations<KPuzzle> for KPuzzle {
-    type Optimizations = NoSearchOptimizations<KPuzzle>;
 }
 
 pub struct IDFSearch<

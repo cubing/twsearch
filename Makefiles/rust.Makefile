@@ -38,7 +38,7 @@ test-rust: test-rust-lib test-rust-wasm test-rust-ffi
 test-rust-lib:
 	cargo test
 	cargo run --release --example kociemba_multiphase
-	#cargo run --release --example random_scramble_for_event
+	cargo run --release --example scramble_all_events
 
 .PHONY: benchmark-rust
 benchmark-rust:

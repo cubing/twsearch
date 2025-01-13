@@ -25,9 +25,9 @@ use crate::{
 
 use super::{phase1::restrict_D_move, solve::Square1SearchPhase};
 
-struct Phase2Checker;
+struct Phase2ShapeChecker;
 
-impl PatternValidityChecker<KPuzzle> for Phase2Checker {
+impl PatternValidityChecker<KPuzzle> for Phase2ShapeChecker {
     fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
         let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
         assert_eq!(orbit_info.name.0, "WEDGES");
@@ -64,6 +64,34 @@ impl PatternValidityChecker<KPuzzle> for Phase2Checker {
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
+pub(crate) struct Phase2ShapeCoordinate {
+    // Holds 8 possible values, namely the Cartesian product of:
+    //
+    // - Equator sliced (or not).
+    // - U off by (1, 0) from solved (or not).
+    // - D off by (-1, 0) from solved (or not).
+    pub(crate) equator: KPattern,
+}
+
+impl SemanticCoordinate<KPuzzle> for Phase2ShapeCoordinate {
+    fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
+        // TODO: this isn't a full validity check for scramble positions.
+        if !Phase2ShapeChecker::is_valid(full_pattern) {
+            return None;
+        }
+
+        let phase_mask = square1_equator_kpattern(); // TODO: Store this with the coordinate lookup?
+        let Ok(masked_pattern) = apply_mask(full_pattern, phase_mask) else {
+            panic!("Mask application failed");
+        };
+
+        Some(Self {
+            equator: masked_pattern,
+        })
+    }
+}
+
+#[derive(PartialEq, Eq, Hash, Clone, Debug)]
 pub(crate) struct Phase2EdgesCoordinate {
     pub(crate) edges: KPattern,
 }
@@ -71,7 +99,7 @@ pub(crate) struct Phase2EdgesCoordinate {
 impl SemanticCoordinate<KPuzzle> for Phase2EdgesCoordinate {
     fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
         // TODO: this isn't a full validity check for scramble positions.
-        if !Phase2Checker::is_valid(full_pattern) {
+        if !Phase2ShapeChecker::is_valid(full_pattern) {
             return None;
         }
 
@@ -94,7 +122,7 @@ pub(crate) struct Phase2CornersCoordinate {
 impl SemanticCoordinate<KPuzzle> for Phase2CornersCoordinate {
     fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
         // TODO: this isn't a full validity check for scramble positions.
-        if !Phase2Checker::is_valid(full_pattern) {
+        if !Phase2ShapeChecker::is_valid(full_pattern) {
             return None;
         }
 
@@ -109,34 +137,11 @@ impl SemanticCoordinate<KPuzzle> for Phase2CornersCoordinate {
     }
 }
 
-#[derive(PartialEq, Eq, Hash, Clone, Debug)]
-pub(crate) struct Phase2EquatorCoordinate {
-    pub(crate) equator: KPattern,
-}
-
-impl SemanticCoordinate<KPuzzle> for Phase2EquatorCoordinate {
-    fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
-        // TODO: this isn't a full validity check for scramble positions.
-        if !Phase2Checker::is_valid(full_pattern) {
-            return None;
-        }
-
-        let phase_mask = square1_equator_kpattern(); // TODO: Store this with the coordinate lookup?
-        let Ok(masked_pattern) = apply_mask(full_pattern, phase_mask) else {
-            panic!("Mask application failed");
-        };
-
-        Some(Self {
-            equator: masked_pattern,
-        })
-    }
-}
-
 pub(crate) type Square1Phase2Puzzle = TriplePhaseCoordinatePuzzle<
     KPuzzle,
+    Phase2ShapeCoordinate,
     Phase2EdgesCoordinate,
     Phase2CornersCoordinate,
-    Phase2EquatorCoordinate,
 >;
 
 impl RecursionFilter<Square1Phase2Puzzle> for Square1Phase2Puzzle {
@@ -159,9 +164,9 @@ impl SearchAdaptations<Square1Phase2Puzzle> for Square1Phase2SearchAdaptations {
     type PatternValidityChecker = AlwaysValid;
     type PruneTable = TriplePhaseCoordinatePruneTable<
         KPuzzle,
+        Phase2ShapeCoordinate,
         Phase2EdgesCoordinate,
         Phase2CornersCoordinate,
-        Phase2EquatorCoordinate,
     >;
     type RecursionFilter = Square1Phase2Puzzle;
 }

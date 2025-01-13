@@ -146,7 +146,7 @@ impl RecursionFilter<Square1Phase2Puzzle> for Square1Phase2Puzzle {
         move_transformation_info: &MoveTransformationInfo<Square1Phase2Puzzle>,
         remaining_depth: Depth,
     ) -> bool {
-        if remaining_depth < Depth(6) {
+        if remaining_depth > Depth(6) {
             lazy_static! {
                 // TODO: perform a one-time check that this matches the search generator indexing.
                 static ref D_MOVE_CLASS_INDEX: MoveClassIndex = MoveClassIndex(1);

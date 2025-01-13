@@ -1,3 +1,5 @@
+use std::ops::Range;
+
 use cubing::{
     alg::Move,
     kpuzzle::{KPattern, KPuzzle},
@@ -141,6 +143,9 @@ pub(crate) type Square1Phase2Puzzle = TriplePhaseCoordinatePuzzle<
     Phase2EquatorCoordinate,
 >;
 
+// TODO: allow flipping this depending on whether this is for a scramble (backwards) or a solution (forwards)?
+const D_SQ_MOVE_RESTRICTED_RANGE: Range<i32> = -3..3;
+
 impl RecursionFilter<Square1Phase2Puzzle> for Square1Phase2Puzzle {
     fn keep_move(
         move_transformation_info: &MoveTransformationInfo<Square1Phase2Puzzle>,
@@ -155,7 +160,7 @@ impl RecursionFilter<Square1Phase2Puzzle> for Square1Phase2Puzzle {
                 return true;
             }
             let Move { amount, .. } = move_transformation_info.r#move;
-            (-2..4).contains(&amount)
+            D_SQ_MOVE_RESTRICTED_RANGE.contains(&amount)
         } else {
             true
         }

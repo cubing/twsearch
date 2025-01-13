@@ -1,8 +1,12 @@
 use cubing::kpuzzle::{KPattern, KPuzzle};
+use lazy_static::lazy_static;
 
 use crate::{
     _internal::{
-        canonical_fsm::search_generators::{FlatMoveIndex, MoveTransformationInfo},
+        canonical_fsm::{
+            canonical_fsm::MoveClassIndex,
+            search_generators::{FlatMoveIndex, MoveTransformationInfo},
+        },
         search::{
             coordinates::{
                 phase_coordinate_puzzle::SemanticCoordinate,
@@ -143,7 +147,14 @@ impl RecursionFilter<Square1Phase2Puzzle> for Square1Phase2Puzzle {
         remaining_depth: Depth,
     ) -> bool {
         if remaining_depth < Depth(6) {
-            move_transformation_info.flat_move_index < FlatMoveIndex(3)
+            lazy_static! {
+                // TODO: perform a one-time check that this matches the search generator indexing.
+                static ref D_MOVE_CLASS_INDEX: MoveClassIndex = MoveClassIndex(1);
+            }
+            if move_transformation_info.move_class_index != *D_MOVE_CLASS_INDEX {
+                return true;
+            }
+            move_transformation_info.r#move.amount.abs() <= 3
         } else {
             true
         }

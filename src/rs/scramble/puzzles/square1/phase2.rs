@@ -1,13 +1,21 @@
 use cubing::kpuzzle::{KPattern, KPuzzle};
 
 use crate::{
-    _internal::search::{
-        pattern_validity_checker::PatternValidityChecker,
-        coordinates::{
-            phase_coordinate_puzzle::SemanticCoordinate,
-            triple_phase_coordinate_puzzle::TriplePhaseCoordinatePuzzle,
+    _internal::{
+        canonical_fsm::search_generators::{FlatMoveIndex, MoveTransformationInfo},
+        search::{
+            coordinates::{
+                phase_coordinate_puzzle::SemanticCoordinate,
+                triple_phase_coordinate_puzzle::{
+                    TriplePhaseCoordinatePruneTable, TriplePhaseCoordinatePuzzle,
+                },
+            },
+            idf_search::search_adaptations::SearchAdaptations,
+            mask_pattern::apply_mask,
+            pattern_validity_checker::{AlwaysValid, PatternValidityChecker},
+            prune_table_trait::Depth,
+            recursion_filter_trait::RecursionFilter,
         },
-        mask_pattern::apply_mask,
     },
     scramble::puzzles::{
         definitions::{square1_corners_kpattern, square1_edges_kpattern, square1_equator_kpattern},
@@ -128,3 +136,30 @@ pub(crate) type Square1Phase2Puzzle = TriplePhaseCoordinatePuzzle<
     Phase2CornersCoordinate,
     Phase2EquatorCoordinate,
 >;
+
+impl RecursionFilter<Square1Phase2Puzzle> for Square1Phase2Puzzle {
+    fn keep_move(
+        move_transformation_info: &MoveTransformationInfo<Square1Phase2Puzzle>,
+        remaining_depth: Depth,
+    ) -> bool {
+        if remaining_depth < Depth(6) {
+            move_transformation_info.flat_move_index < FlatMoveIndex(3)
+        } else {
+            true
+        }
+    }
+}
+
+pub(crate) struct Square1Phase2SearchAdaptations {}
+
+/// Explicitly specifies search adaptations for [`Square1Phase2Puzzle`].
+impl SearchAdaptations<Square1Phase2Puzzle> for Square1Phase2SearchAdaptations {
+    type PatternValidityChecker = AlwaysValid;
+    type PruneTable = TriplePhaseCoordinatePruneTable<
+        KPuzzle,
+        Phase2EdgesCoordinate,
+        Phase2CornersCoordinate,
+        Phase2EquatorCoordinate,
+    >;
+    type RecursionFilter = Square1Phase2Puzzle;
+}

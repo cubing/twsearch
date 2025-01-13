@@ -1,4 +1,7 @@
-use cubing::kpuzzle::{KPattern, KPuzzle};
+use cubing::{
+    alg::Move,
+    kpuzzle::{KPattern, KPuzzle},
+};
 use lazy_static::lazy_static;
 
 use crate::{
@@ -154,7 +157,8 @@ impl RecursionFilter<Square1Phase2Puzzle> for Square1Phase2Puzzle {
             if move_transformation_info.move_class_index != *D_MOVE_CLASS_INDEX {
                 return true;
             }
-            move_transformation_info.r#move.amount.abs() <= 3
+            let Move { amount, .. } = move_transformation_info.r#move;
+            amount <= 3 && amount > -3
         } else {
             true
         }

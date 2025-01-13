@@ -40,9 +40,28 @@ test-rust-lib:
 	cargo doc
 
 .PHONY: test-rust-examples
-test-rust-examples:
+test-rust-examples: \
+	test-rust-example-kociemba_multiphase \
+	test-rust-example-scramble_all_events \
+	test-rust-example-2x2x2_three_phase \
+	test-rust-example-readme_example
+
+.PHONY: test-rust-example-kociemba_multiphase
+test-rust-example-kociemba_multiphase:
+
 	cargo run --release --example kociemba_multiphase
+.PHONY: test-rust-example-scramble_all_events
+test-rust-example-scramble_all_events:
+
 	cargo run --release --example scramble_all_events
+.PHONY: test-rust-example-2x2x2_three_phase
+test-rust-example-2x2x2_three_phase:
+
+	cargo run --release --example 2x2x2_three_phase
+.PHONY: test-rust-example-readme_example
+test-rust-example-readme_example:
+
+	cargo run --release --example readme_example
 
 .PHONY: benchmark-rust
 benchmark-rust:

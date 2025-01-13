@@ -34,11 +34,44 @@ use crate::{
     whole_number_newtype_generic,
 };
 
-pub trait SemanticCoordinate<TPuzzle: SemiGroupActionPuzzle>: Eq + Hash + Clone + Debug
+pub enum TransformationOrIdentityNoOp<'a, TTransformation> {
+    Transformation(&'a TTransformation),
+    IdentityNoOp, // identity transformation
+}
+
+pub trait SemanticCoordinate<TPuzzle: SemiGroupActionPuzzle, Transformation = FlatMoveIndex>:
+    Eq + Hash + Clone + Debug
 where
     Self: std::marker::Sized,
 {
     fn try_new(puzzle: &TPuzzle, pattern: &TPuzzle::Pattern) -> Option<Self>;
+
+    /// Implementation of this method is optional.
+    ///
+    // TODO: figure out how to unify this with the `RecursionFilter` trait.
+    // TODO: this probably needs more parameters.
+    fn keep_move_during_enumeration(
+        move_transformation_info: &MoveTransformationInfo<TPuzzle>,
+    ) -> bool {
+        let _ = move_transformation_info; // Intentionally unused by the default implementation.
+        true
+    }
+    /// Allow moves to be remapped when interpreted for the derived puzzles.
+    ///
+    /// Implementation of this method is optional.
+    ///
+    /// A return value of [`TransformationOrIdentity::Identity`] indicates that the move has no
+    /// effect on this coordinate (e.g. like an inner slice move has no effect on big
+    /// cube corners).
+    // TODO: can this be handled at enumeration time (one-time initialization per puzzle) instead of application time (hot code)?
+    fn remap_move_during_transformation_application<'a>(
+        transformation: &'a Transformation,
+        // TODO: this next param isn't necessarily a great idea, it's just the first thing that worked for Square-1
+        search_generators_for_tpuzzle: &'a SearchGenerators<TPuzzle>, // TODO: pass `search_generators_for_phase_coordinate_puzzle` instead (which requires a more complicated type signature)
+    ) -> TransformationOrIdentityNoOp<'a, Transformation> {
+        let _ = search_generators_for_tpuzzle; // Intentionally unused by the default implementation.
+        TransformationOrIdentityNoOp::Transformation(transformation)
+    }
 }
 
 whole_number_newtype_generic!(PhaseCoordinateIndex, usize, SemiGroupActionPuzzle);
@@ -148,6 +181,10 @@ where
             exact_prune_table.push(depth);
 
             for move_transformation_info in &search_generators.flat.0 {
+                if !TSemanticCoordinate::keep_move_during_enumeration(move_transformation_info) {
+                    continue;
+                }
+
                 let Some(new_pattern) = puzzle.pattern_apply_transformation(
                     &representative_pattern,
                     &move_transformation_info.transformation,
@@ -317,6 +354,15 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
     ) -> Option<Self::Pattern> {
+        let TransformationOrIdentityNoOp::Transformation(transformation_to_apply) =
+            TSemanticCoordinate::remap_move_during_transformation_application(
+                transformation_to_apply,
+                &self.data.search_generators_for_tpuzzle,
+            )
+        else {
+            return Some(*pattern);
+        };
+
         *self
             .data
             .move_application_table

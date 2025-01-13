@@ -1,11 +1,18 @@
-use cubing::kpuzzle::{KPattern, KPuzzle};
+use cubing::{
+    alg::{parse_move, Move},
+    kpuzzle::{KPattern, KPuzzle},
+};
+use lazy_static::lazy_static;
 
 use crate::{
     _internal::{
-        canonical_fsm::search_generators::MoveTransformationInfo,
+        canonical_fsm::{
+            canonical_fsm::MoveClassIndex,
+            search_generators::{FlatMoveIndex, MoveTransformationInfo, SearchGenerators},
+        },
         search::{
             coordinates::{
-                phase_coordinate_puzzle::SemanticCoordinate,
+                phase_coordinate_puzzle::{SemanticCoordinate, TransformationOrIdentityNoOp},
                 triple_phase_coordinate_puzzle::{
                     TriplePhaseCoordinatePruneTable, TriplePhaseCoordinatePuzzle,
                 },
@@ -96,6 +103,27 @@ pub(crate) struct Phase2EdgesCoordinate {
     pub(crate) edges: KPattern,
 }
 
+// TODO: make it impossible to use these at runtime without validating each one at least once?
+// const U_SQ_MOVE_CLASS_INDEX: MoveClassIndex = MoveClassIndex(0);
+// const D_SQ_MOVE_CLASS_INDEX: MoveClassIndex = MoveClassIndex(1);
+const SLASH_MOVE_CLASS_INDEX: MoveClassIndex = MoveClassIndex(2);
+
+const MOVE_AMOUNT_MULTIPLE_FOR_90_DEGREES: i32 = 3;
+const MOVE_AMOUNT_MULTIPLE_FOR_360_DEGREES: i32 = MOVE_AMOUNT_MULTIPLE_FOR_90_DEGREES * 4;
+
+lazy_static! {
+    // (-2, 0) takes a pattern from full cube shape into a square-square shape
+    // where:
+    //
+    // - The puzzle stays square-square even if `/` is applied right after.
+    // - Edges are exactly in the same order (according to the KPuzzle
+    //   definition) as they are in the pattern before this move was applied.
+    static ref EDGES_OFFSET: Move = parse_move!("U_SQ_2'");
+
+    // Same as `CORNERS_OFFSET` but for corners: (1, 0)
+    static ref CORNERS_OFFSET: Move = parse_move!("U_SQ_");
+}
+
 impl SemanticCoordinate<KPuzzle> for Phase2EdgesCoordinate {
     fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
         // TODO: this isn't a full validity check for scramble positions.
@@ -111,6 +139,52 @@ impl SemanticCoordinate<KPuzzle> for Phase2EdgesCoordinate {
         Some(Self {
             edges: masked_pattern,
         })
+    }
+
+    // Keep only 90° moves.
+    fn keep_move_during_enumeration(
+        move_transformation_info: &MoveTransformationInfo<KPuzzle>,
+    ) -> bool {
+        move_transformation_info.move_class_index == SLASH_MOVE_CLASS_INDEX
+            || move_transformation_info.r#move.amount % MOVE_AMOUNT_MULTIPLE_FOR_90_DEGREES == 0
+    }
+
+    // TODO: document the math behind this.
+    fn remap_move_during_transformation_application<'a>(
+        transformation: &'a FlatMoveIndex,
+        search_generators_for_tpuzzle: &'a SearchGenerators<KPuzzle>,
+    ) -> TransformationOrIdentityNoOp<'a, FlatMoveIndex> {
+        let from_move_transformation_info = search_generators_for_tpuzzle.flat.at(*transformation);
+        let frm_move_class_index = from_move_transformation_info.move_class_index;
+
+        if frm_move_class_index == SLASH_MOVE_CLASS_INDEX {
+            return TransformationOrIdentityNoOp::Transformation(transformation);
+        }
+        let Move { amount, .. } = from_move_transformation_info.r#move;
+        if amount % MOVE_AMOUNT_MULTIPLE_FOR_90_DEGREES == 0 {
+            return TransformationOrIdentityNoOp::Transformation(transformation);
+        }
+
+        let amount_delta = match amount.rem_euclid(MOVE_AMOUNT_MULTIPLE_FOR_90_DEGREES) {
+            0 => 0,
+            1 => 2,
+            2 => -2,
+            _ => panic!("Impossible remainder."),
+        };
+
+        let new_amount = (amount + amount_delta).rem_euclid(MOVE_AMOUNT_MULTIPLE_FOR_360_DEGREES);
+        if new_amount == 0 {
+            TransformationOrIdentityNoOp::IdentityNoOp
+        } else {
+            let multiples = search_generators_for_tpuzzle
+                .by_move_class
+                .at(from_move_transformation_info.move_class_index);
+            // Amount 1 is at index 0.
+            // TODO: make this more semantically fabulous
+            TransformationOrIdentityNoOp::Transformation(
+                &multiples[(new_amount - 1) as usize].flat_move_index,
+            )
+        }
     }
 }
 

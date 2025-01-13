@@ -46,6 +46,11 @@ where
 {
     fn try_new(puzzle: &TPuzzle, pattern: &TPuzzle::Pattern) -> Option<Self>;
 
+    // TODO: this is very hacky
+    fn remap_start_pattern(pattern: TPuzzle::Pattern) -> TPuzzle::Pattern {
+        pattern
+    }
+
     /// Implementation of this method is optional.
     ///
     // TODO: figure out how to unify this with the `RecursionFilter` trait.
@@ -56,6 +61,7 @@ where
         let _ = move_transformation_info; // Intentionally unused by the default implementation.
         true
     }
+
     /// Allow moves to be remapped when interpreted for the derived puzzles.
     ///
     /// Implementation of this method is optional.
@@ -144,6 +150,7 @@ where
         start_pattern: TPuzzle::Pattern,
         generator_moves: Vec<Move>,
     ) -> Self {
+        let start_pattern = TSemanticCoordinate::remap_start_pattern(start_pattern);
         let random_start = false; // TODO: for scrambles, we may want this to be true
         let search_generators =
             SearchGenerators::try_new(&puzzle, generator_moves, &MetricEnum::Hand, random_start)

@@ -25,7 +25,7 @@ use super::super::definitions::square1_unbandaged_kpuzzle;
 use super::phase1::{Square1Phase1Coordinate, Square1Phase1SearchAdaptations};
 use super::phase2::{Square1Phase2Puzzle, Square1Phase2SearchAdaptations};
 
-const DEV_DEBUG_SQUARE1: bool = false;
+const DEV_DEBUG_SQUARE1: bool = true;
 
 pub(crate) struct Square1Solver {
     square1_phase1_puzzle: Square1Phase1Puzzle,

@@ -118,10 +118,10 @@ lazy_static! {
     // - The puzzle stays square-square even if `/` is applied right after.
     // - Edges are exactly in the same order (according to the KPuzzle
     //   definition) as they are in the pattern before this move was applied.
-    static ref EDGES_OFFSET: Move = parse_move!("U_SQ_2'");
+    static ref EDGES_START_PATTERN_OFFSET: Move = parse_move!("U_SQ_2'");
 
-    // Same as `CORNERS_OFFSET` but for corners: (1, 0)
-    static ref CORNERS_OFFSET: Move = parse_move!("U_SQ_");
+    // Same as `EDGES_START_PATTERN_OFFSET` but for corners: (1, 0)
+    static ref CORNERS_START_PATTERN_OFFSET: Move = parse_move!("U_SQ_");
 }
 
 impl SemanticCoordinate<KPuzzle> for Phase2EdgesCoordinate {
@@ -139,6 +139,10 @@ impl SemanticCoordinate<KPuzzle> for Phase2EdgesCoordinate {
         Some(Self {
             edges: masked_pattern,
         })
+    }
+
+    fn remap_start_pattern(pattern: KPattern) -> KPattern {
+        pattern.apply_move(&EDGES_START_PATTERN_OFFSET).unwrap()
     }
 
     // Keep only 90° moves.

@@ -155,7 +155,7 @@ impl RecursionFilter<Square1Phase2Puzzle> for Square1Phase2Puzzle {
                 return true;
             }
             let Move { amount, .. } = move_transformation_info.r#move;
-            amount <= 3 && amount > -3
+            (-2..4).contains(&amount)
         } else {
             true
         }

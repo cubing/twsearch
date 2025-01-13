@@ -6,10 +6,7 @@ use lazy_static::lazy_static;
 
 use crate::{
     _internal::{
-        canonical_fsm::{
-            canonical_fsm::MoveClassIndex,
-            search_generators::{FlatMoveIndex, MoveTransformationInfo},
-        },
+        canonical_fsm::{canonical_fsm::MoveClassIndex, search_generators::MoveTransformationInfo},
         search::{
             coordinates::{
                 phase_coordinate_puzzle::SemanticCoordinate,

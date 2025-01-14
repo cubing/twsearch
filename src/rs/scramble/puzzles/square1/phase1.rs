@@ -1,13 +1,11 @@
-use std::fmt::Debug;
+use std::{fmt::Debug, ops::Range};
 
-use cubing::kpuzzle::{KPattern, KPuzzle};
+use cubing::{alg::Move, kpuzzle::{KPattern, KPuzzle}};
 
 use crate::{
-    _internal::search::{
-        pattern_validity_checker::PatternValidityChecker,
-        coordinates::phase_coordinate_puzzle::{PhaseCoordinatePuzzle, SemanticCoordinate},
-        mask_pattern::apply_mask,
-    },
+    _internal::{canonical_fsm::{canonical_fsm::MoveClassIndex, search_generators::MoveTransformationInfo}, search::{
+        coordinates::phase_coordinate_puzzle::{PhaseCoordinatePruneTable, PhaseCoordinatePuzzle, SemanticCoordinate}, idf_search::search_adaptations::SearchAdaptations, mask_pattern::apply_mask, pattern_validity_checker::{AlwaysValid, PatternValidityChecker}, prune_table_trait::{Depth, PruneTable}, recursion_filter_trait::RecursionFilter
+    }},
     scramble::{
         puzzles::square1::wedges::{WedgeType, WEDGE_TYPE_LOOKUP},
         randomize::BasicParity,
@@ -17,6 +15,8 @@ use crate::{
 use super::{
     super::definitions::square1_square_square_shape_kpattern, parity::bandaged_wedge_parity,
 };
+
+use lazy_static::lazy_static;
 
 pub(crate) struct Phase1Checker;
 
@@ -75,3 +75,32 @@ impl SemanticCoordinate<KPuzzle> for Square1Phase1Coordinate {
 }
 
 pub(crate) type Square1Phase1Puzzle = PhaseCoordinatePuzzle<KPuzzle, Square1Phase1Coordinate>;
+
+// TODO: allow flipping this depending on whether this is for a scramble (backwards) or a solution (forwards)?
+const D_SQ_MOVE_RESTRICTED_RANGE: Range<i32> = -3..3;
+
+impl RecursionFilter<Square1Phase1Puzzle> for Square1Phase1Puzzle {
+    fn keep_move(
+        move_transformation_info: &MoveTransformationInfo<Square1Phase1Puzzle>,
+        remaining_depth: Depth,
+    ) -> bool {
+        lazy_static! {
+            // TODO: perform a one-time check that this matches the search generator indexing.
+            static ref D_MOVE_CLASS_INDEX: MoveClassIndex = MoveClassIndex(1);
+        }
+        if move_transformation_info.move_class_index != *D_MOVE_CLASS_INDEX {
+            return true;
+        }
+        let Move { amount, .. } = move_transformation_info.r#move;
+        D_SQ_MOVE_RESTRICTED_RANGE.contains(&amount)
+    }
+}
+
+pub(crate) struct Square1Phase1SearchAdaptations {}
+
+/// Explicitly specifies search adaptations for [`Square1Phase1Puzzle`].
+impl SearchAdaptations<Square1Phase1Puzzle> for Square1Phase1SearchAdaptations {
+    type PatternValidityChecker = AlwaysValid;
+    type PruneTable = PhaseCoordinatePruneTable<KPuzzle, Square1Phase1Coordinate>;
+    type RecursionFilter = Square1Phase1Puzzle;
+}

@@ -21,14 +21,14 @@ use crate::{
 };
 
 use super::super::definitions::square1_unbandaged_kpuzzle;
-use super::phase1::Square1Phase1Coordinate;
+use super::phase1::{Square1Phase1Coordinate, Square1Phase1SearchAdaptations};
 use super::phase2::{Square1Phase2Puzzle, Square1Phase2SearchAdaptations};
 
 const DEV_DEBUG_SQUARE1: bool = false;
 
 pub(crate) struct Square1Solver {
     square1_phase1_puzzle: Square1Phase1Puzzle,
-    phase1_idfs: IDFSearch<Square1Phase1Puzzle>,
+    phase1_idfs: IDFSearch<Square1Phase1Puzzle, Square1Phase1SearchAdaptations>,
     square1_phase2_puzzle: Square1Phase2Puzzle,
     phase2_idfs: IDFSearch<Square1Phase2Puzzle, Square1Phase2SearchAdaptations>,
 }
@@ -49,7 +49,7 @@ impl Square1Solver {
             .full_pattern_to_phase_coordinate(&kpuzzle.default_pattern())
             .unwrap();
 
-        let phase1_idfs = IDFSearch::<Square1Phase1Puzzle>::try_new(
+        let phase1_idfs = IDFSearch::<Square1Phase1Puzzle, Square1Phase1SearchAdaptations>::try_new(
             square1_phase1_puzzle.clone(),
             generator_moves.clone(),
             phase1_target_pattern,

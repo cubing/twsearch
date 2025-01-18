@@ -1,11 +1,24 @@
 use std::{fmt::Debug, ops::Range};
 
-use cubing::{alg::Move, kpuzzle::{KPattern, KPuzzle}};
+use cubing::{
+    alg::Move,
+    kpuzzle::{KPattern, KPuzzle},
+};
 
 use crate::{
-    _internal::{canonical_fsm::{canonical_fsm::MoveClassIndex, search_generators::MoveTransformationInfo}, search::{
-        coordinates::phase_coordinate_puzzle::{PhaseCoordinatePruneTable, PhaseCoordinatePuzzle, SemanticCoordinate}, idf_search::search_adaptations::SearchAdaptations, mask_pattern::apply_mask, pattern_validity_checker::{AlwaysValid, PatternValidityChecker}, prune_table_trait::{Depth, PruneTable}, recursion_filter_trait::RecursionFilter
-    }},
+    _internal::{
+        canonical_fsm::{canonical_fsm::MoveClassIndex, search_generators::MoveTransformationInfo},
+        search::{
+            coordinates::phase_coordinate_puzzle::{
+                PhaseCoordinatePruneTable, PhaseCoordinatePuzzle, SemanticCoordinate,
+            },
+            idf_search::search_adaptations::SearchAdaptations,
+            mask_pattern::apply_mask,
+            pattern_validity_checker::{AlwaysValid, PatternValidityChecker},
+            prune_table_trait::{Depth, PruneTable},
+            recursion_filter_trait::RecursionFilter,
+        },
+    },
     scramble::{
         puzzles::square1::wedges::{WedgeType, WEDGE_TYPE_LOOKUP},
         randomize::BasicParity,

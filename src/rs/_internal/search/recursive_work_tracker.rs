@@ -18,7 +18,6 @@ pub(crate) struct RecursiveWorkTracker {
     search_logger: Arc<SearchLogger>,
 }
 
-// TODO: use a logger intead of printing to stdout.
 impl RecursiveWorkTracker {
     pub fn new(work_name: String, search_logger: Arc<SearchLogger>) -> Self {
         Self {

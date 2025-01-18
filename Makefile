@@ -35,7 +35,7 @@ clean:
 
 .PHONY: reset
 reset: clean
-	rm -rf ./emsdk ./node_modules ./target
+	rm -rf ./emsdk ./node_modules ./target ./.bin
 
 .PHONY: lint
 lint: lint-cpp lint-js lint-rust

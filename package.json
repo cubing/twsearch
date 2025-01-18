@@ -17,6 +17,7 @@
     "@types/bun": "^1.1.0",
     "@types/node": "^22.3.0",
     "bun-types": "^1.0.7",
+    "cmd-ts-too": "^0.15.3",
     "esbuild": "^0.15.11"
   }
 }

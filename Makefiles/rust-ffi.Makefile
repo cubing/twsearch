@@ -5,7 +5,7 @@
 build-rust-ffi:
 	cargo build --release --package twsearch-ffi
 	mkdir -p "./.temp"
-	cargo bin cbindgen --crate twsearch-ffi --lang c --cpp-compat --output "./.temp/twsearch-ffi.h" # TODO: install `cbindgen`
+	cargo tool-run-bin cbindgen --crate twsearch-ffi --lang c --cpp-compat --output "./.temp/twsearch-ffi.h" # TODO: install `cbindgen`
 	cat "./.temp/twsearch-ffi.h" | sed "s#\[..\];#;#g" | sed "s#\[.\];#;#g" | sed "s#const uint8_t#const char#g" > "./target/release/libtwsearch_ffi.h"
 
 .PHONY: test-rust-ffi # TODO: non-PHONY?

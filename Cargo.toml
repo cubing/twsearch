@@ -6,6 +6,7 @@ members = [
   "src/rs",
   "src/rs-ffi",
   "src/rs-wasm",
+  "tools/cargo-run-bin"
 ]
 default-members = [
   "src/rs"

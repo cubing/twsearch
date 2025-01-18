@@ -1,14 +1,8 @@
-use std::ops::Range;
-
-use cubing::{
-    alg::Move,
-    kpuzzle::{KPattern, KPuzzle},
-};
-use lazy_static::lazy_static;
+use cubing::kpuzzle::{KPattern, KPuzzle};
 
 use crate::{
     _internal::{
-        canonical_fsm::{canonical_fsm::MoveClassIndex, search_generators::MoveTransformationInfo},
+        canonical_fsm::search_generators::MoveTransformationInfo,
         search::{
             coordinates::{
                 phase_coordinate_puzzle::SemanticCoordinate,
@@ -28,6 +22,8 @@ use crate::{
         square1::wedges::{WedgeType, WEDGE_TYPE_LOOKUP},
     },
 };
+
+use super::{phase1::restrict_D_move, solve::Square1SearchPhase};
 
 struct Phase2Checker;
 
@@ -143,24 +139,13 @@ pub(crate) type Square1Phase2Puzzle = TriplePhaseCoordinatePuzzle<
     Phase2EquatorCoordinate,
 >;
 
-// TODO: allow flipping this depending on whether this is for a scramble (backwards) or a solution (forwards)?
-const D_SQ_MOVE_RESTRICTED_RANGE: Range<i32> = -3..3;
-
 impl RecursionFilter<Square1Phase2Puzzle> for Square1Phase2Puzzle {
     fn keep_move(
         move_transformation_info: &MoveTransformationInfo<Square1Phase2Puzzle>,
         remaining_depth: Depth,
     ) -> bool {
         if remaining_depth > Depth(6) {
-            lazy_static! {
-                // TODO: perform a one-time check that this matches the search generator indexing.
-                static ref D_MOVE_CLASS_INDEX: MoveClassIndex = MoveClassIndex(1);
-            }
-            if move_transformation_info.move_class_index != *D_MOVE_CLASS_INDEX {
-                return true;
-            }
-            let Move { amount, .. } = move_transformation_info.r#move;
-            D_SQ_MOVE_RESTRICTED_RANGE.contains(&amount)
+            restrict_D_move(move_transformation_info)
         } else {
             true
         }
@@ -180,3 +165,5 @@ impl SearchAdaptations<Square1Phase2Puzzle> for Square1Phase2SearchAdaptations {
     >;
     type RecursionFilter = Square1Phase2Puzzle;
 }
+
+impl Square1SearchPhase for Square1Phase2Puzzle {}

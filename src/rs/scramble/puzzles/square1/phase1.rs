@@ -27,6 +27,7 @@ use crate::{
 
 use super::{
     super::definitions::square1_square_square_shape_kpattern, parity::bandaged_wedge_parity,
+    solve::Square1SearchPhase,
 };
 
 use lazy_static::lazy_static;
@@ -92,20 +93,28 @@ pub(crate) type Square1Phase1Puzzle = PhaseCoordinatePuzzle<KPuzzle, Square1Phas
 // TODO: allow flipping this depending on whether this is for a scramble (backwards) or a solution (forwards)?
 const D_SQ_MOVE_RESTRICTED_RANGE: Range<i32> = -3..3;
 
+// This is exported so it can be reused by phase 2.
+#[allow(non_snake_case)]
+pub fn restrict_D_move<Phase: Square1SearchPhase>(
+    move_transformation_info: &MoveTransformationInfo<Phase>,
+) -> bool {
+    lazy_static! {
+        // TODO: perform a one-time check that this matches the search generator indexing.
+        static ref D_MOVE_CLASS_INDEX: MoveClassIndex = MoveClassIndex(1);
+    }
+    if move_transformation_info.move_class_index != *D_MOVE_CLASS_INDEX {
+        return true;
+    }
+    let Move { amount, .. } = move_transformation_info.r#move;
+    D_SQ_MOVE_RESTRICTED_RANGE.contains(&amount)
+}
+
 impl RecursionFilter<Square1Phase1Puzzle> for Square1Phase1Puzzle {
     fn keep_move(
         move_transformation_info: &MoveTransformationInfo<Square1Phase1Puzzle>,
         _remaining_depth: Depth,
     ) -> bool {
-        lazy_static! {
-            // TODO: perform a one-time check that this matches the search generator indexing.
-            static ref D_MOVE_CLASS_INDEX: MoveClassIndex = MoveClassIndex(1);
-        }
-        if move_transformation_info.move_class_index != *D_MOVE_CLASS_INDEX {
-            return true;
-        }
-        let Move { amount, .. } = move_transformation_info.r#move;
-        D_SQ_MOVE_RESTRICTED_RANGE.contains(&amount)
+        restrict_D_move(move_transformation_info)
     }
 }
 
@@ -117,3 +126,5 @@ impl SearchAdaptations<Square1Phase1Puzzle> for Square1Phase1SearchAdaptations {
     type PruneTable = PhaseCoordinatePruneTable<KPuzzle, Square1Phase1Coordinate>;
     type RecursionFilter = Square1Phase1Puzzle;
 }
+
+impl Square1SearchPhase for Square1Phase1Puzzle {}

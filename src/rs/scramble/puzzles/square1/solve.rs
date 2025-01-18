@@ -6,6 +6,7 @@ use cubing::{
     kpuzzle::KPattern,
 };
 
+use crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle;
 use crate::{
     _internal::search::{
         coordinates::phase_coordinate_puzzle::PhaseCoordinatePuzzle,
@@ -49,15 +50,16 @@ impl Square1Solver {
             .full_pattern_to_phase_coordinate(&kpuzzle.default_pattern())
             .unwrap();
 
-        let phase1_idfs = IDFSearch::<Square1Phase1Puzzle, Square1Phase1SearchAdaptations>::try_new(
-            square1_phase1_puzzle.clone(),
-            generator_moves.clone(),
-            phase1_target_pattern,
-            IDFSearchConstructionOptions {
-                ..Default::default()
-            },
-        )
-        .unwrap();
+        let phase1_idfs =
+            IDFSearch::<Square1Phase1Puzzle, Square1Phase1SearchAdaptations>::try_new(
+                square1_phase1_puzzle.clone(),
+                generator_moves.clone(),
+                phase1_target_pattern,
+                IDFSearchConstructionOptions {
+                    ..Default::default()
+                },
+            )
+            .unwrap();
 
         let square1_phase2_puzzle: Square1Phase2Puzzle = Square1Phase2Puzzle::new(
             kpuzzle.clone(),
@@ -271,3 +273,8 @@ fn group_square_1_tuples(alg: Alg) -> Alg {
     flush_tuple(&mut current_tuple_U, &mut current_tuple_D, &mut alg_builder);
     alg_builder.to_alg()
 }
+
+/// An empty trait that can implemented by traits to indicate that they are a
+/// Square-1 search phase (rather than just a generic
+/// [`SemiGroupActionPuzzle`]).
+pub trait Square1SearchPhase: SemiGroupActionPuzzle {}

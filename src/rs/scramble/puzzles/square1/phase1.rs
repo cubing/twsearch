@@ -15,7 +15,7 @@ use crate::{
             idf_search::search_adaptations::SearchAdaptations,
             mask_pattern::apply_mask,
             pattern_validity_checker::{AlwaysValid, PatternValidityChecker},
-            prune_table_trait::{Depth, PruneTable},
+            prune_table_trait::Depth,
             recursion_filter_trait::RecursionFilter,
         },
     },
@@ -95,7 +95,7 @@ const D_SQ_MOVE_RESTRICTED_RANGE: Range<i32> = -3..3;
 impl RecursionFilter<Square1Phase1Puzzle> for Square1Phase1Puzzle {
     fn keep_move(
         move_transformation_info: &MoveTransformationInfo<Square1Phase1Puzzle>,
-        remaining_depth: Depth,
+        _remaining_depth: Depth,
     ) -> bool {
         lazy_static! {
             // TODO: perform a one-time check that this matches the search generator indexing.

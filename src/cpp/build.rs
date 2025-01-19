@@ -1,7 +1,6 @@
 fn main() {
     let cpp_files = [
         "antipode.cpp",
-        "calcsymm.cpp",
         "canon.cpp",
         "cityhash/src/city.cc",
         "cmdlineops.cpp",

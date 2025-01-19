@@ -377,13 +377,7 @@ Depending on the target:
 
 - An appropriate C++ compiler.
 - Rust and `cargo` (e.g. via [`rustup.rs`](https://rustup.rs/))
-- [`cargo-run-bin`](https://crates.io/crates/cargo-run-bin)
 - [`bun`](https://bun.sh/)
-
-Automatically installed into the repository:
-
-- [`wasm-pack`](https://github.com/rustwasm/wasm-pack)
-- [`cbindgen`](https://github.com/mozilla/cbindgen)
 
 ## License
 

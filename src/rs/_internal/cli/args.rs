@@ -36,7 +36,7 @@ pub enum CliCommand {
     /// Run a single search.
     Search(SearchCommandArgs),
     /// Run a search server.
-    /// Use with: <https://experiments.cubing.net/cubing.js/twsearch/text-ui.html>
+    /// Use with: https://experiments.cubing.net/cubing.js/twsearch/text-ui.html
     Serve(ServeCommandArgs),
 
     // TOOD: Detect identical pieces and warn/error (and give advice on how to run the "same" search with fully-distinguishable pieces).

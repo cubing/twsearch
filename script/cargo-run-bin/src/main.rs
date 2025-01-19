@@ -1,12 +1,7 @@
 use std::{env, process};
 
 fn main() {
-    for argument in env::args() {
-        println!("{argument}");
-    }
     let res = cargo_run_bin::cli::run();
-
-    dbg!(&res);
 
     // Only reached if run-bin code fails, otherwise process exits early from within
     // binary::run.

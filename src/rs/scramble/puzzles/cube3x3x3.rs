@@ -133,12 +133,26 @@ impl Scramble3x3x3TwoPhase {
         pattern: &KPattern,
         constraints: PrefixOrSuffixConstraints,
     ) -> Alg {
-        let (canonical_fsm_pre_moves, canonical_fsm_post_moves) = match constraints {
-            PrefixOrSuffixConstraints::None => (None, None),
+        // TODO: we pass premoves and postmoves to both phases in case the other
+        // turns out to have an empty alg solution. We can handle this better by making
+        // a way to bridge the FSM between phases.
+        let (
+            canonical_fsm_pre_moves_phase1,
+            canonical_fsm_post_moves_phase1,
+            canonical_fsm_pre_moves_phase2,
+            canonical_fsm_post_moves_phase2,
+        ) = match constraints {
+            PrefixOrSuffixConstraints::None => (None, None, None, None),
             PrefixOrSuffixConstraints::ForFMC => {
                 // For the pre-moves, we don't have to specify R' and U' because we know the FSM only depends on the final `F` move.
                 // For similar reasons, we only have to specify R' for the post-moves.
-                (Some(vec![parse_move!("F")]), Some(vec![parse_move!("R'")]))
+                (
+                    Some(vec![parse_move!("F")]),
+                    Some(vec![parse_move!("R'")]),
+                    // TODO: support a way to specify a quantum factor
+                    Some(vec![parse_move!("F2'")]),
+                    Some(vec![parse_move!("R2'")]),
+                )
             }
         };
 
@@ -149,8 +163,8 @@ impl Scramble3x3x3TwoPhase {
                     &phase1_search_pattern,
                     IndividualSearchOptions {
                         min_num_solutions: Some(1),
-                        canonical_fsm_pre_moves,
-                        canonical_fsm_post_moves, // TODO: We currently need to pass this in case phase 2 return the empty alg. Can we handle this in another way?
+                        canonical_fsm_pre_moves: canonical_fsm_pre_moves_phase1,
+                        canonical_fsm_post_moves: canonical_fsm_post_moves_phase1,
                         ..Default::default()
                     },
                 )
@@ -166,6 +180,8 @@ impl Scramble3x3x3TwoPhase {
                     &phase2_search_pattern,
                     IndividualSearchOptions {
                         min_num_solutions: Some(1),
+                        canonical_fsm_pre_moves: canonical_fsm_pre_moves_phase2,
+                        canonical_fsm_post_moves: canonical_fsm_post_moves_phase2,
                         ..Default::default()
                     },
                 )

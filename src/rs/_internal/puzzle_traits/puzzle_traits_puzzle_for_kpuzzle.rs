@@ -1,9 +1,8 @@
-use std::hash::BuildHasher;
-
 use cubing::{
     alg::Move,
     kpuzzle::{InvalidAlgError, KPattern, KPuzzle, KTransformation, KTransformationBuffer},
 };
+use gxhash::gxhash64;
 
 use crate::_internal::{
     canonical_fsm::search_generators::MoveTransformationInfo, search::move_count::MoveCount,
@@ -72,8 +71,8 @@ impl SemiGroupActionPuzzle for KPuzzle {
 
 impl HashablePatternPuzzle for KPuzzle {
     fn pattern_hash_u64(&self, pattern: &Self::Pattern) -> u64 {
-        let h = cityhasher::CityHasher::new();
-        h.hash_one(unsafe { pattern.byte_slice() })
+        let seed = 1234;
+        gxhash64(unsafe { pattern.byte_slice() }, seed)
     }
 }
 

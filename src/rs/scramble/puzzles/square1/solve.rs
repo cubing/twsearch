@@ -1,5 +1,6 @@
 // use std::time::{Duration, Instant};
 
+use cubing::alg::parse_alg;
 use cubing::kpuzzle::KPuzzle;
 use cubing::{
     alg::{parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},
@@ -61,11 +62,7 @@ impl Square1Solver {
             )
             .unwrap();
 
-        let square1_phase2_puzzle: Square1Phase2Puzzle = Square1Phase2Puzzle::new(
-            kpuzzle.clone(),
-            kpuzzle.default_pattern(),
-            generator_moves.clone(),
-        );
+        let square1_phase2_puzzle: Square1Phase2Puzzle = Square1Phase2Puzzle::new();
         let phase2_target_pattern = square1_phase2_puzzle
             .full_pattern_to_phase_coordinate(&kpuzzle.default_pattern())
             .unwrap();

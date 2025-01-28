@@ -69,6 +69,10 @@ pub(crate) struct Phase2EdgesCoordinate {
 }
 
 impl SemanticCoordinate<KPuzzle> for Phase2EdgesCoordinate {
+    fn phase_name() -> &'static str {
+        "Edges (Square-1 → phase 2)"
+    }
+
     fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
         // TODO: this isn't a full validity check for scramble positions.
         if !Phase2Checker::is_valid(full_pattern) {
@@ -92,6 +96,10 @@ pub(crate) struct Phase2CornersCoordinate {
 }
 
 impl SemanticCoordinate<KPuzzle> for Phase2CornersCoordinate {
+    fn phase_name() -> &'static str {
+        "Corners (Square-1 → phase 2)"
+    }
+
     fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
         // TODO: this isn't a full validity check for scramble positions.
         if !Phase2Checker::is_valid(full_pattern) {
@@ -115,6 +123,10 @@ pub(crate) struct Phase2EquatorCoordinate {
 }
 
 impl SemanticCoordinate<KPuzzle> for Phase2EquatorCoordinate {
+    fn phase_name() -> &'static str {
+        "Equator (Square-1 → phase 2)"
+    }
+
     fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
         // TODO: this isn't a full validity check for scramble positions.
         if !Phase2Checker::is_valid(full_pattern) {

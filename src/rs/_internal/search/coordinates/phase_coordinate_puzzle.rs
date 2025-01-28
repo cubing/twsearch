@@ -38,6 +38,7 @@ pub trait SemanticCoordinate<TPuzzle: SemiGroupActionPuzzle>: Eq + Hash + Clone 
 where
     Self: std::marker::Sized,
 {
+    fn phase_name() -> &'static str; // TODO: signature
     fn try_new(puzzle: &TPuzzle, pattern: &TPuzzle::Pattern) -> Option<Self>;
 }
 
@@ -161,10 +162,12 @@ where
             index_to_representative_pattern.push(representative_pattern);
         }
 
-        // eprintln!(
-        //     "PhaseCoordinatePuzzle has {} patterns.",
-        //     index_to_semantic_coordinate.len()
-        // );
+        // TODO: place this behind `SearchLogger`.
+        eprintln!(
+            "[PhaseCoordinatePuzzle] {} has {} patterns.",
+            TSemanticCoordinate::phase_name(),
+            index_to_semantic_coordinate.len()
+        );
 
         let mut move_application_table: IndexedVec<
             PhaseCoordinateIndex<Self>,

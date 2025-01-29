@@ -70,7 +70,7 @@ pub(crate) struct Square1Phase1Coordinate {
 
 impl SemanticCoordinate<KPuzzle> for Square1Phase1Coordinate {
     fn phase_name() -> &'static str {
-        "Shape (Square-1 → phase 1)"
+        "U/D shape (Square-1 → phase 1)"
     }
 
     fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {

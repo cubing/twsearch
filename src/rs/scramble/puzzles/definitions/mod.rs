@@ -11,8 +11,8 @@ kpuzzle_from_json_file!(pub(crate), skewb_fixed_corner_with_co_tweaks, "skewb-fi
 
 kpuzzle_from_json_file!(pub(crate), square1_unbandaged, "square1-unbandaged.kpuzzle.json");
 kpattern_from_json_file!(pub(crate), square1_square_square_shape, "square1-square-square-shape.target-pattern.json", square1_unbandaged_kpuzzle());
+kpattern_from_json_file!(pub(crate), square1_shape, "square1-shape.mask-pattern.json", square1_unbandaged_kpuzzle());
 kpattern_from_json_file!(pub(crate), square1_edges, "square1-edges.mask-pattern.json", square1_unbandaged_kpuzzle());
 kpattern_from_json_file!(pub(crate), square1_corners, "square1-corners.mask-pattern.json", square1_unbandaged_kpuzzle());
-kpattern_from_json_file!(pub(crate), square1_equator, "square1-equator.mask-pattern.json", square1_unbandaged_kpuzzle());
 
 kpuzzle_from_json_file!(pub(crate), baby_fto, "baby_fto.kpuzzle.json");

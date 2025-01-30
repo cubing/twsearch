@@ -1,6 +1,5 @@
 // use std::time::{Duration, Instant};
 
-use cubing::alg::parse_alg;
 use cubing::kpuzzle::KPuzzle;
 use cubing::{
     alg::{parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},

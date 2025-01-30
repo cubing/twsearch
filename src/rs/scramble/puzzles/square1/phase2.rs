@@ -1,7 +1,8 @@
 use cubing::{
-    alg::parse_alg,
+    alg::{parse_alg, parse_move, Alg, Move, QuantumMove},
     kpuzzle::{KPattern, KPuzzle},
 };
+use lazy_static::lazy_static;
 
 use crate::{
     _internal::{
@@ -30,7 +31,9 @@ use crate::{
                 square1_corners_kpattern, square1_edges_kpattern, square1_shape_kpattern,
                 square1_unbandaged_kpuzzle,
             },
-            square1::wedges::{WedgeType, WEDGE_TYPE_LOOKUP},
+            square1::wedges::{
+                WedgeType, FIRST_WEDGE_INDEX_D, FIRST_WEDGE_INDEX_U, WEDGE_TYPE_LOOKUP,
+            },
         },
         scramble_search::move_list_from_vec,
     },
@@ -203,6 +206,29 @@ pub struct Square1Phase2Puzzle {
     corners_puzzle: PhaseCoordinatePuzzle<KPuzzle, Phase2CornersCoordinate>,
 }
 
+#[allow(non_snake_case)]
+fn square1_tuple(U_SQ_amount: i32, D_SQ_amount: i32) -> Alg {
+    lazy_static! {
+        static ref U_SQ_: Move = parse_move!("U_SQ_");
+        static ref D_SQ_: Move = parse_move!("D_SQ_");
+    };
+
+    Alg {
+        nodes: vec![
+            Move {
+                quantum: U_SQ_.quantum.clone(),
+                amount: U_SQ_amount,
+            }
+            .into(),
+            Move {
+                quantum: D_SQ_.quantum.clone(),
+                amount: D_SQ_amount,
+            }
+            .into(),
+        ],
+    }
+}
+
 impl Square1Phase2Puzzle {
     pub fn new() -> Self {
         let kpuzzle = square1_unbandaged_kpuzzle();
@@ -252,24 +278,53 @@ impl Square1Phase2Puzzle {
         }
     }
 
+    // TODO: make this more elegant
     // TODO: report errors for invalid patterns
+    /// Currently assumes the input is square-square with left equator solved.
     pub fn full_pattern_to_phase_coordinate(
         &self,
         pattern: &KPattern,
     ) -> Result<Square1Phase2TripleCoordinate, PhaseCoordinateConversionError> {
+        let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
+        assert_eq!(orbit_info.name.0, "WEDGES");
+
+        // Calculate the `U_SQ_`` move amount that needs to be applied to edges/corners to match the lookup table (which is `(1, 0)` away from solved).
+        // Note that the tuples look like Square-1 move tuples, but are in fact not (they both correspond to U moves).
+        #[allow(non_snake_case)]
+        let (edges_U_SQ_amount, corners_U_SQ_amount) =
+            match WEDGE_TYPE_LOOKUP[pattern.get_piece(orbit_info, FIRST_WEDGE_INDEX_U) as usize] {
+                WedgeType::CornerLower => (-2, 1),
+                WedgeType::CornerUpper => (-1, -1),
+                WedgeType::Edge => (0, 0),
+            };
+
+        // TODO: unify with U calculations?
+        #[allow(non_snake_case)]
+        let (edges_D_SQ_amount, corners_D_SQ_amount) =
+            match WEDGE_TYPE_LOOKUP[pattern.get_piece(orbit_info, FIRST_WEDGE_INDEX_D) as usize] {
+                WedgeType::CornerLower => (-2, 1),
+                WedgeType::CornerUpper => (-1, -1),
+                WedgeType::Edge => (0, 0),
+            };
+
         let Ok(equator) = self
             .equator_puzzle
             .full_pattern_to_phase_coordinate(pattern)
         else {
             return Err(PhaseCoordinateConversionError::InvalidSemanticCoordinate);
         };
-        let Ok(edges) = self.edges_puzzle.full_pattern_to_phase_coordinate(pattern) else {
+        let Ok(edges) = self.edges_puzzle.full_pattern_to_phase_coordinate(
+            &pattern
+                .apply_alg(&square1_tuple(edges_U_SQ_amount, edges_D_SQ_amount))
+                .unwrap(),
+        ) else {
             return Err(PhaseCoordinateConversionError::InvalidSemanticCoordinate);
         };
-        let Ok(corners) = self
-            .corners_puzzle
-            .full_pattern_to_phase_coordinate(pattern)
-        else {
+        let Ok(corners) = self.corners_puzzle.full_pattern_to_phase_coordinate(
+            &pattern
+                .apply_alg(&square1_tuple(corners_U_SQ_amount, corners_D_SQ_amount))
+                .unwrap(),
+        ) else {
             return Err(PhaseCoordinateConversionError::InvalidSemanticCoordinate);
         };
         Ok(Square1Phase2TripleCoordinate {

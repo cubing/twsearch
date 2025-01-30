@@ -40,7 +40,7 @@ pub fn scramble_baby_fto() -> Alg {
         .unwrap(),
     );
 
-    let generator_moves = move_list_from_vec(vec!["U", "L", "F", "R", "D"]);
+    let generator_moves = move_list_from_vec(vec!["U", "L", "F", "R", "BR"]);
     let mut search = <FilteredSearch>::new(
         IDFSearch::try_new(
             kpuzzle.clone(),

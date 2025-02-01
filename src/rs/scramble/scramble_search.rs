@@ -61,7 +61,7 @@ impl<
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
                     min_depth: Some(Depth(0)),
-                    max_depth: Some(Depth(min_optimal_moves.0 - 1)),
+                    max_depth: Some(Depth(min_optimal_moves.0)),
                     ..Default::default()
                 },
             )

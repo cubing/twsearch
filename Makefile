@@ -41,7 +41,7 @@ reset: clean
 lint: lint-cpp lint-js lint-rust
 
 .PHONY: format
-format: format-cpp format-js
+format: format-cpp format-js format-rust
 
 .PHONY: publish
 publish: test-rust publish-rust

@@ -16,6 +16,12 @@ build-rust:
 .PHONY: lint-rust
 lint-rust:
 	cargo clippy -- --deny warnings
+	cargo fmt --check
+
+.PHONY: format-rust
+format-rust:
+	cargo clippy --fix
+	cargo fmt
 
 .PHONY: publish-rust
 publish-rust: publish-rust-main publish-rust-ffi

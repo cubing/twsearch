@@ -5,7 +5,9 @@ use lazy_static::lazy_static;
 use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
-    _internal::search::{pattern_validity_checker::PatternValidityChecker, mask_pattern::apply_mask},
+    _internal::search::{
+        mask_pattern::apply_mask, pattern_validity_checker::PatternValidityChecker,
+    },
     scramble::{
         puzzles::square1::phase1::Phase1Checker,
         randomize::{

@@ -163,11 +163,11 @@ where
         }
 
         // TODO: place this behind `SearchLogger`.
-        eprintln!(
-            "[PhaseCoordinatePuzzle] {} has {} patterns.",
-            TSemanticCoordinate::phase_name(),
-            index_to_semantic_coordinate.len()
-        );
+        // eprintln!(
+        //     "[PhaseCoordinatePuzzle] {} has {} patterns.",
+        //     TSemanticCoordinate::phase_name(),
+        //     index_to_semantic_coordinate.len()
+        // );
 
         let mut move_application_table: IndexedVec<
             PhaseCoordinateIndex<Self>,

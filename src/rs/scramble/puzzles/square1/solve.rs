@@ -1,10 +1,13 @@
 // use std::time::{Duration, Instant};
 
+use std::sync::Mutex;
+
 use cubing::kpuzzle::KPuzzle;
 use cubing::{
     alg::{parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},
     kpuzzle::KPattern,
 };
+use lazy_static::lazy_static;
 
 use crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle;
 use crate::_internal::search::hash_prune_table::HashPruneTable;
@@ -48,7 +51,18 @@ pub(crate) struct Square1Solver {
     pub(crate) depth_filtering_search: FilteredSearch<KPuzzle, FilteringSearchAdaptations>,
 }
 
+lazy_static! {
+    pub(crate) static ref SQUARE1_SOLVER: Mutex<Square1Solver> = Mutex::new(Square1Solver::new());
+}
+
 impl Square1Solver {
+    /// Usage: `Square1Solver::get_globally_shared().lock().unwrap()`
+    /// Note that usage is exclusive, and no search can start until all previous onces finish.
+    // TODO: make a better pattern for this.
+    pub(crate) fn get_globally_shared() -> &'static SQUARE1_SOLVER {
+        &SQUARE1_SOLVER
+    }
+
     pub(crate) fn new() -> Self {
         let kpuzzle = square1_unbandaged_kpuzzle();
         let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);

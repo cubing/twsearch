@@ -2,6 +2,7 @@ import { Alg } from "cubing/alg";
 import type { KPattern, KPuzzleDefinition } from "cubing/kpuzzle";
 import {
   default as init,
+  experimentalWASMSolveSquare1Pattern as rawExperimentalWASMSolveSquare1Pattern,
   wasmRandomScrambleForEvent as rawWasmRandomScrambleForEvent,
   wasmTwsearch as rawWasmTwsearch,
 } from "../../.temp/rust-wasm/twsearch_wasm";
@@ -39,6 +40,17 @@ export async function wasmTwsearch(
       // biome-ignore lint/complexity/useLiteralKeys: JSON field access
       JSON.stringify(searchPattern.toJSON()["patternData"]),
       JSON.stringify(options),
+    ),
+  );
+}
+
+export async function experimentalWASMSolveSquare1Pattern(
+  searchPattern: KPattern,
+): Promise<Alg> {
+  await initWrapper();
+  return new Alg(
+    rawExperimentalWASMSolveSquare1Pattern(
+      JSON.stringify(searchPattern.patternData),
     ),
   );
 }

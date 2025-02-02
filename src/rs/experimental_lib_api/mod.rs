@@ -16,3 +16,6 @@ mod simple_mask_multiphase_search;
 pub use simple_mask_multiphase_search::{
     SimpleMaskMultiphaseSearch, SimpleMaskPhase, SimpleMaskPhaseInfo,
 };
+
+mod solve_square1_pattern;
+pub use solve_square1_pattern::{solve_square1_pattern, solve_square1_pattern_from_json_data};

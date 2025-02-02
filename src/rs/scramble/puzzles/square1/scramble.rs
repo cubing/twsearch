@@ -1,7 +1,6 @@
-use std::{env::var, str::FromStr, sync::Mutex};
+use std::{env::var, str::FromStr};
 
 use cubing::{alg::Alg, kpuzzle::KPattern};
-use lazy_static::lazy_static;
 use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
@@ -66,11 +65,10 @@ impl Square1Solver {
 }
 
 pub(crate) fn scramble_square1() -> Alg {
-    // TODO: figure out a better pattern for this?
-    lazy_static! {
-        static ref SQUARE1_SOLVER: Mutex<Square1Solver> = Mutex::new(Square1Solver::new());
-    }
-    SQUARE1_SOLVER.lock().unwrap().scramble_square1()
+    Square1Solver::get_globally_shared()
+        .lock()
+        .unwrap()
+        .scramble_square1()
 }
 
 fn random_pattern_without_depth_filtering() -> KPattern {

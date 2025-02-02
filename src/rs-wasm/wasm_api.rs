@@ -3,6 +3,7 @@ use cubing::kpuzzle::{KPattern, KPatternData, KPuzzle};
 use serde::{Deserialize, Serialize};
 use twsearch::_internal::cli::args::{CustomGenerators, Generators};
 use twsearch::_internal::search::idf_search::idf_search::{IDFSearch, IndividualSearchOptions};
+use twsearch::experimental_lib_api::solve_square1_pattern_from_json_data;
 use wasm_bindgen::prelude::*;
 
 use twsearch::scramble::{random_scramble_for_event, Event};
@@ -89,5 +90,20 @@ pub fn wasmRandomScrambleForEvent(event_str: String) -> Result<String, String> {
     match random_scramble_for_event(event) {
         Ok(scramble) => Ok(scramble.to_string()),
         Err(e) => Err(e.description),
+    }
+}
+
+#[wasm_bindgen]
+#[allow(non_snake_case)]
+pub fn experimentalWASMSolveSquare1Pattern(pattern_json: String) -> Result<String, String> {
+    internal_init();
+
+    let Ok(pattern_data) = serde_json::from_str::<KPatternData>(&pattern_json) else {
+        return Err("Invalid Square-1 pattern data".to_owned());
+    };
+
+    match solve_square1_pattern_from_json_data(&pattern_data) {
+        Ok(alg) => Ok(alg.to_string()),
+        Err(err) => Err(err.description),
     }
 }

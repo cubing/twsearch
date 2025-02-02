@@ -8,6 +8,6 @@ pub mod pyraminx;
 pub mod skewb;
 pub mod square1;
 
-mod definitions;
+pub(crate) mod definitions;
 
 mod static_move_list;

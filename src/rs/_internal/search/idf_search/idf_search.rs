@@ -194,8 +194,8 @@ impl Default for IDFSearchConstructionOptions {
 
 impl<
         TPuzzle: SemiGroupActionPuzzle + DefaultSearchAdaptations<TPuzzle>,
-        Optimizations: SearchAdaptations<TPuzzle>,
-    > IDFSearch<TPuzzle, Optimizations>
+        Adaptations: SearchAdaptations<TPuzzle>,
+    > IDFSearch<TPuzzle, Adaptations>
 {
     pub fn try_new(
         tpuzzle: TPuzzle,
@@ -222,7 +222,7 @@ impl<
             search_logger: options.search_logger.clone(),
         });
 
-        let prune_table = Optimizations::PruneTable::new(
+        let prune_table = Adaptations::PruneTable::new(
             tpuzzle,
             api_data.clone(),
             options.search_logger,
@@ -325,7 +325,7 @@ impl<
     ) -> SearchRecursionResult {
         let current_pattern = pattern_stack.current_pattern();
         // TODO: apply invalid checks only to intermediate state (i.e. exclude remaining_depth == 0)?
-        if !Optimizations::PatternTraversalFilter::is_valid(current_pattern) {
+        if !Adaptations::PatternTraversalFilter::is_valid(current_pattern) {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
 
@@ -360,7 +360,7 @@ impl<
             };
 
             for move_transformation_info in move_transformation_multiples {
-                if !Optimizations::TransformationTraversalFilter::keep_move(
+                if !Adaptations::TransformationTraversalFilter::keep_move(
                     move_transformation_info,
                     remaining_depth,
                 ) {

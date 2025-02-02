@@ -425,7 +425,7 @@ impl<
     }
 }
 
-pub struct TriplePhaseCoordinateSearchOptimizations<
+pub struct TriplePhaseCoordinateSearchAdaptations<
     TPuzzle: SemiGroupActionPuzzle,
     TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
     TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
@@ -453,7 +453,7 @@ impl<
             TSemanticCoordinate3,
         >,
     >
-    for TriplePhaseCoordinateSearchOptimizations<
+    for TriplePhaseCoordinateSearchAdaptations<
         TPuzzle,
         TSemanticCoordinate1,
         TSemanticCoordinate2,
@@ -491,7 +491,7 @@ impl<
         TSemanticCoordinate3,
     >
 {
-    type Adaptations = TriplePhaseCoordinateSearchOptimizations<
+    type Adaptations = TriplePhaseCoordinateSearchAdaptations<
         TPuzzle,
         TSemanticCoordinate1,
         TSemanticCoordinate2,

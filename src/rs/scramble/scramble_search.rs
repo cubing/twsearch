@@ -26,21 +26,21 @@ pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
 
 pub struct FilteredSearch<
     TPuzzle: SemiGroupActionPuzzle + DefaultSearchAdaptations<TPuzzle> = KPuzzle,
-    Optimizations: SearchAdaptations<TPuzzle> = <TPuzzle as DefaultSearchAdaptations<
+    Adaptations: SearchAdaptations<TPuzzle> = <TPuzzle as DefaultSearchAdaptations<
         TPuzzle,
     >>::Adaptations,
 > {
-    pub(crate) idfs: IDFSearch<TPuzzle, Optimizations>,
+    pub(crate) idfs: IDFSearch<TPuzzle, Adaptations>,
 
-    phantom_data: PhantomData<(TPuzzle, Optimizations)>,
+    phantom_data: PhantomData<(TPuzzle, Adaptations)>,
 }
 
 impl<
         TPuzzle: SemiGroupActionPuzzle + DefaultSearchAdaptations<TPuzzle>,
-        Optimizations: SearchAdaptations<TPuzzle>,
-    > FilteredSearch<TPuzzle, Optimizations>
+        Adaptations: SearchAdaptations<TPuzzle>,
+    > FilteredSearch<TPuzzle, Adaptations>
 {
-    pub fn new(idfs: IDFSearch<TPuzzle, Optimizations>) -> Self {
+    pub fn new(idfs: IDFSearch<TPuzzle, Adaptations>) -> Self {
         Self {
             idfs,
             phantom_data: PhantomData,

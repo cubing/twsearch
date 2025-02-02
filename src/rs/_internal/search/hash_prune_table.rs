@@ -82,7 +82,7 @@ pub struct HashPruneTable<
     // We would store a `tpuzzle` here, but the one stored in `.mutable` is sufficient.
     immutable: HashPruneTableImmutableData<TPuzzle>,
     mutable: HashPruneTableMutableData<TPuzzle>,
-    phantom_validity_checker: PhantomData<TPatternTraversalFilter>,
+    phantom_data: PhantomData<TPatternTraversalFilter>,
 }
 
 impl<
@@ -176,7 +176,7 @@ impl<
                 ),
                 search_logger,
             },
-            phantom_validity_checker: PhantomData,
+            phantom_data: PhantomData,
         };
         prune_table.extend_for_search_depth(Depth(0), 1);
         prune_table

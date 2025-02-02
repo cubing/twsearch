@@ -379,7 +379,7 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
 }
 
 // TODO: simplify the default for below.
-pub struct PhaseCoordinatePuzzleSearchOptimizations<
+pub struct PhaseCoordinatePuzzleAdaptations<
     TPuzzle: SemiGroupActionPuzzle,
     TSemanticCoordinate: SemanticCoordinate<TPuzzle>,
 > {
@@ -388,7 +388,7 @@ pub struct PhaseCoordinatePuzzleSearchOptimizations<
 
 impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPuzzle>>
     SearchAdaptations<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>
-    for PhaseCoordinatePuzzleSearchOptimizations<TPuzzle, TSemanticCoordinate>
+    for PhaseCoordinatePuzzleAdaptations<TPuzzle, TSemanticCoordinate>
 {
     type PruneTable = PhaseCoordinatePruneTable<TPuzzle, TSemanticCoordinate>;
     type PatternTraversalFilter = PatternTraversalFilterNoOp; // TODO: reconcile this with fallible transformation application.
@@ -399,5 +399,5 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
     DefaultSearchAdaptations<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>
     for PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>
 {
-    type Adaptations = PhaseCoordinatePuzzleSearchOptimizations<TPuzzle, TSemanticCoordinate>;
+    type Adaptations = PhaseCoordinatePuzzleAdaptations<TPuzzle, TSemanticCoordinate>;
 }

@@ -9,6 +9,7 @@ for (const eventID of [
   "555",
   "666",
   "777",
+  "sq1",
   ...new Array(10).fill("333"),
 ]) {
   const startTime = performance.now();

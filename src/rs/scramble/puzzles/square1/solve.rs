@@ -45,6 +45,7 @@ pub(crate) struct Square1Solver {
     phase1_idfs: IDFSearch<Square1Phase1Puzzle, Square1Phase1SearchAdaptations>,
     square1_phase2_puzzle: Square1Phase2Puzzle,
     phase2_idfs: IDFSearch<Square1Phase2Puzzle, Square1Phase2SearchAdaptations>,
+    // TODO: lazy-initialize `depth_filtering_search`?
     pub(crate) depth_filtering_search: FilteredSearch<KPuzzle, FilteringSearchAdaptations>,
 }
 

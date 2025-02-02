@@ -7,6 +7,10 @@ use cubing::{
 };
 
 use crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle;
+use crate::_internal::search::hash_prune_table::HashPruneTable;
+use crate::_internal::search::idf_search::search_adaptations::SearchAdaptations;
+use crate::_internal::search::transformation_traversal_filter_trait::TransformationTraversalFilterNoOp;
+use crate::scramble::scramble_search::FilteredSearch;
 use crate::{
     _internal::search::{
         coordinates::phase_coordinate_puzzle::PhaseCoordinatePuzzle,
@@ -24,14 +28,24 @@ use crate::{
 use super::super::definitions::square1_unbandaged_kpuzzle;
 use super::phase1::{Square1Phase1Coordinate, Square1Phase1SearchAdaptations};
 use super::phase2::{Square1Phase2Puzzle, Square1Phase2SearchAdaptations};
+use super::square1_shape_traversal_filter::Square1ShapeTraversalFilter;
 
 const DEV_DEBUG_SQUARE1: bool = false;
+
+pub(crate) struct FilteringSearchAdaptations {}
+
+impl SearchAdaptations<KPuzzle> for FilteringSearchAdaptations {
+    type PruneTable = HashPruneTable<KPuzzle, Square1ShapeTraversalFilter>;
+    type PatternTraversalFilter = Square1ShapeTraversalFilter;
+    type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
+}
 
 pub(crate) struct Square1Solver {
     square1_phase1_puzzle: Square1Phase1Puzzle,
     phase1_idfs: IDFSearch<Square1Phase1Puzzle, Square1Phase1SearchAdaptations>,
     square1_phase2_puzzle: Square1Phase2Puzzle,
     phase2_idfs: IDFSearch<Square1Phase2Puzzle, Square1Phase2SearchAdaptations>,
+    pub(crate) depth_filtering_search: FilteredSearch<KPuzzle, FilteringSearchAdaptations>,
 }
 
 impl Square1Solver {
@@ -76,11 +90,27 @@ impl Square1Solver {
                 },
             )
             .unwrap();
+
+        let depth_filtering_search = {
+            let kpuzzle = square1_unbandaged_kpuzzle();
+            let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
+
+            let idfs = IDFSearch::<KPuzzle, FilteringSearchAdaptations>::try_new(
+                kpuzzle.clone(),
+                generator_moves,
+                kpuzzle.default_pattern(),
+                Default::default(),
+            )
+            .unwrap();
+            FilteredSearch::<KPuzzle, FilteringSearchAdaptations>::new(idfs)
+        };
+
         Self {
             square1_phase1_puzzle,
             phase1_idfs,
             square1_phase2_puzzle,
             phase2_idfs,
+            depth_filtering_search,
         }
     }
 

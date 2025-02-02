@@ -6,10 +6,11 @@ use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
     _internal::search::{
-        mask_pattern::apply_mask, pattern_traversal_filter_trait::PatternTraversalFilter,
+        mask_pattern::apply_mask, move_count::MoveCount,
+        pattern_traversal_filter_trait::PatternTraversalFilter,
     },
     scramble::{
-        puzzles::square1::phase1::Phase1Checker,
+        puzzles::square1::square1_shape_traversal_filter::Square1ShapeTraversalFilter,
         randomize::{
             randomize_orbit_naïve, ConstraintForFirstPiece, OrbitRandomizationConstraints,
         },
@@ -20,6 +21,9 @@ use super::{
     super::definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
     solve::Square1Solver,
 };
+
+// https://www.worldcubeassociation.org/regulations/#4b3d
+const SQUARE_1_SCRAMBLE_MIN_OPTIMAL_MOVE_COUNT: MoveCount = MoveCount(11);
 
 const DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG: &str = "(-2, 3) / (-1, 2) / (-5, -2) / (3, -3) / (-4, 5) / (0, -2) / (0, -3) / (-2, -3) / (0, -4) / (2, 0) / (-3, 2) / (0, 2)";
 
@@ -41,10 +45,23 @@ impl Square1Solver {
                 .apply_alg(&Alg::from_str(DEBUG_STATIC_SQUARE_1_SCRAMBLE_SETUP_ALG).unwrap())
                 .unwrap()
         } else {
-            random_pattern()
+            self.random_depth_filtered_pattern()
         };
 
         self.solve_square1(&pattern).unwrap()
+    }
+
+    fn random_depth_filtered_pattern(&mut self) -> KPattern {
+        loop {
+            let pattern = random_pattern_without_depth_filtering();
+            if self
+                .depth_filtering_search
+                .filter(&pattern, SQUARE_1_SCRAMBLE_MIN_OPTIMAL_MOVE_COUNT)
+                .is_none()
+            {
+                return pattern;
+            }
+        }
     }
 }
 
@@ -56,7 +73,7 @@ pub(crate) fn scramble_square1() -> Alg {
     SQUARE1_SOLVER.lock().unwrap().scramble_square1()
 }
 
-fn random_pattern() -> KPattern {
+fn random_pattern_without_depth_filtering() -> KPattern {
     let mut rng = thread_rng();
 
     loop {
@@ -105,7 +122,10 @@ fn random_pattern() -> KPattern {
         let phase1_start_pattern =
             apply_mask(&scramble_pattern, square1_square_square_shape_kpattern()).unwrap();
 
-        if Phase1Checker::is_valid(&phase1_start_pattern) {
+        // Note: it is not safe in general to use a traversal filter for
+        // scramble pattern filtering. However, this is safe here due to the
+        // properties of the Square-1 puzzle.
+        if Square1ShapeTraversalFilter::is_valid(&phase1_start_pattern) {
             return scramble_pattern;
         }
     }

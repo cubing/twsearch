@@ -19,41 +19,15 @@ use crate::{
             transformation_traversal_filter_trait::TransformationTraversalFilter,
         },
     },
-    scramble::{
-        puzzles::square1::wedges::{WedgeType, WEDGE_TYPE_LOOKUP},
-        randomize::BasicParity,
-    },
+    scramble::randomize::BasicParity,
 };
 
 use super::{
     super::definitions::square1_square_square_shape_kpattern, parity::bandaged_wedge_parity,
-    solve::Square1SearchPhase,
+    solve::Square1SearchPhase, square1_shape_traversal_filter::Square1ShapeTraversalFilter,
 };
 
 use lazy_static::lazy_static;
-
-pub(crate) struct Phase1Checker;
-
-const SLOTS_THAT_ARE_AFTER_SLICES: [u8; 4] = [0, 6, 12, 18];
-
-impl PatternTraversalFilter<KPuzzle> for Phase1Checker {
-    fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
-        let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
-        assert_eq!(orbit_info.name.0, "WEDGES");
-
-        for slot in SLOTS_THAT_ARE_AFTER_SLICES {
-            let value = pattern.get_piece(orbit_info, slot);
-
-            // TODO: consider removing this lookup. We know that the wedge values are only 0, 1, or
-            // 2 during this phase.
-            if WEDGE_TYPE_LOOKUP[value as usize] == WedgeType::CornerUpper {
-                return false;
-            }
-        }
-
-        true
-    }
-}
 
 // Note that this entire struct consists of single coordinate.
 // The fields themselves are more like "subcoordinates" rather than coordinates in themselves.
@@ -76,7 +50,7 @@ impl SemanticCoordinate<KPuzzle> for Square1Phase1Coordinate {
         };
 
         // TODO: this isn't a full validity check for scramble positions.
-        if !Phase1Checker::is_valid(&masked_pattern) {
+        if !Square1ShapeTraversalFilter::is_valid(&masked_pattern) {
             return None;
         }
 

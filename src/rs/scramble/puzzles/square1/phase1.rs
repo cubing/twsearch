@@ -42,11 +42,7 @@ impl PatternValidityChecker<KPuzzle> for Phase1Checker {
         assert_eq!(orbit_info.name.0, "WEDGES");
 
         for slot in SLOTS_THAT_ARE_AFTER_SLICES {
-            let value = unsafe {
-                pattern
-                    .packed_orbit_data()
-                    .get_raw_piece_or_permutation_value(orbit_info, slot)
-            };
+            let value = pattern.get_piece(orbit_info, slot);
 
             // TODO: consider removing this lookup. We know that the wedge values are only 0, 1, or
             // 2 during this phase.

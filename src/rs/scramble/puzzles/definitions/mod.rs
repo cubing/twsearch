@@ -14,5 +14,6 @@ kpattern_from_json_file!(pub(crate), square1_square_square_shape, "square1-squar
 kpattern_from_json_file!(pub(crate), square1_shape, "square1-shape.mask-pattern.json", square1_unbandaged_kpuzzle());
 kpattern_from_json_file!(pub(crate), square1_edges, "square1-edges.mask-pattern.json", square1_unbandaged_kpuzzle());
 kpattern_from_json_file!(pub(crate), square1_corners, "square1-corners.mask-pattern.json", square1_unbandaged_kpuzzle());
+kpuzzle_from_json_file!(pub(crate), square0_equatorless, "square0-equatorless.kpuzzle.json");
 
 kpuzzle_from_json_file!(pub(crate), baby_fto, "baby_fto.kpuzzle.json");

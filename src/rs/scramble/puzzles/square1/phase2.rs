@@ -1,6 +1,6 @@
 use cubing::{
     alg::{parse_alg, parse_move, Alg, Move},
-    kpuzzle::{KPattern, KPuzzle},
+    kpuzzle::{KPattern, KPuzzle, KPuzzleOrbitInfo},
 };
 use lazy_static::lazy_static;
 use std::cmp::max;
@@ -24,8 +24,7 @@ use crate::{
     scramble::{
         puzzles::{
             definitions::{
-                square1_corners_kpattern, square1_edges_kpattern, square1_shape_kpattern,
-                square1_unbandaged_kpuzzle,
+                square0_equatorless_kpuzzle, square1_shape_kpattern, square1_unbandaged_kpuzzle,
             },
             square1::wedges::{WedgeType, WEDGE_TYPE_LOOKUP},
         },
@@ -101,55 +100,135 @@ impl SemanticCoordinate<KPuzzle> for Phase2ShapeCoordinate {
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
-pub(crate) struct Phase2EdgesCoordinate {
-    pub(crate) edges: KPattern,
+pub(crate) struct Square0EquatorlessCoordinate {
+    pub(crate) pattern: KPattern,
 }
 
-impl SemanticCoordinate<KPuzzle> for Phase2EdgesCoordinate {
-    fn phase_name() -> &'static str {
-        "Edges (Square-1 → phase 2)"
-    }
-
-    fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
-        // TODO: this isn't a full validity check for scramble positions.
-        if !Phase2Checker::is_valid(full_pattern) {
-            return None;
-        }
-
-        let phase_mask = square1_edges_kpattern(); // TODO: Store this with the coordinate lookup?
-        let Ok(masked_pattern) = apply_mask(full_pattern, phase_mask) else {
-            panic!("Mask application failed");
+const NUM_SQUARE0_EQUATORLESS_WEDGES: u8 = 8;
+impl Square0EquatorlessCoordinate {
+    // TODO: define this as a static method instead and just output a `KPattern` instead of a `Square0EquatorlessCoordinate`? Or ideally add a type-safe way for coordinates to us different masks/conversions into the same coordinates (and tables).
+    fn from_edges_pattern(square1_edges_pattern: &KPattern) -> Self {
+        lazy_static! {
+            static ref orbit_info: &'static KPuzzleOrbitInfo =
+                &square1_unbandaged_kpuzzle().data.ordered_orbit_info[0];
         };
+        assert_eq!(orbit_info.name.0, "WEDGES"); // TODO: only do this at orbit info time, using the former pattern for retrieving an `OrbitInfo` from a definition.
 
-        Some(Self {
-            edges: masked_pattern,
-        })
-    }
-}
+        let mut square0_equatorless_pattern =
+            square0_equatorless_kpuzzle().default_pattern().clone();
 
-#[derive(PartialEq, Eq, Hash, Clone, Debug)]
-pub(crate) struct Phase2CornersCoordinate {
-    pub(crate) corners: KPattern,
-}
-
-impl SemanticCoordinate<KPuzzle> for Phase2CornersCoordinate {
-    fn phase_name() -> &'static str {
-        "Corners (Square-1 → phase 2)"
-    }
-
-    fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
-        // TODO: this isn't a full validity check for scramble positions.
-        if !Phase2Checker::is_valid(full_pattern) {
-            return None;
+        let mut square0_equatorless_i = 0;
+        for square1_i in 0..orbit_info.num_pieces {
+            let piece = square1_edges_pattern.get_piece(&orbit_info, square1_i);
+            let square0_piece = match piece {
+                // TODO: unify this with `WEDGE_TYPE_LOOKUP`?
+                0 => None,
+                1 => None,
+                2 => Some(0),
+                3 => None,
+                4 => None,
+                5 => Some(1),
+                6 => None,
+                7 => None,
+                8 => Some(2),
+                9 => None,
+                10 => None,
+                11 => Some(3),
+                12 => Some(4),
+                13 => None,
+                14 => None,
+                15 => Some(5),
+                16 => None,
+                17 => None,
+                18 => Some(6),
+                19 => None,
+                20 => None,
+                21 => Some(7),
+                22 => None,
+                23 => None,
+                _ => panic!("Invalid edge piece"),
+            };
+            if let Some(square0_piece) = square0_piece {
+                square0_equatorless_pattern.set_piece(
+                    &orbit_info,
+                    square0_equatorless_i,
+                    square0_piece,
+                );
+                square0_equatorless_i += 1;
+            }
         }
+        assert_eq!(square0_equatorless_i, NUM_SQUARE0_EQUATORLESS_WEDGES);
+        Self {
+            pattern: square0_equatorless_pattern,
+        }
+    }
 
-        let phase_mask = square1_corners_kpattern(); // TODO: Store this with the coordinate lookup?
-        let Ok(masked_pattern) = apply_mask(full_pattern, phase_mask) else {
-            panic!("Mask application failed");
+    // TODO: define this as a static method instead and just output a `KPattern` instead of a `Square0EquatorlessCoordinate`? Or ideally add a type-safe way for coordinates to us different masks/conversions into the same coordinates (and tables).
+    fn from_corners_pattern(square1_corners_pattern: &KPattern) -> Self {
+        lazy_static! {
+            static ref orbit_info: &'static KPuzzleOrbitInfo =
+                &square1_unbandaged_kpuzzle().data.ordered_orbit_info[0];
         };
+        assert_eq!(orbit_info.name.0, "WEDGES"); // TODO: only do this at orbit info time, using the former pattern for retrieving an `OrbitInfo` from a definition.
 
+        let mut square0_equatorless_pattern =
+            square0_equatorless_kpuzzle().default_pattern().clone();
+
+        let mut square0_equatorless_i = 0;
+        for square1_i in 0..orbit_info.num_pieces {
+            let piece = square1_corners_pattern.get_piece(&orbit_info, square1_i);
+            let square0_piece = match piece {
+                // TODO: unify this with `WEDGE_TYPE_LOOKUP`?
+                0 => Some(0),
+                1 => None,
+                2 => None,
+                3 => Some(1),
+                4 => None,
+                5 => None,
+                6 => Some(2),
+                7 => None,
+                8 => None,
+                9 => Some(3),
+                10 => None,
+                11 => None,
+                12 => None,
+                13 => Some(4),
+                14 => None,
+                15 => None,
+                16 => Some(5),
+                17 => None,
+                18 => None,
+                19 => Some(6),
+                20 => None,
+                21 => None,
+                22 => Some(7),
+                23 => None,
+                _ => panic!("Invalid corner piece"),
+            };
+            if let Some(square0_piece) = square0_piece {
+                square0_equatorless_pattern.set_piece(
+                    &orbit_info,
+                    square0_equatorless_i,
+                    square0_piece,
+                );
+                square0_equatorless_i += 1;
+            }
+        }
+        assert_eq!(square0_equatorless_i, NUM_SQUARE0_EQUATORLESS_WEDGES);
+        Self {
+            pattern: square0_equatorless_pattern,
+        }
+    }
+}
+
+impl SemanticCoordinate<KPuzzle> for Square0EquatorlessCoordinate {
+    fn phase_name() -> &'static str {
+        "Square-0 equatorless (Square-1 → phase 2)"
+    }
+
+    fn try_new(_kpuzzle: &KPuzzle, pattern: &KPattern) -> Option<Self> {
         Some(Self {
-            corners: masked_pattern,
+            pattern: pattern.clone(),
         })
     }
 }
@@ -158,8 +237,8 @@ impl SemanticCoordinate<KPuzzle> for Phase2CornersCoordinate {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Square1Phase2TripleCoordinate {
     shape: PhaseCoordinateIndex<PhaseCoordinatePuzzle<KPuzzle, Phase2ShapeCoordinate>>, // TODO: rename to "shape"
-    edges: PhaseCoordinateIndex<PhaseCoordinatePuzzle<KPuzzle, Phase2EdgesCoordinate>>,
-    corners: PhaseCoordinateIndex<PhaseCoordinatePuzzle<KPuzzle, Phase2CornersCoordinate>>,
+    edges: PhaseCoordinateIndex<PhaseCoordinatePuzzle<KPuzzle, Square0EquatorlessCoordinate>>,
+    corners: PhaseCoordinateIndex<PhaseCoordinatePuzzle<KPuzzle, Square0EquatorlessCoordinate>>,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -168,8 +247,7 @@ pub struct Square1Phase2Transformation(FlatMoveIndex); // Index into search gene
 #[derive(Clone, Debug)]
 pub struct Square1Phase2Puzzle {
     shape_puzzle: PhaseCoordinatePuzzle<KPuzzle, Phase2ShapeCoordinate>,
-    edges_puzzle: PhaseCoordinatePuzzle<KPuzzle, Phase2EdgesCoordinate>,
-    corners_puzzle: PhaseCoordinatePuzzle<KPuzzle, Phase2CornersCoordinate>,
+    square0_equatorless_puzzle: PhaseCoordinatePuzzle<KPuzzle, Square0EquatorlessCoordinate>,
 }
 
 #[allow(non_snake_case)]
@@ -322,35 +400,21 @@ impl Square1Phase2Puzzle {
             )
         };
 
-        let reduced_generator_moves = move_list_from_vec(vec!["U_SQ_3", "D_SQ_3", "/"]);
-
-        let edges_puzzle = {
-            let start_pattern = square1_edges_kpattern()
-                .apply_alg(&parse_alg!("(-2, 0)"))
-                .unwrap();
-            PhaseCoordinatePuzzle::<KPuzzle, Phase2EdgesCoordinate>::new(
+        // TODO: when using `U_SQ_3` and `D_SQ_3` here (and in the def), `cubing.rs` runs into an error. So we use inconsistent moves for now.
+        // let reduced_generator_moves = move_list_from_vec(vec!["U_SQ_3", "D_SQ_3", "/"]);
+        let reduced_generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
+        let square0_equatorless_puzzle = {
+            let kpuzzle = square0_equatorless_kpuzzle();
+            PhaseCoordinatePuzzle::<KPuzzle, Square0EquatorlessCoordinate>::new(
                 kpuzzle.clone(),
-                start_pattern,
-                reduced_generator_moves.clone(),
-            )
-        };
-
-        // TODO: reuse the table from edges (with different move remappings)
-        let corners_puzzle = {
-            let start_pattern = square1_corners_kpattern()
-                .apply_alg(&parse_alg!("(1, 0)"))
-                .unwrap();
-            PhaseCoordinatePuzzle::<KPuzzle, Phase2CornersCoordinate>::new(
-                kpuzzle.clone(),
-                start_pattern,
+                kpuzzle.default_pattern(),
                 reduced_generator_moves,
             )
         };
 
         Self {
             shape_puzzle,
-            edges_puzzle,
-            corners_puzzle,
+            square0_equatorless_puzzle,
         }
     }
 
@@ -366,24 +430,36 @@ impl Square1Phase2Puzzle {
         let Ok(shape) = self.shape_puzzle.full_pattern_to_phase_coordinate(pattern) else {
             return Err(PhaseCoordinateConversionError::InvalidSemanticCoordinate);
         };
-        let Ok(edges) = self.edges_puzzle.full_pattern_to_phase_coordinate(
-            &pattern
-                .apply_alg(&square1_tuple(
-                    offsets.edges_amount_U,
-                    offsets.edges_amount_D,
-                ))
-                .unwrap(),
-        ) else {
+        let Ok(edges) = self
+            .square0_equatorless_puzzle
+            .full_pattern_to_phase_coordinate(
+                &Square0EquatorlessCoordinate::from_edges_pattern(
+                    &pattern
+                        .apply_alg(&square1_tuple(
+                            offsets.edges_amount_U,
+                            offsets.edges_amount_D,
+                        ))
+                        .unwrap(),
+                )
+                .pattern,
+            )
+        else {
             return Err(PhaseCoordinateConversionError::InvalidSemanticCoordinate);
         };
-        let Ok(corners) = self.corners_puzzle.full_pattern_to_phase_coordinate(
-            &pattern
-                .apply_alg(&square1_tuple(
-                    offsets.corners_amount_U,
-                    offsets.corners_amount_D,
-                ))
-                .unwrap(),
-        ) else {
+        let Ok(corners) = self
+            .square0_equatorless_puzzle
+            .full_pattern_to_phase_coordinate(
+                &Square0EquatorlessCoordinate::from_corners_pattern(
+                    &pattern
+                        .apply_alg(&square1_tuple(
+                            offsets.corners_amount_U,
+                            offsets.corners_amount_D,
+                        ))
+                        .unwrap(),
+                )
+                .pattern,
+            )
+        else {
             return Err(PhaseCoordinateConversionError::InvalidSemanticCoordinate);
         };
         let pattern = Square1Phase2TripleCoordinate {
@@ -468,7 +544,7 @@ impl SemiGroupActionPuzzle for Square1Phase2Puzzle {
 
             match edges_transformation {
                 Some(edges_transformation) => self
-                    .edges_puzzle
+                    .square0_equatorless_puzzle
                     .pattern_apply_transformation(&pattern.edges, &edges_transformation)
                     .unwrap_or(pattern.edges),
                 None => pattern.edges,
@@ -489,7 +565,7 @@ impl SemiGroupActionPuzzle for Square1Phase2Puzzle {
 
             match corners_transformation {
                 Some(corners_transformation) => self
-                    .corners_puzzle
+                    .square0_equatorless_puzzle
                     .pattern_apply_transformation(&pattern.corners, &corners_transformation)
                     .unwrap_or(pattern.corners),
                 None => pattern.corners,
@@ -546,13 +622,13 @@ impl PruneTable<Square1Phase2Puzzle> for Square1Phase2PruneTable {
             .at(pattern.shape);
         let edges_depth = *self
             .tpuzzle
-            .edges_puzzle
+            .square0_equatorless_puzzle
             .data
             .exact_prune_table
             .at(pattern.edges);
         let corners_depth = *self
             .tpuzzle
-            .corners_puzzle
+            .square0_equatorless_puzzle
             .data
             .exact_prune_table
             .at(pattern.corners);

@@ -1,8 +1,20 @@
-use cubing::{alg::Alg, puzzles::cube2x2x2_kpuzzle};
+use std::collections::HashSet;
+
+use cubing::{
+    alg::{Alg, QuantumMove},
+    puzzles::cube2x2x2_kpuzzle,
+};
 
 use crate::{
-    _internal::search::{idf_search::idf_search::IDFSearch, move_count::MoveCount},
+    _internal::{
+        canonical_fsm::canonical_fsm::CanonicalFSMConstructionOptions,
+        search::{
+            idf_search::idf_search::{IDFSearch, IDFSearchConstructionOptions},
+            move_count::MoveCount,
+        },
+    },
     scramble::{
+        collapse::collapse_adjacent_moves,
         puzzles::static_move_list::{add_random_suffixes_from, static_parsed_opt_list},
         randomize::{ConstraintForFirstPiece, OrbitRandomizationConstraints},
         scramble_search::{move_list_from_vec, FilteredSearch},
@@ -31,7 +43,15 @@ pub fn scramble_2x2x2() -> Alg {
             kpuzzle.clone(),
             move_list_from_vec(vec!["U", "L", "F", "R"]),
             kpuzzle.default_pattern(),
-            Default::default(),
+            IDFSearchConstructionOptions {
+                canonical_fsm_construction_options: CanonicalFSMConstructionOptions {
+                    forbid_transitions_by_quantums_either_direction: HashSet::from([(
+                        QuantumMove::new("L", None),
+                        QuantumMove::new("R", None),
+                    )]),
+                },
+                ..Default::default()
+            },
         )
         .unwrap(),
     );
@@ -64,7 +84,11 @@ pub fn scramble_2x2x2() -> Alg {
             .apply_alg(&add_random_suffixes_from(Alg::default(), [s1, s2]))
             .unwrap();
 
-        return filtered_search_U_L_F_R
-            .generate_scramble(&scramble_pattern_random_orientation, Some(MoveCount(11)));
+        return collapse_adjacent_moves(
+            filtered_search_U_L_F_R
+                .generate_scramble(&scramble_pattern_random_orientation, Some(MoveCount(11))),
+            4,
+            -1,
+        );
     }
 }

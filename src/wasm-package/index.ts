@@ -16,7 +16,7 @@ async function initWrapper(): Promise<void> {
     const wasmUint8Array = (
       await import("../../.temp/rust-wasm/twsearch_wasm_bg.wasm")
     ).default as unknown as Uint8Array;
-    await init(wasmUint8Array.buffer as BufferSource);
+    await init({ module_or_path: wasmUint8Array.buffer as BufferSource });
   })());
 }
 

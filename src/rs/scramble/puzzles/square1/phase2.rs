@@ -16,9 +16,9 @@ use crate::{
             },
             idf_search::search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
             mask_pattern::apply_mask,
-            pattern_validity_checker::{AlwaysValid, PatternValidityChecker},
+            pattern_traversal_filter_trait::{PatternTraversalFilter, PatternTraversalFilterNoOp},
             prune_table_trait::{Depth, PruneTable},
-            recursion_filter_trait::RecursionFilterNoOp,
+            transformation_traversal_filter_trait::TransformationTraversalFilterNoOp,
         },
     },
     scramble::{
@@ -36,7 +36,7 @@ use super::wedges::get_phase2_shape_offsets;
 
 struct Phase2Checker;
 
-impl PatternValidityChecker<KPuzzle> for Phase2Checker {
+impl PatternTraversalFilter<KPuzzle> for Phase2Checker {
     fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
         let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
         assert_eq!(orbit_info.name.0, "WEDGES");
@@ -645,9 +645,9 @@ pub struct Square1Phase2SearchAdaptations {}
 
 /// Explicitly specifies search adaptations for [`Square1Phase2Puzzle`].
 impl SearchAdaptations<Square1Phase2Puzzle> for Square1Phase2SearchAdaptations {
-    type PatternValidityChecker = AlwaysValid;
+    type PatternTraversalFilter = PatternTraversalFilterNoOp;
     type PruneTable = Square1Phase2PruneTable;
-    type RecursionFilter = RecursionFilterNoOp;
+    type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
 }
 
 impl DefaultSearchAdaptations<Square1Phase2Puzzle> for Square1Phase2Puzzle {

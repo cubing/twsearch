@@ -12,7 +12,7 @@ use crate::_internal::puzzle_traits::puzzle_traits::{
 use crate::whole_number_newtype;
 
 use super::idf_search::idf_search::IDFSearchAPIData;
-use super::pattern_validity_checker::PatternValidityChecker;
+use super::pattern_traversal_filter_trait::PatternTraversalFilter;
 use super::prune_table_trait::{Depth, PruneTable};
 use super::recursive_work_tracker::RecursiveWorkTracker;
 use super::search_logger::SearchLogger;
@@ -77,18 +77,18 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> HashPruneTableMutab
 
 pub struct HashPruneTable<
     TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle,
-    TPatternValidityChecker: PatternValidityChecker<TPuzzle>,
+    TPatternTraversalFilter: PatternTraversalFilter<TPuzzle>,
 > {
     // We would store a `tpuzzle` here, but the one stored in `.mutable` is sufficient.
     immutable: HashPruneTableImmutableData<TPuzzle>,
     mutable: HashPruneTableMutableData<TPuzzle>,
-    phantom_validity_checker: PhantomData<TPatternValidityChecker>,
+    phantom_validity_checker: PhantomData<TPatternTraversalFilter>,
 }
 
 impl<
         TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle,
-        TPatternValidityChecker: PatternValidityChecker<TPuzzle>,
-    > HashPruneTable<TPuzzle, TPatternValidityChecker>
+        TPatternTraversalFilter: PatternTraversalFilter<TPuzzle>,
+    > HashPruneTable<TPuzzle, TPatternTraversalFilter>
 {
     // TODO: dedup with IDFSearch?
     // TODO: Store a reference to `search_api_data` so that you can't accidentally pass in the wrong `search_api_data`?
@@ -130,7 +130,7 @@ impl<
                     continue;
                 };
 
-                if !TPatternValidityChecker::is_valid(&next_pattern) {
+                if !TPatternTraversalFilter::is_valid(&next_pattern) {
                     mutable_data.set_invalid_depth(&next_pattern);
                     continue;
                 }
@@ -148,8 +148,8 @@ impl<
 
 impl<
         TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle,
-        TPatternValidityChecker: PatternValidityChecker<TPuzzle>,
-    > PruneTable<TPuzzle> for HashPruneTable<TPuzzle, TPatternValidityChecker>
+        TPatternTraversalFilter: PatternTraversalFilter<TPuzzle>,
+    > PruneTable<TPuzzle> for HashPruneTable<TPuzzle, TPatternTraversalFilter>
 {
     fn new(
         tpuzzle: TPuzzle,

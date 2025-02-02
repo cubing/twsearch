@@ -28,11 +28,11 @@ use crate::_internal::{
 
 use super::{
     super::{
-        pattern_validity_checker::PatternValidityChecker,
+        pattern_traversal_filter_trait::PatternTraversalFilter,
         prune_table_trait::{Depth, PruneTable},
-        recursion_filter_trait::RecursionFilter,
         recursive_work_tracker::RecursiveWorkTracker,
         search_logger::SearchLogger,
+        transformation_traversal_filter_trait::TransformationTraversalFilter,
     },
     search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
 };
@@ -325,7 +325,7 @@ impl<
     ) -> SearchRecursionResult {
         let current_pattern = pattern_stack.current_pattern();
         // TODO: apply invalid checks only to intermediate state (i.e. exclude remaining_depth == 0)?
-        if !Optimizations::PatternValidityChecker::is_valid(current_pattern) {
+        if !Optimizations::PatternTraversalFilter::is_valid(current_pattern) {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
 
@@ -360,7 +360,7 @@ impl<
             };
 
             for move_transformation_info in move_transformation_multiples {
-                if !Optimizations::RecursionFilter::keep_move(
+                if !Optimizations::TransformationTraversalFilter::keep_move(
                     move_transformation_info,
                     remaining_depth,
                 ) {

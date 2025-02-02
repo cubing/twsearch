@@ -4,12 +4,14 @@ use cubing::kpuzzle::KPuzzle;
 
 use crate::_internal::{
     puzzle_traits::puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
-    search::recursion_filter_trait::{RecursionFilter, RecursionFilterNoOp},
+    search::transformation_traversal_filter_trait::{
+        TransformationTraversalFilter, TransformationTraversalFilterNoOp,
+    },
 };
 
 use super::super::{
     hash_prune_table::HashPruneTable,
-    pattern_validity_checker::{AlwaysValid, PatternValidityChecker},
+    pattern_traversal_filter_trait::{PatternTraversalFilter, PatternTraversalFilterNoOp},
     prune_table_trait::PruneTable,
 };
 
@@ -22,7 +24,7 @@ use super::super::{
 /// instead of this:
 ///
 /// ```text
-/// IDFSearch<TPuzzle: …, PatternValidityChecker: …, PruneTable: …, (more in the future…)>
+/// IDFSearch<TPuzzle: …, PatternTraversalFilter: …, PruneTable: …, (more in the future…)>
 /// ```
 ///
 /// we have this:
@@ -50,9 +52,9 @@ use super::super::{
 /// TODO: figure out if/when dynamic dispatch is actually cheap and ergonomic
 /// enough once we know all the adaptations we need for common puzzles.
 pub trait SearchAdaptations<TPuzzle: SemiGroupActionPuzzle> {
-    type PatternValidityChecker: PatternValidityChecker<TPuzzle>;
     type PruneTable: PruneTable<TPuzzle>;
-    type RecursionFilter: RecursionFilter<TPuzzle>;
+    type PatternTraversalFilter: PatternTraversalFilter<TPuzzle>;
+    type TransformationTraversalFilter: TransformationTraversalFilter<TPuzzle>;
 }
 
 pub struct SearchAdaptationsHashPruneTableOnly<TPuzzle: HashablePatternPuzzle> {
@@ -62,9 +64,9 @@ pub struct SearchAdaptationsHashPruneTableOnly<TPuzzle: HashablePatternPuzzle> {
 impl<TPuzzle: HashablePatternPuzzle> SearchAdaptations<TPuzzle>
     for SearchAdaptationsHashPruneTableOnly<TPuzzle>
 {
-    type PatternValidityChecker = AlwaysValid;
-    type PruneTable = HashPruneTable<TPuzzle, Self::PatternValidityChecker>;
-    type RecursionFilter = RecursionFilterNoOp;
+    type PatternTraversalFilter = PatternTraversalFilterNoOp;
+    type PruneTable = HashPruneTable<TPuzzle, Self::PatternTraversalFilter>;
+    type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
 }
 
 pub trait DefaultSearchAdaptations<TPuzzle: SemiGroupActionPuzzle> {

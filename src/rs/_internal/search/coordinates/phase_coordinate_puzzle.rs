@@ -25,10 +25,10 @@ use crate::{
             },
             indexed_vec::IndexedVec,
             move_count::MoveCount,
-            pattern_validity_checker::AlwaysValid,
+            pattern_traversal_filter_trait::PatternTraversalFilterNoOp,
             prune_table_trait::{Depth, PruneTable},
-            recursion_filter_trait::RecursionFilterNoOp,
             search_logger::SearchLogger,
+            transformation_traversal_filter_trait::TransformationTraversalFilterNoOp,
         },
     },
     whole_number_newtype_generic,
@@ -390,9 +390,9 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
     SearchAdaptations<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>
     for PhaseCoordinatePuzzleSearchOptimizations<TPuzzle, TSemanticCoordinate>
 {
-    type PatternValidityChecker = AlwaysValid; // TODO: reconcile this with fallible transformation application.
     type PruneTable = PhaseCoordinatePruneTable<TPuzzle, TSemanticCoordinate>;
-    type RecursionFilter = RecursionFilterNoOp;
+    type PatternTraversalFilter = PatternTraversalFilterNoOp; // TODO: reconcile this with fallible transformation application.
+    type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
 }
 
 impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPuzzle>>

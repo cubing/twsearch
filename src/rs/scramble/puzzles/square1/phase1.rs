@@ -14,9 +14,9 @@ use crate::{
             },
             idf_search::search_adaptations::SearchAdaptations,
             mask_pattern::apply_mask,
-            pattern_validity_checker::{AlwaysValid, PatternValidityChecker},
+            pattern_traversal_filter_trait::{PatternTraversalFilter, PatternTraversalFilterNoOp},
             prune_table_trait::Depth,
-            recursion_filter_trait::RecursionFilter,
+            transformation_traversal_filter_trait::TransformationTraversalFilter,
         },
     },
     scramble::{
@@ -36,7 +36,7 @@ pub(crate) struct Phase1Checker;
 
 const SLOTS_THAT_ARE_AFTER_SLICES: [u8; 4] = [0, 6, 12, 18];
 
-impl PatternValidityChecker<KPuzzle> for Phase1Checker {
+impl PatternTraversalFilter<KPuzzle> for Phase1Checker {
     fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
         let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
         assert_eq!(orbit_info.name.0, "WEDGES");
@@ -109,7 +109,7 @@ pub fn restrict_D_move<Phase: Square1SearchPhase>(
     D_SQ_MOVE_RESTRICTED_RANGE.contains(&amount)
 }
 
-impl RecursionFilter<Square1Phase1Puzzle> for Square1Phase1Puzzle {
+impl TransformationTraversalFilter<Square1Phase1Puzzle> for Square1Phase1Puzzle {
     fn keep_move(
         move_transformation_info: &MoveTransformationInfo<Square1Phase1Puzzle>,
         _remaining_depth: Depth,
@@ -122,9 +122,9 @@ pub(crate) struct Square1Phase1SearchAdaptations {}
 
 /// Explicitly specifies search adaptations for [`Square1Phase1Puzzle`].
 impl SearchAdaptations<Square1Phase1Puzzle> for Square1Phase1SearchAdaptations {
-    type PatternValidityChecker = AlwaysValid;
+    type PatternTraversalFilter = PatternTraversalFilterNoOp;
     type PruneTable = PhaseCoordinatePruneTable<KPuzzle, Square1Phase1Coordinate>;
-    type RecursionFilter = Square1Phase1Puzzle;
+    type TransformationTraversalFilter = Square1Phase1Puzzle;
 }
 
 impl Square1SearchPhase for Square1Phase1Puzzle {}

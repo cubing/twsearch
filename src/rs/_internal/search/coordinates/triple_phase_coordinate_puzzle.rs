@@ -11,10 +11,10 @@ use crate::_internal::{
             search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
         },
         move_count::MoveCount,
-        pattern_validity_checker::AlwaysValid,
+        pattern_traversal_filter_trait::PatternTraversalFilterNoOp,
         prune_table_trait::{Depth, PruneTable},
-        recursion_filter_trait::RecursionFilterNoOp,
         search_logger::SearchLogger,
+        transformation_traversal_filter_trait::TransformationTraversalFilterNoOp,
     },
 };
 
@@ -460,14 +460,14 @@ impl<
         TSemanticCoordinate3,
     >
 {
-    type PatternValidityChecker = AlwaysValid; // TODO: reconcile this with fallible transformation application.
+    type PatternTraversalFilter = PatternTraversalFilterNoOp; // TODO: reconcile this with fallible transformation application.
     type PruneTable = TriplePhaseCoordinatePruneTable<
         TPuzzle,
         TSemanticCoordinate1,
         TSemanticCoordinate2,
         TSemanticCoordinate3,
     >;
-    type RecursionFilter = RecursionFilterNoOp;
+    type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
 }
 
 impl<

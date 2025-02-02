@@ -6,7 +6,7 @@ use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
     _internal::search::{
-        mask_pattern::apply_mask, pattern_validity_checker::PatternValidityChecker,
+        mask_pattern::apply_mask, pattern_traversal_filter_trait::PatternTraversalFilter,
     },
     scramble::{
         puzzles::square1::phase1::Phase1Checker,

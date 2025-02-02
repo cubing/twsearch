@@ -15,7 +15,6 @@ use crate::{
                 SemanticCoordinate,
             },
             idf_search::search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
-            indexed_vec::IndexedVec,
             mask_pattern::apply_mask,
             pattern_validity_checker::{AlwaysValid, PatternValidityChecker},
             prune_table_trait::{Depth, PruneTable},
@@ -34,7 +33,7 @@ use crate::{
     },
 };
 
-use super::wedges::{get_phase2_shape_offsets, Square1Phase2Offsets};
+use super::wedges::get_phase2_shape_offsets;
 
 struct Phase2Checker;
 
@@ -169,10 +168,6 @@ pub struct Square1Phase2Transformation(FlatMoveIndex); // Index into search gene
 #[derive(Clone, Debug)]
 pub struct Square1Phase2Puzzle {
     shape_puzzle: PhaseCoordinatePuzzle<KPuzzle, Phase2ShapeCoordinate>,
-    shape_to_offsets: IndexedVec<
-        PhaseCoordinateIndex<PhaseCoordinatePuzzle<KPuzzle, Phase2ShapeCoordinate>>,
-        Square1Phase2Offsets,
-    >,
     edges_puzzle: PhaseCoordinatePuzzle<KPuzzle, Phase2EdgesCoordinate>,
     corners_puzzle: PhaseCoordinatePuzzle<KPuzzle, Phase2CornersCoordinate>,
 }
@@ -246,32 +241,64 @@ impl From<FlatMoveIndex> for Square1Phase2Move {
 // TODO: more type safety
 impl Square1Phase2Move {
     // Accepts amounts from `0` to `11` (for `U_SQ_` or `D_SQ_` moves).
-    fn to_edge_or_corner_transformation(self) -> Option<FlatMoveIndex> {
+    fn to_edge_transformation(self) -> Option<FlatMoveIndex> {
+        Some(FlatMoveIndex(match self {
+            Square1Phase2Move::U_SQ_(0) => return None,
+            Square1Phase2Move::U_SQ_(1) => 0,
+            Square1Phase2Move::U_SQ_(2) => return None,
+            Square1Phase2Move::U_SQ_(3) => 0,
+            Square1Phase2Move::U_SQ_(4) => 1,
+            Square1Phase2Move::U_SQ_(5) => 0,
+            Square1Phase2Move::U_SQ_(6) => 1,
+            Square1Phase2Move::U_SQ_(7) => 2,
+            Square1Phase2Move::U_SQ_(8) => 1,
+            Square1Phase2Move::U_SQ_(9) => 2,
+            Square1Phase2Move::U_SQ_(10) => return None,
+            Square1Phase2Move::U_SQ_(11) => 2,
+            Square1Phase2Move::D_SQ_(0) => return None,
+            Square1Phase2Move::D_SQ_(1) => 3,
+            Square1Phase2Move::D_SQ_(2) => return None,
+            Square1Phase2Move::D_SQ_(3) => 3,
+            Square1Phase2Move::D_SQ_(4) => 4,
+            Square1Phase2Move::D_SQ_(5) => 3,
+            Square1Phase2Move::D_SQ_(6) => 4,
+            Square1Phase2Move::D_SQ_(7) => 5,
+            Square1Phase2Move::D_SQ_(8) => 4,
+            Square1Phase2Move::D_SQ_(9) => 5,
+            Square1Phase2Move::D_SQ_(10) => return None,
+            Square1Phase2Move::D_SQ_(11) => 5,
+            Square1Phase2Move::SLASH => 6,
+            _ => panic!("Invalid move"), // TODO: is it faster to just return `None` as the default?
+        }))
+    }
+
+    // Accepts amounts from `0` to `11` (for `U_SQ_` or `D_SQ_` moves).
+    fn to_corner_transformation(self) -> Option<FlatMoveIndex> {
         Some(FlatMoveIndex(match self {
             Square1Phase2Move::U_SQ_(0) => return None,
             Square1Phase2Move::U_SQ_(1) => return None,
-            Square1Phase2Move::U_SQ_(2) => return None,
+            Square1Phase2Move::U_SQ_(2) => 0,
             Square1Phase2Move::U_SQ_(3) => 0,
             Square1Phase2Move::U_SQ_(4) => 0,
-            Square1Phase2Move::U_SQ_(5) => 0,
+            Square1Phase2Move::U_SQ_(5) => 1,
             Square1Phase2Move::U_SQ_(6) => 1,
             Square1Phase2Move::U_SQ_(7) => 1,
-            Square1Phase2Move::U_SQ_(8) => 1,
+            Square1Phase2Move::U_SQ_(8) => 2,
             Square1Phase2Move::U_SQ_(9) => 2,
             Square1Phase2Move::U_SQ_(10) => 2,
-            Square1Phase2Move::U_SQ_(11) => 2,
+            Square1Phase2Move::U_SQ_(11) => return None,
             Square1Phase2Move::D_SQ_(0) => return None,
             Square1Phase2Move::D_SQ_(1) => return None,
-            Square1Phase2Move::D_SQ_(2) => return None,
+            Square1Phase2Move::D_SQ_(2) => 3,
             Square1Phase2Move::D_SQ_(3) => 3,
             Square1Phase2Move::D_SQ_(4) => 3,
-            Square1Phase2Move::D_SQ_(5) => 3,
+            Square1Phase2Move::D_SQ_(5) => 4,
             Square1Phase2Move::D_SQ_(6) => 4,
             Square1Phase2Move::D_SQ_(7) => 4,
-            Square1Phase2Move::D_SQ_(8) => 4,
+            Square1Phase2Move::D_SQ_(8) => 5,
             Square1Phase2Move::D_SQ_(9) => 5,
             Square1Phase2Move::D_SQ_(10) => 5,
-            Square1Phase2Move::D_SQ_(11) => 5,
+            Square1Phase2Move::D_SQ_(11) => return None,
             Square1Phase2Move::SLASH => 6,
             _ => panic!("Invalid move"), // TODO: is it faster to just return `None` as the default?
         }))
@@ -294,14 +321,6 @@ impl Square1Phase2Puzzle {
                 full_generator_moves,
             )
         };
-
-        let mut shape_to_offsets = IndexedVec::<
-            PhaseCoordinateIndex<PhaseCoordinatePuzzle<KPuzzle, Phase2ShapeCoordinate>>,
-            Square1Phase2Offsets,
-        >::default();
-        for (_, pattern) in shape_puzzle.data.index_to_semantic_coordinate.iter() {
-            shape_to_offsets.push(get_phase2_shape_offsets(&pattern.shape));
-        }
 
         let reduced_generator_moves = move_list_from_vec(vec!["U_SQ_3", "D_SQ_3", "/"]);
 
@@ -330,7 +349,6 @@ impl Square1Phase2Puzzle {
 
         Self {
             shape_puzzle,
-            shape_to_offsets,
             edges_puzzle,
             corners_puzzle,
         }
@@ -368,11 +386,12 @@ impl Square1Phase2Puzzle {
         ) else {
             return Err(PhaseCoordinateConversionError::InvalidSemanticCoordinate);
         };
-        Ok(Square1Phase2TripleCoordinate {
+        let pattern = Square1Phase2TripleCoordinate {
             shape,
             edges,
             corners,
-        })
+        };
+        Ok(pattern)
     }
 }
 
@@ -429,21 +448,23 @@ impl SemiGroupActionPuzzle for Square1Phase2Puzzle {
         // TODO: write down an explanation of the math.
         // TODO: cache the sharp math in a type-safe table instead of doing it every time.
 
-        let offsets = self.shape_to_offsets.at(pattern.shape);
-
         let phase2_move = Square1Phase2Move::from(transformation_to_apply.0);
+
+        let shape = self
+            .shape_puzzle
+            .pattern_apply_transformation(&pattern.shape, &transformation_to_apply.0)?;
 
         let edges = {
             let edges_transformation = match phase2_move {
                 Square1Phase2Move::U_SQ_(amount) => {
-                    Square1Phase2Move::U_SQ_((amount - offsets.edges_amount_U).rem_euclid(12))
+                    Square1Phase2Move::U_SQ_((amount).rem_euclid(12))
                 }
                 Square1Phase2Move::D_SQ_(amount) => {
-                    Square1Phase2Move::D_SQ_((amount - offsets.edges_amount_D).rem_euclid(12))
+                    Square1Phase2Move::D_SQ_((amount).rem_euclid(12))
                 }
                 Square1Phase2Move::SLASH => phase2_move,
             }
-            .to_edge_or_corner_transformation();
+            .to_edge_transformation();
 
             match edges_transformation {
                 Some(edges_transformation) => self
@@ -457,14 +478,14 @@ impl SemiGroupActionPuzzle for Square1Phase2Puzzle {
         let corners = {
             let corners_transformation = match phase2_move {
                 Square1Phase2Move::U_SQ_(amount) => {
-                    Square1Phase2Move::U_SQ_((amount - offsets.corners_amount_U).rem_euclid(12))
+                    Square1Phase2Move::U_SQ_((amount).rem_euclid(12))
                 }
                 Square1Phase2Move::D_SQ_(amount) => {
-                    Square1Phase2Move::D_SQ_((amount - offsets.corners_amount_D).rem_euclid(12))
+                    Square1Phase2Move::D_SQ_((amount).rem_euclid(12))
                 }
                 Square1Phase2Move::SLASH => phase2_move,
             }
-            .to_edge_or_corner_transformation();
+            .to_corner_transformation();
 
             match corners_transformation {
                 Some(corners_transformation) => self
@@ -476,9 +497,7 @@ impl SemiGroupActionPuzzle for Square1Phase2Puzzle {
         };
 
         Some(Self::Pattern {
-            shape: self
-                .shape_puzzle
-                .pattern_apply_transformation(&pattern.shape, &transformation_to_apply.0)?,
+            shape,
             edges,
             corners,
         })

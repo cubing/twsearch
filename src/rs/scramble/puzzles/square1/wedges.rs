@@ -1,6 +1,6 @@
 use cubing::kpuzzle::KPattern;
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub(crate) enum WedgeType {
     CornerLower,
     CornerUpper,

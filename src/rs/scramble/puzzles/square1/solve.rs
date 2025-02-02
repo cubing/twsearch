@@ -117,15 +117,6 @@ impl Square1Solver {
             'phase1_loop: for mut phase1_solution in phase1_search {
                 found_phase1_solutions += 1;
                 // phase1_cumulative_time += Instant::now() - phase1_start_time;
-                let Ok(phase2_start_pattern) =
-                    self.square1_phase2_puzzle.full_pattern_to_phase_coordinate(
-                        &pattern.apply_alg(&phase1_solution).unwrap(),
-                    )
-                else {
-                    return Err(SearchError {
-                        description: "Could not convert pattern into phase 2 coordinate".to_owned(),
-                    });
-                };
                 // TODO: Push the candidate check into a trait for `IDFSearch`.
                 while let Some(cubing::alg::AlgNode::MoveNode(r#move)) =
                     phase1_solution.nodes.last()
@@ -145,6 +136,15 @@ impl Square1Solver {
                 checked_phase1_solutions += 1;
                 // num_phase2_starts += 1;
                 // let phase2_start_time = Instant::now();
+                let Ok(phase2_start_pattern) =
+                    self.square1_phase2_puzzle.full_pattern_to_phase_coordinate(
+                        &pattern.apply_alg(&phase1_solution).unwrap(),
+                    )
+                else {
+                    return Err(SearchError {
+                        description: "Could not convert pattern into phase 2 coordinate".to_owned(),
+                    });
+                };
                 let phase2_solution = self
                     .phase2_idfs
                     .search(

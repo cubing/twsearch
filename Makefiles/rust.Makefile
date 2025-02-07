@@ -17,6 +17,7 @@ build-rust:
 lint-rust:
 	cargo clippy -- --deny warnings
 	cargo fmt --check
+	cargo doc
 
 .PHONY: format-rust
 format-rust:

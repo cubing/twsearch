@@ -28,12 +28,12 @@ impl KociembaTwoPhase {
                         name: "G1 reduction".to_owned(),
                         mask: cube3x3x3_centerless_g1_target_kpattern().clone(),
                         generator_moves: vec![
-                            parse_move!("U"),
-                            parse_move!("L"),
-                            parse_move!("F"),
-                            parse_move!("R"),
-                            parse_move!("B"),
-                            parse_move!("D"),
+                            parse_move!("U").to_owned(),
+                            parse_move!("L").to_owned(),
+                            parse_move!("F").to_owned(),
+                            parse_move!("R").to_owned(),
+                            parse_move!("B").to_owned(),
+                            parse_move!("D").to_owned(),
                         ],
                         individual_search_options: None,
                     },
@@ -41,12 +41,12 @@ impl KociembaTwoPhase {
                         name: "Domino".to_owned(),
                         mask: kpuzzle.default_pattern().clone(),
                         generator_moves: vec![
-                            parse_move!("U"),
-                            parse_move!("L2"),
-                            parse_move!("F2"),
-                            parse_move!("R2"),
-                            parse_move!("B2"),
-                            parse_move!("D"),
+                            parse_move!("U").to_owned(),
+                            parse_move!("L2").to_owned(),
+                            parse_move!("F2").to_owned(),
+                            parse_move!("R2").to_owned(),
+                            parse_move!("B2").to_owned(),
+                            parse_move!("D").to_owned(),
                         ],
                         individual_search_options: None,
                     },
@@ -67,7 +67,7 @@ pub fn main() {
 
     let scramble = kpuzzle
         .default_pattern()
-        .apply_alg(&parse_alg!(
+        .apply_alg(parse_alg!(
             "F B2 L' U2 D' B2 D B' U2 B2 U2 L2 B2 L2 D B2 U' F2 R2 F2 L"
         ))
         .unwrap();

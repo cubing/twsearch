@@ -36,7 +36,7 @@ use super::common::PatternSource;
 /// let depth = table.pattern_to_depth.get(
 ///     &kpuzzle
 ///         .default_pattern()
-///         .apply_alg(&parse_alg!("F2 B2 D2 L' D L' D L2 F' U2 F' B2 R2 U2 F' D2 F"))
+///         .apply_alg(parse_alg!("F2 B2 D2 L' D L' D L2 F' U2 F' B2 R2 U2 F' D2 F"))
 ///         .unwrap(),
 /// );
 /// dbg!(depth);

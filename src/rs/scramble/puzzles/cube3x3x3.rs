@@ -147,11 +147,11 @@ impl Scramble3x3x3TwoPhase {
                 // For the pre-moves, we don't have to specify R' and U' because we know the FSM only depends on the final `F` move.
                 // For similar reasons, we only have to specify R' for the post-moves.
                 (
-                    Some(vec![parse_move!("F")]),
-                    Some(vec![parse_move!("R'")]),
+                    Some(vec![parse_move!("F").to_owned()]),
+                    Some(vec![parse_move!("R'").to_owned()]),
                     // TODO: support a way to specify a quantum factor
-                    Some(vec![parse_move!("F2'")]),
-                    Some(vec![parse_move!("R2'")]),
+                    Some(vec![parse_move!("F2'").to_owned()]),
+                    Some(vec![parse_move!("R2'").to_owned()]),
                 )
             }
         };

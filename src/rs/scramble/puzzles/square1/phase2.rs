@@ -252,10 +252,8 @@ pub struct Square1Phase2Puzzle {
 
 #[allow(non_snake_case)]
 fn square1_tuple(U_SQ_amount: i32, D_SQ_amount: i32) -> Alg {
-    lazy_static! {
-        static ref U_SQ_: Move = parse_move!("U_SQ_");
-        static ref D_SQ_: Move = parse_move!("D_SQ_");
-    };
+    let U_SQ_ = parse_move!("U_SQ_");
+    let D_SQ_ = parse_move!("D_SQ_");
 
     Alg {
         nodes: vec![
@@ -391,7 +389,7 @@ impl Square1Phase2Puzzle {
             let full_generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
 
             let start_pattern = square1_shape_kpattern()
-                .apply_alg(&parse_alg!("(0, 0)"))
+                .apply_alg(parse_alg!("(0, 0)"))
                 .unwrap();
             PhaseCoordinatePuzzle::<KPuzzle, Phase2ShapeCoordinate>::new(
                 kpuzzle.clone(),

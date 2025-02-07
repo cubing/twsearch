@@ -50,6 +50,7 @@ fn pop_final_move(nodes: &mut Vec<AlgNode>) -> Option<Move> {
 /// - `mod_n`: 4
 /// - `mod_offset`: -1
 // TODO: `R4` is not collapsed into an empty alg.
+// TODO: support taking a reference for cases where that's more efficient?
 pub fn collapse_adjacent_moves(alg: Alg, mod_n: i32, mod_offset: i32) -> Alg {
     let mut nodes = Vec::<AlgNode>::new();
 
@@ -95,35 +96,38 @@ fn collapse_test() {
         collapse_adjacent_moves(
             parse_alg!(
                 "R' U' F R2 D U B D U' L' B2 U' F F2 D' B2 D' L2 D' R2 B2 R2 F2 U' B2 D' R' U' F"
-            ),
+            )
+            .to_owned(),
             4,
             -1
         ),
-        parse_alg!("R' U' F R2 D U B D U' L' B2 U' F' D' B2 D' L2 D' R2 B2 R2 F2 U' B2 D' R' U' F")
+        *parse_alg!(
+            "R' U' F R2 D U B D U' L' B2 U' F' D' B2 D' L2 D' R2 B2 R2 F2 U' B2 D' R' U' F"
+        )
     );
 
     assert_eq!(
-        collapse_adjacent_moves(parse_alg!("R F F' R"), 4, -1),
-        parse_alg!("R2")
+        collapse_adjacent_moves(parse_alg!("R F F' R").to_owned(), 4, -1),
+        *parse_alg!("R2")
     );
 
     assert_eq!(
-        collapse_adjacent_moves(parse_alg!("R F F2 F R"), 4, -1),
-        parse_alg!("R2")
+        collapse_adjacent_moves(parse_alg!("R F F2 F R").to_owned(), 4, -1),
+        *parse_alg!("R2")
     );
 
     assert_eq!(
-        collapse_adjacent_moves(parse_alg!("U D2 R4 D6' U"), 4, -1),
-        parse_alg!("U2")
+        collapse_adjacent_moves(parse_alg!("U D2 R4 D6' U").to_owned(), 4, -1),
+        *parse_alg!("U2")
     );
 
     assert_eq!(
-        collapse_adjacent_moves(parse_alg!("R F F2 . F R"), 4, -1),
-        parse_alg!("R F' . F R")
+        collapse_adjacent_moves(parse_alg!("R F F2 . F R").to_owned(), 4, -1),
+        *parse_alg!("R F' . F R")
     );
 
     assert_eq!(
-        collapse_adjacent_moves(parse_alg!("R F F2 R"), 5, -2),
-        parse_alg!("R F2' R")
+        collapse_adjacent_moves(parse_alg!("R F F2 R").to_owned(), 5, -2),
+        *parse_alg!("R F2' R")
     );
 }

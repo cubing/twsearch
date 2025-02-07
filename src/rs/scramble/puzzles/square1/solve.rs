@@ -152,7 +152,7 @@ impl Square1Solver {
                 while let Some(cubing::alg::AlgNode::MoveNode(r#move)) =
                     phase1_solution.nodes.last()
                 {
-                    if r#move == &_SLASH_
+                    if r#move == _SLASH_
                     // TODO: redundant parsing
                     {
                         break;
@@ -238,12 +238,12 @@ fn flush_tuple(
                     cubing::alg::AlgNode::MoveNode(
                         current_tuple_U
                             .take()
-                            .unwrap_or_else(|| parse_move!("U_SQ_0")),
+                            .unwrap_or_else(|| parse_move!("U_SQ_0").to_owned()),
                     ),
                     cubing::alg::AlgNode::MoveNode(
                         current_tuple_D
                             .take()
-                            .unwrap_or_else(|| parse_move!("D_SQ_0")),
+                            .unwrap_or_else(|| parse_move!("D_SQ_0").to_owned()),
                     ),
                 ],
             }
@@ -264,7 +264,7 @@ fn group_square_1_tuples(alg: Alg) -> Alg {
     let mut alg_builder = AlgBuilder::default();
 
     #[allow(non_snake_case)]
-    let U_SQ_0: Move = parse_move!("U_SQ_0");
+    let U_SQ_0 = parse_move!("U_SQ_0");
     #[allow(non_snake_case)]
     let D_SQ_0 = parse_move!("D_SQ_0");
     #[allow(non_snake_case)]
@@ -275,7 +275,7 @@ fn group_square_1_tuples(alg: Alg) -> Alg {
         let cubing::alg::AlgNode::MoveNode(r#move) = node else {
             panic!("Invalid Square-1 scramble alg in internal code.");
         };
-        if r#move == _SLASH_ {
+        if r#move == *_SLASH_ {
             flush_tuple(&mut current_tuple_U, &mut current_tuple_D, &mut alg_builder);
 
             let alg_node: AlgNode = r#move.into();

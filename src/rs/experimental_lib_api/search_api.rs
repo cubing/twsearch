@@ -25,7 +25,7 @@ use super::common::PatternSource;
 /// let kpuzzle = cube3x3x3_kpuzzle();
 /// let search_pattern = kpuzzle
 ///     .default_pattern()
-///     .apply_alg(&parse_alg!("R U R'"))
+///     .apply_alg(parse_alg!("R U R'"))
 ///     .expect("Invalid alg for puzzle.");
 /// let solutions =
 ///     search(kpuzzle, &search_pattern, Default::default()).expect("Search failed.");
@@ -97,7 +97,7 @@ mod tests {
         let kpuzzle = cube3x3x3_kpuzzle();
         let search_pattern = kpuzzle
             .default_pattern()
-            .apply_alg(&parse_alg!("R U R'"))
+            .apply_alg(parse_alg!("R U R'"))
             .expect("Invalid alg for puzzle.");
         let mut solutions =
             search(kpuzzle, &search_pattern, Default::default()).expect("Search failed.");

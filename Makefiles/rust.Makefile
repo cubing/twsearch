@@ -14,10 +14,9 @@ build-rust:
 	cargo build --release
 
 .PHONY: lint-rust
-lint-rust:
+lint-rust: test-cargo-doc
 	cargo clippy -- --deny warnings
 	cargo fmt --check
-	cargo doc
 
 .PHONY: format-rust
 format-rust:
@@ -42,9 +41,13 @@ setup-rust:
 test-rust: test-rust-lib test-rust-examples test-rust-wasm test-rust-ffi
 
 .PHONY: test-rust-lib
-test-rust-lib:
+test-rust-lib: test-cargo-doc
 	cargo test
+
+.PHONY: test-cargo-doc
+test-cargo-doc:
 	cargo doc
+
 
 .PHONY: test-rust-examples
 test-rust-examples: \

@@ -35,7 +35,8 @@ pub struct TwsearchArgs {
 pub enum CliCommand {
     /// Run a single search.
     Search(SearchCommandArgs),
-     #[allow(rustdoc::bare_urls)] // The URL is not for Rust docs, it is printed to the comandline by `clap` (which does not remove brackets around URLs).
+    // The URL is not for Rust docs, it is printed to the comandline by `clap` (which does not remove brackets around URLs).
+    #[allow(rustdoc::bare_urls)]
     /// Run a search server.
     /// Use with: https://experiments.cubing.net/cubing.js/twsearch/text-ui.html
     Serve(ServeCommandArgs),

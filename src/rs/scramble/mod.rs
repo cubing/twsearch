@@ -11,3 +11,6 @@ pub use event::{Event, EventError};
 
 mod random_scramble_for_event;
 pub use random_scramble_for_event::random_scramble_for_event;
+
+mod solving_based_scramble_finder;
+pub use solving_based_scramble_finder::free_memory_for_all_scramble_finders;

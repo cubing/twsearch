@@ -17,6 +17,8 @@ use crate::_internal::{
     },
 };
 
+use super::solving_based_scramble_finder::FilteringDecision;
+
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
     move_str_list
         .iter()
@@ -66,6 +68,17 @@ impl<
                 },
             )
             .next()
+    }
+
+    pub fn filtering_decision(
+        &mut self,
+        scramble_pattern: &TPuzzle::Pattern,
+        min_optimal_moves: MoveCount,
+    ) -> FilteringDecision {
+        match self.filter(scramble_pattern, min_optimal_moves) {
+            Some(_) => FilteringDecision::Reject,
+            None => FilteringDecision::Accept,
+        }
     }
 
     /// This function depends on the caller to pass parameters that will always result in an alg.

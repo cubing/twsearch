@@ -5,7 +5,7 @@ use std::{
     ptr::null_mut,
 };
 
-use twsearch::scramble::{random_scramble_for_event, Event};
+use twsearch::scramble::{free_memory_for_all_scramble_finders, random_scramble_for_event, Event};
 
 /// # Safety
 ///
@@ -63,4 +63,9 @@ fn ffi_test() {
         assert!(alg.nodes.len() >= min_num_moves);
         assert!(alg.nodes.len() <= max_num_moves);
     }
+}
+
+#[no_mangle]
+pub extern "C" fn ffi_free_memory_for_all_scramble_finders() {
+    free_memory_for_all_scramble_finders()
 }

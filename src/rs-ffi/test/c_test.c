@@ -14,6 +14,12 @@ int main() {
   puts("// 333");
   puts(ffi_random_scramble_for_event(CUBING_EVENT_333));
 
+  puts("// 333bf");
+  puts(ffi_random_scramble_for_event(CUBING_EVENT_333BF));
+
+  puts("// 333fm");
+  puts(ffi_random_scramble_for_event(CUBING_EVENT_333FM));
+
   puts("// 555");
   puts(ffi_random_scramble_for_event(CUBING_EVENT_555));
 
@@ -22,4 +28,6 @@ int main() {
 
   puts("// 777");
   puts(ffi_random_scramble_for_event(CUBING_EVENT_777));
+
+  ffi_free_memory_for_all_scramble_finders();
 }

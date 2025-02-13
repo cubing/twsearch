@@ -1,6 +1,7 @@
-use std::{cell::OnceCell, marker::PhantomData, sync::OnceLock};
+use std::sync::{LazyLock, Mutex, RwLock};
 
 use cubing::alg::Alg;
+use erased_set::ErasedSyncSet;
 
 use crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle;
 
@@ -11,30 +12,31 @@ pub enum FilteringDecision {
 
 pub struct NoScrambleOptions {}
 
-pub trait SolvingBasedScrambleFinder<
-    TPuzzle: SemiGroupActionPuzzle,
-    ScrambleOptions = NoScrambleOptions,
->
-{
+pub trait SolvingBasedScrambleFinder {
+    type TPuzzle: SemiGroupActionPuzzle;
+    type ScrambleOptions;
+
     fn new() -> Self;
-    fn generate_fair_unfiltered_random_pattern(&mut self) -> TPuzzle::Pattern;
+    fn generate_fair_unfiltered_random_pattern(
+        &mut self,
+    ) -> <<Self as SolvingBasedScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern;
     fn filter_pattern(
         &mut self,
-        pattern: &TPuzzle::Pattern,
-        scramble_options: &ScrambleOptions,
+        pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern,
+        scramble_options: &Self::ScrambleOptions,
     ) -> FilteringDecision;
     fn solve_pattern(
         &mut self,
-        pattern: &TPuzzle::Pattern,
-        scramble_options: &ScrambleOptions,
+        pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern,
+        scramble_options: &Self::ScrambleOptions,
     ) -> Alg;
     fn invert_alg_to_use_as_scramble(
         &mut self,
         alg: Alg,
-        scramble_options: &ScrambleOptions,
+        scramble_options: &Self::ScrambleOptions,
     ) -> Alg;
 
-    fn generate_fair_scramble(&mut self, scramble_options: &ScrambleOptions) -> Alg {
+    fn generate_fair_scramble(&mut self, scramble_options: &Self::ScrambleOptions) -> Alg {
         loop {
             let pattern = self.generate_fair_unfiltered_random_pattern();
             if matches!(
@@ -49,33 +51,53 @@ pub trait SolvingBasedScrambleFinder<
     }
 }
 
-struct CachedScrambleFinder<
-    TPuzzle: SemiGroupActionPuzzle,
-    ScrambleFinder: SolvingBasedScrambleFinder<TPuzzle, ScrambleOptions>,
-    ScrambleOptions = NoScrambleOptions,
-> {
-    cached_finder: OnceCell<ScrambleFinder>,
-    phantom_data: PhantomData<(TPuzzle, ScrambleOptions)>,
+pub fn generate_fair_scramble<
+    ScrambleFinder: SolvingBasedScrambleFinder + 'static + Sync + Send,
+>(
+    scramble_options: &ScrambleFinder::ScrambleOptions,
+) -> Alg {
+    ScrambleFinderCacher::generate_fair_scramble::<ScrambleFinder>(scramble_options)
 }
 
-impl<
-        TPuzzle: SemiGroupActionPuzzle,
-        ScrambleFinder: SolvingBasedScrambleFinder<TPuzzle, ScrambleOptions>,
-        ScrambleOptions,
-    > CachedScrambleFinder<TPuzzle, ScrambleFinder, ScrambleOptions>
-{
-    pub fn get_cached_finder(&mut self) -> &mut ScrambleFinder {
-        // TODO: use `.get_mut_or_init(…)` once that's stable.
-        self.cached_finder.get_or_init(ScrambleFinder::new);
-        self.cached_finder.get_mut().unwrap()
-    }
+#[derive(Default)]
+struct ScrambleFinderCacher {
+    erased_sync_set: ErasedSyncSet,
+}
 
-    pub fn clear_cached_finder(&mut self) {
-        self.cached_finder.take();
-    }
+static SINGLETON: LazyLock<Mutex<ScrambleFinderCacher>> =
+    LazyLock::<Mutex<ScrambleFinderCacher>>::new(Default::default);
 
-    pub fn generate_fair_scramble(&mut self, scramble_options: &ScrambleOptions) -> Alg {
-        self.get_cached_finder()
+impl ScrambleFinderCacher {
+    pub fn generate_fair_scramble<
+        ScrambleFinder: SolvingBasedScrambleFinder + 'static + Sync + Send,
+    >(
+        scramble_options: &ScrambleFinder::ScrambleOptions,
+    ) -> Alg {
+        let mut mutex_guard = SINGLETON.lock().unwrap();
+        mutex_guard
+            .erased_sync_set
+            .get_or_insert_with(|| RwLock::new(ScrambleFinder::new()));
+
+        let rw_lock = mutex_guard
+            .erased_sync_set
+            .get_mut::<RwLock<ScrambleFinder>>()
+            .unwrap();
+
+        rw_lock
+            .get_mut()
+            .unwrap()
             .generate_fair_scramble(scramble_options)
+    }
+
+    pub fn free_memory_for_scramble_finder<
+        ScrambleFinder: SolvingBasedScrambleFinder + 'static + Sync + Send,
+    >() {
+        let mut mutex_guard = SINGLETON.lock().unwrap();
+        mutex_guard.erased_sync_set.remove::<ScrambleFinder>();
+    }
+
+    pub fn clear<ScrambleFinder: SolvingBasedScrambleFinder + 'static + Sync + Send>() {
+        let mut mutex_guard = SINGLETON.lock().unwrap();
+        mutex_guard.erased_sync_set.clear();
     }
 }

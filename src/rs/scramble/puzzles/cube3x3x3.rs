@@ -18,6 +18,7 @@ use crate::{
         collapse::collapse_adjacent_moves,
         randomize::{basic_parity, BasicParity, OrbitRandomizationConstraints},
         scramble_search::{move_list_from_vec, FilteredSearch},
+        solving_based_scramble_finder::{FilteringDecision, SolvingBasedScrambleFinder},
     },
 };
 
@@ -38,6 +39,68 @@ pub struct Scramble3x3x3TwoPhase {
     phase1_idfs: IDFSearch<KPuzzle>,
 
     phase2_idfs: IDFSearch<KPuzzle>,
+}
+
+struct Scramble3x3x3TwoPhaseScrambleOptions {
+    prefix_or_suffix_constraints: PrefixOrSuffixConstraints,
+}
+
+impl SolvingBasedScrambleFinder<KPuzzle, Scramble3x3x3TwoPhaseScrambleOptions>
+    for Scramble3x3x3TwoPhase
+{
+    fn generate_fair_unfiltered_random_pattern(&mut self) -> KPattern {
+        let kpuzzle = cube3x3x3_centerless_kpuzzle();
+        let mut scramble_pattern = kpuzzle.default_pattern();
+        let edge_order = randomize_orbit_naïve(
+            &mut scramble_pattern,
+            0,
+            "EDGES",
+            OrbitRandomizationConstraints {
+                orientation: Some(OrbitOrientationConstraint::SumToZero),
+                ..Default::default()
+            },
+        );
+        let each_orbit_parity = basic_parity(&edge_order);
+        randomize_orbit_naïve(
+            &mut scramble_pattern,
+            1,
+            "CORNERS",
+            OrbitRandomizationConstraints {
+                permutation: Some(match each_orbit_parity {
+                    BasicParity::Even => OrbitPermutationConstraint::EvenParity,
+                    BasicParity::Odd => OrbitPermutationConstraint::OddParity,
+                }),
+                orientation: Some(OrbitOrientationConstraint::SumToZero),
+                ..Default::default()
+            },
+        );
+        scramble_pattern
+    }
+
+    fn filter_pattern(
+        &mut self,
+        pattern: &KPattern,
+        options: &Scramble3x3x3TwoPhaseScrambleOptions,
+    ) -> FilteringDecision {
+        self.filtered_search
+            .filtering_decision(pattern, MoveCount(2))
+    }
+
+    fn solve_pattern(
+        &mut self,
+        pattern: &KPattern,
+        options: &Scramble3x3x3TwoPhaseScrambleOptions,
+    ) -> Alg {
+        todo!()
+    }
+
+    fn invert_alg_to_use_as_scramble(
+        &mut self,
+        alg: Alg,
+        options: &Scramble3x3x3TwoPhaseScrambleOptions,
+    ) -> Alg {
+        todo!()
+    }
 }
 
 impl Default for Scramble3x3x3TwoPhase {
@@ -91,35 +154,6 @@ impl Default for Scramble3x3x3TwoPhase {
             phase2_idfs,
         }
     }
-}
-
-pub fn random_3x3x3_pattern() -> KPattern {
-    let kpuzzle = cube3x3x3_centerless_kpuzzle();
-    let mut scramble_pattern = kpuzzle.default_pattern();
-    let edge_order = randomize_orbit_naïve(
-        &mut scramble_pattern,
-        0,
-        "EDGES",
-        OrbitRandomizationConstraints {
-            orientation: Some(OrbitOrientationConstraint::SumToZero),
-            ..Default::default()
-        },
-    );
-    let each_orbit_parity = basic_parity(&edge_order);
-    randomize_orbit_naïve(
-        &mut scramble_pattern,
-        1,
-        "CORNERS",
-        OrbitRandomizationConstraints {
-            permutation: Some(match each_orbit_parity {
-                BasicParity::Even => OrbitPermutationConstraint::EvenParity,
-                BasicParity::Odd => OrbitPermutationConstraint::OddParity,
-            }),
-            orientation: Some(OrbitOrientationConstraint::SumToZero),
-            ..Default::default()
-        },
-    );
-    scramble_pattern
 }
 
 pub(crate) enum PrefixOrSuffixConstraints {
@@ -195,9 +229,7 @@ impl Scramble3x3x3TwoPhase {
     }
 
     // TODO: rely on the main search to find patterns at a low depth?
-    pub fn is_valid_scramble_pattern(&mut self, pattern: &KPattern) -> bool {
-        self.filtered_search.filter(pattern, MoveCount(2)).is_none()
-    }
+    pub fn is_valid_scramble_pattern(&mut self, pattern: &KPattern) -> bool {}
 
     pub(crate) fn scramble_3x3x3(&mut self, constraints: PrefixOrSuffixConstraints) -> Alg {
         loop {

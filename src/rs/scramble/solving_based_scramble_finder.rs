@@ -12,41 +12,48 @@ pub enum FilteringDecision {
 
 pub struct NoScrambleOptions {}
 
-pub trait SolvingBasedScrambleFinder {
+pub trait SolvingBasedScrambleFinder: Default {
     type TPuzzle: SemiGroupActionPuzzle;
+    type ScrambleAssociatedData;
     type ScrambleOptions;
 
-    fn new() -> Self;
     fn generate_fair_unfiltered_random_pattern(
         &mut self,
-    ) -> <<Self as SolvingBasedScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern;
+        scramble_options: &Self::ScrambleOptions,
+    ) -> (
+        <<Self as SolvingBasedScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern,
+        Self::ScrambleAssociatedData,
+    );
+
     fn filter_pattern(
         &mut self,
         pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern,
+        scramble_associated_data: &Self::ScrambleAssociatedData,
         scramble_options: &Self::ScrambleOptions,
     ) -> FilteringDecision;
+
     fn solve_pattern(
         &mut self,
         pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern,
-        scramble_options: &Self::ScrambleOptions,
-    ) -> Alg;
-    fn invert_alg_to_use_as_scramble(
-        &mut self,
-        alg: Alg,
+        scramble_associated_data: &Self::ScrambleAssociatedData,
         scramble_options: &Self::ScrambleOptions,
     ) -> Alg;
 
+    fn collapse_inverted_alg(&mut self, alg: Alg) -> Alg;
+
     fn generate_fair_scramble(&mut self, scramble_options: &Self::ScrambleOptions) -> Alg {
         loop {
-            let pattern = self.generate_fair_unfiltered_random_pattern();
+            let (pattern, scramble_associated_data) =
+                self.generate_fair_unfiltered_random_pattern(scramble_options);
             if matches!(
-                self.filter_pattern(&pattern, scramble_options),
+                self.filter_pattern(&pattern, &scramble_associated_data, scramble_options),
                 FilteringDecision::Reject
             ) {
                 continue;
             }
-            let inverse_scramble = self.solve_pattern(&pattern, scramble_options);
-            return self.invert_alg_to_use_as_scramble(inverse_scramble, scramble_options);
+            let inverse_scramble =
+                self.solve_pattern(&pattern, &scramble_associated_data, scramble_options);
+            return self.collapse_inverted_alg(inverse_scramble.invert());
         }
     }
 }
@@ -76,7 +83,7 @@ impl ScrambleFinderCacher {
         let mut mutex_guard = SINGLETON.lock().unwrap();
         mutex_guard
             .erased_sync_set
-            .get_or_insert_with(|| RwLock::new(ScrambleFinder::new()));
+            .get_or_insert_with(|| RwLock::new(ScrambleFinder::default()));
 
         let rw_lock = mutex_guard
             .erased_sync_set

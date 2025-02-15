@@ -1,6 +1,6 @@
 [package]
 name = "twsearch-cpp-wrapper"
-version = "0.0.0"
+version = "0.7.1-dev"
 edition = "2021"
 
 [dependencies]

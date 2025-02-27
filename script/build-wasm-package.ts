@@ -67,7 +67,7 @@ assert(secondsToDownloadUsing3G(wasmSize) < 4.5);
 
 await mkdir(distDir, { recursive: true });
 
-const version = (async () => {
+const version = await (async () => {
   if (env.CI) {
     // Bun seems to segfault, so we need to avoid the `spawn` call completely.
     console.warn(

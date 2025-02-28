@@ -7,12 +7,15 @@ use cubing::{
 };
 
 use crate::{
-    _internal::search::{
-        idf_search::idf_search::{
-            IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions,
+    _internal::{
+        errors::SearchError,
+        search::{
+            idf_search::idf_search::{
+                IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions,
+            },
+            mask_pattern::apply_mask,
+            move_count::MoveCount,
         },
-        mask_pattern::apply_mask,
-        move_count::MoveCount,
     },
     scramble::{
         collapse::collapse_adjacent_moves,
@@ -179,7 +182,7 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3Scramble {
                         .into(),
                         amount: r#move.amount,
                     };
-                    pattern = pattern.apply_move(&inverse_move).unwrap();
+                    pattern = pattern.apply_move(&inverse_move).unwrap(); // TODO
                 }
                 pattern
             }
@@ -189,12 +192,13 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3Scramble {
             .filtering_decision(&pattern_to_filter, MoveCount(2))
     }
 
+    // TODO: handle all `unwrap()`s.
     fn solve_pattern(
         &mut self,
         pattern: &KPattern,
         scramble_associated_data: &TwoPhase3x3x3ScrambleAssociatedData,
         _scramble_options: &TwoPhase3x3x3ScrambleOptions,
-    ) -> Alg {
+    ) -> Result<Alg, SearchError> {
         // TODO: we pass premoves and postmoves to both phases in case the other
         // turns out to have an empty alg solution. We can handle this better by making
         // a way to bridge the FSM between phases.
@@ -250,21 +254,24 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3Scramble {
 
         // dbg!(&search_pattern);
 
-        let mut phase1_alg = {
-            let phase1_search_pattern =
-                apply_mask(&search_pattern, &self.phase1_target_pattern).unwrap();
-            self.phase1_idfs
-                .search(
-                    &phase1_search_pattern,
-                    IndividualSearchOptions {
-                        min_num_solutions: Some(1),
-                        canonical_fsm_pre_moves: canonical_fsm_pre_moves_phase1,
-                        canonical_fsm_post_moves: canonical_fsm_post_moves_phase1,
-                        ..Default::default()
-                    },
-                )
-                .next()
-                .unwrap()
+        let phase1_search_pattern =
+            apply_mask(&search_pattern, &self.phase1_target_pattern).unwrap();
+        let Some(mut phase1_alg) = self
+            .phase1_idfs
+            .search(
+                &phase1_search_pattern,
+                IndividualSearchOptions {
+                    min_num_solutions: Some(1),
+                    canonical_fsm_pre_moves: canonical_fsm_pre_moves_phase1,
+                    canonical_fsm_post_moves: canonical_fsm_post_moves_phase1,
+                    ..Default::default()
+                },
+            )
+            .next()
+        else {
+            return Err(SearchError {
+                description: "Could not find a solution".to_owned(),
+            });
         };
 
         let mut phase2_alg = {
@@ -288,7 +295,7 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3Scramble {
         nodes.append(&mut phase1_alg.nodes);
         nodes.append(&mut phase2_alg.nodes);
         nodes.append(&mut post_alg.invert().nodes);
-        Alg { nodes }
+        Ok(Alg { nodes })
     }
 
     fn collapse_inverted_alg(&mut self, alg: Alg) -> Alg {

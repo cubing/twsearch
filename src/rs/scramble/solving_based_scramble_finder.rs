@@ -3,14 +3,15 @@ use std::sync::{LazyLock, Mutex, RwLock};
 use cubing::alg::Alg;
 use erased_set::ErasedSyncSet;
 
-use crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle;
+use crate::_internal::{errors::SearchError, puzzle_traits::puzzle_traits::SemiGroupActionPuzzle};
 
 pub enum FilteringDecision {
     Accept,
     Reject,
 }
 
-// pub struct NoScrambleOptions {}
+pub struct NoScrambleAssociatedData {}
+pub struct NoScrambleOptions {}
 
 pub trait SolvingBasedScrambleFinder: Default {
     type TPuzzle: SemiGroupActionPuzzle;
@@ -37,7 +38,7 @@ pub trait SolvingBasedScrambleFinder: Default {
         pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern,
         scramble_associated_data: &Self::ScrambleAssociatedData,
         scramble_options: &Self::ScrambleOptions,
-    ) -> Alg;
+    ) -> Result<Alg, SearchError>;
 
     fn collapse_inverted_alg(&mut self, alg: Alg) -> Alg;
 
@@ -51,8 +52,11 @@ pub trait SolvingBasedScrambleFinder: Default {
             ) {
                 continue;
             }
-            let inverse_scramble =
-                self.solve_pattern(&pattern, &scramble_associated_data, scramble_options);
+            // Since we got the pattern from the trait implementation, it should be safe to `.unwrap()` — else, the trait implementation is broken.
+            // TODO: are there any puzzles for which we may want to change this?
+            let inverse_scramble = self
+                .solve_pattern(&pattern, &scramble_associated_data, scramble_options)
+                .unwrap();
             return self.collapse_inverted_alg(inverse_scramble.invert());
         }
     }

@@ -9,12 +9,13 @@ use super::{
         cube3x3x3::{
             PrefixOrSuffixConstraints, TwoPhase3x3x3Scramble, TwoPhase3x3x3ScrambleOptions,
         },
+        cube4x4x4::solve::Cube4x4x4Solver,
         megaminx::scramble_megaminx,
         pyraminx::scramble_pyraminx,
         skewb::scramble_skewb,
         square1::scramble::scramble_square1,
     },
-    solving_based_scramble_finder::generate_fair_scramble,
+    solving_based_scramble_finder::{generate_fair_scramble, NoScrambleOptions},
     Event, PuzzleError,
 };
 
@@ -29,7 +30,9 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
             },
         )),
         Event::Cube2x2x2Speedsolving => Ok(scramble_2x2x2()),
-        Event::Cube4x4x4Speedsolving => err,
+        Event::Cube4x4x4Speedsolving => Ok(generate_fair_scramble::<Cube4x4x4Solver>(
+            &NoScrambleOptions {},
+        )),
         Event::Cube5x5x5Speedsolving => Ok(scramble_5x5x5()),
         Event::Cube6x6x6Speedsolving => Ok(scramble_6x6x6()),
         Event::Cube7x7x7Speedsolving => Ok(scramble_7x7x7()),

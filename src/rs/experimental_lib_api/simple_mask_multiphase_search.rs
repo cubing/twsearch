@@ -97,6 +97,7 @@ impl SimpleMaskMultiphaseSearch {
                     ),
                 });
             };
+            dbg!(&phase_search_pattern);
             search_logger.write_info(&format!("{:#?}", phase_search_pattern));
             let Some(phase_solution) = phase
                 .idfs
@@ -131,7 +132,14 @@ impl SimpleMaskMultiphaseSearch {
                 None => Some(Alg {
                     nodes: [phase_solution.nodes].concat(),
                 }),
-            }
+            };
+            dbg!(apply_mask(
+                &full_search_pattern
+                    .apply_alg(current_solution.as_ref().unwrap_or(&Alg::default()))
+                    .unwrap(),
+                &phase.phase_info.mask,
+            )
+            .unwrap());
         }
         Ok(current_solution.expect("No phase solutions?"))
     }

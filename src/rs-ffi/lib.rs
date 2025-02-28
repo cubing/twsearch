@@ -66,6 +66,8 @@ fn ffi_test() {
 }
 
 #[no_mangle]
-pub extern "C" fn ffi_free_memory_for_all_scramble_finders() {
-    free_memory_for_all_scramble_finders()
+pub extern "C" fn ffi_free_memory_for_all_scramble_finders() -> u32 {
+    // We cast to `u32` for the public API so that it's more stable across environments (including WASM).
+    // If we've allocated more than `u32::MAX`` scramble finders, I'd be *very* impressed.
+    free_memory_for_all_scramble_finders() as u32
 }

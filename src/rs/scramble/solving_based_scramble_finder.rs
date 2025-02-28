@@ -66,8 +66,8 @@ pub fn generate_fair_scramble<
     ScrambleFinderCacher::generate_fair_scramble::<ScrambleFinder>(scramble_options)
 }
 
-pub fn free_memory_for_all_scramble_finders() {
-    ScrambleFinderCacher::free_memory_for_all_scramble_finders();
+pub fn free_memory_for_all_scramble_finders() -> usize {
+    ScrambleFinderCacher::free_memory_for_all_scramble_finders()
 }
 
 #[derive(Default)]
@@ -107,8 +107,13 @@ impl ScrambleFinderCacher {
     //     mutex_guard.erased_sync_set.remove::<ScrambleFinder>();
     // }
 
-    pub fn free_memory_for_all_scramble_finders() {
+    /// Returns the number of scramble finders freed.
+    /// Note that some events share scramble finders, so this will not necessarily match the number of events scrambles have been generated for.
+    pub fn free_memory_for_all_scramble_finders() -> usize {
         let mut mutex_guard = SCRAMBLE_FINDER_CACHER_SINGLETON.lock().unwrap();
+        let num_freed = mutex_guard.erased_sync_set.len();
         mutex_guard.erased_sync_set.clear();
+        // The number of freed scramble finders is not super useful in itself, but it can be a useful sense check that scramble finders were actually allocated and freed.
+        num_freed
     }
 }

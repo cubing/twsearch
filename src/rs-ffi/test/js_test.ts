@@ -18,6 +18,7 @@ const {
     },
     ffi_free_memory_for_all_scramble_finders: {
       args: [],
+      returns: FFIType.u32,
     },
   },
 );
@@ -44,4 +45,7 @@ for (const eventID of [
   );
 }
 
-ffi_free_memory_for_all_scramble_finders();
+const numScrambleFidnersFreed = ffi_free_memory_for_all_scramble_finders();
+console.log(
+  `Freed ${numScrambleFidnersFreed} scramble finder${numScrambleFidnersFreed === 1 ? "" : "s"}.`,
+);

@@ -49,8 +49,8 @@ pub fn scramble_baby_fto() -> Alg {
             IDFSearchConstructionOptions {
                 canonical_fsm_construction_options: CanonicalFSMConstructionOptions {
                     forbid_transitions_by_quantums_either_direction: HashSet::from([(
-                        QuantumMove::new("U", None),
-                        QuantumMove::new("D", None),
+                        QuantumMove::new("L", None),
+                        QuantumMove::new("BR", None),
                     )]),
                 },
                 ..Default::default()

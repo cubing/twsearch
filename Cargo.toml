@@ -18,7 +18,7 @@ license = "MPL-2.0"
 edition = "2021"
 
 [workspace.dependencies]
-cubing = "0.14.0"
+cubing = "0.14.1"
 
 [workspace.metadata.bin]
 cbindgen = { version = "0.26.0" }

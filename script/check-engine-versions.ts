@@ -3,7 +3,7 @@
 // TOOD: remove this once https://github.com/oven-sh/bun/issues/5846 is implemented.
 // TODO: turn this into a package?
 
-import { file } from "bun";
+import { file, spawn } from "bun";
 import { satisfies } from "compare-versions";
 import { PrintableShellCommand } from "printable-shell-command";
 
@@ -17,7 +17,7 @@ async function checkEngine(
 ) {
   const engineRequirement = engines[engineID];
   try {
-    const command = Bun.spawn(versionCommand.forBun(), {
+    const command = spawn(versionCommand.forBun(), {
       stdout: "pipe",
       stderr: "ignore",
     });

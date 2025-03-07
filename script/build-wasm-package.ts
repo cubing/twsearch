@@ -4,7 +4,7 @@ import assert from "node:assert";
 import { mkdir } from "node:fs/promises";
 import { env } from "node:process";
 import { fileURLToPath } from "node:url";
-import { $, file } from "bun";
+import { $, file, spawn } from "bun";
 import { build } from "esbuild";
 
 const distDir = fileURLToPath(new URL("../dist/wasm/", import.meta.url));
@@ -75,7 +75,7 @@ const version = await (async () => {
     );
     return "vUNKNOWN";
   }
-  const command = Bun.spawn(["git", "describe", "--tags"], {
+  const command = spawn(["git", "describe", "--tags"], {
     stdout: "pipe",
     stderr: "ignore",
   });

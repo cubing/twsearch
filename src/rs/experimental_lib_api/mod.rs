@@ -12,7 +12,5 @@ pub use search_api::search;
 mod gods_algorithm_api;
 pub use gods_algorithm_api::gods_algorithm;
 
-mod simple_mask_multiphase_search;
-pub use simple_mask_multiphase_search::{
-    SimpleMaskMultiphaseSearch, SimpleMaskPhase, SimpleMaskPhaseInfo,
-};
+mod multi_phase_search;
+pub use multi_phase_search::{KPuzzleSimpleMaskPhase, MultiPhaseSearch, SearchPhase};

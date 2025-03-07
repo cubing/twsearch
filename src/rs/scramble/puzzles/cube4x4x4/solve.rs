@@ -5,7 +5,7 @@ use cubing::kpuzzle::KPuzzle;
 
 use crate::_internal::cli::args::VerbosityLevel;
 use crate::_internal::search::search_logger::SearchLogger;
-use crate::experimental_lib_api::{SimpleMaskMultiphaseSearch, SimpleMaskPhaseInfo};
+use crate::experimental_lib_api::{KPuzzleSimpleMaskPhase, MultiPhaseSearch};
 use crate::scramble::puzzles::definitions::{cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern};
 use crate::scramble::solving_based_scramble_finder::FilteringDecision;
 use crate::{_internal::errors::SearchError, scramble::scramble_search::move_list_from_vec};
@@ -21,7 +21,7 @@ use crate::scramble::{
 };
 
 pub(crate) struct Cube4x4x4Solver {
-    phase1_search: SimpleMaskMultiphaseSearch,
+    phase1_search: MultiPhaseSearch<KPuzzle>,
 }
 
 fn run_incomplete_scramble_finder_check() {
@@ -112,17 +112,22 @@ impl Default for Cube4x4x4Solver {
         // )
         // .unwrap();
 
-        let phase1_search = SimpleMaskMultiphaseSearch::try_new(
-            kpuzzle,
-            vec![SimpleMaskPhaseInfo {
-                name: "Place L/R centers on L/R".to_owned(),
-                mask: cube4x4x4_phase1_target_kpattern().clone(),
-                generator_moves,
-                individual_search_options: None,
-            }],
+        let phase1_search = MultiPhaseSearch::try_new(
+            kpuzzle.clone(),
+            vec![Box::new(
+                KPuzzleSimpleMaskPhase::try_new(
+                    "Place L/R centers on L/R".to_owned(),
+                    cube4x4x4_phase1_target_kpattern().clone(),
+                    generator_moves,
+                    None,
+                    Default::default(),
+                )
+                .unwrap(),
+            )],
+            // Default::default(),
             Some(SearchLogger {
                 verbosity: VerbosityLevel::Info,
-            }), // Default::default(),
+            }),
         )
         .unwrap();
 

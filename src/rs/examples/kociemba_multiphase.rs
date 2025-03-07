@@ -5,51 +5,59 @@
 */
 use cubing::{
     alg::{parse_alg, parse_move},
-    kpuzzle::{kpattern_from_json_file, kpuzzle_from_json_file},
+    kpuzzle::{kpattern_from_json_file, kpuzzle_from_json_file, KPuzzle},
 };
 use twsearch::{
     _internal::{cli::args::VerbosityLevel, search::search_logger::SearchLogger},
-    experimental_lib_api::{SimpleMaskMultiphaseSearch, SimpleMaskPhaseInfo},
+    experimental_lib_api::{KPuzzleSimpleMaskPhase, MultiPhaseSearch},
 };
 
 kpuzzle_from_json_file!(pub(crate), cube3x3x3_centerless, "../scramble/puzzles/definitions/3x3x3-centerless.kpuzzle.json");
 kpattern_from_json_file!(pub(crate), cube3x3x3_centerless_g1_target, "../scramble/puzzles/definitions/3x3x3-G1-centerless.target-pattern.json", cube3x3x3_centerless_kpuzzle());
 
-struct KociembaTwoPhase(SimpleMaskMultiphaseSearch);
+struct KociembaTwoPhase(MultiPhaseSearch<KPuzzle>);
 
 impl KociembaTwoPhase {
     pub fn new() -> Self {
         let kpuzzle = cube3x3x3_centerless_kpuzzle();
         Self(
-            SimpleMaskMultiphaseSearch::try_new(
-                kpuzzle,
+            MultiPhaseSearch::try_new(
+                kpuzzle.clone(),
                 vec![
-                    SimpleMaskPhaseInfo {
-                        name: "G1 reduction".to_owned(),
-                        mask: cube3x3x3_centerless_g1_target_kpattern().clone(),
-                        generator_moves: vec![
-                            parse_move!("U").to_owned(),
-                            parse_move!("L").to_owned(),
-                            parse_move!("F").to_owned(),
-                            parse_move!("R").to_owned(),
-                            parse_move!("B").to_owned(),
-                            parse_move!("D").to_owned(),
-                        ],
-                        individual_search_options: None,
-                    },
-                    SimpleMaskPhaseInfo {
-                        name: "Domino".to_owned(),
-                        mask: kpuzzle.default_pattern().clone(),
-                        generator_moves: vec![
-                            parse_move!("U").to_owned(),
-                            parse_move!("L2").to_owned(),
-                            parse_move!("F2").to_owned(),
-                            parse_move!("R2").to_owned(),
-                            parse_move!("B2").to_owned(),
-                            parse_move!("D").to_owned(),
-                        ],
-                        individual_search_options: None,
-                    },
+                    Box::new(
+                        KPuzzleSimpleMaskPhase::try_new(
+                            "G1 reduction".to_owned(),
+                            cube3x3x3_centerless_g1_target_kpattern().clone(),
+                            vec![
+                                parse_move!("U").to_owned(),
+                                parse_move!("L").to_owned(),
+                                parse_move!("F").to_owned(),
+                                parse_move!("R").to_owned(),
+                                parse_move!("B").to_owned(),
+                                parse_move!("D").to_owned(),
+                            ],
+                            None,
+                            Default::default(),
+                        )
+                        .unwrap(),
+                    ),
+                    Box::new(
+                        KPuzzleSimpleMaskPhase::try_new(
+                            "Domino".to_owned(),
+                            kpuzzle.default_pattern().clone(),
+                            vec![
+                                parse_move!("U").to_owned(),
+                                parse_move!("L2").to_owned(),
+                                parse_move!("F2").to_owned(),
+                                parse_move!("R2").to_owned(),
+                                parse_move!("B2").to_owned(),
+                                parse_move!("D").to_owned(),
+                            ],
+                            None,
+                            Default::default(),
+                        )
+                        .unwrap(),
+                    ),
                 ],
                 Some(SearchLogger {
                     verbosity: VerbosityLevel::Info,

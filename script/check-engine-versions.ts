@@ -63,3 +63,5 @@ export async function checkEngines(): Promise<void> {
     checkEngine("node", new PrintableShellCommand("node", ["--version"])),
   ]);
 }
+
+await checkEngines();

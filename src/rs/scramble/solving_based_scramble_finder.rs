@@ -75,7 +75,7 @@ struct ScrambleFinderCacher {
     erased_sync_set: ErasedSyncSet,
 }
 
-static SINGLETON: LazyLock<Mutex<ScrambleFinderCacher>> =
+static SCRAMBLE_FINDER_CACHER_SINGLETON: LazyLock<Mutex<ScrambleFinderCacher>> =
     LazyLock::<Mutex<ScrambleFinderCacher>>::new(Default::default);
 
 impl ScrambleFinderCacher {
@@ -84,7 +84,7 @@ impl ScrambleFinderCacher {
     >(
         scramble_options: &ScrambleFinder::ScrambleOptions,
     ) -> Alg {
-        let mut mutex_guard = SINGLETON.lock().unwrap();
+        let mut mutex_guard = SCRAMBLE_FINDER_CACHER_SINGLETON.lock().unwrap();
         mutex_guard
             .erased_sync_set
             .get_or_insert_with(|| RwLock::new(ScrambleFinder::default()));
@@ -108,7 +108,7 @@ impl ScrambleFinderCacher {
     // }
 
     pub fn free_memory_for_all_scramble_finders() {
-        let mut mutex_guard = SINGLETON.lock().unwrap();
+        let mut mutex_guard = SCRAMBLE_FINDER_CACHER_SINGLETON.lock().unwrap();
         mutex_guard.erased_sync_set.clear();
     }
 }

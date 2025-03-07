@@ -17,8 +17,7 @@ const {
       returns: FFIType.cstring,
     },
     ffi_free_memory_for_all_scramble_finders: {
-      args: [FFIType.cstring],
-      returns: FFIType.cstring,
+      args: [],
     },
   },
 );

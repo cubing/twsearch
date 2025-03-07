@@ -1,6 +1,7 @@
 .PHONY: setup-js
 setup-js:
-	bun install --no-save
+	bun run "./script/check-engine-versions.ts"
+	bun install --frozen-lockfile > /dev/null
 
 .PHONY: lint-js
 lint-js: setup-js

@@ -12,7 +12,6 @@
         "@types/bun": "^1.1.0",
         "@types/node": "^22.3.0",
         "barely-a-dev-server": "^0.7.1",
-        "bun-types": "^1.0.7",
         "cmd-ts-too": "^0.15.3",
         "compare-versions": "^6.1.1",
         "esbuild": "^0.25.0",

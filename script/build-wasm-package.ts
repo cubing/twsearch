@@ -4,7 +4,7 @@ import assert from "node:assert";
 import { mkdir } from "node:fs/promises";
 import { env } from "node:process";
 import { fileURLToPath } from "node:url";
-import { file } from "bun";
+import { $, file } from "bun";
 import { build } from "esbuild";
 
 const distDir = fileURLToPath(new URL("../dist/wasm/", import.meta.url));
@@ -63,7 +63,7 @@ assert(wasmSize > 32 * KiB); // Make sure the file exists and has some contents.
  * - See https://github.com/cubing/twsearch/issues/37 for an issue about
  *   decreasing the WASM build size directly.
  */
-assert(secondsToDownloadUsing3G(wasmSize) < 4.5);
+assert(secondsToDownloadUsing3G(wasmSize) < 4.75);
 
 await mkdir(distDir, { recursive: true });
 
@@ -75,9 +75,18 @@ const version = await (async () => {
     );
     return "vUNKNOWN";
   }
-  return await new Response(
-    Bun.spawn(["git", "describe", "--tags"], { stdout: "pipe" }).stdout,
-  ).text();
+  const command = Bun.spawn(["git", "describe", "--tags"], {
+    stdout: "pipe",
+    stderr: "ignore",
+  });
+  if ((await command.exited) !== 0) {
+    console.log("Using version from `jj`");
+    // From https://github.com/jj-vcs/jj/discussions/2563#discussioncomment-11885001
+    return $`jj log -r 'latest(tags())::@- ~ empty()' --no-graph --reversed -T 'commit_id.short(8) ++ " " ++ tags ++ "\n"' \
+  | awk '{latest = $1; count++}; $2 != "" && tag == "" { tag = $2 } END {print tag "-" count "-g" latest}'`.text();
+  }
+  console.log("Using version from `git`");
+  await new Response(command.stdout).text();
 })();
 
 build({

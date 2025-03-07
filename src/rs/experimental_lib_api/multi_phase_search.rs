@@ -37,6 +37,7 @@ pub struct KPuzzleSimpleMaskPhase {
     pub phase_name: String,
     pub mask: KPattern,
     pub idfs: IDFSearch,
+    // TODO: support passing these in dynamically somehow
     pub individual_search_options: IndividualSearchOptions,
 }
 

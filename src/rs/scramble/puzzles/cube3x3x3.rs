@@ -15,8 +15,10 @@ use crate::{
             },
             mask_pattern::apply_mask,
             move_count::MoveCount,
+            search_logger::SearchLogger,
         },
     },
+    experimental_lib_api::{KPuzzleSimpleMaskPhase, MultiPhaseSearch},
     scramble::{
         collapse::collapse_adjacent_moves,
         randomize::{
@@ -41,10 +43,7 @@ pub(crate) struct TwoPhase3x3x3Scramble {
 
     filtered_search: FilteredSearch<KPuzzle>,
 
-    phase1_target_pattern: KPattern,
-    phase1_idfs: IDFSearch<KPuzzle>,
-
-    phase2_idfs: IDFSearch<KPuzzle>,
+    multi_phase_search: MultiPhaseSearch<KPuzzle>,
 }
 
 pub(crate) struct TwoPhase3x3x3ScrambleOptions {
@@ -321,38 +320,52 @@ impl Default for TwoPhase3x3x3Scramble {
             .unwrap(),
         );
 
-        let phase1_target_pattern = cube3x3x3_g1_target_kpattern().clone();
-        let phase1_idfs = IDFSearch::try_new(
+        let multi_phase_search = MultiPhaseSearch::try_new(
             kpuzzle.clone(),
-            generators.clone(),
-            phase1_target_pattern.clone(),
-            IDFSearchConstructionOptions {
-                min_prune_table_size: Some(32),
-                ..Default::default()
-            },
-        )
-        .unwrap();
-
-        let phase2_generators = move_list_from_vec(vec!["U", "L2", "F2", "R2", "B2", "D"]);
-        let phase2_idfs = IDFSearch::try_new(
-            kpuzzle.clone(),
-            phase2_generators.clone(),
-            kpuzzle.default_pattern(),
-            IDFSearchConstructionOptions {
-                min_prune_table_size: Some(1 << 24),
-                ..Default::default()
-            },
+            vec![
+                Box::new(
+                    KPuzzleSimpleMaskPhase::try_new(
+                        "G1 reduction".to_owned(),
+                        cube3x3x3_g1_target_kpattern().clone(),
+                        vec![
+                            parse_move!("U").to_owned(),
+                            parse_move!("L").to_owned(),
+                            parse_move!("F").to_owned(),
+                            parse_move!("R").to_owned(),
+                            parse_move!("B").to_owned(),
+                            parse_move!("D").to_owned(),
+                        ],
+                        None,
+                        Default::default(),
+                    )
+                    .unwrap(),
+                ),
+                Box::new(
+                    KPuzzleSimpleMaskPhase::try_new(
+                        "Domino".to_owned(),
+                        kpuzzle.default_pattern().clone(),
+                        vec![
+                            parse_move!("U").to_owned(),
+                            parse_move!("L2").to_owned(),
+                            parse_move!("F2").to_owned(),
+                            parse_move!("R2").to_owned(),
+                            parse_move!("B2").to_owned(),
+                            parse_move!("D").to_owned(),
+                        ],
+                        None,
+                        Default::default(),
+                    )
+                    .unwrap(),
+                ),
+            ],
+            None,
         )
         .unwrap();
 
         Self {
             kpuzzle,
             filtered_search,
-
-            phase1_target_pattern,
-            phase1_idfs,
-
-            phase2_idfs,
+            multi_phase_search,
         }
     }
 }

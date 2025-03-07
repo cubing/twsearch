@@ -6,7 +6,6 @@
       "dependencies": {
         "cubing": "v0.53.11",
         "getbuiltinmodule-ponyfill": "^1.0.1",
-        "printable-shell-command": "^0.1.1",
       },
       "devDependencies": {
         "@biomejs/biome": "^v1.9.4",
@@ -17,6 +16,7 @@
         "cmd-ts-too": "^0.15.3",
         "compare-versions": "^6.1.1",
         "esbuild": "^0.25.0",
+        "printable-shell-command": "^0.1.1",
       },
     },
   },

@@ -20,6 +20,6 @@
     "cmd-ts-too": "^0.15.3",
     "compare-versions": "^6.1.1",
     "esbuild": "^0.25.0",
-    "printable-shell-command": "^0.1.1"
+    "printable-shell-command": "v0.1.2"
   }
 }

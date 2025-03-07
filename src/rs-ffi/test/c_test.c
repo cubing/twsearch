@@ -29,5 +29,8 @@ int main() {
   puts("// 777");
   puts(ffi_random_scramble_for_event(CUBING_EVENT_777));
 
-  printf("Freed %u scramble filters\n", ffi_free_memory_for_all_scramble_finders()); 
+  puts("// skewb");
+  puts(ffi_random_scramble_for_event(CUBING_EVENT_SKEWB));
+
+  printf("Freed %u scramble finder(s).\n", ffi_free_memory_for_all_scramble_finders()); 
 }

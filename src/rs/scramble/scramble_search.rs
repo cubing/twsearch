@@ -82,11 +82,11 @@ impl<
     }
 
     /// This function depends on the caller to pass parameters that will always result in an alg.
-    pub fn generate_scramble(
+    pub fn solve(
         &mut self,
         scramble_pattern: &TPuzzle::Pattern,
         min_scramble_moves: Option<MoveCount>,
-    ) -> Alg {
+    ) -> Option<Alg> {
         self.idfs
             .search(
                 scramble_pattern,
@@ -97,6 +97,15 @@ impl<
                 },
             )
             .next()
+    }
+
+    /// This function depends on the caller to pass parameters that will always result in an alg.
+    pub fn generate_scramble(
+        &mut self,
+        scramble_pattern: &TPuzzle::Pattern,
+        min_scramble_moves: Option<MoveCount>,
+    ) -> Alg {
+        self.solve(scramble_pattern, min_scramble_moves)
             .unwrap()
             .invert()
     }

@@ -10,7 +10,10 @@ pub enum FilteringDecision {
     Reject,
 }
 
+#[derive(Default)]
 pub struct NoScrambleAssociatedData {}
+
+#[derive(Default)]
 pub struct NoScrambleOptions {}
 
 pub trait SolvingBasedScrambleFinder: Default {

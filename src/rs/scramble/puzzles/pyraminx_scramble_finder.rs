@@ -1,8 +1,4 @@
-use cubing::{
-    alg::{Alg, AlgNode, Move},
-    kpuzzle::KPuzzle,
-};
-use rand::{thread_rng, Rng};
+use cubing::{alg::Alg, kpuzzle::KPuzzle};
 
 use crate::{
     _internal::{
@@ -24,6 +20,7 @@ use super::{
         randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
     definitions::pyraminx_kpuzzle,
+    static_move_list::{add_random_suffixes_from, static_parsed_opt_list},
 };
 
 pub(crate) struct PyraminxScrambleAssociatedData {
@@ -90,22 +87,22 @@ impl SolvingBasedScrambleFinder for PyraminxScrambleFinder {
             },
         );
 
-        let tip_randomization_alg = {
-            let tip_moves = move_list_from_vec(vec!["u", "l", "r", "b"]); // TODO: cache
-            let mut rng = thread_rng();
-            let mut nodes: Vec<AlgNode> = vec![];
-            for tip_move in tip_moves {
-                let amount = rng.gen_range(-1..=1);
-                if amount == 0 {
-                    continue;
-                }
-                nodes.push(cubing::alg::AlgNode::MoveNode(Move {
-                    quantum: tip_move.quantum.clone(),
-                    amount,
-                }))
-            }
-            Alg { nodes }
-        };
+        // TODO: `add_random_suffixes_from` is designed for BLD orientation, so
+        // it is hardcoded for 2 entries. We should change it to accept 4, but
+        // for now we just call it here twice with 2 each.
+        let tip_randomization_alg = add_random_suffixes_from(
+            add_random_suffixes_from(
+                Alg::default(),
+                [
+                    static_parsed_opt_list(&["", "u", "u'"]),
+                    static_parsed_opt_list(&["", "l", "l'"]),
+                ],
+            ),
+            [
+                static_parsed_opt_list(&["", "r", "r'"]),
+                static_parsed_opt_list(&["", "b", "b'"]),
+            ],
+        );
 
         let scramble_pattern = scramble_pattern.apply_alg(&tip_randomization_alg).unwrap();
 

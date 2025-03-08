@@ -1,23 +1,74 @@
-use cubing::alg::{Alg, AlgNode, Move};
+use cubing::{
+    alg::{Alg, AlgNode, Move},
+    kpuzzle::KPuzzle,
+};
 use rand::{thread_rng, Rng};
 
 use crate::{
-    _internal::search::move_count::MoveCount,
-    scramble::{randomize::OrbitRandomizationConstraints, scramble_search::move_list_from_vec},
+    _internal::{
+        errors::SearchError,
+        search::{idf_search::idf_search::IDFSearch, move_count::MoveCount},
+    },
+    scramble::{
+        collapse::collapse_adjacent_moves,
+        randomize::OrbitRandomizationConstraints,
+        scramble_search::{move_list_from_vec, FilteredSearch},
+        solving_based_scramble_finder::{
+            FilteringDecision, NoScrambleOptions, SolvingBasedScrambleFinder,
+        },
+    },
 };
 
 use super::{
     super::randomize::{
         randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
-    super::scramble_search::simple_filtered_search,
-    definitions::tetraminx_kpuzzle,
+    definitions::pyraminx_kpuzzle,
 };
 
-pub fn scramble_pyraminx() -> Alg {
-    let kpuzzle = tetraminx_kpuzzle();
-    loop {
-        let mut scramble_pattern = kpuzzle.default_pattern();
+pub(crate) struct PyraminxScrambleAssociatedData {
+    tip_randomization_alg: Alg,
+}
+
+pub(crate) struct PyraminxScrambleFinder {
+    kpuzzle: KPuzzle,
+    filtered_search_without_tips: FilteredSearch<KPuzzle>,
+}
+
+impl Default for PyraminxScrambleFinder {
+    fn default() -> Self {
+        let kpuzzle = pyraminx_kpuzzle();
+
+        let generator_moves = move_list_from_vec(vec!["U", "L", "R", "B"]);
+        let filtered_search_without_tips = <FilteredSearch>::new(
+            IDFSearch::try_new(
+                kpuzzle.clone(),
+                generator_moves,
+                kpuzzle.default_pattern(),
+                Default::default(),
+            )
+            .unwrap(),
+        );
+        Self {
+            kpuzzle: kpuzzle.clone(),
+            filtered_search_without_tips,
+        }
+    }
+}
+
+impl SolvingBasedScrambleFinder for PyraminxScrambleFinder {
+    type TPuzzle = KPuzzle;
+    type ScrambleAssociatedData = PyraminxScrambleAssociatedData;
+    type ScrambleOptions = NoScrambleOptions;
+
+    fn generate_fair_unfiltered_random_pattern(
+        &mut self,
+        _scramble_options: &Self::ScrambleOptions,
+    ) -> (
+        <<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
+        Self::ScrambleAssociatedData,
+    ){
+        let mut scramble_pattern = self.kpuzzle.default_pattern();
 
         randomize_orbit_naïve(
             &mut scramble_pattern,
@@ -29,7 +80,6 @@ pub fn scramble_pyraminx() -> Alg {
                 ..Default::default()
             },
         );
-
         randomize_orbit_naïve(
             &mut scramble_pattern,
             1,
@@ -40,30 +90,78 @@ pub fn scramble_pyraminx() -> Alg {
             },
         );
 
-        let tip_moves = move_list_from_vec(vec!["u", "l", "r", "b"]); // TODO: cache
-        let mut rng = thread_rng();
-        let mut alg_nodes: Vec<AlgNode> = vec![];
-        for tip_move in tip_moves {
-            let amount = rng.gen_range(-1..=1);
-            if amount == 0 {
-                continue;
+        let tip_randomization_alg = {
+            let tip_moves = move_list_from_vec(vec!["u", "l", "r", "b"]); // TODO: cache
+            let mut rng = thread_rng();
+            let mut nodes: Vec<AlgNode> = vec![];
+            for tip_move in tip_moves {
+                let amount = rng.gen_range(-1..=1);
+                if amount == 0 {
+                    continue;
+                }
+                nodes.push(cubing::alg::AlgNode::MoveNode(Move {
+                    quantum: tip_move.quantum.clone(),
+                    amount,
+                }))
             }
-            alg_nodes.push(cubing::alg::AlgNode::MoveNode(Move {
-                quantum: tip_move.quantum.clone(),
-                amount,
-            }))
-        }
+            Alg { nodes }
+        };
 
-        let generators = move_list_from_vec(vec!["U", "L", "R", "B"]); // TODO: cache
-        if let Some(scramble) = simple_filtered_search(
-            &scramble_pattern,
-            generators,
-            MoveCount(6 - alg_nodes.len()),
-            Some(MoveCount(11 - alg_nodes.len())),
-        ) {
-            let mut nodes = scramble.nodes;
-            nodes.append(&mut alg_nodes);
-            return Alg { nodes };
-        }
+        let scramble_pattern = scramble_pattern.apply_alg(&tip_randomization_alg).unwrap();
+
+        (
+            scramble_pattern,
+            PyraminxScrambleAssociatedData {
+                tip_randomization_alg,
+            },
+        )
+    }
+
+    fn filter_pattern(
+        &mut self,
+        pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
+        scramble_associated_data: &Self::ScrambleAssociatedData,
+        _scramble_options: &Self::ScrambleOptions,
+    ) -> FilteringDecision {
+        // TODO: if `scramble_associated_data.tip_randomization_alg` is invalid, this will loop infinitely: https://github.com/cubing/twsearch/issues/94
+        let pattern = pattern
+            .apply_alg(&scramble_associated_data.tip_randomization_alg.invert())
+            .unwrap(); // TODO
+        self.filtered_search_without_tips.filtering_decision(
+            &pattern,
+            MoveCount(6 - scramble_associated_data.tip_randomization_alg.nodes.len()),
+        )
+    }
+
+    fn solve_pattern(
+        &mut self,
+        pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
+        scramble_associated_data: &Self::ScrambleAssociatedData,
+        _scramble_options: &Self::ScrambleOptions,
+    ) -> Result<Alg, SearchError> {
+        // TODO: if `scramble_associated_data.tip_randomization_alg` is invalid, this will loop infinitely: https://github.com/cubing/twsearch/issues/94
+        let pattern = pattern
+            .apply_alg(&scramble_associated_data.tip_randomization_alg.invert())
+            .unwrap(); // TODO
+        let alg_without_tips = self.filtered_search_without_tips.solve_or_error(
+            &pattern,
+            Some(MoveCount(
+                11 - scramble_associated_data.tip_randomization_alg.nodes.len(),
+            )),
+        )?;
+        Ok(Alg {
+            nodes: [
+                scramble_associated_data
+                    .tip_randomization_alg
+                    .invert()
+                    .nodes,
+                alg_without_tips.nodes,
+            ]
+            .concat(),
+        })
+    }
+
+    fn collapse_inverted_alg(&mut self, alg: Alg) -> Alg {
+        collapse_adjacent_moves(alg, 3, -1)
     }
 }

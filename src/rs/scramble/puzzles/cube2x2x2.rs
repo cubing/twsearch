@@ -148,16 +148,9 @@ impl SolvingBasedScrambleFinder for Cube2x2x2ScrambleFinder {
         pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
         _scramble_associated_data: &Self::ScrambleAssociatedData,
         _scramble_options: &Self::ScrambleOptions,
-    ) -> Result<Alg, crate::_internal::errors::SearchError> {
-        let Some(alg) = self
-            .filtered_search_U_L_F_R
-            .solve(pattern, Some(MoveCount(11)))
-        else {
-            return Err(SearchError {
-                description: "Could not solve 2×2×2 pattern".to_owned(),
-            });
-        };
-        Ok(alg)
+    ) -> Result<Alg, SearchError> {
+        self.filtered_search_U_L_F_R
+            .solve_or_error(pattern, Some(MoveCount(11)))
     }
 
     fn collapse_inverted_alg(&mut self, alg: Alg) -> Alg {

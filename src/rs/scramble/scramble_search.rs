@@ -2,10 +2,11 @@ use std::{default::Default, marker::PhantomData};
 
 use cubing::{
     alg::{Alg, Move},
-    kpuzzle::{KPattern, KPuzzle},
+    kpuzzle::KPuzzle,
 };
 
 use crate::_internal::{
+    errors::SearchError,
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
         idf_search::{
@@ -100,6 +101,20 @@ impl<
     }
 
     /// This function depends on the caller to pass parameters that will always result in an alg.
+    pub fn solve_or_error(
+        &mut self,
+        scramble_pattern: &TPuzzle::Pattern,
+        min_scramble_moves: Option<MoveCount>,
+    ) -> Result<Alg, SearchError> {
+        let Some(alg) = self.solve(scramble_pattern, min_scramble_moves) else {
+            return Err(SearchError {
+                description: "Could not solve pattern".to_owned(),
+            });
+        };
+        Ok(alg)
+    }
+
+    /// This function depends on the caller to pass parameters that will always result in an alg.
     pub fn generate_scramble(
         &mut self,
         scramble_pattern: &TPuzzle::Pattern,
@@ -109,29 +124,4 @@ impl<
             .unwrap()
             .invert()
     }
-}
-
-pub(crate) fn simple_filtered_search(
-    scramble_pattern: &KPattern,
-    generator_moves: Vec<Move>,
-    min_optimal_moves: MoveCount,
-    min_scramble_moves: Option<MoveCount>,
-) -> Option<Alg> {
-    let kpuzzle = scramble_pattern.kpuzzle();
-    let mut filtered_search = <FilteredSearch>::new(
-        IDFSearch::try_new(
-            kpuzzle.clone(),
-            generator_moves,
-            kpuzzle.default_pattern(),
-            Default::default(),
-        )
-        .unwrap(),
-    );
-    if filtered_search
-        .filter(scramble_pattern, min_optimal_moves)
-        .is_some()
-    {
-        return None;
-    }
-    Some(filtered_search.generate_scramble(scramble_pattern, min_scramble_moves))
 }

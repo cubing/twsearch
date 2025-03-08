@@ -11,7 +11,7 @@ use super::{
         },
         cube4x4x4::cube4x4x4_solver::Cube4x4x4Solver,
         megaminx::scramble_megaminx,
-        pyraminx::scramble_pyraminx,
+        pyraminx::PyraminxScrambleFinder,
         skewb::SkewbScrambleFinder,
         square1::scramble::scramble_square1,
     },
@@ -55,7 +55,9 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
         )),
         Event::ClockSpeedsolving => Ok(scramble_clock()),
         Event::MegaminxSpeedsolving => Ok(scramble_megaminx()),
-        Event::PyraminxSpeedsolving => Ok(scramble_pyraminx()),
+        Event::PyraminxSpeedsolving => Ok(generate_fair_scramble::<PyraminxScrambleFinder>(
+            &NoScrambleOptions {},
+        )),
         Event::SkewbSpeedsolving => Ok(generate_fair_scramble::<SkewbScrambleFinder>(
             &Default::default(),
         )),

@@ -5,7 +5,7 @@ use super::{
         baby_fto::scramble_baby_fto,
         big_cubes::{scramble_5x5x5, scramble_5x5x5_bld, scramble_6x6x6, scramble_7x7x7},
         clock::scramble_clock,
-        cube2x2x2::scramble_2x2x2,
+        cube2x2x2::Cube2x2x2ScrambleFinder,
         cube3x3x3::{
             PrefixOrSuffixConstraints, TwoPhase3x3x3Scramble, TwoPhase3x3x3ScrambleOptions,
         },
@@ -29,7 +29,9 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
                 prefix_or_suffix_constraints: PrefixOrSuffixConstraints::None,
             },
         )),
-        Event::Cube2x2x2Speedsolving => Ok(scramble_2x2x2()),
+        Event::Cube2x2x2Speedsolving => Ok(generate_fair_scramble::<Cube2x2x2ScrambleFinder>(
+            &NoScrambleOptions {},
+        )),
         Event::Cube4x4x4Speedsolving => Ok(generate_fair_scramble::<Cube4x4x4Solver>(
             &NoScrambleOptions {},
         )),

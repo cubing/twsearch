@@ -9,7 +9,7 @@ use super::{
         cube3x3x3::{
             PrefixOrSuffixConstraints, TwoPhase3x3x3Scramble, TwoPhase3x3x3ScrambleOptions,
         },
-        cube4x4x4::solve::Cube4x4x4Solver,
+        cube4x4x4::cube4x4x4_solver::Cube4x4x4Solver,
         megaminx::scramble_megaminx,
         pyraminx::scramble_pyraminx,
         skewb::SkewbScrambleFinder,

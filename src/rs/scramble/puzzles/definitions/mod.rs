@@ -11,7 +11,7 @@ kpattern_from_json_file!(pub(crate), cube3x3x3_g1_target, "3x3x3-G1.target-patte
 // TODO: Handle a default pattern with indistinguishable pieces on `apply_mask(…)`.
 kpuzzle_from_json_file!(pub(crate), cube4x4x4, "4x4x4.kpuzzle.json");
 kpattern_from_json_file!(pub(crate), cube4x4x4_phase1_target, "4x4x4-Phase1.target.json", cube4x4x4_kpuzzle());
-kpattern_from_json_file!(pub(crate), cube4x4x4_phase2_target, "4x4x4-Phase2.target.json", cube4x4x4_kpuzzle());
+// kpattern_from_json_file!(pub(crate), cube4x4x4_phase2_target, "4x4x4-Phase2.target.json", cube4x4x4_kpuzzle());
 
 kpuzzle_from_json_file!(pub(crate), cube5x5x5, "5x5x5.kpuzzle.json");
 kpuzzle_from_json_file!(pub(crate), cube6x6x6, "6x6x6.kpuzzle.json");

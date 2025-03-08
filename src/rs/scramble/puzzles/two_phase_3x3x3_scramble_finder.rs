@@ -36,7 +36,7 @@ use super::{
 // static FMC_AFFIX: [&str; 3] = ["R'", "U'", "F"];
 static FMC_AFFIX_ALG: LazyLock<Alg> = LazyLock::new(|| parse_alg!("R' U' F").clone());
 
-pub(crate) struct TwoPhase3x3x3Scramble {
+pub(crate) struct TwoPhase3x3x3ScrambleFinder {
     kpuzzle: KPuzzle,
 
     filtered_search: FilteredSearch<KPuzzle>,
@@ -90,7 +90,7 @@ pub(crate) struct TwoPhase3x3x3ScrambleAssociatedData {
     affixes: TwoPhase3x3x3ScrambleAssociatedAffixes,
 }
 
-impl SolvingBasedScrambleFinder for TwoPhase3x3x3Scramble {
+impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
     type TPuzzle = KPuzzle;
     type ScrambleAssociatedData = TwoPhase3x3x3ScrambleAssociatedData;
     type ScrambleOptions = TwoPhase3x3x3ScrambleOptions;
@@ -303,7 +303,7 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3Scramble {
     }
 }
 
-impl Default for TwoPhase3x3x3Scramble {
+impl Default for TwoPhase3x3x3ScrambleFinder {
     fn default() -> Self {
         // TODO: add centerless optimizations where possible?
         let kpuzzle = cube3x3x3_kpuzzle().clone();

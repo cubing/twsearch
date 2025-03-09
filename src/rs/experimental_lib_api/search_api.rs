@@ -4,8 +4,9 @@ use crate::_internal::{
     cli::args::{SearchCommandOptionalArgs, VerbosityLevel},
     errors::CommandError,
     search::{
-        idf_search::idf_search::{
-            IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions, SearchSolutions,
+        iterative_deepening::iterative_deepening_search::{
+            IndividualSearchOptions, IterativeDeepeningSearch,
+            IterativeDeepeningSearchConstructionOptions, SearchSolutions,
         },
         search_logger::SearchLogger,
     },
@@ -50,14 +51,14 @@ pub fn search(
         None => kpuzzle.default_pattern(),
     };
 
-    let mut idf_search = <IDFSearch<KPuzzle>>::try_new(
+    let mut iterative_deepening_search = <IterativeDeepeningSearch<KPuzzle>>::try_new(
         kpuzzle.clone(),
         search_command_optional_args
             .generator_args
             .parse()
             .enumerate_moves_for_kpuzzle(kpuzzle),
         target_pattern,
-        IDFSearchConstructionOptions {
+        IterativeDeepeningSearchConstructionOptions {
             search_logger: Arc::new(SearchLogger {
                 verbosity: search_command_optional_args
                     .verbosity_args
@@ -70,7 +71,7 @@ pub fn search(
         },
     )?;
 
-    let solutions = idf_search.search(
+    let solutions = iterative_deepening_search.search(
         search_pattern,
         IndividualSearchOptions {
             min_num_solutions: search_command_optional_args.min_num_solutions,

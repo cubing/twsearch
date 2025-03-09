@@ -8,17 +8,20 @@ use cubing::{
 
 use crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle;
 use crate::_internal::search::hash_prune_table::HashPruneTable;
-use crate::_internal::search::idf_search::search_adaptations::SearchAdaptations;
+use crate::_internal::search::iterative_deepening::search_adaptations::SearchAdaptations;
 use crate::_internal::search::transformation_traversal_filter_trait::TransformationTraversalFilterNoOp;
 use crate::scramble::scramble_search::FilteredSearch;
 use crate::{
     _internal::search::{
         coordinates::phase_coordinate_puzzle::PhaseCoordinatePuzzle,
-        idf_search::idf_search::IDFSearchConstructionOptions, prune_table_trait::Depth,
+        iterative_deepening::iterative_deepening_search::IterativeDeepeningSearchConstructionOptions,
+        prune_table_trait::Depth,
     },
     _internal::{
         errors::SearchError,
-        search::idf_search::idf_search::{IDFSearch, IndividualSearchOptions},
+        search::iterative_deepening::iterative_deepening_search::{
+            IndividualSearchOptions, IterativeDeepeningSearch,
+        },
     },
     scramble::{
         puzzles::square1::phase1::Square1Phase1Puzzle, scramble_search::move_list_from_vec,
@@ -42,9 +45,11 @@ impl SearchAdaptations<KPuzzle> for FilteringSearchAdaptations {
 
 pub(crate) struct Square1Solver {
     square1_phase1_puzzle: Square1Phase1Puzzle,
-    phase1_idfs: IDFSearch<Square1Phase1Puzzle, Square1Phase1SearchAdaptations>,
+    phase1_iterative_deepening_search:
+        IterativeDeepeningSearch<Square1Phase1Puzzle, Square1Phase1SearchAdaptations>,
     square1_phase2_puzzle: Square1Phase2Puzzle,
-    phase2_idfs: IDFSearch<Square1Phase2Puzzle, Square1Phase2SearchAdaptations>,
+    phase2_iterative_deepening_search:
+        IterativeDeepeningSearch<Square1Phase2Puzzle, Square1Phase2SearchAdaptations>,
     // TODO: lazy-initialize `depth_filtering_search`?
     pub(crate) depth_filtering_search: FilteredSearch<KPuzzle, FilteringSearchAdaptations>,
 }
@@ -65,52 +70,57 @@ impl Square1Solver {
             .full_pattern_to_phase_coordinate(&kpuzzle.default_pattern())
             .unwrap();
 
-        let phase1_idfs =
-            IDFSearch::<Square1Phase1Puzzle, Square1Phase1SearchAdaptations>::try_new(
-                square1_phase1_puzzle.clone(),
-                generator_moves.clone(),
-                phase1_target_pattern,
-                IDFSearchConstructionOptions {
-                    ..Default::default()
-                },
-            )
-            .unwrap();
+        let phase1_iterative_deepening_search = IterativeDeepeningSearch::<
+            Square1Phase1Puzzle,
+            Square1Phase1SearchAdaptations,
+        >::try_new(
+            square1_phase1_puzzle.clone(),
+            generator_moves.clone(),
+            phase1_target_pattern,
+            IterativeDeepeningSearchConstructionOptions {
+                ..Default::default()
+            },
+        )
+        .unwrap();
 
         let square1_phase2_puzzle: Square1Phase2Puzzle = Square1Phase2Puzzle::new();
         let phase2_target_pattern = square1_phase2_puzzle
             .full_pattern_to_phase_coordinate(&kpuzzle.default_pattern())
             .unwrap();
 
-        let phase2_idfs =
-            IDFSearch::<Square1Phase2Puzzle, Square1Phase2SearchAdaptations>::try_new(
-                square1_phase2_puzzle.clone(),
-                generator_moves.clone(),
-                phase2_target_pattern,
-                IDFSearchConstructionOptions {
-                    ..Default::default()
-                },
-            )
-            .unwrap();
+        let phase2_iterative_deepening_search = IterativeDeepeningSearch::<
+            Square1Phase2Puzzle,
+            Square1Phase2SearchAdaptations,
+        >::try_new(
+            square1_phase2_puzzle.clone(),
+            generator_moves.clone(),
+            phase2_target_pattern,
+            IterativeDeepeningSearchConstructionOptions {
+                ..Default::default()
+            },
+        )
+        .unwrap();
 
         let depth_filtering_search = {
             let kpuzzle = square1_unbandaged_kpuzzle();
             let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
 
-            let idfs = IDFSearch::<KPuzzle, FilteringSearchAdaptations>::try_new(
-                kpuzzle.clone(),
-                generator_moves,
-                kpuzzle.default_pattern(),
-                Default::default(),
-            )
-            .unwrap();
-            FilteredSearch::<KPuzzle, FilteringSearchAdaptations>::new(idfs)
+            let iterative_deepening_search =
+                IterativeDeepeningSearch::<KPuzzle, FilteringSearchAdaptations>::try_new(
+                    kpuzzle.clone(),
+                    generator_moves,
+                    kpuzzle.default_pattern(),
+                    Default::default(),
+                )
+                .unwrap();
+            FilteredSearch::<KPuzzle, FilteringSearchAdaptations>::new(iterative_deepening_search)
         };
 
         Self {
             square1_phase1_puzzle,
-            phase1_idfs,
+            phase1_iterative_deepening_search,
             square1_phase2_puzzle,
-            phase2_idfs,
+            phase2_iterative_deepening_search,
             depth_filtering_search,
         }
     }
@@ -129,7 +139,7 @@ impl Square1Solver {
         // let mut phase1_start_time = Instant::now();
         for current_depth in 0..31 {
             let num_solutions = 10000000;
-            let phase1_search = self.phase1_idfs.search(
+            let phase1_search = self.phase1_iterative_deepening_search.search(
                 &phase1_start_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(num_solutions),
@@ -148,7 +158,7 @@ impl Square1Solver {
             'phase1_loop: for mut phase1_solution in phase1_search {
                 found_phase1_solutions += 1;
                 // phase1_cumulative_time += Instant::now() - phase1_start_time;
-                // TODO: Push the candidate check into a trait for `IDFSearch`.
+                // TODO: Push the candidate check into a trait for `IterativeDeepeningSearch`.
                 while let Some(cubing::alg::AlgNode::MoveNode(r#move)) =
                     phase1_solution.nodes.last()
                 {
@@ -177,7 +187,7 @@ impl Square1Solver {
                     });
                 };
                 let phase2_solution = self
-                    .phase2_idfs
+                    .phase2_iterative_deepening_search
                     .search(
                         &phase2_start_pattern,
                         IndividualSearchOptions {
@@ -270,7 +280,7 @@ fn group_square_1_tuples(alg: Alg) -> Alg {
     #[allow(non_snake_case)]
     let _SLASH_ = parse_move!("/");
 
-    // TODO: Push the candidate check into a trait for `IDFSearch`.
+    // TODO: Push the candidate check into a trait for `IterativeDeepeningSearch`.
     for node in alg.nodes {
         let cubing::alg::AlgNode::MoveNode(r#move) = node else {
             panic!("Invalid Square-1 scramble alg in internal code.");

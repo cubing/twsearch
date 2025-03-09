@@ -9,8 +9,8 @@ use crate::_internal::{
     errors::SearchError,
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
-        idf_search::{
-            idf_search::{IDFSearch, IndividualSearchOptions},
+        iterative_deepening::{
+            iterative_deepening_search::{IndividualSearchOptions, IterativeDeepeningSearch},
             search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
         },
         move_count::MoveCount,
@@ -33,7 +33,7 @@ pub struct FilteredSearch<
         TPuzzle,
     >>::Adaptations,
 > {
-    pub(crate) idfs: IDFSearch<TPuzzle, Adaptations>,
+    pub(crate) iterative_deepening_search: IterativeDeepeningSearch<TPuzzle, Adaptations>,
 
     phantom_data: PhantomData<(TPuzzle, Adaptations)>,
 }
@@ -43,9 +43,9 @@ impl<
         Adaptations: SearchAdaptations<TPuzzle>,
     > FilteredSearch<TPuzzle, Adaptations>
 {
-    pub fn new(idfs: IDFSearch<TPuzzle, Adaptations>) -> Self {
+    pub fn new(iterative_deepening_search: IterativeDeepeningSearch<TPuzzle, Adaptations>) -> Self {
         Self {
-            idfs,
+            iterative_deepening_search,
             phantom_data: PhantomData,
         }
     }
@@ -58,7 +58,7 @@ impl<
         if min_optimal_moves == MoveCount(0) {
             return None;
         }
-        self.idfs
+        self.iterative_deepening_search
             .search(
                 scramble_pattern,
                 IndividualSearchOptions {
@@ -88,7 +88,7 @@ impl<
         scramble_pattern: &TPuzzle::Pattern,
         min_scramble_moves: Option<MoveCount>,
     ) -> Option<Alg> {
-        self.idfs
+        self.iterative_deepening_search
             .search(
                 scramble_pattern,
                 IndividualSearchOptions {

@@ -9,8 +9,9 @@ use crate::_internal::{
     errors::SearchError,
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
-        idf_search::idf_search::{
-            IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions,
+        iterative_deepening::iterative_deepening_search::{
+            IndividualSearchOptions, IterativeDeepeningSearch,
+            IterativeDeepeningSearchConstructionOptions,
         },
         mask_pattern::apply_mask,
         search_logger::SearchLogger,
@@ -36,7 +37,7 @@ pub trait SearchPhase<TPuzzle: SemiGroupActionPuzzle>: Send + Sync {
 pub struct KPuzzleSimpleMaskPhase {
     pub phase_name: String,
     pub mask: KPattern,
-    pub idfs: IDFSearch,
+    pub iterative_deepening_search: IterativeDeepeningSearch,
     // TODO: support passing these in dynamically somehow
     pub individual_search_options: IndividualSearchOptions,
 }
@@ -58,11 +59,11 @@ impl KPuzzleSimpleMaskPhase {
                 ),
             });
         };
-        let Ok(idfs) = IDFSearch::<KPuzzle>::try_new(
+        let Ok(iterative_deepening_search) = IterativeDeepeningSearch::<KPuzzle>::try_new(
             kpuzzle.clone(),
             generator_moves,
             target_pattern,
-            IDFSearchConstructionOptions {
+            IterativeDeepeningSearchConstructionOptions {
                 search_logger: search_logger.unwrap_or_default().into(),
                 ..Default::default()
             },
@@ -77,7 +78,7 @@ impl KPuzzleSimpleMaskPhase {
         Ok(Self {
             phase_name,
             mask,
-            idfs,
+            iterative_deepening_search,
             individual_search_options,
         })
     }
@@ -96,7 +97,7 @@ impl KPuzzleSimpleMaskPhase {
     //     };
     //     // TODO: can we avoid a clone of `individual_search_options`?
     //     let iterator = self
-    //         .idfs
+    //         .iterative_deepening_search
     //         .search(&masked_pattern, self.individual_search_options.clone());
     //     Ok(Box::new(iterator))
     // }
@@ -121,7 +122,7 @@ impl SearchPhase<KPuzzle> for KPuzzleSimpleMaskPhase {
         };
         // TODO: can we avoid a clone of `individual_search_options`?
         Ok(self
-            .idfs
+            .iterative_deepening_search
             .search(&masked_pattern, self.individual_search_options.clone())
             .next())
     }

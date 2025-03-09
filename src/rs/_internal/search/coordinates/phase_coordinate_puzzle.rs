@@ -19,11 +19,11 @@ use crate::{
         cli::args::MetricEnum,
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{
-            idf_search::{
-                idf_search::IDFSearchAPIData,
+            indexed_vec::IndexedVec,
+            iterative_deepening::{
+                iterative_deepening_search::IterativeDeepeningSearchAPIData,
                 search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
             },
-            indexed_vec::IndexedVec,
             move_count::MoveCount,
             pattern_traversal_filter_trait::PatternTraversalFilterNoOp,
             prune_table_trait::{Depth, PruneTable},
@@ -358,7 +358,7 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
     fn new(
         puzzle: PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>,
         _search_api_data: Arc<
-            IDFSearchAPIData<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>,
+            IterativeDeepeningSearchAPIData<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>,
         >,
         _search_logger: Arc<SearchLogger>,
         _min_size: Option<usize>,

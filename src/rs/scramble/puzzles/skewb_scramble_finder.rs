@@ -3,7 +3,10 @@ use cubing::{alg::Alg, kpuzzle::KPuzzle};
 use crate::{
     _internal::{
         errors::SearchError,
-        search::{idf_search::idf_search::IDFSearch, move_count::MoveCount},
+        search::{
+            iterative_deepening::iterative_deepening_search::IterativeDeepeningSearch,
+            move_count::MoveCount,
+        },
     },
     scramble::{
         collapse::collapse_adjacent_moves,
@@ -33,7 +36,7 @@ impl Default for SkewbScrambleFinder {
         let kpuzzle = skewb_fixed_corner_with_co_tweaks_kpuzzle();
         let generator_moves = move_list_from_vec(vec!["U", "L", "R", "B"]);
         let filtered_search = FilteredSearch::new(
-            IDFSearch::try_new(
+            IterativeDeepeningSearch::try_new(
                 kpuzzle.clone(),
                 generator_moves,
                 kpuzzle.default_pattern(),

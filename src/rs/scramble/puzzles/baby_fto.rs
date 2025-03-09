@@ -7,8 +7,9 @@ use crate::{
     _internal::{
         canonical_fsm::canonical_fsm::CanonicalFSMConstructionOptions,
         search::{
-            idf_search::idf_search::{
-                IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions,
+            iterative_deepening::iterative_deepening_search::{
+                IndividualSearchOptions, IterativeDeepeningSearch,
+                IterativeDeepeningSearchConstructionOptions,
             },
             move_count::MoveCount,
             prune_table_trait::Depth,
@@ -31,7 +32,7 @@ pub fn scramble_baby_fto() -> Alg {
     let kpuzzle = baby_fto_kpuzzle();
     let filter_generator_moves = move_list_from_vec(vec!["U", "L", "F", "R"]);
     let mut filtered_search = <FilteredSearch>::new(
-        IDFSearch::try_new(
+        IterativeDeepeningSearch::try_new(
             kpuzzle.clone(),
             filter_generator_moves,
             kpuzzle.default_pattern(),
@@ -42,11 +43,11 @@ pub fn scramble_baby_fto() -> Alg {
 
     let generator_moves = move_list_from_vec(vec!["U", "L", "F", "R", "BR"]);
     let mut search = <FilteredSearch>::new(
-        IDFSearch::try_new(
+        IterativeDeepeningSearch::try_new(
             kpuzzle.clone(),
             generator_moves,
             kpuzzle.default_pattern(),
-            IDFSearchConstructionOptions {
+            IterativeDeepeningSearchConstructionOptions {
                 canonical_fsm_construction_options: CanonicalFSMConstructionOptions {
                     forbid_transitions_by_quantums_either_direction: HashSet::from([(
                         QuantumMove::new("L", None),
@@ -119,7 +120,7 @@ pub fn scramble_baby_fto() -> Alg {
             )
             .unwrap();
         if let Some(solution) = search
-            .idfs
+            .iterative_deepening_search
             .search(
                 &scramble_pattern,
                 IndividualSearchOptions {

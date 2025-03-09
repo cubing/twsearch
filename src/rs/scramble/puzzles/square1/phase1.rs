@@ -12,7 +12,7 @@ use crate::{
             coordinates::phase_coordinate_puzzle::{
                 PhaseCoordinatePruneTable, PhaseCoordinatePuzzle, SemanticCoordinate,
             },
-            idf_search::search_adaptations::SearchAdaptations,
+            iterative_deepening::search_adaptations::SearchAdaptations,
             mask_pattern::apply_mask,
             pattern_traversal_filter_trait::{PatternTraversalFilter, PatternTraversalFilterNoOp},
             prune_table_trait::Depth,

@@ -1,8 +1,7 @@
 pub mod coordinates;
 pub(crate) mod hash_prune_table;
-#[allow(clippy::module_inception)]
-pub mod idf_search;
 pub mod indexed_vec;
+pub mod iterative_deepening;
 pub(crate) mod mask_pattern;
 pub mod move_count;
 pub(crate) mod pattern_stack;

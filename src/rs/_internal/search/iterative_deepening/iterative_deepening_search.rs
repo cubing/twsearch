@@ -153,7 +153,7 @@ struct IndividualSearchData {
     solution_sender: Sender<Option<Alg>>,
 }
 
-pub struct IDFSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
+pub struct IterativeDeepeningSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
     pub search_generators: SearchGenerators<TPuzzle>,
     pub canonical_fsm: CanonicalFSM<TPuzzle>, // TODO: move this into `SearchAdaptations`
     pub tpuzzle: TPuzzle,
@@ -162,17 +162,17 @@ pub struct IDFSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
 }
 
 /// For information on [`SearchAdaptations`], see the documentation for that trait.
-pub struct IDFSearch<
+pub struct IterativeDeepeningSearch<
     TPuzzle: SemiGroupActionPuzzle + DefaultSearchAdaptations<TPuzzle> = KPuzzle,
     Adaptations: SearchAdaptations<TPuzzle> = <TPuzzle as DefaultSearchAdaptations<
         TPuzzle,
     >>::Adaptations,
 > {
-    pub api_data: Arc<IDFSearchAPIData<TPuzzle>>,
+    pub api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
     pub prune_table: Adaptations::PruneTable, // TODO: push this into the associated data for the adaptations.
 }
 
-pub struct IDFSearchConstructionOptions {
+pub struct IterativeDeepeningSearchConstructionOptions {
     pub search_logger: Arc<SearchLogger>,
     pub metric: MetricEnum,
     pub random_start: bool,
@@ -180,7 +180,7 @@ pub struct IDFSearchConstructionOptions {
     pub canonical_fsm_construction_options: CanonicalFSMConstructionOptions,
 }
 
-impl Default for IDFSearchConstructionOptions {
+impl Default for IterativeDeepeningSearchConstructionOptions {
     fn default() -> Self {
         Self {
             search_logger: Default::default(),
@@ -195,13 +195,13 @@ impl Default for IDFSearchConstructionOptions {
 impl<
         TPuzzle: SemiGroupActionPuzzle + DefaultSearchAdaptations<TPuzzle>,
         Adaptations: SearchAdaptations<TPuzzle>,
-    > IDFSearch<TPuzzle, Adaptations>
+    > IterativeDeepeningSearch<TPuzzle, Adaptations>
 {
     pub fn try_new(
         tpuzzle: TPuzzle,
         generator_moves: Vec<Move>, // TODO: turn this back into `Generators`
         target_pattern: TPuzzle::Pattern,
-        options: IDFSearchConstructionOptions,
+        options: IterativeDeepeningSearchConstructionOptions,
     ) -> Result<Self, SearchError> {
         let search_generators = SearchGenerators::try_new(
             &tpuzzle,
@@ -214,7 +214,7 @@ impl<
             search_generators.clone(),
             options.canonical_fsm_construction_options,
         )?; // TODO: avoid a clone
-        let api_data = Arc::new(IDFSearchAPIData {
+        let api_data = Arc::new(IterativeDeepeningSearchAPIData {
             search_generators,
             canonical_fsm,
             tpuzzle: tpuzzle.clone(),

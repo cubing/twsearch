@@ -10,8 +10,9 @@ use crate::{
     _internal::{
         errors::SearchError,
         search::{
-            idf_search::idf_search::{
-                IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions,
+            iterative_deepening::iterative_deepening_search::{
+                IndividualSearchOptions, IterativeDeepeningSearch,
+                IterativeDeepeningSearchConstructionOptions,
             },
             mask_pattern::apply_mask,
             move_count::MoveCount,
@@ -42,9 +43,9 @@ pub(crate) struct TwoPhase3x3x3ScrambleFinder {
     filtered_search: FilteredSearch<KPuzzle>,
 
     phase1_target_pattern: KPattern,
-    phase1_idfs: IDFSearch<KPuzzle>,
+    phase1_iterative_deepening_search: IterativeDeepeningSearch<KPuzzle>,
 
-    phase2_idfs: IDFSearch<KPuzzle>,
+    phase2_iterative_deepening_search: IterativeDeepeningSearch<KPuzzle>,
 }
 
 pub(crate) struct TwoPhase3x3x3ScrambleOptions {
@@ -255,7 +256,7 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
         let phase1_search_pattern =
             apply_mask(&search_pattern, &self.phase1_target_pattern).unwrap();
         let Some(mut phase1_alg) = self
-            .phase1_idfs
+            .phase1_iterative_deepening_search
             .search(
                 &phase1_search_pattern,
                 IndividualSearchOptions {
@@ -275,7 +276,7 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
         let mut phase2_alg = {
             let phase2_search_pattern = search_pattern
                 .apply_transformation(&self.kpuzzle.transformation_from_alg(&phase1_alg).unwrap());
-            self.phase2_idfs
+            self.phase2_iterative_deepening_search
                 .search(
                     &phase2_search_pattern,
                     IndividualSearchOptions {
@@ -307,11 +308,11 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
         let kpuzzle = cube3x3x3_kpuzzle().clone();
         let generators = move_list_from_vec(vec!["U", "L", "F", "R", "B", "D"]);
         let filtered_search = FilteredSearch::new(
-            IDFSearch::try_new(
+            IterativeDeepeningSearch::try_new(
                 kpuzzle.clone(),
                 generators.clone(),
                 kpuzzle.default_pattern(),
-                IDFSearchConstructionOptions {
+                IterativeDeepeningSearchConstructionOptions {
                     min_prune_table_size: Some(32),
                     ..Default::default()
                 },
@@ -320,11 +321,11 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
         );
 
         let phase1_target_pattern = cube3x3x3_g1_target_kpattern().clone();
-        let phase1_idfs = IDFSearch::try_new(
+        let phase1_iterative_deepening_search = IterativeDeepeningSearch::try_new(
             kpuzzle.clone(),
             generators.clone(),
             phase1_target_pattern.clone(),
-            IDFSearchConstructionOptions {
+            IterativeDeepeningSearchConstructionOptions {
                 min_prune_table_size: Some(32),
                 ..Default::default()
             },
@@ -332,11 +333,11 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
         .unwrap();
 
         let phase2_generators = move_list_from_vec(vec!["U", "L2", "F2", "R2", "B2", "D"]);
-        let phase2_idfs = IDFSearch::try_new(
+        let phase2_iterative_deepening_search = IterativeDeepeningSearch::try_new(
             kpuzzle.clone(),
             phase2_generators.clone(),
             kpuzzle.default_pattern(),
-            IDFSearchConstructionOptions {
+            IterativeDeepeningSearchConstructionOptions {
                 min_prune_table_size: Some(1 << 24),
                 ..Default::default()
             },
@@ -348,9 +349,9 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
             filtered_search,
 
             phase1_target_pattern,
-            phase1_idfs,
+            phase1_iterative_deepening_search,
 
-            phase2_idfs,
+            phase2_iterative_deepening_search,
         }
     }
 }

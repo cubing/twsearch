@@ -14,7 +14,9 @@ use crate::{
                 PhaseCoordinateConversionError, PhaseCoordinateIndex, PhaseCoordinatePuzzle,
                 SemanticCoordinate,
             },
-            idf_search::search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
+            iterative_deepening::search_adaptations::{
+                DefaultSearchAdaptations, SearchAdaptations,
+            },
             mask_pattern::apply_mask,
             pattern_traversal_filter_trait::{PatternTraversalFilter, PatternTraversalFilterNoOp},
             prune_table_trait::{Depth, PruneTable},
@@ -603,7 +605,7 @@ impl PruneTable<Square1Phase2Puzzle> for Square1Phase2PruneTable {
     fn new(
         tpuzzle: Square1Phase2Puzzle,
         _search_api_data: std::sync::Arc<
-            crate::_internal::search::idf_search::idf_search::IDFSearchAPIData<Square1Phase2Puzzle>,
+            crate::_internal::search::iterative_deepening::iterative_deepening_search::IterativeDeepeningSearchAPIData<Square1Phase2Puzzle>,
         >,
         _search_logger: std::sync::Arc<crate::_internal::search::search_logger::SearchLogger>,
         _min_size: Option<usize>,

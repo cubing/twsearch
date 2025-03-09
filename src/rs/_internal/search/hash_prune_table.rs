@@ -11,7 +11,7 @@ use crate::_internal::puzzle_traits::puzzle_traits::{
 };
 use crate::whole_number_newtype;
 
-use super::idf_search::idf_search::IDFSearchAPIData;
+use super::iterative_deepening::iterative_deepening_search::IterativeDeepeningSearchAPIData;
 use super::pattern_traversal_filter_trait::PatternTraversalFilter;
 use super::prune_table_trait::{Depth, PruneTable};
 use super::recursive_work_tracker::RecursiveWorkTracker;
@@ -31,7 +31,7 @@ const DEFAULT_MIN_PRUNE_TABLE_SIZE: usize = 1 << 20;
 
 struct HashPruneTableImmutableData<TPuzzle: SemiGroupActionPuzzle> {
     // TODO
-    search_api_data: Arc<IDFSearchAPIData<TPuzzle>>,
+    search_api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
 }
 struct HashPruneTableMutableData<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> {
     tpuzzle: TPuzzle,
@@ -90,7 +90,7 @@ impl<
         TPatternTraversalFilter: PatternTraversalFilter<TPuzzle>,
     > HashPruneTable<TPuzzle, TPatternTraversalFilter>
 {
-    // TODO: dedup with IDFSearch?
+    // TODO: dedup with IterativeDeepeningSearch?
     // TODO: Store a reference to `search_api_data` so that you can't accidentally pass in the wrong `search_api_data`?
     fn recurse(
         immutable_data: &HashPruneTableImmutableData<TPuzzle>,
@@ -153,7 +153,7 @@ impl<
 {
     fn new(
         tpuzzle: TPuzzle,
-        search_api_data: Arc<IDFSearchAPIData<TPuzzle>>,
+        search_api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
         search_logger: Arc<SearchLogger>,
         min_size: Option<usize>,
     ) -> Self {
@@ -187,7 +187,7 @@ impl<
         self.mutable.lookup(pattern)
     }
 
-    // TODO: dedup with IDFSearch?
+    // TODO: dedup with IterativeDeepeningSearch?
     // TODO: Store a reference to `search_api_data` so that you can't accidentally pass in the wrong `search_api_data`?
     fn extend_for_search_depth(&mut self, search_depth: Depth, approximate_num_entries: usize) {
         let mut new_pruning_depth = DepthU8(

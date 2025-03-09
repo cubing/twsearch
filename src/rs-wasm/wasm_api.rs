@@ -2,7 +2,9 @@ use cubing::alg::Move;
 use cubing::kpuzzle::{KPattern, KPatternData, KPuzzle};
 use serde::{Deserialize, Serialize};
 use twsearch::_internal::cli::args::{CustomGenerators, Generators};
-use twsearch::_internal::search::idf_search::idf_search::{IDFSearch, IndividualSearchOptions};
+use twsearch::_internal::search::iterative_deepening::iterative_deepening_search::{
+    IndividualSearchOptions, IterativeDeepeningSearch,
+};
 use wasm_bindgen::prelude::*;
 
 use twsearch::scramble::{random_scramble_for_event, Event};
@@ -63,15 +65,15 @@ pub fn wasmTwsearch(
         None => Generators::Default,
     };
 
-    let idfs = <IDFSearch<KPuzzle>>::try_new(
+    let iterative_deepening_search = <IterativeDeepeningSearch<KPuzzle>>::try_new(
         kpuzzle.clone(),
         generators.enumerate_moves_for_kpuzzle(&kpuzzle),
         target_pattern,
         Default::default(),
     );
-    let mut idfs = idfs.map_err(|e| e.description)?;
+    let mut iterative_deepening_search = iterative_deepening_search.map_err(|e| e.description)?;
 
-    match idfs
+    match iterative_deepening_search
         .search(&search_pattern, options.inidividual_search_options)
         .next()
     {

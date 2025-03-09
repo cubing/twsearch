@@ -366,7 +366,7 @@ pub struct MetricArgs {
 impl Default for MetricArgs {
     fn default() -> Self {
         Self {
-            // TODO: deduplicate with `IDFSearchConstructionOptions`
+            // TODO: deduplicate with `IterativeDeepeningSearchConstructionOptions`
             metric: MetricEnum::Hand,
         }
     }

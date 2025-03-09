@@ -98,11 +98,11 @@ impl Default for Cube4x4x4Solver {
             "Uw", "U", "Lw", "L", "Fw", "F", "Rw", "R", "Bw", "B", "Dw", "D",
         ]);
 
-        // let phase1_ifds = <IDFSearch>::try_new(
+        // let phase1_ifds = <IterativeDeepeningSearch>::try_new(
         //     kpuzzle.clone(),
         //     generator_moves,
         //     cube4x4x4_phase1_target_kpattern().clone(),
-        //     IDFSearchConstructionOptions {
+        //     IterativeDeepeningSearchConstructionOptions {
         //         search_logger: SearchLogger {
         //             verbosity: VerbosityLevel::Info,
         //         }
@@ -132,12 +132,12 @@ impl Default for Cube4x4x4Solver {
         .unwrap();
 
         // let phase2_target_pattern = cube4x4x4_phase2_target_kpattern();
-        // let phase2_idfs =
-        //     IDFSearch::<Square1Phase2Puzzle, Square1Phase2SearchAdaptations>::try_new(
+        // let phase2_iterative_deepening_search =
+        //     IterativeDeepeningSearch::<Square1Phase2Puzzle, Square1Phase2SearchAdaptations>::try_new(
         //         kpuzzle.clone(),
         //         generator_moves.clone(),
         //         phase2_target_pattern,
-        //         IDFSearchConstructionOptions {
+        //         IterativeDeepeningSearchConstructionOptions {
         //             ..Default::default()
         //         },
         //     )
@@ -147,21 +147,21 @@ impl Default for Cube4x4x4Solver {
         //     let kpuzzle = square1_unbandaged_kpuzzle();
         //     let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
 
-        //     let idfs = IDFSearch::<KPuzzle, FilteringSearchAdaptations>::try_new(
+        //     let iterative_deepening_search = IterativeDeepeningSearch::<KPuzzle, FilteringSearchAdaptations>::try_new(
         //         kpuzzle.clone(),
         //         generator_moves,
         //         kpuzzle.default_pattern(),
         //         Default::default(),
         //     )
         //     .unwrap();
-        //     FilteredSearch::<KPuzzle, FilteringSearchAdaptations>::new(idfs)
+        //     FilteredSearch::<KPuzzle, FilteringSearchAdaptations>::new(iterative_deepening_search)
         // };
 
         Self {
             // kpuzzle: kpuzzle.clone(),
             // phase1_ifds,
             phase1_search, // square1_phase2_puzzle,
-                           // phase2_idfs,
+                           // phase2_iterative_deepening_search,
                            // depth_filtering_search,
         }
     }

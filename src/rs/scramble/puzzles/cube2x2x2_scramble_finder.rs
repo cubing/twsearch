@@ -11,7 +11,9 @@ use crate::{
         canonical_fsm::canonical_fsm::CanonicalFSMConstructionOptions,
         errors::SearchError,
         search::{
-            idf_search::idf_search::{IDFSearch, IDFSearchConstructionOptions},
+            iterative_deepening::iterative_deepening_search::{
+                IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+            },
             move_count::MoveCount,
         },
     },
@@ -41,7 +43,7 @@ impl Default for Cube2x2x2ScrambleFinder {
 
         #[allow(non_snake_case)] // Move meanings are case sensitive.
         let filtered_search_L_B_D = <FilteredSearch>::new(
-            IDFSearch::try_new(
+            IterativeDeepeningSearch::try_new(
                 kpuzzle.clone(),
                 move_list_from_vec(vec!["L", "B", "D"]),
                 kpuzzle.default_pattern(),
@@ -52,11 +54,11 @@ impl Default for Cube2x2x2ScrambleFinder {
 
         #[allow(non_snake_case)] // Move meanings are case sensitive.
         let filtered_search_U_L_F_R = <FilteredSearch>::new(
-            IDFSearch::try_new(
+            IterativeDeepeningSearch::try_new(
                 kpuzzle.clone(),
                 move_list_from_vec(vec!["U", "L", "F", "R"]),
                 kpuzzle.default_pattern(),
-                IDFSearchConstructionOptions {
+                IterativeDeepeningSearchConstructionOptions {
                     canonical_fsm_construction_options: CanonicalFSMConstructionOptions {
                         forbid_transitions_by_quantums_either_direction: HashSet::from([(
                             QuantumMove::new("L", None),

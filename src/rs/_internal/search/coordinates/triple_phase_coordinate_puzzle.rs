@@ -6,8 +6,8 @@ use crate::_internal::{
     canonical_fsm::search_generators::{FlatMoveIndex, MoveTransformationInfo},
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
-        idf_search::{
-            idf_search::IDFSearchAPIData,
+        iterative_deepening::{
+            iterative_deepening_search::IterativeDeepeningSearchAPIData,
             search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
         },
         move_count::MoveCount,
@@ -372,7 +372,7 @@ impl<
             TSemanticCoordinate3,
         >,
         _search_api_data: std::sync::Arc<
-            IDFSearchAPIData<
+            IterativeDeepeningSearchAPIData<
                 TriplePhaseCoordinatePuzzle<
                     TPuzzle,
                     TSemanticCoordinate1,

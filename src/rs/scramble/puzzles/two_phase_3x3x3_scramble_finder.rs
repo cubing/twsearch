@@ -60,7 +60,6 @@ enum TwoPhase3x3x3ScrambleAssociatedAffixes {
 // TODO: validation
 fn kpattern_to_transformation(kpattern: &KPattern) -> Option<KTransformation> {
     let mut transformation = kpattern.kpuzzle().identity_transformation();
-    // let transformation =
     for orbit_info in kpattern.kpuzzle().orbit_info_iter() {
         for i in 0..orbit_info.num_pieces {
             transformation.set_permutation_idx(orbit_info, i, kpattern.get_piece(orbit_info, i));
@@ -83,7 +82,6 @@ fn apply_pre_alg(kpattern: &KPattern, alg: &Alg) -> Option<KPattern> {
         return None;
     };
     Some(alg_pattern.apply_transformation(&pattern_transformation))
-    // Some(alg_transformation.invert().apply_transformation(&pattern_transformation))
 }
 
 pub(crate) struct TwoPhase3x3x3ScrambleAssociatedData {

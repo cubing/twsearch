@@ -34,6 +34,7 @@ for (const eventID of [
   ...new Array(10).fill("333"),
   "333fm",
   "333bf",
+  "sq1",
 ]) {
   const startTime = performance.now();
   const scramble = ffi_random_scramble_for_event(

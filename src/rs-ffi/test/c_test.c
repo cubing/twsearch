@@ -32,5 +32,8 @@ int main() {
   puts("// skewb");
   puts(ffi_random_scramble_for_event(CUBING_EVENT_SKEWB));
 
+  puts("// sq1");
+  puts(ffi_random_scramble_for_event(CUBING_EVENT_SQ1));
+
   printf("Freed %u scramble finder(s).\n", ffi_free_memory_for_all_scramble_finders()); 
 }

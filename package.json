@@ -9,7 +9,7 @@
     "bun": ">=1.2.0"
   },
   "dependencies": {
-    "cubing": "v0.53.11",
+    "cubing": "v0.54.4",
     "getbuiltinmodule-ponyfill": "^1.0.1"
   },
   "devDependencies": {

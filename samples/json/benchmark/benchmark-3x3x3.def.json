@@ -1,4 +1,5 @@
 {
+  "$schema": "../../../node_modules/cubing/experimental-json-schema/kpuzzle/KPuzzleDefinition.schema.json",
   "name": "3x3x3",
   "orbits": [
     {

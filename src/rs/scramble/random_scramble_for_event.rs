@@ -10,7 +10,7 @@ use super::{
         megaminx::scramble_megaminx,
         pyraminx_scramble_finder::PyraminxScrambleFinder,
         skewb_scramble_finder::SkewbScrambleFinder,
-        square1::scramble::scramble_square1,
+        square1::square1_scramble_finder::Square1ScrambleFinder,
         two_phase_3x3x3_scramble_finder::{
             PrefixOrSuffixConstraints, TwoPhase3x3x3ScrambleFinder, TwoPhase3x3x3ScrambleOptions,
         },
@@ -61,7 +61,9 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
         Event::SkewbSpeedsolving => Ok(generate_fair_scramble::<SkewbScrambleFinder>(
             &Default::default(),
         )),
-        Event::Square1Speedsolving => Ok(scramble_square1()),
+        Event::Square1Speedsolving => Ok(generate_fair_scramble::<Square1ScrambleFinder>(
+            &NoScrambleOptions {},
+        )),
         Event::Cube4x4x4Blindfolded => err,
         Event::Cube5x5x5Blindfolded => Ok(scramble_5x5x5_bld()),
         Event::Cube3x3x3MultiBlind => Ok(generate_fair_scramble::<TwoPhase3x3x3ScrambleFinder>(

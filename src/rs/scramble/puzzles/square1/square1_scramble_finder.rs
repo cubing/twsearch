@@ -1,12 +1,30 @@
-// use std::time::{Duration, Instant};
-
-use cubing::kpuzzle::KPuzzle;
-use cubing::{
-    alg::{parse_move, Alg, AlgBuilder, AlgNode, Grouping, Move},
-    kpuzzle::KPattern,
+use crate::{
+    _internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
+    scramble::solving_based_scramble_finder::{
+        FilteringDecision, NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
+    },
 };
 
-use crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle;
+use cubing::{alg::Alg, kpuzzle::KPattern};
+use rand::{seq::SliceRandom, thread_rng};
+
+use crate::{
+    _internal::search::{
+        mask_pattern::apply_mask, move_count::MoveCount,
+        pattern_traversal_filter_trait::PatternTraversalFilter,
+    },
+    scramble::{
+        puzzles::square1::square1_shape_traversal_filter::Square1ShapeTraversalFilter,
+        randomize::{
+            randomize_orbit_naïve, ConstraintForFirstPiece, OrbitRandomizationConstraints,
+        },
+    },
+};
+
+use super::super::definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle};
+use cubing::alg::{parse_move, AlgBuilder, AlgNode, Grouping, Move};
+use cubing::kpuzzle::KPuzzle;
+
 use crate::_internal::search::hash_prune_table::HashPruneTable;
 use crate::_internal::search::iterative_deepening::search_adaptations::SearchAdaptations;
 use crate::_internal::search::transformation_traversal_filter_trait::TransformationTraversalFilterNoOp;
@@ -28,12 +46,13 @@ use crate::{
     },
 };
 
-use super::super::definitions::square1_unbandaged_kpuzzle;
 use super::phase1::{Square1Phase1Coordinate, Square1Phase1SearchAdaptations};
 use super::phase2::{Square1Phase2Puzzle, Square1Phase2SearchAdaptations};
-use super::square1_shape_traversal_filter::Square1ShapeTraversalFilter;
 
 const DEV_DEBUG_SQUARE1: bool = false;
+
+// https://www.worldcubeassociation.org/regulations/#4b3d
+const SQUARE_1_SCRAMBLE_MIN_OPTIMAL_MOVE_COUNT: MoveCount = MoveCount(11);
 
 pub(crate) struct FilteringSearchAdaptations {}
 
@@ -43,7 +62,7 @@ impl SearchAdaptations<KPuzzle> for FilteringSearchAdaptations {
     type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
 }
 
-pub(crate) struct Square1Solver {
+pub(crate) struct Square1ScrambleFinder {
     square1_phase1_puzzle: Square1Phase1Puzzle,
     phase1_iterative_deepening_search:
         IterativeDeepeningSearch<Square1Phase1Puzzle, Square1Phase1SearchAdaptations>,
@@ -51,11 +70,11 @@ pub(crate) struct Square1Solver {
     phase2_iterative_deepening_search:
         IterativeDeepeningSearch<Square1Phase2Puzzle, Square1Phase2SearchAdaptations>,
     // TODO: lazy-initialize `depth_filtering_search`?
-    pub(crate) depth_filtering_search: FilteredSearch<KPuzzle, FilteringSearchAdaptations>,
+    depth_filtering_search: FilteredSearch<KPuzzle, FilteringSearchAdaptations>,
 }
 
-impl Square1Solver {
-    pub(crate) fn new() -> Self {
+impl Default for Square1ScrambleFinder {
+    fn default() -> Self {
         let kpuzzle = square1_unbandaged_kpuzzle();
         let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
 
@@ -123,116 +142,6 @@ impl Square1Solver {
             phase2_iterative_deepening_search,
             depth_filtering_search,
         }
-    }
-
-    pub(crate) fn solve_square1(&mut self, pattern: &KPattern) -> Result<Alg, SearchError> {
-        let Ok(phase1_start_pattern) = self
-            .square1_phase1_puzzle
-            .full_pattern_to_phase_coordinate(pattern)
-        else {
-            return Err(SearchError {
-                description: "invalid pattern".to_owned(),
-            });
-        };
-
-        // let start_time = Instant::now();
-        // let mut phase1_start_time = Instant::now();
-        for current_depth in 0..31 {
-            let num_solutions = 10000000;
-            let phase1_search = self.phase1_iterative_deepening_search.search(
-                &phase1_start_pattern,
-                IndividualSearchOptions {
-                    min_num_solutions: Some(num_solutions),
-                    min_depth: Some(Depth(current_depth)),
-                    max_depth: Some(Depth(current_depth + 1)),
-                    ..Default::default()
-                },
-            );
-            // let mut num_phase2_starts = 0;
-            // let mut phase1_cumulative_time = Duration::default();
-            // let mut phase2_cumulative_time = Duration::default();
-            #[allow(non_snake_case)]
-            let _SLASH_ = parse_move!("/");
-            let mut found_phase1_solutions = 0;
-            let mut checked_phase1_solutions = 0;
-            'phase1_loop: for mut phase1_solution in phase1_search {
-                found_phase1_solutions += 1;
-                // phase1_cumulative_time += Instant::now() - phase1_start_time;
-                // TODO: Push the candidate check into a trait for `IterativeDeepeningSearch`.
-                while let Some(cubing::alg::AlgNode::MoveNode(r#move)) =
-                    phase1_solution.nodes.last()
-                {
-                    if r#move == _SLASH_
-                    // TODO: redundant parsing
-                    {
-                        break;
-                    }
-                    // Discard equivalent phase 1 solutions (reduces redundant phase 2 searches by a factor of 16).
-                    if r#move.amount > 2 || r#move.amount < 0 {
-                        // phase1_start_time = Instant::now();
-                        continue 'phase1_loop;
-                    }
-                    phase1_solution.nodes.pop();
-                }
-                checked_phase1_solutions += 1;
-                // num_phase2_starts += 1;
-                // let phase2_start_time = Instant::now();
-                let Ok(phase2_start_pattern) =
-                    self.square1_phase2_puzzle.full_pattern_to_phase_coordinate(
-                        &pattern.apply_alg(&phase1_solution).unwrap(),
-                    )
-                else {
-                    return Err(SearchError {
-                        description: "Could not convert pattern into phase 2 coordinate".to_owned(),
-                    });
-                };
-                let phase2_solution = self
-                    .phase2_iterative_deepening_search
-                    .search(
-                        &phase2_start_pattern,
-                        IndividualSearchOptions {
-                            min_num_solutions: Some(1),
-                            // max_depth: Some(Depth(min(31 - phase1_solution.nodes.len(), 17))), // TODO
-                            max_depth: Some(Depth(17)), //<<<
-                            ..Default::default()
-                        },
-                    )
-                    .next();
-
-                // phase2_cumulative_time += Instant::now() - phase2_start_time;
-                // let cumulative_time = Instant::now() - start_time;
-
-                if let Some(mut phase2_solution) = phase2_solution {
-                    let mut nodes = phase1_solution.nodes;
-                    nodes.append(&mut phase2_solution.nodes);
-                    if DEV_DEBUG_SQUARE1 {
-                        println!(
-                            "-- depth {} returned sols {} checked sols {}",
-                            current_depth, found_phase1_solutions, checked_phase1_solutions
-                        );
-                    }
-                    return Ok(group_square_1_tuples(Alg { nodes }.invert()));
-                }
-
-                // if num_phase2_starts % 100 == 0 {
-                //     eprintln!(
-                //         "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2, {:?} in phase transition\n",
-                //         num_phase2_starts,
-                //         phase1_cumulative_time,
-                //         phase2_cumulative_time,
-                //         cumulative_time - phase1_cumulative_time - phase2_cumulative_time,
-                //     )
-                // }
-            }
-            // phase1_start_time = Instant::now();
-            if DEV_DEBUG_SQUARE1 && found_phase1_solutions > 0 {
-                println!(
-                    "At depth {} returned sols {} checked sols {}",
-                    current_depth, found_phase1_solutions, checked_phase1_solutions
-                );
-            }
-        }
-        panic!("at the (lack of) disco(very)")
     }
 }
 
@@ -315,3 +224,201 @@ fn group_square_1_tuples(alg: Alg) -> Alg {
 /// Square-1 search phase (rather than just a generic
 /// [`SemiGroupActionPuzzle`]).
 pub trait Square1SearchPhase: SemiGroupActionPuzzle {}
+
+impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
+    type TPuzzle = KPuzzle;
+    type ScrambleAssociatedData = NoScrambleAssociatedData;
+    type ScrambleOptions = NoScrambleOptions;
+
+    fn generate_fair_unfiltered_random_pattern(
+        &mut self,
+        _scramble_options: &Self::ScrambleOptions,
+    ) -> (KPattern, Self::ScrambleAssociatedData) {
+        let mut rng = thread_rng();
+
+        loop {
+            let mut scramble_pattern = square1_unbandaged_kpuzzle().default_pattern();
+
+            let mut deep_wedges = vec![
+                vec![0, 1],
+                vec![2],
+                vec![3, 4],
+                vec![5],
+                vec![6, 7],
+                vec![8],
+                vec![9, 10],
+                vec![11],
+                vec![12],
+                vec![13, 14],
+                vec![15],
+                vec![16, 17],
+                vec![18],
+                vec![19, 20],
+                vec![21],
+                vec![22, 23],
+            ];
+            deep_wedges.shuffle(&mut rng);
+            let wedge_orbit_info = &scramble_pattern.kpuzzle().clone().data.ordered_orbit_info[0];
+            assert_eq!(wedge_orbit_info.name.0, "WEDGES");
+            for (i, value) in deep_wedges.into_iter().flatten().enumerate() {
+                unsafe {
+                    scramble_pattern
+                        .packed_orbit_data_mut()
+                        .set_raw_piece_or_permutation_value(wedge_orbit_info, i as u8, value);
+                }
+            }
+
+            randomize_orbit_naïve(
+                &mut scramble_pattern,
+                1,
+                "EQUATOR",
+                OrbitRandomizationConstraints {
+                    first_piece: Some(ConstraintForFirstPiece::KeepSolved),
+                    ..Default::default()
+                },
+            );
+
+            // TODO: do this check without masking.
+            let phase1_start_pattern =
+                apply_mask(&scramble_pattern, square1_square_square_shape_kpattern()).unwrap();
+
+            // Note: it is not safe in general to use a traversal filter for
+            // scramble pattern filtering. However, this is safe here due to the
+            // properties of the Square-1 puzzle.
+            if Square1ShapeTraversalFilter::is_valid(&phase1_start_pattern) {
+                return (scramble_pattern, NoScrambleAssociatedData {});
+            }
+        }
+    }
+
+    fn filter_pattern(
+        &mut self,
+        pattern: &KPattern,
+        _scramble_associated_data: &Self::ScrambleAssociatedData,
+        _scramble_options: &Self::ScrambleOptions,
+    ) -> FilteringDecision {
+        self.depth_filtering_search
+            .filtering_decision(pattern, SQUARE_1_SCRAMBLE_MIN_OPTIMAL_MOVE_COUNT)
+    }
+
+    fn solve_pattern(
+        &mut self,
+        pattern: &KPattern,
+        _scramble_associated_data: &Self::ScrambleAssociatedData,
+        _scramble_options: &Self::ScrambleOptions,
+    ) -> Result<cubing::alg::Alg, crate::_internal::errors::SearchError> {
+        let Ok(phase1_start_pattern) = self
+            .square1_phase1_puzzle
+            .full_pattern_to_phase_coordinate(pattern)
+        else {
+            return Err(SearchError {
+                description: "invalid pattern".to_owned(),
+            });
+        };
+
+        // let start_time = Instant::now();
+        // let mut phase1_start_time = Instant::now();
+        for current_depth in 0..31 {
+            let num_solutions = 10000000;
+            let phase1_search = self.phase1_iterative_deepening_search.search(
+                &phase1_start_pattern,
+                IndividualSearchOptions {
+                    min_num_solutions: Some(num_solutions),
+                    min_depth: Some(Depth(current_depth)),
+                    max_depth: Some(Depth(current_depth + 1)),
+                    ..Default::default()
+                },
+            );
+            // let mut num_phase2_starts = 0;
+            // let mut phase1_cumulative_time = Duration::default();
+            // let mut phase2_cumulative_time = Duration::default();
+            #[allow(non_snake_case)]
+            let _SLASH_ = parse_move!("/");
+            let mut found_phase1_solutions = 0;
+            let mut checked_phase1_solutions = 0;
+            'phase1_loop: for mut phase1_solution in phase1_search {
+                found_phase1_solutions += 1;
+                // phase1_cumulative_time += Instant::now() - phase1_start_time;
+                // TODO: Push the candidate check into a trait for `IterativeDeepeningSearch`.
+                while let Some(cubing::alg::AlgNode::MoveNode(r#move)) =
+                    phase1_solution.nodes.last()
+                {
+                    if r#move == _SLASH_
+                    // TODO: redundant parsing
+                    {
+                        break;
+                    }
+                    // Discard equivalent phase 1 solutions (reduces redundant phase 2 searches by a factor of 16).
+                    if r#move.amount > 2 || r#move.amount < 0 {
+                        // phase1_start_time = Instant::now();
+                        continue 'phase1_loop;
+                    }
+                    phase1_solution.nodes.pop();
+                }
+                checked_phase1_solutions += 1;
+                // num_phase2_starts += 1;
+                // let phase2_start_time = Instant::now();
+                let Ok(phase2_start_pattern) =
+                    self.square1_phase2_puzzle.full_pattern_to_phase_coordinate(
+                        &pattern.apply_alg(&phase1_solution).unwrap(),
+                    )
+                else {
+                    return Err(SearchError {
+                        description: "Could not convert pattern into phase 2 coordinate".to_owned(),
+                    });
+                };
+                let phase2_solution = self
+                    .phase2_iterative_deepening_search
+                    .search(
+                        &phase2_start_pattern,
+                        IndividualSearchOptions {
+                            min_num_solutions: Some(1),
+                            // TODO: we need to solve phase transition for 4x4x4, that will cause
+                            // us to revisit this code.
+                            // max_depth: Some(Depth(min(31 - phase1_solution.nodes.len(), 17))),
+                            max_depth: Some(Depth(17)),
+                            ..Default::default()
+                        },
+                    )
+                    .next();
+
+                // phase2_cumulative_time += Instant::now() - phase2_start_time;
+                // let cumulative_time = Instant::now() - start_time;
+
+                if let Some(mut phase2_solution) = phase2_solution {
+                    let mut nodes = phase1_solution.nodes;
+                    nodes.append(&mut phase2_solution.nodes);
+                    if DEV_DEBUG_SQUARE1 {
+                        println!(
+                            "-- depth {} returned sols {} checked sols {}",
+                            current_depth, found_phase1_solutions, checked_phase1_solutions
+                        );
+                    }
+                    return Ok(Alg { nodes });
+                }
+
+                // if num_phase2_starts % 100 == 0 {
+                //     eprintln!(
+                //         "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2, {:?} in phase transition\n",
+                //         num_phase2_starts,
+                //         phase1_cumulative_time,
+                //         phase2_cumulative_time,
+                //         cumulative_time - phase1_cumulative_time - phase2_cumulative_time,
+                //     )
+                // }
+            }
+            // phase1_start_time = Instant::now();
+            if DEV_DEBUG_SQUARE1 && found_phase1_solutions > 0 {
+                println!(
+                    "At depth {} returned sols {} checked sols {}",
+                    current_depth, found_phase1_solutions, checked_phase1_solutions
+                );
+            }
+        }
+        panic!("at the (lack of) disco(very)")
+    }
+
+    fn collapse_inverted_alg(&mut self, alg: cubing::alg::Alg) -> cubing::alg::Alg {
+        group_square_1_tuples(alg)
+    }
+}

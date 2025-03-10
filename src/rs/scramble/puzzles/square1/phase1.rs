@@ -24,7 +24,8 @@ use crate::{
 
 use super::{
     super::definitions::square1_square_square_shape_kpattern, parity::bandaged_wedge_parity,
-    solve::Square1SearchPhase, square1_shape_traversal_filter::Square1ShapeTraversalFilter,
+    square1_scramble_finder::Square1SearchPhase,
+    square1_shape_traversal_filter::Square1ShapeTraversalFilter,
 };
 
 use lazy_static::lazy_static;

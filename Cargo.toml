@@ -23,4 +23,4 @@ cubing = "0.14.1"
 [workspace.metadata.bin]
 cbindgen = { version = "0.27.0" }
 cargo-binstall = { version = "1.4.4" }
-wasm-pack = { version = "0.12.1" }
+wasm-pack = { version = "0.13.1" }

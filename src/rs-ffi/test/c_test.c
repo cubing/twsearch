@@ -20,10 +20,5 @@ int main() {
   generate_scramble(CUBING_EVENT_777);
   generate_scramble(CUBING_EVENT_SKEWB);
   generate_scramble(CUBING_EVENT_SQ1);
-  
-  for (int i = 0;; i++) {
-    generate_scramble(CUBING_EVENT_333);
-    printf("Freed %u scramble finder(s).\n", ffi_free_memory_for_all_scramble_finders()); 
-  }
 
 }

@@ -47,7 +47,7 @@ for (const eventID of [
   );
 }
 
-const numScrambleFidnersFreed = ffi_free_memory_for_all_scramble_finders();
+const numScrambleFindersFreed = ffi_free_memory_for_all_scramble_finders();
 console.log(
-  `Freed ${numScrambleFidnersFreed} scramble finder${numScrambleFidnersFreed === 1 ? "" : "s"}.`,
+  `Freed ${numScrambleFindersFreed} scramble finder${numScrambleFindersFreed === 1 ? "" : "s"}.`,
 );

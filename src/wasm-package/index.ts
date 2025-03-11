@@ -2,6 +2,7 @@ import { Alg } from "cubing/alg";
 import type { KPattern, KPuzzleDefinition } from "cubing/kpuzzle";
 import {
   default as init,
+  wasmFreeMemoryForAllScrambleFinders as rawWasmFreeMemoryForAllScrambleFinders,
   wasmRandomScrambleForEvent as rawWasmRandomScrambleForEvent,
   wasmTwsearch as rawWasmTwsearch,
 } from "../../.temp/rust-wasm/twsearch_wasm";
@@ -41,4 +42,8 @@ export async function wasmTwsearch(
       JSON.stringify(options),
     ),
   );
+}
+
+export function wasmFreeMemoryForAllScrambleFinders(): number {
+  return rawWasmFreeMemoryForAllScrambleFinders();
 }

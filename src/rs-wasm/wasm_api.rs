@@ -7,7 +7,7 @@ use twsearch::_internal::search::iterative_deepening::iterative_deepening_search
 };
 use wasm_bindgen::prelude::*;
 
-use twsearch::scramble::{random_scramble_for_event, Event};
+use twsearch::scramble::{free_memory_for_all_scramble_finders, random_scramble_for_event, Event};
 
 pub fn internal_init() {
     console_error_panic_hook::set_once();
@@ -92,4 +92,12 @@ pub fn wasmRandomScrambleForEvent(event_str: String) -> Result<String, String> {
         Ok(scramble) => Ok(scramble.to_string()),
         Err(e) => Err(e.description),
     }
+}
+
+#[wasm_bindgen]
+#[allow(non_snake_case)]
+pub extern "C" fn wasmFreeMemoryForAllScrambleFinders() -> u32 {
+    // We cast to `u32` for the public API so that it's more stable across environments (including WASM).
+    // If we've allocated more than `u32::MAX` scramble finders, I'd be *very* impressed.
+    free_memory_for_all_scramble_finders() as u32
 }

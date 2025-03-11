@@ -1,3 +1,4 @@
+import { heapStats } from "bun:jsc";
 import assert from "node:assert";
 import { cube2x2x2 } from "cubing/puzzles";
 import {
@@ -19,6 +20,7 @@ for (const eventID of [
   "333fm",
   "skewb",
 ]) {
+  console.log(heapStats());
   const startTime = performance.now();
   const scramble = await wasmRandomScrambleForEvent(eventID);
   console.log(
@@ -43,3 +45,8 @@ for (const eventID of [
 }
 
 console.log(`Freed ${wasmFreeMemoryForAllScrambleFinders()} scramble finders.`);
+
+for (let i = 0; i < 10; i++) {
+  await new Promise((resolve) => setTimeout(resolve, 5000));
+  console.log(heapStats());
+}

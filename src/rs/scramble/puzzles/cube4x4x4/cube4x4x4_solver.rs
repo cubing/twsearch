@@ -1,12 +1,14 @@
 use std::env::var;
 
-use cubing::alg::Alg;
+use cubing::alg::{parse_alg, Alg};
 use cubing::kpuzzle::KPuzzle;
 
 use crate::_internal::cli::args::VerbosityLevel;
 use crate::_internal::search::search_logger::SearchLogger;
 use crate::experimental_lib_api::{KPuzzleSimpleMaskPhase, MultiPhaseSearch};
-use crate::scramble::puzzles::definitions::{cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern};
+use crate::scramble::puzzles::definitions::{
+    cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern, cube4x4x4_phase2_target_kpattern,
+};
 use crate::scramble::solving_based_scramble_finder::FilteringDecision;
 use crate::{_internal::errors::SearchError, scramble::scramble_search::move_list_from_vec};
 
@@ -21,7 +23,7 @@ use crate::scramble::{
 };
 
 pub(crate) struct Cube4x4x4Solver {
-    phase1_search: MultiPhaseSearch<KPuzzle>,
+    multi_phase_search: MultiPhaseSearch<KPuzzle>,
 }
 
 fn run_incomplete_scramble_finder_check() {
@@ -47,6 +49,10 @@ impl SolvingBasedScrambleFinder for Cube4x4x4Solver {
         Self::ScrambleAssociatedData,
     ){
         let mut scramble_pattern = cube4x4x4_kpuzzle().default_pattern();
+
+        // If you want a hardcoded scramble =)
+        // <<< let hack = parse_alg!("U2 Rw' F' L' F U Uw F Fw2 Rw D2 Rw' Uw D2 F' R D Rw U' L' Uw Rw2 B L2 U2 F' R Rw D' Rw' L Fw' R2 F' D L' B' Rw' R2 L'");
+        // <<< scramble_pattern = scramble_pattern.apply_alg(hack).unwrap();
 
         randomize_orbit_naïve(
             &mut scramble_pattern,
@@ -82,7 +88,7 @@ impl SolvingBasedScrambleFinder for Cube4x4x4Solver {
     ) -> Result<Alg, SearchError> {
         run_incomplete_scramble_finder_check();
 
-        self.phase1_search
+        self.multi_phase_search
             .chain_first_solution_for_each_phase(pattern)
     }
 
@@ -94,8 +100,11 @@ impl SolvingBasedScrambleFinder for Cube4x4x4Solver {
 impl Default for Cube4x4x4Solver {
     fn default() -> Self {
         let kpuzzle = cube4x4x4_kpuzzle();
-        let generator_moves = move_list_from_vec(vec![
+        let phase1_generator_moves = move_list_from_vec(vec![
             "Uw", "U", "Lw", "L", "Fw", "F", "Rw", "R", "Bw", "B", "Dw", "D",
+        ]);
+        let phase2_generator_moves = move_list_from_vec(vec![
+            "Uw2", "U", "Lw", "L", "Fw2", "F", "Rw", "R", "Bw2", "B", "Dw2", "D",
         ]);
 
         // let phase1_ifds = <IterativeDeepeningSearch>::try_new(
@@ -112,18 +121,30 @@ impl Default for Cube4x4x4Solver {
         // )
         // .unwrap();
 
-        let phase1_search = MultiPhaseSearch::try_new(
+        let multi_phase_search = MultiPhaseSearch::try_new(
             kpuzzle.clone(),
-            vec![Box::new(
-                KPuzzleSimpleMaskPhase::try_new(
-                    "Place L/R centers on L/R".to_owned(),
-                    cube4x4x4_phase1_target_kpattern().clone(),
-                    generator_moves,
-                    None,
-                    Default::default(),
-                )
-                .unwrap(),
-            )],
+            vec![
+                Box::new(
+                    KPuzzleSimpleMaskPhase::try_new(
+                        "Place L/R centers on L/R".to_owned(),
+                        cube4x4x4_phase1_target_kpattern().clone(),
+                        phase1_generator_moves,
+                        None,
+                        Default::default(),
+                    )
+                    .unwrap(),
+                ),
+                Box::new(
+                    KPuzzleSimpleMaskPhase::try_new(
+                        "Place F/B and U/D centers on correct axes".to_owned(),
+                        cube4x4x4_phase2_target_kpattern().clone(),
+                        phase2_generator_moves,
+                        None,
+                        Default::default(),
+                    )
+                    .unwrap(),
+                ),
+            ],
             // Default::default(),
             Some(SearchLogger {
                 verbosity: VerbosityLevel::Info,
@@ -160,9 +181,9 @@ impl Default for Cube4x4x4Solver {
         Self {
             // kpuzzle: kpuzzle.clone(),
             // phase1_ifds,
-            phase1_search, // square1_phase2_puzzle,
-                           // phase2_iterative_deepening_search,
-                           // depth_filtering_search,
+            multi_phase_search, // square1_phase2_puzzle,
+                                // phase2_iterative_deepening_search,
+                                // depth_filtering_search,
         }
     }
 }

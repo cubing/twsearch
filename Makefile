@@ -46,6 +46,10 @@ format: format-cpp format-js format-rust
 .PHONY: publish
 publish: test-rust publish-rust
 
+.PHONY: print-current-commit-hash
+print-current-commit-hash:
+	@bun run ./script/print-current-commit-hash.ts
+
 TWSEARCH_VERSION=$(shell git describe --tags)
 
 include ./Makefiles/cpp.Makefile

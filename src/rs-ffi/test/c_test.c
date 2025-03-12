@@ -21,4 +21,5 @@ int main() {
   generate_scramble(CUBING_EVENT_SKEWB);
   generate_scramble(CUBING_EVENT_SQ1);
 
+  printf("Freed %u scramble finder(s).\n", ffi_free_memory_for_all_scramble_finders()); 
 }

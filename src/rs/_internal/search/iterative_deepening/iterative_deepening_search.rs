@@ -413,14 +413,10 @@ impl<
                     .get(r#move)
                     .expect("move!")
                     .move_class_index;
-                current_state = match self
+                current_state = self
                     .api_data
                     .canonical_fsm
-                    .next_state(current_state, move_class_index)
-                {
-                    Some(next_state) => next_state,
-                    None => return None,
-                }
+                    .next_state(current_state, move_class_index)?
             }
         }
         Some(current_state)

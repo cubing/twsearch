@@ -51,7 +51,11 @@ impl SolvingBasedScrambleFinder for Cube4x4x4Solver {
         let mut scramble_pattern = cube4x4x4_kpuzzle().default_pattern();
 
         // If you want a hardcoded scramble =)
-        let hack = parse_alg!("U2 Rw' F' L' F U Uw F Fw2 Rw D2 Rw' Uw D2 F' R D Rw U' L' Uw Rw2 B L2 U2 F' R Rw D' Rw' L Fw' R2 F' D L' B' Rw' R2 L'");
+        // <<< let hack = parse_alg!("U2 Rw' F' L' F U Uw F Fw2 Rw D2 Rw' Uw D2 F' R D Rw U' L' Uw Rw2 B L2 U2 F' R Rw D' Rw' L Fw' R2 F' D L' B' Rw' R2 L'");
+        // <<< let hack = parse_alg!("B' L U D2 L F2 B U L D2 R2 B' U2 D2 B' U2 L2 B2 U2 D2 Rw2 Fw2 F' U Rw2 F' Uw2 B' L2 D2 Fw2 D L2 Rw U2 Fw2 L Fw2 R2 Uw Fw' Rw' L B' Rw B2");
+        // <<< let hack = parse_alg!("R B' D' L' F' R' L B L2 F' B2 D' F2 L2 F2 L2 U2 L2 D' F2 B2 Uw2 B Rw2 R2 D' F B2 Uw2 U B2 L2 Rw' D2 F L U2 F Fw' Uw2 R Fw' Rw B L F2");
+        // <<< let hack = parse_alg!("U' D2 R2 B2 U' B D U2 R' F2 U2 R2 B2 R' B2 R F2 R' F2 U' R2 Fw2 R D U2 F2 Uw2 Fw2 Rw2 D2 L' R Fw' L D2 U2 L' Fw U Rw' F D Rw' B Uw2");
+        let hack = parse_alg!("D R D2 F2 U D2 B U' F L F2 L2 D2 R' U2 L F2 U2 D2 R' D2 Rw2 B' Rw2 U2 Fw2 L F L2 F2 R' Uw2 B Uw' B2 R D' L D' B' Rw Fw' R' F Rw");
         scramble_pattern = scramble_pattern.apply_alg(hack).unwrap();
 
         // <<< randomize_orbit_naïve(
@@ -124,6 +128,22 @@ impl Default for Cube4x4x4Solver {
         let search_logger = SearchLogger {
             verbosity: VerbosityLevel::Info,
         };
+
+        let phase2_target_patterns = [
+            parse_alg!(""),
+            parse_alg!("y2"),
+            parse_alg!("Fw2"),
+            parse_alg!("Bw2"),
+            parse_alg!("Uw2"),
+            parse_alg!("Dw2"),
+            parse_alg!("Fw2 Rw2"),
+            parse_alg!("Bw2 Rw2"),
+            parse_alg!("Uw2 Rw2"),
+            parse_alg!("Dw2 Rw2"),
+            parse_alg!("Dw2 Rw2 Fw2"),
+            parse_alg!("Fw2 Rw2 Uw2"),
+        ].map(|alg| cube4x4x4_phase2_target_kpattern().apply_alg(alg).unwrap());
+
         let multi_phase_search = MultiPhaseSearch::try_new(
             kpuzzle.clone(),
             vec![
@@ -140,12 +160,12 @@ impl Default for Cube4x4x4Solver {
                 ),
                 Box::new(
                     KPuzzleSimpleMaskPhase::try_new(
-                        "Place F/B and U/D centers on correct axes".to_owned(),
+                        "Place F/B and U/D centers on correct axes and make L/R solvable with half turns".to_owned(),
                         cube4x4x4_phase2_target_kpattern().clone(),
                         phase2_generator_moves,
                         Some(search_logger),
                         Default::default(),
-                        None,
+                        Some(phase2_target_patterns.to_vec()),
                     )
                     .unwrap(),
                 ),

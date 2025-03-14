@@ -44,7 +44,7 @@ impl Default for PyraminxScrambleFinder {
             IterativeDeepeningSearch::try_new(
                 kpuzzle.clone(),
                 generator_moves,
-                kpuzzle.default_pattern(),
+                vec![kpuzzle.default_pattern()],
                 Default::default(),
             )
             .unwrap(),

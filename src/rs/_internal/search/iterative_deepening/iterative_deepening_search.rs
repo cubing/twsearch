@@ -157,7 +157,7 @@ pub struct IterativeDeepeningSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
     pub search_generators: SearchGenerators<TPuzzle>,
     pub canonical_fsm: CanonicalFSM<TPuzzle>, // TODO: move this into `SearchAdaptations`
     pub tpuzzle: TPuzzle,
-    pub target_pattern: TPuzzle::Pattern,
+    pub target_patterns: Vec<TPuzzle::Pattern>,
     pub search_logger: Arc<SearchLogger>,
 }
 
@@ -200,7 +200,7 @@ impl<
     pub fn try_new(
         tpuzzle: TPuzzle,
         generator_moves: Vec<Move>, // TODO: turn this back into `Generators`
-        target_pattern: TPuzzle::Pattern,
+        target_patterns: Vec<TPuzzle::Pattern>,
         options: IterativeDeepeningSearchConstructionOptions,
     ) -> Result<Self, SearchError> {
         let search_generators = SearchGenerators::try_new(
@@ -218,7 +218,7 @@ impl<
             search_generators,
             canonical_fsm,
             tpuzzle: tpuzzle.clone(),
-            target_pattern,
+            target_patterns,
             search_logger: options.search_logger.clone(),
         });
 
@@ -429,7 +429,7 @@ impl<
         current_state: CanonicalFSMState,
         solution_moves: SolutionMoves,
     ) -> SearchRecursionResult {
-        if current_pattern != &self.api_data.target_pattern {
+        if !self.is_target_pattern(current_pattern) {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
         if self
@@ -467,5 +467,10 @@ impl<
         } else {
             SearchRecursionResult::ContinueSearchingDefault()
         }
+    }
+
+    fn is_target_pattern(&self, current_pattern: &TPuzzle::Pattern) -> bool {
+        // TODO: use a hash set instead (for when there is more than 1 target pattern)
+        self.api_data.target_patterns.contains(current_pattern)
     }
 }

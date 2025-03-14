@@ -46,7 +46,7 @@ impl Default for Cube2x2x2ScrambleFinder {
             IterativeDeepeningSearch::try_new(
                 kpuzzle.clone(),
                 move_list_from_vec(vec!["L", "B", "D"]),
-                kpuzzle.default_pattern(),
+                vec![kpuzzle.default_pattern()],
                 Default::default(),
             )
             .unwrap(),
@@ -57,7 +57,7 @@ impl Default for Cube2x2x2ScrambleFinder {
             IterativeDeepeningSearch::try_new(
                 kpuzzle.clone(),
                 move_list_from_vec(vec!["U", "L", "F", "R"]),
-                kpuzzle.default_pattern(),
+                vec![kpuzzle.default_pattern()],
                 IterativeDeepeningSearchConstructionOptions {
                     canonical_fsm_construction_options: CanonicalFSMConstructionOptions {
                         forbid_transitions_by_quantums_either_direction: HashSet::from([(

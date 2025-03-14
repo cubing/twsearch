@@ -95,7 +95,7 @@ impl Default for Square1ScrambleFinder {
         >::try_new(
             square1_phase1_puzzle.clone(),
             generator_moves.clone(),
-            phase1_target_pattern,
+            vec![phase1_target_pattern],
             IterativeDeepeningSearchConstructionOptions {
                 ..Default::default()
             },
@@ -113,7 +113,7 @@ impl Default for Square1ScrambleFinder {
         >::try_new(
             square1_phase2_puzzle.clone(),
             generator_moves.clone(),
-            phase2_target_pattern,
+            vec![phase2_target_pattern],
             IterativeDeepeningSearchConstructionOptions {
                 ..Default::default()
             },
@@ -128,7 +128,7 @@ impl Default for Square1ScrambleFinder {
                 IterativeDeepeningSearch::<KPuzzle, FilteringSearchAdaptations>::try_new(
                     kpuzzle.clone(),
                     generator_moves,
-                    kpuzzle.default_pattern(),
+                    vec![kpuzzle.default_pattern()],
                     Default::default(),
                 )
                 .unwrap();

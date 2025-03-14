@@ -35,7 +35,7 @@ pub fn scramble_baby_fto() -> Alg {
         IterativeDeepeningSearch::try_new(
             kpuzzle.clone(),
             filter_generator_moves,
-            kpuzzle.default_pattern(),
+            vec![kpuzzle.default_pattern()],
             Default::default(),
         )
         .unwrap(),
@@ -46,7 +46,7 @@ pub fn scramble_baby_fto() -> Alg {
         IterativeDeepeningSearch::try_new(
             kpuzzle.clone(),
             generator_moves,
-            kpuzzle.default_pattern(),
+            vec![kpuzzle.default_pattern()],
             IterativeDeepeningSearchConstructionOptions {
                 canonical_fsm_construction_options: CanonicalFSMConstructionOptions {
                     forbid_transitions_by_quantums_either_direction: HashSet::from([(

@@ -57,7 +57,7 @@ pub fn search(
             .generator_args
             .parse()
             .enumerate_moves_for_kpuzzle(kpuzzle),
-        target_pattern,
+        vec![target_pattern], // TODO: support multiple target patterns in API
         IterativeDeepeningSearchConstructionOptions {
             search_logger: Arc::new(SearchLogger {
                 verbosity: search_command_optional_args

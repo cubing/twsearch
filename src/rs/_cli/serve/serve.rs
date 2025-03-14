@@ -87,7 +87,7 @@ fn solve_pattern(
             algs: vec![],
         })
         .enumerate_moves_for_kpuzzle(&kpuzzle),
-        target_pattern,
+        vec![target_pattern], // TODO: modify api to support multiple target patterns
         IterativeDeepeningSearchConstructionOptions {
             search_logger,
             random_start: match args_for_individual_search.client_args {

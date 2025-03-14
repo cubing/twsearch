@@ -51,21 +51,21 @@ impl SolvingBasedScrambleFinder for Cube4x4x4Solver {
         let mut scramble_pattern = cube4x4x4_kpuzzle().default_pattern();
 
         // If you want a hardcoded scramble =)
-        // <<< let hack = parse_alg!("U2 Rw' F' L' F U Uw F Fw2 Rw D2 Rw' Uw D2 F' R D Rw U' L' Uw Rw2 B L2 U2 F' R Rw D' Rw' L Fw' R2 F' D L' B' Rw' R2 L'");
-        // <<< scramble_pattern = scramble_pattern.apply_alg(hack).unwrap();
+        let hack = parse_alg!("U2 Rw' F' L' F U Uw F Fw2 Rw D2 Rw' Uw D2 F' R D Rw U' L' Uw Rw2 B L2 U2 F' R Rw D' Rw' L Fw' R2 F' D L' B' Rw' R2 L'");
+        scramble_pattern = scramble_pattern.apply_alg(hack).unwrap();
 
-        randomize_orbit_naïve(
-            &mut scramble_pattern,
-            0,
-            "CORNERS",
-            OrbitRandomizationConstraints {
-                orientation: Some(OrbitOrientationConstraint::SumToZero),
-                ..Default::default()
-            },
-        );
-
-        randomize_orbit_naïve(&mut scramble_pattern, 1, "WINGS", Default::default());
-        randomize_orbit_naïve(&mut scramble_pattern, 2, "CENTERS", Default::default());
+        // <<< randomize_orbit_naïve(
+        // <<<     &mut scramble_pattern,
+        // <<<     0,
+        // <<<     "CORNERS",
+        // <<<     OrbitRandomizationConstraints {
+        // <<<         orientation: Some(OrbitOrientationConstraint::SumToZero),
+        // <<<         ..Default::default()
+        // <<<     },
+        // <<< );
+        // <<<
+        // <<< randomize_orbit_naïve(&mut scramble_pattern, 1, "WINGS", Default::default());
+        // <<< randomize_orbit_naïve(&mut scramble_pattern, 2, "CENTERS", Default::default());
 
         (scramble_pattern, NoScrambleAssociatedData {})
     }
@@ -121,6 +121,9 @@ impl Default for Cube4x4x4Solver {
         // )
         // .unwrap();
 
+        let search_logger = SearchLogger {
+            verbosity: VerbosityLevel::Info,
+        };
         let multi_phase_search = MultiPhaseSearch::try_new(
             kpuzzle.clone(),
             vec![
@@ -129,8 +132,9 @@ impl Default for Cube4x4x4Solver {
                         "Place L/R centers on L/R".to_owned(),
                         cube4x4x4_phase1_target_kpattern().clone(),
                         phase1_generator_moves,
-                        None,
+                        Some(search_logger.clone()),
                         Default::default(),
+                        None,
                     )
                     .unwrap(),
                 ),
@@ -139,8 +143,9 @@ impl Default for Cube4x4x4Solver {
                         "Place F/B and U/D centers on correct axes".to_owned(),
                         cube4x4x4_phase2_target_kpattern().clone(),
                         phase2_generator_moves,
-                        None,
+                        Some(search_logger),
                         Default::default(),
+                        None,
                     )
                     .unwrap(),
                 ),

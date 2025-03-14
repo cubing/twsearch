@@ -311,7 +311,7 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
             IterativeDeepeningSearch::try_new(
                 kpuzzle.clone(),
                 generators.clone(),
-                kpuzzle.default_pattern(),
+                vec![kpuzzle.default_pattern()],
                 IterativeDeepeningSearchConstructionOptions {
                     min_prune_table_size: Some(32),
                     ..Default::default()
@@ -324,7 +324,7 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
         let phase1_iterative_deepening_search = IterativeDeepeningSearch::try_new(
             kpuzzle.clone(),
             generators.clone(),
-            phase1_target_pattern.clone(),
+            vec![phase1_target_pattern.clone()],
             IterativeDeepeningSearchConstructionOptions {
                 min_prune_table_size: Some(32),
                 ..Default::default()
@@ -336,7 +336,7 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
         let phase2_iterative_deepening_search = IterativeDeepeningSearch::try_new(
             kpuzzle.clone(),
             phase2_generators.clone(),
-            kpuzzle.default_pattern(),
+            vec![kpuzzle.default_pattern()],
             IterativeDeepeningSearchConstructionOptions {
                 min_prune_table_size: Some(1 << 24),
                 ..Default::default()

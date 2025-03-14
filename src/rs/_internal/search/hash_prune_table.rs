@@ -233,13 +233,15 @@ impl<
             self.mutable
                 .recursive_work_tracker
                 .start_depth(Depth(*depth as usize), None);
-            Self::recurse(
-                &self.immutable,
-                &mut self.mutable,
-                &self.immutable.search_api_data.target_pattern,
-                CANONICAL_FSM_START_STATE,
-                depth,
-            );
+            for target_pattern in &self.immutable.search_api_data.target_patterns {
+                Self::recurse(
+                    &self.immutable,
+                    &mut self.mutable,
+                    target_pattern,
+                    CANONICAL_FSM_START_STATE,
+                    depth,
+                );
+            }
             self.mutable.recursive_work_tracker.finish_latest_depth();
         }
         self.mutable.current_pruning_depth = new_pruning_depth

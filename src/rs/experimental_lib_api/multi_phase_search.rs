@@ -49,20 +49,27 @@ impl KPuzzleSimpleMaskPhase {
         generator_moves: Vec<Move>,
         search_logger: Option<SearchLogger>,
         individual_search_options: IndividualSearchOptions,
+        masked_target_patterns: Option<Vec<KPattern>>,
     ) -> Result<Self, SearchError> {
         let kpuzzle = mask.kpuzzle();
-        let Ok(target_pattern) = apply_mask(&kpuzzle.default_pattern(), &mask) else {
-            return Err(SearchError {
-                description: format!(
-                    "Could not apply mask to default pattern for phase: {}",
-                    phase_name
-                ),
-            });
+        let target_patterns = match masked_target_patterns {
+            Some(masked_target_patterns) => masked_target_patterns,
+            None => {
+                let Ok(target_pattern) = apply_mask(&kpuzzle.default_pattern(), &mask) else {
+                    return Err(SearchError {
+                        description: format!(
+                            "Could not apply mask to default pattern for phase: {}",
+                            phase_name
+                        ),
+                    });
+                };
+                vec![target_pattern]
+            }
         };
         let Ok(iterative_deepening_search) = IterativeDeepeningSearch::<KPuzzle>::try_new(
             kpuzzle.clone(),
             generator_moves,
-            target_pattern,
+            target_patterns,
             IterativeDeepeningSearchConstructionOptions {
                 search_logger: search_logger.unwrap_or_default().into(),
                 ..Default::default()

@@ -15,7 +15,10 @@ use super::{
             PrefixOrSuffixConstraints, TwoPhase3x3x3ScrambleFinder, TwoPhase3x3x3ScrambleOptions,
         },
     },
-    solving_based_scramble_finder::{generate_fair_scramble, NoScrambleOptions},
+    solving_based_scramble_finder::{
+        generate_fair_scramble, scramble_finder_cacher_map, NoScrambleAssociatedData,
+        NoScrambleOptions, SolvingBasedScrambleFinder,
+    },
     Event, PuzzleError,
 };
 
@@ -76,5 +79,25 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
         Event::KilominxSpeedsolving => err,
         Event::RediCubeSpeedsolving => err,
         Event::BabyFTOSpeedsolving => Ok(scramble_baby_fto()),
+    }
+}
+
+pub fn test_random_scramble(event: Event, scramble_setup_alg: &Alg) -> Result<Alg, PuzzleError> {
+    let err = Err(PuzzleError {
+        description: format!(
+            "Random scramble testing is not implemented for this event yet: {}",
+            event
+        ),
+    });
+    match event {
+        Event::Cube4x4x4Speedsolving => {
+            let pattern = Cube4x4x4Solver::get_kpuzzle()
+                .default_pattern()
+                .apply_alg(scramble_setup_alg)
+                .expect("Invalid alg for puzzle.");
+            let test_scramble =     scramble_finder_cacher_map(|scramble_finder: &mut Cube4x4x4Solver| -> Result<Alg, crate::_internal::errors::SearchError> {scramble_finder.solve_pattern(&pattern, &NoScrambleAssociatedData{}, &NoScrambleOptions{})}).expect("Could not test scramble.");
+            Ok(test_scramble)
+        }
+        _ => err,
     }
 }

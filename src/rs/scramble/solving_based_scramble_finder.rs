@@ -65,6 +65,16 @@ pub trait SolvingBasedScrambleFinder: Default {
     }
 }
 
+pub fn scramble_finder_cacher_map<
+    ScrambleFinder: SolvingBasedScrambleFinder + 'static + Sync + Send,
+    ReturnValue,
+    F: Fn(&mut ScrambleFinder) -> ReturnValue,
+>(
+    f: F,
+) -> ReturnValue {
+    ScrambleFinderCacher::map::<ScrambleFinder, ReturnValue, F>(f)
+}
+
 pub fn generate_fair_scramble<
     ScrambleFinder: SolvingBasedScrambleFinder + 'static + Sync + Send,
 >(
@@ -86,12 +96,18 @@ static SCRAMBLE_FINDER_CACHER_SINGLETON: LazyLock<Mutex<ScrambleFinderCacher>> =
     LazyLock::<Mutex<ScrambleFinderCacher>>::new(Default::default);
 
 impl ScrambleFinderCacher {
-    pub fn generate_fair_scramble<
+    pub fn map<
         ScrambleFinder: SolvingBasedScrambleFinder + 'static + Sync + Send,
+        ReturnValue,
+        F: Fn(&mut ScrambleFinder) -> ReturnValue,
     >(
-        scramble_options: &ScrambleFinder::ScrambleOptions,
-    ) -> Alg {
+        f: F,
+    ) -> ReturnValue {
+        // TODO: figure out how to share a concrete implementation instead of template code.
+        // This is trickier than it sounds: https://stackoverflow.com/questions/40095383/how-to-return-a-reference-to-a-sub-value-of-a-value-that-is-under-a-mutex/40103840#40103840
+        // There are some crates to do this, but not an obvious choice.
         let mut mutex_guard = SCRAMBLE_FINDER_CACHER_SINGLETON.lock().unwrap();
+
         mutex_guard
             .erased_sync_set
             .get_or_insert_with(|| RwLock::new(ScrambleFinder::default()));
@@ -101,10 +117,21 @@ impl ScrambleFinderCacher {
             .get_mut::<RwLock<ScrambleFinder>>()
             .unwrap();
 
-        rw_lock
-            .get_mut()
-            .unwrap()
-            .generate_fair_scramble(scramble_options)
+        let scramble_finder = rw_lock.get_mut().unwrap();
+        /********/
+
+        f(scramble_finder)
+        // scramble_finder.generate_fair_scramble(scramble_options)
+    }
+
+    pub fn generate_fair_scramble<
+        ScrambleFinder: SolvingBasedScrambleFinder + 'static + Sync + Send,
+    >(
+        scramble_options: &ScrambleFinder::ScrambleOptions,
+    ) -> Alg {
+        ScrambleFinderCacher::map(|scramble_finder: &mut ScrambleFinder| {
+            scramble_finder.generate_fair_scramble(scramble_options)
+        })
     }
 
     // pub fn free_memory_for_scramble_finder<

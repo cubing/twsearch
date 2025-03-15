@@ -142,7 +142,8 @@ impl Default for Cube4x4x4Solver {
             parse_alg!("Dw2 Rw2"),
             parse_alg!("Dw2 Rw2 Fw2"),
             parse_alg!("Fw2 Rw2 Uw2"),
-        ].map(|alg| cube4x4x4_phase2_target_kpattern().apply_alg(alg).unwrap());
+        ]
+        .map(|alg| cube4x4x4_phase2_target_kpattern().apply_alg(alg).unwrap());
 
         let multi_phase_search = MultiPhaseSearch::try_new(
             kpuzzle.clone(),
@@ -210,5 +211,11 @@ impl Default for Cube4x4x4Solver {
                                 // phase2_iterative_deepening_search,
                                 // depth_filtering_search,
         }
+    }
+}
+
+impl Cube4x4x4Solver {
+    pub fn get_kpuzzle() -> &'static KPuzzle {
+        cube4x4x4_kpuzzle()
     }
 }

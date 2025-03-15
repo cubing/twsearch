@@ -54,6 +54,8 @@ pub enum CliCommand {
     CanonicalAlgs(CanonicalAlgsArgs),
     // Generate a scramble
     Scramble(ScrambleArgs),
+    // Generate a scramble matching the same pattern as produced by the given test scramble alg.
+    TestScramble(TestScrambleArgs),
 
     /// Run an internal benchmark suite.
     Benchmark(BenchmarkArgs),
@@ -396,6 +398,16 @@ pub struct ScrambleArgs {
     /// Amount of scrambles
     #[clap(long, default_value = "1")]
     pub amount: usize,
+}
+
+#[derive(Args, Debug)]
+pub struct TestScrambleArgs {
+    /// Event ID (WCA or unofficial)
+    pub event_id: String,
+
+    /// Scramble setup alg
+    // TODO: Make this an `Alg` (by implementing `ValueEnum`?)
+    pub scramble_setup_alg: String,
 }
 
 #[derive(Args, Debug)]

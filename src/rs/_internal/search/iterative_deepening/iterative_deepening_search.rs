@@ -1,5 +1,7 @@
 use std::{
+    collections::HashSet,
     fmt::Debug,
+    hash::Hash,
     sync::{
         mpsc::{channel, Receiver, Sender},
         Arc,
@@ -161,6 +163,30 @@ pub struct IterativeDeepeningSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
     pub search_logger: Arc<SearchLogger>,
 }
 
+enum TargetPatternCache<TPuzzle: SemiGroupActionPuzzle> {
+    SinglePattern(TPuzzle::Pattern),
+    MultiplePatterns(HashSet<TPuzzle::Pattern>), // TODO: `cityhasher::HashSet`? Or make this generic?
+}
+
+impl<TPuzzle: SemiGroupActionPuzzle> TargetPatternCache<TPuzzle>
+where
+    TPuzzle::Pattern: Hash,
+{
+    // TODO: is https://docs.rs/nonempty/latest/nonempty/ light enough to use?
+    fn try_new(target_patterns: &Vec<TPuzzle::Pattern>) -> Result<Self, SearchError> {
+        match target_patterns.len() {
+            0 => return Err("Must have at least one target pattern.".into()),
+            1 => {
+                let c: TPuzzle::Pattern = target_patterns[0].clone();
+                Ok(Self::SinglePattern(c))
+            }
+            _ => Ok(Self::MultiplePatterns(HashSet::from_iter(
+                target_patterns.iter().cloned(),
+            ))),
+        }
+    }
+}
+
 /// For information on [`SearchAdaptations`], see the documentation for that trait.
 pub struct IterativeDeepeningSearch<
     TPuzzle: SemiGroupActionPuzzle + DefaultSearchAdaptations<TPuzzle> = KPuzzle,
@@ -170,6 +196,7 @@ pub struct IterativeDeepeningSearch<
 > {
     pub api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
     pub prune_table: Adaptations::PruneTable, // TODO: push this into the associated data for the adaptations.
+    pub target_pattern_cache: TargetPatternCache<TPuzzle>
 }
 
 pub struct IterativeDeepeningSearchConstructionOptions {
@@ -214,6 +241,9 @@ impl<
             search_generators.clone(),
             options.canonical_fsm_construction_options,
         )?; // TODO: avoid a clone
+
+        let target_pattern_cache = TargetPatternCache::try_new(&target_patterns)?;
+
         let api_data = Arc::new(IterativeDeepeningSearchAPIData {
             search_generators,
             canonical_fsm,
@@ -231,6 +261,7 @@ impl<
         Ok(Self {
             api_data,
             prune_table,
+            target_pattern_cache,
         })
     }
 

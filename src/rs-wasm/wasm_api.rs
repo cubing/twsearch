@@ -68,7 +68,7 @@ pub fn wasmTwsearch(
     let iterative_deepening_search = <IterativeDeepeningSearch<KPuzzle>>::try_new(
         kpuzzle.clone(),
         generators.enumerate_moves_for_kpuzzle(&kpuzzle),
-        target_pattern,
+        vec![target_pattern], // TODO: support multiple target patterns.
         Default::default(),
     );
     let mut iterative_deepening_search = iterative_deepening_search.map_err(|e| e.description)?;

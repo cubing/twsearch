@@ -34,6 +34,13 @@ pub trait SearchPhase<TPuzzle: SemiGroupActionPuzzle>: Send + Sync {
     ) -> Result<Option<Alg>, SearchError>;
 }
 
+#[derive(Default)]
+pub struct KPuzzleSimpleMaskPhaseConstructionOptions {
+    pub search_logger: Option<SearchLogger>,
+    pub individual_search_options: Option<IndividualSearchOptions>,
+    pub masked_target_patterns: Option<Vec<KPattern>>,
+}
+
 pub struct KPuzzleSimpleMaskPhase {
     pub phase_name: String,
     pub mask: KPattern,
@@ -47,12 +54,10 @@ impl KPuzzleSimpleMaskPhase {
         phase_name: String,
         mask: KPattern,
         generator_moves: Vec<Move>,
-        search_logger: Option<SearchLogger>,
-        individual_search_options: IndividualSearchOptions,
-        masked_target_patterns: Option<Vec<KPattern>>,
+        options: KPuzzleSimpleMaskPhaseConstructionOptions,
     ) -> Result<Self, SearchError> {
         let kpuzzle = mask.kpuzzle();
-        let target_patterns = match masked_target_patterns {
+        let target_patterns = match options.masked_target_patterns {
             Some(masked_target_patterns) => masked_target_patterns,
             None => {
                 let Ok(target_pattern) = apply_mask(&kpuzzle.default_pattern(), &mask) else {
@@ -71,7 +76,7 @@ impl KPuzzleSimpleMaskPhase {
             generator_moves,
             target_patterns,
             IterativeDeepeningSearchConstructionOptions {
-                search_logger: search_logger.unwrap_or_default().into(),
+                search_logger: options.search_logger.unwrap_or_default().into(),
                 ..Default::default()
             },
         ) else {
@@ -86,7 +91,7 @@ impl KPuzzleSimpleMaskPhase {
             phase_name,
             mask,
             iterative_deepening_search,
-            individual_search_options,
+            individual_search_options: options.individual_search_options.unwrap_or_default(),
         })
     }
 

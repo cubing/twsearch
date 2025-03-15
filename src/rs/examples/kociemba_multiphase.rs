@@ -36,7 +36,6 @@ impl KociembaTwoPhase {
                                 parse_move!("B").to_owned(),
                                 parse_move!("D").to_owned(),
                             ],
-                            None,
                             Default::default(),
                         )
                         .unwrap(),
@@ -53,7 +52,6 @@ impl KociembaTwoPhase {
                                 parse_move!("B2").to_owned(),
                                 parse_move!("D").to_owned(),
                             ],
-                            None,
                             Default::default(),
                         )
                         .unwrap(),

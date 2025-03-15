@@ -5,7 +5,9 @@ use cubing::kpuzzle::KPuzzle;
 
 use crate::_internal::cli::args::VerbosityLevel;
 use crate::_internal::search::search_logger::SearchLogger;
-use crate::experimental_lib_api::{KPuzzleSimpleMaskPhase, MultiPhaseSearch};
+use crate::experimental_lib_api::{
+    KPuzzleSimpleMaskPhase, KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,
+};
 use crate::scramble::puzzles::definitions::{
     cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern, cube4x4x4_phase2_target_kpattern,
 };
@@ -14,9 +16,6 @@ use crate::{_internal::errors::SearchError, scramble::scramble_search::move_list
 
 use crate::scramble::{
     collapse::collapse_adjacent_moves,
-    randomize::{
-        randomize_orbit_naïve, OrbitOrientationConstraint, OrbitRandomizationConstraints
-    },
     solving_based_scramble_finder::{
         NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
     },
@@ -153,9 +152,11 @@ impl Default for Cube4x4x4Solver {
                         "Place L/R centers on L/R".to_owned(),
                         cube4x4x4_phase1_target_kpattern().clone(),
                         phase1_generator_moves,
-                        Some(search_logger.clone()),
-                        Default::default(),
-                        None,
+                        KPuzzleSimpleMaskPhaseConstructionOptions {
+search_logger:
+                            Some(search_logger.clone()),
+                            ..Default::default()
+                        },
                     )
                     .unwrap(),
                 ),
@@ -164,9 +165,12 @@ impl Default for Cube4x4x4Solver {
                         "Place F/B and U/D centers on correct axes and make L/R solvable with half turns".to_owned(),
                         cube4x4x4_phase2_target_kpattern().clone(),
                         phase2_generator_moves,
-                        Some(search_logger),
-                        Default::default(),
-                        Some(phase2_target_patterns.to_vec()),
+                        KPuzzleSimpleMaskPhaseConstructionOptions {
+search_logger:
+                            Some(search_logger.clone()),
+                            masked_target_patterns:Some(phase2_target_patterns.to_vec()),
+                            ..Default::default()
+                        }
                     )
                     .unwrap(),
                 ),

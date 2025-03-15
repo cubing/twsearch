@@ -39,8 +39,7 @@ pub fn main() {
                         parse_move!("B").to_owned(),
                         parse_move!("D").to_owned(),
                     ],
-                    None,
-                    Default::default(), //     individual_search_options: None,
+                    Default::default(),
                 )
                 .unwrap(),
             ),
@@ -53,8 +52,7 @@ pub fn main() {
                         parse_move!("F").to_owned(),
                         parse_move!("R").to_owned(),
                     ],
-                    None,
-                    Default::default(), //     individual_search_options: None,
+                    Default::default(),
                 )
                 .unwrap(),
             ),
@@ -69,7 +67,6 @@ pub fn main() {
                         parse_move!("L2").to_owned(),
                         parse_move!("D").to_owned(),
                     ],
-                    None,
                     Default::default(),
                 )
                 .unwrap(),

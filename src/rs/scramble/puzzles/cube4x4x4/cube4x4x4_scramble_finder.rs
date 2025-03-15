@@ -24,7 +24,7 @@ use crate::scramble::{
     },
 };
 
-pub(crate) struct Cube4x4x4Solver {
+pub(crate) struct Cube4x4x4ScrambleFinder {
     multi_phase_search: MultiPhaseSearch<KPuzzle>,
 }
 
@@ -38,7 +38,7 @@ fn run_incomplete_scramble_finder_check() {
     }
 }
 
-impl SolvingBasedScrambleFinder for Cube4x4x4Solver {
+impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
     type TPuzzle = KPuzzle;
     type ScrambleAssociatedData = NoScrambleAssociatedData;
     type ScrambleOptions = NoScrambleOptions;
@@ -94,7 +94,7 @@ impl SolvingBasedScrambleFinder for Cube4x4x4Solver {
     }
 }
 
-impl Default for Cube4x4x4Solver {
+impl Default for Cube4x4x4ScrambleFinder {
     fn default() -> Self {
         let kpuzzle = cube4x4x4_kpuzzle();
         let phase1_generator_moves = move_list_from_vec(vec![
@@ -212,7 +212,7 @@ search_logger:
     }
 }
 
-impl Cube4x4x4Solver {
+impl Cube4x4x4ScrambleFinder {
     pub fn get_kpuzzle() -> &'static KPuzzle {
         cube4x4x4_kpuzzle()
     }

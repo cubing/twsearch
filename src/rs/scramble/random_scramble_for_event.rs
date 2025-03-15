@@ -6,7 +6,7 @@ use super::{
         big_cubes::{scramble_5x5x5, scramble_5x5x5_bld, scramble_6x6x6, scramble_7x7x7},
         clock::scramble_clock,
         cube2x2x2_scramble_finder::Cube2x2x2ScrambleFinder,
-        cube4x4x4::cube4x4x4_solver::Cube4x4x4Solver,
+        cube4x4x4::cube4x4x4_scramble_finder::Cube4x4x4ScrambleFinder,
         megaminx::scramble_megaminx,
         pyraminx_scramble_finder::PyraminxScrambleFinder,
         skewb_scramble_finder::SkewbScrambleFinder,
@@ -35,7 +35,7 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
         Event::Cube2x2x2Speedsolving => Ok(generate_fair_scramble::<Cube2x2x2ScrambleFinder>(
             &NoScrambleOptions {},
         )),
-        Event::Cube4x4x4Speedsolving => Ok(generate_fair_scramble::<Cube4x4x4Solver>(
+        Event::Cube4x4x4Speedsolving => Ok(generate_fair_scramble::<Cube4x4x4ScrambleFinder>(
             &NoScrambleOptions {},
         )),
         Event::Cube5x5x5Speedsolving => Ok(scramble_5x5x5()),
@@ -91,11 +91,11 @@ pub fn test_random_scramble(event: Event, scramble_setup_alg: &Alg) -> Result<Al
     });
     match event {
         Event::Cube4x4x4Speedsolving => {
-            let pattern = Cube4x4x4Solver::get_kpuzzle()
+            let pattern = Cube4x4x4ScrambleFinder::get_kpuzzle()
                 .default_pattern()
                 .apply_alg(scramble_setup_alg)
                 .expect("Invalid alg for puzzle.");
-            let test_scramble =     scramble_finder_cacher_map(|scramble_finder: &mut Cube4x4x4Solver| -> Result<Alg, crate::_internal::errors::SearchError> {scramble_finder.solve_pattern(&pattern, &NoScrambleAssociatedData{}, &NoScrambleOptions{})}).expect("Could not test scramble.");
+            let test_scramble =     scramble_finder_cacher_map(|scramble_finder: &mut Cube4x4x4ScrambleFinder| -> Result<Alg, crate::_internal::errors::SearchError> {scramble_finder.solve_pattern(&pattern, &NoScrambleAssociatedData{}, &NoScrambleOptions{})}).expect("Could not test scramble.");
             Ok(test_scramble)
         }
         _ => err,

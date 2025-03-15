@@ -16,6 +16,9 @@ use crate::{_internal::errors::SearchError, scramble::scramble_search::move_list
 
 use crate::scramble::{
     collapse::collapse_adjacent_moves,
+    randomize::{
+        randomize_orbit_naïve, OrbitOrientationConstraint, OrbitRandomizationConstraints
+    },
     solving_based_scramble_finder::{
         NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
     },
@@ -49,26 +52,17 @@ impl SolvingBasedScrambleFinder for Cube4x4x4Solver {
     ){
         let mut scramble_pattern = cube4x4x4_kpuzzle().default_pattern();
 
-        // If you want a hardcoded scramble =)
-        // <<< let hack = parse_alg!("U2 Rw' F' L' F U Uw F Fw2 Rw D2 Rw' Uw D2 F' R D Rw U' L' Uw Rw2 B L2 U2 F' R Rw D' Rw' L Fw' R2 F' D L' B' Rw' R2 L'");
-        // <<< let hack = parse_alg!("B' L U D2 L F2 B U L D2 R2 B' U2 D2 B' U2 L2 B2 U2 D2 Rw2 Fw2 F' U Rw2 F' Uw2 B' L2 D2 Fw2 D L2 Rw U2 Fw2 L Fw2 R2 Uw Fw' Rw' L B' Rw B2");
-        // <<< let hack = parse_alg!("R B' D' L' F' R' L B L2 F' B2 D' F2 L2 F2 L2 U2 L2 D' F2 B2 Uw2 B Rw2 R2 D' F B2 Uw2 U B2 L2 Rw' D2 F L U2 F Fw' Uw2 R Fw' Rw B L F2");
-        // <<< let hack = parse_alg!("U' D2 R2 B2 U' B D U2 R' F2 U2 R2 B2 R' B2 R F2 R' F2 U' R2 Fw2 R D U2 F2 Uw2 Fw2 Rw2 D2 L' R Fw' L D2 U2 L' Fw U Rw' F D Rw' B Uw2");
-        let hack = parse_alg!("D R D2 F2 U D2 B U' F L F2 L2 D2 R' U2 L F2 U2 D2 R' D2 Rw2 B' Rw2 U2 Fw2 L F L2 F2 R' Uw2 B Uw' B2 R D' L D' B' Rw Fw' R' F Rw");
-        scramble_pattern = scramble_pattern.apply_alg(hack).unwrap();
-
-        // <<< randomize_orbit_naïve(
-        // <<<     &mut scramble_pattern,
-        // <<<     0,
-        // <<<     "CORNERS",
-        // <<<     OrbitRandomizationConstraints {
-        // <<<         orientation: Some(OrbitOrientationConstraint::SumToZero),
-        // <<<         ..Default::default()
-        // <<<     },
-        // <<< );
-        // <<<
-        // <<< randomize_orbit_naïve(&mut scramble_pattern, 1, "WINGS", Default::default());
-        // <<< randomize_orbit_naïve(&mut scramble_pattern, 2, "CENTERS", Default::default());
+        randomize_orbit_naïve(
+            &mut scramble_pattern,
+            0,
+            "CORNERS",
+            OrbitRandomizationConstraints {
+                orientation: Some(OrbitOrientationConstraint::SumToZero),
+                ..Default::default()
+            },
+        );
+        randomize_orbit_naïve(&mut scramble_pattern, 1, "WINGS", Default::default());
+        randomize_orbit_naïve(&mut scramble_pattern, 2, "CENTERS", Default::default());
 
         (scramble_pattern, NoScrambleAssociatedData {})
     }

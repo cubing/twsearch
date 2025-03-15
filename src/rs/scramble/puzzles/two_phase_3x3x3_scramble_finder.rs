@@ -49,10 +49,10 @@ pub(crate) struct TwoPhase3x3x3ScrambleFinder {
 }
 
 pub(crate) struct TwoPhase3x3x3ScrambleOptions {
-    pub(crate) prefix_or_suffix_constraints: PrefixOrSuffixConstraints,
+    pub(crate) prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints,
 }
 
-enum TwoPhase3x3x3ScrambleAssociatedAffixes {
+pub(crate) enum TwoPhase3x3x3ScrambleAssociatedAffixes {
     None,
     ForFMC,
     ForBLD(Alg),
@@ -86,7 +86,7 @@ fn apply_pre_alg(kpattern: &KPattern, alg: &Alg) -> Option<KPattern> {
 }
 
 pub(crate) struct TwoPhase3x3x3ScrambleAssociatedData {
-    affixes: TwoPhase3x3x3ScrambleAssociatedAffixes,
+    pub(crate) affixes: TwoPhase3x3x3ScrambleAssociatedAffixes,
 }
 
 impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
@@ -125,15 +125,15 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
         );
 
         let (scramble_pattern, affixes) = match scramble_options.prefix_or_suffix_constraints {
-            PrefixOrSuffixConstraints::None => (
+            TwoPhase3x3x3PrefixOrSuffixConstraints::None => (
                 scramble_pattern,
                 TwoPhase3x3x3ScrambleAssociatedAffixes::None,
             ),
-            PrefixOrSuffixConstraints::ForFMC => (
+            TwoPhase3x3x3PrefixOrSuffixConstraints::ForFMC => (
                 scramble_pattern,
                 TwoPhase3x3x3ScrambleAssociatedAffixes::ForFMC,
             ),
-            PrefixOrSuffixConstraints::ForBLD => {
+            TwoPhase3x3x3PrefixOrSuffixConstraints::ForBLD => {
                 // TODO: randomize centers directly?
                 let suffix = random_suffix_for_bld();
                 (
@@ -362,7 +362,7 @@ fn random_suffix_for_bld() -> Alg {
     add_random_suffixes_from(Alg::default(), [s1, s2])
 }
 
-pub(crate) enum PrefixOrSuffixConstraints {
+pub(crate) enum TwoPhase3x3x3PrefixOrSuffixConstraints {
     None,
     ForFMC,
     ForBLD,

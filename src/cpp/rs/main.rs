@@ -81,7 +81,7 @@ fn main() {
             println!("This command is not supported for the wrapper CLI");
             exit(1);
         }
-        CliCommand::TestScramble(_args) => {
+        CliCommand::ScrambleFinder(_args) => {
             println!("This command is not supported for the wrapper CLI");
             exit(1);
         }

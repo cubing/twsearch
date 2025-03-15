@@ -84,7 +84,7 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
     }
 }
 
-pub fn test_random_scramble(event: Event, scramble_setup_alg: &Alg) -> Result<Alg, PuzzleError> {
+pub fn scramble_finder_solve(event: Event, scramble_setup_alg: &Alg) -> Result<Alg, PuzzleError> {
     let err = Err(PuzzleError {
         description: format!(
             "Random scramble testing is not implemented for this event yet: {}",

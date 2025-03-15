@@ -55,7 +55,7 @@ pub enum CliCommand {
     // Generate a scramble
     Scramble(ScrambleArgs),
     // Generate a scramble matching the same pattern as produced by the given test scramble alg.
-    TestScramble(TestScrambleArgs),
+    ScrambleFinder(ScrambleFinderArgs),
 
     /// Run an internal benchmark suite.
     Benchmark(BenchmarkArgs),
@@ -401,7 +401,18 @@ pub struct ScrambleArgs {
 }
 
 #[derive(Args, Debug)]
-pub struct TestScrambleArgs {
+pub struct ScrambleFinderArgs {
+    #[command(subcommand)]
+    pub command: ScrambleFinderCommand,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum ScrambleFinderCommand {
+    Solve(ScrambleFinderSolveArgs),
+}
+
+#[derive(Args, Debug)]
+pub struct ScrambleFinderSolveArgs {
     /// Event ID (WCA or unofficial)
     pub event_id: String,
 

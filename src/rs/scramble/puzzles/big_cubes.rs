@@ -34,7 +34,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> ScrambleInfo<TPuzzle> {
         let generators =
             SearchGenerators::try_new(tpuzzle, moves, &MetricEnum::Hand, false).unwrap();
         let canonical_fsm =
-            CanonicalFSM::try_new(tpuzzle.clone(), generators.clone(), Default::default()).unwrap();
+            CanonicalFSM::new(tpuzzle.clone(), generators.clone(), Default::default());
         Self {
             generators,
             canonical_fsm,

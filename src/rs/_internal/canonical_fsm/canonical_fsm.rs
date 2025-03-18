@@ -18,7 +18,6 @@ use super::search_generators::{MoveTransformationInfo, SearchGenerators};
 whole_number_newtype!(MoveClassIndex, usize);
 
 // Bit N is indexed by a `MoveClassIndex` value of N.
-// whole_number_newtype!(MoveClassMask, u64);
 #[derive(Debug, Eq, Hash, PartialEq, Clone)]
 struct MoveClassMask(Vec<bool>);
 

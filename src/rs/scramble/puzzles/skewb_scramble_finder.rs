@@ -1,10 +1,21 @@
-use cubing::alg::Alg;
+use cubing::{alg::Alg, kpuzzle::KPuzzle};
 
 use crate::{
-    _internal::search::move_count::MoveCount,
+    _internal::{
+        errors::SearchError,
+        search::{
+            iterative_deepening::iterative_deepening_search::IterativeDeepeningSearch,
+            move_count::MoveCount,
+        },
+    },
     scramble::{
+        collapse::collapse_adjacent_moves,
         randomize::{ConstraintForFirstPiece, OrbitRandomizationConstraints},
-        scramble_search::move_list_from_vec,
+        scramble_search::{move_list_from_vec, FilteredSearch},
+        solving_based_scramble_finder::{
+            FilteringDecision, NoScrambleAssociatedData, NoScrambleOptions,
+            SolvingBasedScrambleFinder,
+        },
     },
 };
 
@@ -12,14 +23,47 @@ use super::{
     super::randomize::{
         randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
     },
-    super::scramble_search::simple_filtered_search,
     definitions::skewb_fixed_corner_with_co_tweaks_kpuzzle,
 };
 
-pub fn scramble_skewb() -> Alg {
-    let kpuzzle = skewb_fixed_corner_with_co_tweaks_kpuzzle();
-    loop {
-        let mut scramble_pattern = kpuzzle.default_pattern();
+pub(crate) struct SkewbScrambleFinder {
+    kpuzzle: KPuzzle,
+    filtered_search: FilteredSearch<KPuzzle>,
+}
+
+impl Default for SkewbScrambleFinder {
+    fn default() -> Self {
+        let kpuzzle = skewb_fixed_corner_with_co_tweaks_kpuzzle();
+        let generator_moves = move_list_from_vec(vec!["U", "L", "R", "B"]);
+        let filtered_search = FilteredSearch::new(
+            IterativeDeepeningSearch::try_new(
+                kpuzzle.clone(),
+                generator_moves,
+                vec![kpuzzle.default_pattern()],
+                Default::default(),
+            )
+            .unwrap(),
+        );
+        Self {
+            kpuzzle: kpuzzle.clone(),
+            filtered_search,
+        }
+    }
+}
+
+impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
+    type TPuzzle = KPuzzle;
+    type ScrambleAssociatedData = NoScrambleAssociatedData;
+    type ScrambleOptions = NoScrambleOptions;
+
+    fn generate_fair_unfiltered_random_pattern(
+        &mut self,
+        _scramble_options: &Self::ScrambleOptions,
+    ) -> (
+        <<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
+        Self::ScrambleAssociatedData,
+    ){
+        let mut scramble_pattern = self.kpuzzle.default_pattern();
 
         /* The total orientation of each corner orbit is constrained by the permutation of the other.
          * That is, suppose we have a valid state of Skewb with values labelled as follows:
@@ -100,15 +144,31 @@ pub fn scramble_skewb() -> Alg {
                 ..Default::default()
             },
         );
+        (scramble_pattern, NoScrambleAssociatedData {})
+    }
 
-        let generators = move_list_from_vec(vec!["U", "L", "R", "B"]); // TODO: cache
-        if let Some(scramble) = simple_filtered_search(
-            &scramble_pattern,
-            generators,
-            MoveCount(7),
-            Some(MoveCount(11)),
-        ) {
-            return scramble;
-        }
+    fn filter_pattern(
+        &mut self,
+        pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
+        _scramble_associated_data: &Self::ScrambleAssociatedData,
+        _scramble_options: &Self::ScrambleOptions,
+    ) -> FilteringDecision {
+        self.filtered_search
+            .filtering_decision(pattern, MoveCount(7))
+    }
+
+    fn solve_pattern(
+        &mut self,
+        pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
+        _scramble_associated_data: &Self::ScrambleAssociatedData,
+        _scramble_options: &Self::ScrambleOptions,
+    ) -> Result<Alg, SearchError> {
+        Ok(self
+            .filtered_search
+            .generate_scramble(pattern, Some(MoveCount(11))))
+    }
+
+    fn collapse_inverted_alg(&mut self, alg: Alg) -> Alg {
+        collapse_adjacent_moves(alg, 3, -1)
     }
 }

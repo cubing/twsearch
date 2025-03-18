@@ -6,6 +6,15 @@ enum CombinedMoves {
     Separate(Move, Move),
 }
 
+fn mod_move(mut r#move: Move, mod_n: i32, mod_offset: i32) -> Option<Move> {
+    let amount = (r#move.amount - mod_offset).rem_euclid(mod_n) + mod_offset;
+    if amount == 0 {
+        return None;
+    }
+    r#move.amount = amount;
+    Some(r#move)
+}
+
 fn combine_adjacent_moves(
     move1: Move,
     mut move2: Move,
@@ -16,12 +25,11 @@ fn combine_adjacent_moves(
         return CombinedMoves::Separate(move1, move2);
     }
 
-    let new_amount = (move2.amount + move1.amount - mod_offset) % mod_n + mod_offset;
-    if new_amount == 0 {
-        return CombinedMoves::Cancelled();
+    move2.amount += move1.amount;
+    match mod_move(move2, mod_n, mod_offset) {
+        Some(move2) => CombinedMoves::Collapsed(move2),
+        None => CombinedMoves::Cancelled(),
     }
-    move2.amount = new_amount;
-    CombinedMoves::Collapsed(move2)
 }
 
 fn pop_final_move(nodes: &mut Vec<AlgNode>) -> Option<Move> {
@@ -40,7 +48,9 @@ fn pop_final_move(nodes: &mut Vec<AlgNode>) -> Option<Move> {
 /// This is a minimal implementation of https://js.cubing.net/cubing/api/classes/alg.Alg.html#experimentalSimplify for collapsing moves between phases.
 /// For face turns and face rotations of a cube, pass:
 /// - `mod_n`: 4
-/// - `mod_offset`: 1
+/// - `mod_offset`: -1
+// TODO: `R4` is not collapsed into an empty alg.
+// TODO: support taking a reference for cases where that's more efficient?
 pub fn collapse_adjacent_moves(alg: Alg, mod_n: i32, mod_offset: i32) -> Alg {
     let mut nodes = Vec::<AlgNode>::new();
 
@@ -52,12 +62,17 @@ pub fn collapse_adjacent_moves(alg: Alg, mod_n: i32, mod_offset: i32) -> Alg {
                     CombinedMoves::Cancelled() => pop_final_move(&mut nodes),
                     CombinedMoves::Collapsed(r#move) => Some(r#move),
                     CombinedMoves::Separate(move1, move2) => {
-                        nodes.push(move1.into());
-                        Some(move2)
+                        match mod_move(move2, mod_n, mod_offset) {
+                            Some(move2) => {
+                                nodes.push(move1.into());
+                                Some(move2)
+                            }
+                            None => Some(move1),
+                        }
                     }
                 }
             } else {
-                Some(new_move)
+                mod_move(new_move, mod_n, mod_offset)
             }
         } else {
             if let Some(pending_move) = maybe_pending_move {
@@ -81,30 +96,38 @@ fn collapse_test() {
         collapse_adjacent_moves(
             parse_alg!(
                 "R' U' F R2 D U B D U' L' B2 U' F F2 D' B2 D' L2 D' R2 B2 R2 F2 U' B2 D' R' U' F"
-            ),
+            )
+            .to_owned(),
             4,
             -1
         ),
-        parse_alg!("R' U' F R2 D U B D U' L' B2 U' F' D' B2 D' L2 D' R2 B2 R2 F2 U' B2 D' R' U' F")
+        *parse_alg!(
+            "R' U' F R2 D U B D U' L' B2 U' F' D' B2 D' L2 D' R2 B2 R2 F2 U' B2 D' R' U' F"
+        )
     );
 
     assert_eq!(
-        collapse_adjacent_moves(parse_alg!("R F F' R"), 4, -1),
-        parse_alg!("R2")
+        collapse_adjacent_moves(parse_alg!("R F F' R").to_owned(), 4, -1),
+        *parse_alg!("R2")
     );
 
     assert_eq!(
-        collapse_adjacent_moves(parse_alg!("R F F2 F R"), 4, -1),
-        parse_alg!("R2")
+        collapse_adjacent_moves(parse_alg!("R F F2 F R").to_owned(), 4, -1),
+        *parse_alg!("R2")
     );
 
     assert_eq!(
-        collapse_adjacent_moves(parse_alg!("R F F2 . F R"), 4, -1),
-        parse_alg!("R F' . F R")
+        collapse_adjacent_moves(parse_alg!("U D2 R4 D6' U").to_owned(), 4, -1),
+        *parse_alg!("U2")
     );
 
     assert_eq!(
-        collapse_adjacent_moves(parse_alg!("R F F2 R"), 5, -2),
-        parse_alg!("R F2' R")
+        collapse_adjacent_moves(parse_alg!("R F F2 . F R").to_owned(), 4, -1),
+        *parse_alg!("R F' . F R")
+    );
+
+    assert_eq!(
+        collapse_adjacent_moves(parse_alg!("R F F2 R").to_owned(), 5, -2),
+        *parse_alg!("R F2' R")
     );
 }

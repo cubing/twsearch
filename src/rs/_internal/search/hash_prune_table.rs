@@ -11,8 +11,8 @@ use crate::_internal::puzzle_traits::puzzle_traits::{
 };
 use crate::whole_number_newtype;
 
-use super::idf_search::idf_search::IDFSearchAPIData;
-use super::pattern_validity_checker::PatternValidityChecker;
+use super::iterative_deepening::iterative_deepening_search::IterativeDeepeningSearchAPIData;
+use super::pattern_traversal_filter_trait::PatternTraversalFilter;
 use super::prune_table_trait::{Depth, PruneTable};
 use super::recursive_work_tracker::RecursiveWorkTracker;
 use super::search_logger::SearchLogger;
@@ -31,7 +31,7 @@ const DEFAULT_MIN_PRUNE_TABLE_SIZE: usize = 1 << 20;
 
 struct HashPruneTableImmutableData<TPuzzle: SemiGroupActionPuzzle> {
     // TODO
-    search_api_data: Arc<IDFSearchAPIData<TPuzzle>>,
+    search_api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
 }
 struct HashPruneTableMutableData<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> {
     tpuzzle: TPuzzle,
@@ -77,20 +77,20 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> HashPruneTableMutab
 
 pub struct HashPruneTable<
     TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle,
-    TPatternValidityChecker: PatternValidityChecker<TPuzzle>,
+    TPatternTraversalFilter: PatternTraversalFilter<TPuzzle>,
 > {
     // We would store a `tpuzzle` here, but the one stored in `.mutable` is sufficient.
     immutable: HashPruneTableImmutableData<TPuzzle>,
     mutable: HashPruneTableMutableData<TPuzzle>,
-    phantom_validity_checker: PhantomData<TPatternValidityChecker>,
+    phantom_data: PhantomData<TPatternTraversalFilter>,
 }
 
 impl<
         TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle,
-        TPatternValidityChecker: PatternValidityChecker<TPuzzle>,
-    > HashPruneTable<TPuzzle, TPatternValidityChecker>
+        TPatternTraversalFilter: PatternTraversalFilter<TPuzzle>,
+    > HashPruneTable<TPuzzle, TPatternTraversalFilter>
 {
-    // TODO: dedup with IDFSearch?
+    // TODO: dedup with IterativeDeepeningSearch?
     // TODO: Store a reference to `search_api_data` so that you can't accidentally pass in the wrong `search_api_data`?
     fn recurse(
         immutable_data: &HashPruneTableImmutableData<TPuzzle>,
@@ -130,7 +130,7 @@ impl<
                     continue;
                 };
 
-                if !TPatternValidityChecker::is_valid(&next_pattern) {
+                if !TPatternTraversalFilter::is_valid(&next_pattern) {
                     mutable_data.set_invalid_depth(&next_pattern);
                     continue;
                 }
@@ -148,12 +148,12 @@ impl<
 
 impl<
         TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle,
-        TPatternValidityChecker: PatternValidityChecker<TPuzzle>,
-    > PruneTable<TPuzzle> for HashPruneTable<TPuzzle, TPatternValidityChecker>
+        TPatternTraversalFilter: PatternTraversalFilter<TPuzzle>,
+    > PruneTable<TPuzzle> for HashPruneTable<TPuzzle, TPatternTraversalFilter>
 {
     fn new(
         tpuzzle: TPuzzle,
-        search_api_data: Arc<IDFSearchAPIData<TPuzzle>>,
+        search_api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
         search_logger: Arc<SearchLogger>,
         min_size: Option<usize>,
     ) -> Self {
@@ -176,7 +176,7 @@ impl<
                 ),
                 search_logger,
             },
-            phantom_validity_checker: PhantomData,
+            phantom_data: PhantomData,
         };
         prune_table.extend_for_search_depth(Depth(0), 1);
         prune_table
@@ -187,7 +187,7 @@ impl<
         self.mutable.lookup(pattern)
     }
 
-    // TODO: dedup with IDFSearch?
+    // TODO: dedup with IterativeDeepeningSearch?
     // TODO: Store a reference to `search_api_data` so that you can't accidentally pass in the wrong `search_api_data`?
     fn extend_for_search_depth(&mut self, search_depth: Depth, approximate_num_entries: usize) {
         let mut new_pruning_depth = DepthU8(
@@ -233,13 +233,15 @@ impl<
             self.mutable
                 .recursive_work_tracker
                 .start_depth(Depth(*depth as usize), None);
-            Self::recurse(
-                &self.immutable,
-                &mut self.mutable,
-                &self.immutable.search_api_data.target_pattern,
-                CANONICAL_FSM_START_STATE,
-                depth,
-            );
+            for target_pattern in &self.immutable.search_api_data.target_patterns {
+                Self::recurse(
+                    &self.immutable,
+                    &mut self.mutable,
+                    target_pattern,
+                    CANONICAL_FSM_START_STATE,
+                    depth,
+                );
+            }
             self.mutable.recursive_work_tracker.finish_latest_depth();
         }
         self.mutable.current_pruning_depth = new_pruning_depth

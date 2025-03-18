@@ -14,15 +14,21 @@ build-rust:
 	cargo build --release
 
 .PHONY: lint-rust
-lint-rust:
-	cargo clippy
+lint-rust: test-cargo-doc
+	cargo clippy -- --deny warnings
+	cargo fmt --check
+
+.PHONY: format-rust
+format-rust:
+	cargo clippy --fix --allow-no-vcs
+	cargo fmt
 
 .PHONY: publish-rust
 publish-rust: publish-rust-main publish-rust-ffi
 
 .PHONY: publish-rust-main
 publish-rust-main:
-	@echo "WARNING: will fall back to `--no-verify` due to https://github.com/rust-lang/cargo/issues/8407" # TODO
+	@echo "WARNING: will fall back to \`--no-verify\` due to https://github.com/rust-lang/cargo/issues/8407" # TODO
 	cargo publish --package twsearch || cargo publish --package twsearch --no-verify
 
 .PHONY: setup-rust
@@ -35,9 +41,13 @@ setup-rust:
 test-rust: test-rust-lib test-rust-examples test-rust-wasm test-rust-ffi
 
 .PHONY: test-rust-lib
-test-rust-lib:
+test-rust-lib: test-cargo-doc
 	cargo test
+
+.PHONY: test-cargo-doc
+test-cargo-doc:
 	cargo doc
+
 
 .PHONY: test-rust-examples
 test-rust-examples: \

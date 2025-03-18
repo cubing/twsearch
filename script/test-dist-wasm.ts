@@ -1,6 +1,10 @@
 import assert from "node:assert";
 import { cube2x2x2 } from "cubing/puzzles";
-import { wasmRandomScrambleForEvent, wasmTwsearch } from "../dist/wasm/index";
+import {
+  wasmFreeMemoryForAllScrambleFinders,
+  wasmRandomScrambleForEvent,
+  wasmTwsearch,
+} from "../dist/wasm/index";
 
 for (const eventID of [
   "222",
@@ -9,7 +13,11 @@ for (const eventID of [
   "555",
   "666",
   "777",
+  "sq1",
   ...new Array(10).fill("333"),
+  "333oh",
+  "333fm",
+  "skewb",
 ]) {
   const startTime = performance.now();
   const scramble = await wasmRandomScrambleForEvent(eventID);
@@ -33,3 +41,5 @@ for (const eventID of [
   console.log("Solution:", solution.toString());
   assert(pattern.applyAlg(solution).isIdentical(kpuzzle.defaultPattern()));
 }
+
+console.log(`Freed ${wasmFreeMemoryForAllScrambleFinders()} scramble finders.`);

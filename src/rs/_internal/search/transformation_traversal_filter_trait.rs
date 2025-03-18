@@ -5,7 +5,7 @@ use crate::_internal::{
 
 use super::prune_table_trait::Depth;
 
-pub trait RecursionFilter<TPuzzle: SemiGroupActionPuzzle> {
+pub trait TransformationTraversalFilter<TPuzzle: SemiGroupActionPuzzle> {
     // TODO: if performance is not good enough, apply this filter earlier during the iterators?
     // TODO: figure out the appropriate params.
     fn keep_move(
@@ -15,9 +15,11 @@ pub trait RecursionFilter<TPuzzle: SemiGroupActionPuzzle> {
 }
 
 // TODO: unify struct with `AlwaysValid`?
-pub struct RecursionFilterNoOp;
+pub struct TransformationTraversalFilterNoOp;
 
-impl<TPuzzle: SemiGroupActionPuzzle> RecursionFilter<TPuzzle> for RecursionFilterNoOp {
+impl<TPuzzle: SemiGroupActionPuzzle> TransformationTraversalFilter<TPuzzle>
+    for TransformationTraversalFilterNoOp
+{
     fn keep_move(
         _move_transformation_info: &MoveTransformationInfo<TPuzzle>,
         _remaining_depth: Depth,

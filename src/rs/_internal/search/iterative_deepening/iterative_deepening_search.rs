@@ -28,11 +28,11 @@ use crate::_internal::{
 
 use super::{
     super::{
-        pattern_validity_checker::PatternValidityChecker,
+        pattern_traversal_filter_trait::PatternTraversalFilter,
         prune_table_trait::{Depth, PruneTable},
-        recursion_filter_trait::RecursionFilter,
         recursive_work_tracker::RecursiveWorkTracker,
         search_logger::SearchLogger,
+        transformation_traversal_filter_trait::TransformationTraversalFilter,
     },
     search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
 };
@@ -153,26 +153,26 @@ struct IndividualSearchData {
     solution_sender: Sender<Option<Alg>>,
 }
 
-pub struct IDFSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
+pub struct IterativeDeepeningSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
     pub search_generators: SearchGenerators<TPuzzle>,
     pub canonical_fsm: CanonicalFSM<TPuzzle>, // TODO: move this into `SearchAdaptations`
     pub tpuzzle: TPuzzle,
-    pub target_pattern: TPuzzle::Pattern,
+    pub target_patterns: Vec<TPuzzle::Pattern>,
     pub search_logger: Arc<SearchLogger>,
 }
 
 /// For information on [`SearchAdaptations`], see the documentation for that trait.
-pub struct IDFSearch<
+pub struct IterativeDeepeningSearch<
     TPuzzle: SemiGroupActionPuzzle + DefaultSearchAdaptations<TPuzzle> = KPuzzle,
     Adaptations: SearchAdaptations<TPuzzle> = <TPuzzle as DefaultSearchAdaptations<
         TPuzzle,
     >>::Adaptations,
 > {
-    pub api_data: Arc<IDFSearchAPIData<TPuzzle>>,
+    pub api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
     pub prune_table: Adaptations::PruneTable, // TODO: push this into the associated data for the adaptations.
 }
 
-pub struct IDFSearchConstructionOptions {
+pub struct IterativeDeepeningSearchConstructionOptions {
     pub search_logger: Arc<SearchLogger>,
     pub metric: MetricEnum,
     pub random_start: bool,
@@ -180,7 +180,7 @@ pub struct IDFSearchConstructionOptions {
     pub canonical_fsm_construction_options: CanonicalFSMConstructionOptions,
 }
 
-impl Default for IDFSearchConstructionOptions {
+impl Default for IterativeDeepeningSearchConstructionOptions {
     fn default() -> Self {
         Self {
             search_logger: Default::default(),
@@ -194,14 +194,14 @@ impl Default for IDFSearchConstructionOptions {
 
 impl<
         TPuzzle: SemiGroupActionPuzzle + DefaultSearchAdaptations<TPuzzle>,
-        Optimizations: SearchAdaptations<TPuzzle>,
-    > IDFSearch<TPuzzle, Optimizations>
+        Adaptations: SearchAdaptations<TPuzzle>,
+    > IterativeDeepeningSearch<TPuzzle, Adaptations>
 {
     pub fn try_new(
         tpuzzle: TPuzzle,
         generator_moves: Vec<Move>, // TODO: turn this back into `Generators`
-        target_pattern: TPuzzle::Pattern,
-        options: IDFSearchConstructionOptions,
+        target_patterns: Vec<TPuzzle::Pattern>,
+        options: IterativeDeepeningSearchConstructionOptions,
     ) -> Result<Self, SearchError> {
         let search_generators = SearchGenerators::try_new(
             &tpuzzle,
@@ -214,15 +214,15 @@ impl<
             search_generators.clone(),
             options.canonical_fsm_construction_options,
         )?; // TODO: avoid a clone
-        let api_data = Arc::new(IDFSearchAPIData {
+        let api_data = Arc::new(IterativeDeepeningSearchAPIData {
             search_generators,
             canonical_fsm,
             tpuzzle: tpuzzle.clone(),
-            target_pattern,
+            target_patterns,
             search_logger: options.search_logger.clone(),
         });
 
-        let prune_table = Optimizations::PruneTable::new(
+        let prune_table = Adaptations::PruneTable::new(
             tpuzzle,
             api_data.clone(),
             options.search_logger,
@@ -325,7 +325,7 @@ impl<
     ) -> SearchRecursionResult {
         let current_pattern = pattern_stack.current_pattern();
         // TODO: apply invalid checks only to intermediate state (i.e. exclude remaining_depth == 0)?
-        if !Optimizations::PatternValidityChecker::is_valid(current_pattern) {
+        if !Adaptations::PatternTraversalFilter::is_valid(current_pattern) {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
 
@@ -360,7 +360,7 @@ impl<
             };
 
             for move_transformation_info in move_transformation_multiples {
-                if !Optimizations::RecursionFilter::keep_move(
+                if !Adaptations::TransformationTraversalFilter::keep_move(
                     move_transformation_info,
                     remaining_depth,
                 ) {
@@ -413,14 +413,10 @@ impl<
                     .get(r#move)
                     .expect("move!")
                     .move_class_index;
-                current_state = match self
+                current_state = self
                     .api_data
                     .canonical_fsm
-                    .next_state(current_state, move_class_index)
-                {
-                    Some(next_state) => next_state,
-                    None => return None,
-                }
+                    .next_state(current_state, move_class_index)?
             }
         }
         Some(current_state)
@@ -433,7 +429,7 @@ impl<
         current_state: CanonicalFSMState,
         solution_moves: SolutionMoves,
     ) -> SearchRecursionResult {
-        if current_pattern != &self.api_data.target_pattern {
+        if !self.is_target_pattern(current_pattern) {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
         if self
@@ -471,5 +467,10 @@ impl<
         } else {
             SearchRecursionResult::ContinueSearchingDefault()
         }
+    }
+
+    fn is_target_pattern(&self, current_pattern: &TPuzzle::Pattern) -> bool {
+        // TODO: use a hash set instead (for when there is more than 1 target pattern)
+        self.api_data.target_patterns.contains(current_pattern)
     }
 }

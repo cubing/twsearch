@@ -8,6 +8,7 @@ pub struct SearchLogger {
 }
 
 impl SearchLogger {
+    // TODO: support using the `write!` macro to avoid unnecessary string formatting in the caller when nothing is actually logged.
     pub fn write_info(&self, s: &str) {
         if match self.verbosity {
             VerbosityLevel::Silent => false,

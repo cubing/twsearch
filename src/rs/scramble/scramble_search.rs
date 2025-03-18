@@ -2,20 +2,23 @@ use std::{default::Default, marker::PhantomData};
 
 use cubing::{
     alg::{Alg, Move},
-    kpuzzle::{KPattern, KPuzzle},
+    kpuzzle::KPuzzle,
 };
 
 use crate::_internal::{
+    errors::SearchError,
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
-        idf_search::{
-            idf_search::{IDFSearch, IndividualSearchOptions},
+        iterative_deepening::{
+            iterative_deepening_search::{IndividualSearchOptions, IterativeDeepeningSearch},
             search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
         },
         move_count::MoveCount,
         prune_table_trait::Depth,
     },
 };
+
+use super::solving_based_scramble_finder::FilteringDecision;
 
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
     move_str_list
@@ -26,23 +29,23 @@ pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
 
 pub struct FilteredSearch<
     TPuzzle: SemiGroupActionPuzzle + DefaultSearchAdaptations<TPuzzle> = KPuzzle,
-    Optimizations: SearchAdaptations<TPuzzle> = <TPuzzle as DefaultSearchAdaptations<
+    Adaptations: SearchAdaptations<TPuzzle> = <TPuzzle as DefaultSearchAdaptations<
         TPuzzle,
     >>::Adaptations,
 > {
-    pub(crate) idfs: IDFSearch<TPuzzle, Optimizations>,
+    pub(crate) iterative_deepening_search: IterativeDeepeningSearch<TPuzzle, Adaptations>,
 
-    phantom_data: PhantomData<(TPuzzle, Optimizations)>,
+    phantom_data: PhantomData<(TPuzzle, Adaptations)>,
 }
 
 impl<
         TPuzzle: SemiGroupActionPuzzle + DefaultSearchAdaptations<TPuzzle>,
-        Optimizations: SearchAdaptations<TPuzzle>,
-    > FilteredSearch<TPuzzle, Optimizations>
+        Adaptations: SearchAdaptations<TPuzzle>,
+    > FilteredSearch<TPuzzle, Adaptations>
 {
-    pub fn new(idfs: IDFSearch<TPuzzle, Optimizations>) -> Self {
+    pub fn new(iterative_deepening_search: IterativeDeepeningSearch<TPuzzle, Adaptations>) -> Self {
         Self {
-            idfs,
+            iterative_deepening_search,
             phantom_data: PhantomData,
         }
     }
@@ -55,26 +58,37 @@ impl<
         if min_optimal_moves == MoveCount(0) {
             return None;
         }
-        self.idfs
+        self.iterative_deepening_search
             .search(
                 scramble_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
                     min_depth: Some(Depth(0)),
-                    max_depth: Some(Depth(min_optimal_moves.0 - 1)),
+                    max_depth: Some(Depth(min_optimal_moves.0)),
                     ..Default::default()
                 },
             )
             .next()
     }
 
+    pub fn filtering_decision(
+        &mut self,
+        scramble_pattern: &TPuzzle::Pattern,
+        min_optimal_moves: MoveCount,
+    ) -> FilteringDecision {
+        match self.filter(scramble_pattern, min_optimal_moves) {
+            Some(_) => FilteringDecision::Reject,
+            None => FilteringDecision::Accept,
+        }
+    }
+
     /// This function depends on the caller to pass parameters that will always result in an alg.
-    pub fn generate_scramble(
+    pub fn solve(
         &mut self,
         scramble_pattern: &TPuzzle::Pattern,
         min_scramble_moves: Option<MoveCount>,
-    ) -> Alg {
-        self.idfs
+    ) -> Option<Alg> {
+        self.iterative_deepening_search
             .search(
                 scramble_pattern,
                 IndividualSearchOptions {
@@ -84,32 +98,30 @@ impl<
                 },
             )
             .next()
+    }
+
+    /// This function depends on the caller to pass parameters that will always result in an alg.
+    pub fn solve_or_error(
+        &mut self,
+        scramble_pattern: &TPuzzle::Pattern,
+        min_scramble_moves: Option<MoveCount>,
+    ) -> Result<Alg, SearchError> {
+        let Some(alg) = self.solve(scramble_pattern, min_scramble_moves) else {
+            return Err(SearchError {
+                description: "Could not solve pattern".to_owned(),
+            });
+        };
+        Ok(alg)
+    }
+
+    /// This function depends on the caller to pass parameters that will always result in an alg.
+    pub fn generate_scramble(
+        &mut self,
+        scramble_pattern: &TPuzzle::Pattern,
+        min_scramble_moves: Option<MoveCount>,
+    ) -> Alg {
+        self.solve(scramble_pattern, min_scramble_moves)
             .unwrap()
             .invert()
     }
-}
-
-pub(crate) fn simple_filtered_search(
-    scramble_pattern: &KPattern,
-    generator_moves: Vec<Move>,
-    min_optimal_moves: MoveCount,
-    min_scramble_moves: Option<MoveCount>,
-) -> Option<Alg> {
-    let kpuzzle = scramble_pattern.kpuzzle();
-    let mut filtered_search = <FilteredSearch>::new(
-        IDFSearch::try_new(
-            kpuzzle.clone(),
-            generator_moves,
-            kpuzzle.default_pattern(),
-            Default::default(),
-        )
-        .unwrap(),
-    );
-    if filtered_search
-        .filter(scramble_pattern, min_optimal_moves)
-        .is_some()
-    {
-        return None;
-    }
-    Some(filtered_search.generate_scramble(scramble_pattern, min_scramble_moves))
 }

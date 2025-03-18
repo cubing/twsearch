@@ -7,20 +7,20 @@ pub fn scramble_clock() -> Alg {
 
     // TODO: implement `parse_quantum_move!(…)`?
     let back_moves = vec![
-        parse_move!("U_PLUS_").quantum,
-        parse_move!("R_PLUS_").quantum,
-        parse_move!("D_PLUS_").quantum,
-        parse_move!("L_PLUS_").quantum,
-        parse_move!("ALL_PLUS_").quantum,
+        parse_move!("U_PLUS_").quantum.to_owned(),
+        parse_move!("R_PLUS_").quantum.to_owned(),
+        parse_move!("D_PLUS_").quantum.to_owned(),
+        parse_move!("L_PLUS_").quantum.to_owned(),
+        parse_move!("ALL_PLUS_").quantum.to_owned(),
     ];
 
     let front_moves = [
         back_moves.clone(),
         vec![
-            parse_move!("UR_PLUS_").quantum,
-            parse_move!("DR_PLUS_").quantum,
-            parse_move!("DL_PLUS_").quantum,
-            parse_move!("UL_PLUS_").quantum,
+            parse_move!("UR_PLUS_").quantum.to_owned(),
+            parse_move!("DR_PLUS_").quantum.to_owned(),
+            parse_move!("DL_PLUS_").quantum.to_owned(),
+            parse_move!("UL_PLUS_").quantum.to_owned(),
         ],
     ]
     .concat();
@@ -34,7 +34,7 @@ pub fn scramble_clock() -> Alg {
             .into(),
         );
     }
-    alg_nodes.push(parse_move!("y2").into());
+    alg_nodes.push(parse_move!("y2").clone().into());
     for back_move in back_moves {
         alg_nodes.push(
             Move {

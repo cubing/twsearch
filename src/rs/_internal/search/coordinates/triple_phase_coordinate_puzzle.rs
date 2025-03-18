@@ -6,15 +6,15 @@ use crate::_internal::{
     canonical_fsm::search_generators::{FlatMoveIndex, MoveTransformationInfo},
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
-        idf_search::{
-            idf_search::IDFSearchAPIData,
+        iterative_deepening::{
+            iterative_deepening_search::IterativeDeepeningSearchAPIData,
             search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
         },
         move_count::MoveCount,
-        pattern_validity_checker::AlwaysValid,
+        pattern_traversal_filter_trait::PatternTraversalFilterNoOp,
         prune_table_trait::{Depth, PruneTable},
-        recursion_filter_trait::RecursionFilterNoOp,
         search_logger::SearchLogger,
+        transformation_traversal_filter_trait::TransformationTraversalFilterNoOp,
     },
 };
 
@@ -372,7 +372,7 @@ impl<
             TSemanticCoordinate3,
         >,
         _search_api_data: std::sync::Arc<
-            IDFSearchAPIData<
+            IterativeDeepeningSearchAPIData<
                 TriplePhaseCoordinatePuzzle<
                     TPuzzle,
                     TSemanticCoordinate1,
@@ -425,7 +425,7 @@ impl<
     }
 }
 
-pub struct TriplePhaseCoordinateSearchOptimizations<
+pub struct TriplePhaseCoordinateSearchAdaptations<
     TPuzzle: SemiGroupActionPuzzle,
     TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
     TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
@@ -453,21 +453,21 @@ impl<
             TSemanticCoordinate3,
         >,
     >
-    for TriplePhaseCoordinateSearchOptimizations<
+    for TriplePhaseCoordinateSearchAdaptations<
         TPuzzle,
         TSemanticCoordinate1,
         TSemanticCoordinate2,
         TSemanticCoordinate3,
     >
 {
-    type PatternValidityChecker = AlwaysValid; // TODO: reconcile this with fallible transformation application.
+    type PatternTraversalFilter = PatternTraversalFilterNoOp; // TODO: reconcile this with fallible transformation application.
     type PruneTable = TriplePhaseCoordinatePruneTable<
         TPuzzle,
         TSemanticCoordinate1,
         TSemanticCoordinate2,
         TSemanticCoordinate3,
     >;
-    type RecursionFilter = RecursionFilterNoOp;
+    type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
 }
 
 impl<
@@ -491,7 +491,7 @@ impl<
         TSemanticCoordinate3,
     >
 {
-    type Adaptations = TriplePhaseCoordinateSearchOptimizations<
+    type Adaptations = TriplePhaseCoordinateSearchAdaptations<
         TPuzzle,
         TSemanticCoordinate1,
         TSemanticCoordinate2,

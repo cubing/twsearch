@@ -2,8 +2,11 @@ mod commands;
 mod serve;
 
 use commands::{
-    benchmark::benchmark, canonical_algs::canonical_algs, cli_scramble::cli_scramble,
-    cli_search::cli_search, gods_algorithm::cli_gods_algorithm,
+    benchmark::benchmark,
+    canonical_algs::canonical_algs,
+    cli_scramble::{cli_scramble, cli_scramble_finder_solve},
+    cli_search::cli_search,
+    gods_algorithm::cli_gods_algorithm,
 };
 use twsearch::_internal::{
     cli::args::{get_options, CliCommand},
@@ -25,6 +28,9 @@ fn main() -> Result<(), CommandError> {
         CliCommand::TimingTest(_args) => todo!(),
         CliCommand::CanonicalAlgs(args) => canonical_algs(&args),
         CliCommand::Scramble(scramble_args) => cli_scramble(&scramble_args),
+        CliCommand::ScrambleFinder(scramble_finder_solve_args) => {
+            cli_scramble_finder_solve(&scramble_finder_solve_args)
+        }
         CliCommand::Benchmark(benchmark_args) => benchmark(&benchmark_args),
     }
 }

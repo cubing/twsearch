@@ -8,9 +8,9 @@ pub fn scramble_megaminx() -> Alg {
     let mut rng = thread_rng();
     let mut alg_nodes = Vec::<AlgNode>::new();
 
-    let r_array: [Move; 2] = [parse_move!("R++"), parse_move!("R--")];
-    let d_array: [Move; 2] = [parse_move!("D++"), parse_move!("D--")];
-    let u_array: [Move; 2] = [parse_move!("U"), parse_move!("U'")];
+    let r_array: [&Move; 2] = [parse_move!("R++"), parse_move!("R--")];
+    let d_array: [&Move; 2] = [parse_move!("D++"), parse_move!("D--")];
+    let u_array: [&Move; 2] = [parse_move!("U"), parse_move!("U'")];
 
     for _ in 0..NUM_LINES {
         let mut random_choice: usize = 0;

@@ -5,7 +5,7 @@ use std::{
     ptr::null_mut,
 };
 
-use twsearch::scramble::{random_scramble_for_event, Event};
+use twsearch::scramble::{free_memory_for_all_scramble_finders, random_scramble_for_event, Event};
 
 /// # Safety
 ///
@@ -63,4 +63,11 @@ fn ffi_test() {
         assert!(alg.nodes.len() >= min_num_moves);
         assert!(alg.nodes.len() <= max_num_moves);
     }
+}
+
+#[no_mangle]
+pub extern "C" fn ffi_free_memory_for_all_scramble_finders() -> u32 {
+    // We cast to `u32` for the public API so that it's more stable across environments (including WASM).
+    // If we've allocated more than `u32::MAX` scramble finders, I'd be *very* impressed.
+    free_memory_for_all_scramble_finders() as u32
 }

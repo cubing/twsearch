@@ -6,20 +6,21 @@ members = [
   "src/rs",
   "src/rs-ffi",
   "src/rs-wasm",
+  "script/cargo-run-bin"
 ]
 default-members = [
   "src/rs"
 ]
 
 [workspace.package]
-version = "0.6.6"
+version = "0.7.1-dev"
 license = "MPL-2.0"
 edition = "2021"
 
 [workspace.dependencies]
-cubing = "0.13.7"
+cubing = "0.14.1"
 
 [workspace.metadata.bin]
-cbindgen = { version = "0.26.0" }
+cbindgen = { version = "0.27.0" }
 cargo-binstall = { version = "1.4.4" }
-wasm-pack = { version = "0.12.1" }
+wasm-pack = { version = "0.13.1" }

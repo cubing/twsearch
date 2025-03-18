@@ -19,16 +19,16 @@ use crate::{
         cli::args::MetricEnum,
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{
-            idf_search::{
-                idf_search::IDFSearchAPIData,
+            indexed_vec::IndexedVec,
+            iterative_deepening::{
+                iterative_deepening_search::IterativeDeepeningSearchAPIData,
                 search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
             },
-            indexed_vec::IndexedVec,
             move_count::MoveCount,
-            pattern_validity_checker::AlwaysValid,
+            pattern_traversal_filter_trait::PatternTraversalFilterNoOp,
             prune_table_trait::{Depth, PruneTable},
-            recursion_filter_trait::RecursionFilterNoOp,
             search_logger::SearchLogger,
+            transformation_traversal_filter_trait::TransformationTraversalFilterNoOp,
         },
     },
     whole_number_newtype_generic,
@@ -38,6 +38,7 @@ pub trait SemanticCoordinate<TPuzzle: SemiGroupActionPuzzle>: Eq + Hash + Clone 
 where
     Self: std::marker::Sized,
 {
+    fn phase_name() -> &'static str; // TODO: signature
     fn try_new(puzzle: &TPuzzle, pattern: &TPuzzle::Pattern) -> Option<Self>;
 }
 
@@ -161,8 +162,10 @@ where
             index_to_representative_pattern.push(representative_pattern);
         }
 
+        // TODO: place this behind `SearchLogger`.
         // eprintln!(
-        //     "PhaseCoordinatePuzzle has {} patterns.",
+        //     "[PhaseCoordinatePuzzle] {} has {} patterns.",
+        //     TSemanticCoordinate::phase_name(),
         //     index_to_semantic_coordinate.len()
         // );
 
@@ -355,7 +358,7 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
     fn new(
         puzzle: PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>,
         _search_api_data: Arc<
-            IDFSearchAPIData<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>,
+            IterativeDeepeningSearchAPIData<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>,
         >,
         _search_logger: Arc<SearchLogger>,
         _min_size: Option<usize>,
@@ -376,7 +379,7 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
 }
 
 // TODO: simplify the default for below.
-pub struct PhaseCoordinatePuzzleSearchOptimizations<
+pub struct PhaseCoordinatePuzzleAdaptations<
     TPuzzle: SemiGroupActionPuzzle,
     TSemanticCoordinate: SemanticCoordinate<TPuzzle>,
 > {
@@ -385,16 +388,16 @@ pub struct PhaseCoordinatePuzzleSearchOptimizations<
 
 impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPuzzle>>
     SearchAdaptations<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>
-    for PhaseCoordinatePuzzleSearchOptimizations<TPuzzle, TSemanticCoordinate>
+    for PhaseCoordinatePuzzleAdaptations<TPuzzle, TSemanticCoordinate>
 {
-    type PatternValidityChecker = AlwaysValid; // TODO: reconcile this with fallible transformation application.
     type PruneTable = PhaseCoordinatePruneTable<TPuzzle, TSemanticCoordinate>;
-    type RecursionFilter = RecursionFilterNoOp;
+    type PatternTraversalFilter = PatternTraversalFilterNoOp; // TODO: reconcile this with fallible transformation application.
+    type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
 }
 
 impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPuzzle>>
     DefaultSearchAdaptations<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>>
     for PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate>
 {
-    type Adaptations = PhaseCoordinatePuzzleSearchOptimizations<TPuzzle, TSemanticCoordinate>;
+    type Adaptations = PhaseCoordinatePuzzleAdaptations<TPuzzle, TSemanticCoordinate>;
 }

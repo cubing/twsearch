@@ -1,7 +1,15 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "files": {
-    "ignore": ["./.temp", "./build", "./dist", "./emsdk", "./target"]
+    "ignore": [
+      "./.bin",
+      "./.jj",
+      "./.temp",
+      "./build",
+      "./dist",
+      "./emsdk",
+      "./target"
+    ]
   },
   "formatter": {
     "indentStyle": "space",

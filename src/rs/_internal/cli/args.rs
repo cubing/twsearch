@@ -35,8 +35,10 @@ pub struct TwsearchArgs {
 pub enum CliCommand {
     /// Run a single search.
     Search(SearchCommandArgs),
+    // The URL is not for Rust docs, it is printed to the comandline by `clap` (which does not remove brackets around URLs).
+    #[allow(rustdoc::bare_urls)]
     /// Run a search server.
-    /// Use with: <https://experiments.cubing.net/cubing.js/twsearch/text-ui.html>
+    /// Use with: https://experiments.cubing.net/cubing.js/twsearch/text-ui.html
     Serve(ServeCommandArgs),
 
     // TOOD: Detect identical pieces and warn/error (and give advice on how to run the "same" search with fully-distinguishable pieces).
@@ -52,6 +54,8 @@ pub enum CliCommand {
     CanonicalAlgs(CanonicalAlgsArgs),
     // Generate a scramble
     Scramble(ScrambleArgs),
+    // Generate a scramble matching the same pattern as produced by the given test scramble alg.
+    ScrambleFinder(ScrambleFinderArgs),
 
     /// Run an internal benchmark suite.
     Benchmark(BenchmarkArgs),
@@ -364,7 +368,7 @@ pub struct MetricArgs {
 impl Default for MetricArgs {
     fn default() -> Self {
         Self {
-            // TODO: deduplicate with `IDFSearchConstructionOptions`
+            // TODO: deduplicate with `IterativeDeepeningSearchConstructionOptions`
             metric: MetricEnum::Hand,
         }
     }
@@ -394,6 +398,27 @@ pub struct ScrambleArgs {
     /// Amount of scrambles
     #[clap(long, default_value = "1")]
     pub amount: usize,
+}
+
+#[derive(Args, Debug)]
+pub struct ScrambleFinderArgs {
+    #[command(subcommand)]
+    pub command: ScrambleFinderCommand,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum ScrambleFinderCommand {
+    Solve(ScrambleFinderSolveArgs),
+}
+
+#[derive(Args, Debug)]
+pub struct ScrambleFinderSolveArgs {
+    /// Event ID (WCA or unofficial)
+    pub event_id: String,
+
+    /// Scramble setup alg
+    // TODO: Make this an `Alg` (by implementing `ValueEnum`?)
+    pub scramble_setup_alg: String,
 }
 
 #[derive(Args, Debug)]

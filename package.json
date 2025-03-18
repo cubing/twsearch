@@ -6,17 +6,20 @@
   },
   "engines": {
     "node": ">=22.3.0",
-    "bun": ">=1.1.5"
+    "bun": ">=1.2.0"
   },
   "dependencies": {
-    "cubing": "^0.52.3",
+    "cubing": "v0.54.4",
     "getbuiltinmodule-ponyfill": "^1.0.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^v1.9.4",
     "@types/bun": "^1.1.0",
     "@types/node": "^22.3.0",
-    "bun-types": "^1.0.7",
-    "esbuild": "^0.15.11"
+    "barely-a-dev-server": "^0.7.1",
+    "cmd-ts-too": "^0.15.3",
+    "compare-versions": "^6.1.1",
+    "esbuild": "^0.25.0",
+    "printable-shell-command": "v0.1.2"
   }
 }

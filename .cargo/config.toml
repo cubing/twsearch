@@ -1,3 +1,6 @@
 # TODO: remove this once we're no longer compiling C++ with Rust.
 [future-incompat-report]
 frequency = "never"
+
+[alias]
+tool-run-bin = ["run", "--quiet", "--package", "cargo-bin", "--"]

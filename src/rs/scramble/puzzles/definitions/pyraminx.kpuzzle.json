@@ -1,0 +1,103 @@
+{
+  "$schema": "../../../../../node_modules/cubing/experimental-json-schema/kpuzzle/KPuzzleDefinition.schema.json",
+  "name": "pyraminx",
+  "orbits": [
+    {
+      "orbitName": "EDGES",
+      "numPieces": 6,
+      "numOrientations": 2
+    },
+    {
+      "orbitName": "CORNERS",
+      "numPieces": 4,
+      "numOrientations": 3
+    },
+    {
+      "orbitName": "TIPS",
+      "numPieces": 4,
+      "numOrientations": 3
+    }
+  ],
+  "defaultPattern": {
+    "EDGES": {
+      "pieces": [0, 1, 2, 3, 4, 5],
+      "orientation": [0, 0, 0, 0, 0, 0]
+    },
+    "CORNERS": {
+      "pieces": [0, 1, 2, 3],
+      "orientation": [0, 0, 0, 0]
+    },
+    "TIPS": {
+      "pieces": [0, 1, 2, 3],
+      "orientation": [0, 0, 0, 0]
+    }
+  },
+  "moves": {
+    "r": {
+      "EDGES": {
+        "permutation": [0, 1, 2, 3, 4, 5],
+        "orientationDelta": [0, 0, 0, 0, 0, 0]
+      },
+      "CORNERS": {
+        "permutation": [0, 1, 2, 3],
+        "orientationDelta": [0, 0, 0, 0]
+      },
+      "TIPS": {
+        "permutation": [0, 1, 2, 3],
+        "orientationDelta": [0, 0, 1, 0]
+      }
+    },
+    "R": {
+      "EDGES": {
+        "permutation": [0, 1, 3, 5, 4, 2],
+        "orientationDelta": [0, 0, 0, 0, 0, 0]
+      },
+      "CORNERS": {
+        "permutation": [0, 1, 2, 3],
+        "orientationDelta": [0, 0, 1, 0]
+      },
+      "TIPS": {
+        "permutation": [0, 1, 2, 3],
+        "orientationDelta": [0, 0, 0, 0]
+      }
+    },
+    "Rv": {
+      "EDGES": {
+        "permutation": [4, 0, 3, 5, 1, 2],
+        "orientationDelta": [1, 1, 0, 0, 0, 0]
+      },
+      "CORNERS": {
+        "permutation": [3, 0, 2, 1],
+        "orientationDelta": [0, 1, 1, 2]
+      },
+      "TIPS": {
+        "permutation": [3, 0, 2, 1],
+        "orientationDelta": [0, 1, 1, 2]
+      }
+    },
+    "Uv": {
+      "EDGES": {
+        "permutation": [5, 0, 3, 4, 2, 1],
+        "orientationDelta": [0, 0, 1, 1, 0, 0]
+      },
+      "CORNERS": {
+        "permutation": [0, 3, 1, 2],
+        "orientationDelta": [1, 0, 0, 0]
+      },
+      "TIPS": {
+        "permutation": [0, 3, 1, 2],
+        "orientationDelta": [1, 0, 0, 0]
+      }
+    }
+  },
+  "derivedMoves": {
+    "Lv": "[Uv': Rv]",
+    "L": "[Uv': R]",
+    "l": "[Uv': r]",
+    "Bv": "[Uv: Rv]",
+    "B": "[Uv: R]",
+    "b": "[Uv: r]",
+    "U": "[Bv': R]",
+    "u": "[Bv': r]"
+  }
+}

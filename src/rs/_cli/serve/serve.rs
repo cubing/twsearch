@@ -8,8 +8,9 @@ use twsearch::_internal::{
         ServeCommandArgs,
     },
     errors::CommandError,
-    search::idf_search::idf_search::{
-        IDFSearch, IDFSearchConstructionOptions, IndividualSearchOptions,
+    search::iterative_deepening::iterative_deepening_search::{
+        IndividualSearchOptions, IterativeDeepeningSearch,
+        IterativeDeepeningSearchConstructionOptions,
     },
     search::search_logger::SearchLogger,
 };
@@ -79,15 +80,15 @@ fn solve_pattern(
         Ok(search_pattern) => search_pattern,
         Err(e) => return Response::text(e.to_string()).with_status_code(400),
     };
-    let mut search = match <IDFSearch<KPuzzle>>::try_new(
+    let mut search = match <IterativeDeepeningSearch<KPuzzle>>::try_new(
         kpuzzle.clone(),
         Generators::Custom(CustomGenerators {
             moves: move_list.clone(),
             algs: vec![],
         })
         .enumerate_moves_for_kpuzzle(&kpuzzle),
-        target_pattern,
-        IDFSearchConstructionOptions {
+        vec![target_pattern], // TODO: modify api to support multiple target patterns
+        IterativeDeepeningSearchConstructionOptions {
             search_logger,
             random_start: match args_for_individual_search.client_args {
                 Some(client_args) => client_args.random_start == Some(true),

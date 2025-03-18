@@ -14,6 +14,7 @@ clap = { version = "4.3.24", features = ["derive"] }
 clap_complete = "4.3.2"
 cubing.workspace = true
 derive_more = "0.99.17"
+erased_set = "0.8.0"
 indicatif = "0.17.6"
 instant = { version = "0.1.12", features = ["wasm-bindgen"] }
 lazy_static = "1.4.0"

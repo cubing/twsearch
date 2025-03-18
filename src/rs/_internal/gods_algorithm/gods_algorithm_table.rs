@@ -158,7 +158,7 @@ impl GodsAlgorithmSearch {
             let mut patterns_at_current_depth = BulkQueue::new(None);
             for queue_item in last_depth_patterns.into_iter() {
                 for move_class_index in self.search_generators.by_move_class.index_iter() {
-                    let moves_in_class = self.search_generators.by_move_class.at(move_class_index);
+                    let moves_in_class = &self.search_generators.by_move_class[move_class_index];
                     let next_state = self
                         .canonical_fsm
                         .next_state(queue_item.canonical_fsm_state, move_class_index);
@@ -171,9 +171,9 @@ impl GodsAlgorithmSearch {
                     };
                     for move_info in moves_in_class {
                         num_tested_at_current_depth += 1;
-                        let new_pattern = queue_item.pattern.apply_transformation(
-                            self.cached_inverses.at(move_info.flat_move_index),
-                        );
+                        let new_pattern = queue_item
+                            .pattern
+                            .apply_transformation(&self.cached_inverses[move_info.flat_move_index]);
                         if self.table.pattern_to_depth.contains_key(&new_pattern) {
                             continue;
                         }

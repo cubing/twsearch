@@ -117,10 +117,7 @@ fn scramble_big_cube(scramble_info: &ScrambleInfo<KPuzzle>, num_random_moves: us
                 .next_state(current_fsm_state, move_class_index);
             if let Some(next) = next {
                 nodes.push(AlgNode::MoveNode(
-                    scramble_info
-                        .generators
-                        .by_move_class
-                        .at(move_class_index)
+                    scramble_info.generators.by_move_class[move_class_index]
                         .choose(&mut rng)
                         .unwrap()
                         .r#move

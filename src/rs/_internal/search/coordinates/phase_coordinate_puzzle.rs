@@ -174,7 +174,7 @@ where
             IndexedVec<FlatMoveIndex, Option<PhaseCoordinateIndex<Self>>>,
         > = IndexedVec::default();
         for (phase_pattern_index, _) in index_to_semantic_coordinate.iter() {
-            let representative = index_to_representative_pattern.at(phase_pattern_index);
+            let representative = &index_to_representative_pattern[phase_pattern_index];
             let mut table_row =
                 IndexedVec::<FlatMoveIndex, Option<PhaseCoordinateIndex<Self>>>::default();
             for move_transformation_info in &search_generators.flat.0 {
@@ -300,16 +300,8 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
         move1_info: &MoveTransformationInfo<Self>,
         move2_info: &MoveTransformationInfo<Self>,
     ) -> bool {
-        let move1_info = self
-            .data
-            .search_generators_for_tpuzzle
-            .flat
-            .at(move1_info.flat_move_index);
-        let move2_info = self
-            .data
-            .search_generators_for_tpuzzle
-            .flat
-            .at(move2_info.flat_move_index);
+        let move1_info = &self.data.search_generators_for_tpuzzle.flat[move1_info.flat_move_index];
+        let move2_info = &self.data.search_generators_for_tpuzzle.flat[move2_info.flat_move_index];
         self.data.tpuzzle.do_moves_commute(move1_info, move2_info)
     }
 
@@ -320,11 +312,7 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
     ) -> Option<Self::Pattern> {
-        *self
-            .data
-            .move_application_table
-            .at(*pattern)
-            .at(*transformation_to_apply)
+        self.data.move_application_table[*pattern][*transformation_to_apply]
     }
 
     fn pattern_apply_transformation_into(
@@ -370,7 +358,7 @@ impl<TPuzzle: SemiGroupActionPuzzle, TSemanticCoordinate: SemanticCoordinate<TPu
         &self,
         pattern: &<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate> as SemiGroupActionPuzzle>::Pattern,
     ) -> Depth {
-        *self.tpuzzle.data.exact_prune_table.at(*pattern)
+        self.tpuzzle.data.exact_prune_table[*pattern]
     }
 
     fn extend_for_search_depth(&mut self, _search_depth: Depth, _approximate_num_entries: usize) {

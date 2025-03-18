@@ -1,7 +1,10 @@
-use std::marker::PhantomData;
+use std::{
+    marker::PhantomData,
+    ops::{Index, IndexMut},
+};
 
 /// Contains some direct convenience methods. Use `.0` to access the underlying array.
-#[derive(Clone, Debug)]
+#[derive(Clone, Hash, Debug)]
 pub struct IndexedVec<K: From<usize> + Into<usize> + Default, V>(pub Vec<V>, PhantomData<K>);
 
 impl<K: From<usize> + Into<usize> + Default, V> IndexedVec<K, V> {
@@ -12,14 +15,6 @@ impl<K: From<usize> + Into<usize> + Default, V> IndexedVec<K, V> {
     // Convenience wrapper
     pub fn push(&mut self, v: V) {
         self.0.push(v);
-    }
-
-    pub fn at(&self, k: K) -> &V {
-        &self.0[k.into()]
-    }
-
-    pub fn set(&mut self, k: K, v: V) {
-        self.0[k.into()] = v;
     }
 
     #[allow(clippy::len_without_is_empty)]
@@ -43,5 +38,19 @@ impl<K: From<usize> + Into<usize> + Default, V> IndexedVec<K, V> {
 impl<K: From<usize> + Into<usize> + Default, V> Default for IndexedVec<K, V> {
     fn default() -> Self {
         Self(Default::default(), Default::default())
+    }
+}
+
+impl<K: From<usize> + Into<usize> + Default, V> Index<K> for IndexedVec<K, V> {
+    type Output = V;
+
+    fn index(&self, index: K) -> &V {
+        &self.0[index.into()]
+    }
+}
+
+impl<K: From<usize> + Into<usize> + Default, V> IndexMut<K> for IndexedVec<K, V> {
+    fn index_mut(&mut self, index: K) -> &mut V {
+        &mut self.0[index.into()]
     }
 }

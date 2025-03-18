@@ -614,24 +614,17 @@ impl PruneTable<Square1Phase2Puzzle> for Square1Phase2PruneTable {
     }
 
     fn lookup(&self, pattern: &<Square1Phase2Puzzle as SemiGroupActionPuzzle>::Pattern) -> Depth {
-        let shape_depth = *self
-            .tpuzzle
-            .shape_puzzle
-            .data
-            .exact_prune_table
-            .at(pattern.shape);
-        let edges_depth = *self
+        let shape_depth = self.tpuzzle.shape_puzzle.data.exact_prune_table[pattern.shape];
+        let edges_depth = self
             .tpuzzle
             .square0_equatorless_puzzle
             .data
-            .exact_prune_table
-            .at(pattern.edges);
-        let corners_depth = *self
+            .exact_prune_table[pattern.edges];
+        let corners_depth = self
             .tpuzzle
             .square0_equatorless_puzzle
             .data
-            .exact_prune_table
-            .at(pattern.corners);
+            .exact_prune_table[pattern.corners];
         max(shape_depth, max(edges_depth, corners_depth))
     }
 

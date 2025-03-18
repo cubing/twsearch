@@ -232,51 +232,51 @@ impl<
         move2_info: &MoveTransformationInfo<Self>,
     ) -> bool {
         let do_moves_commute = self.data.puzzle1.do_moves_commute(
-            self.data
+            &self
+                .data
                 .puzzle1
                 .data
                 .search_generators_for_phase_coordinate_puzzle
-                .flat
-                .at(move1_info.flat_move_index),
-            self.data
+                .flat[move1_info.flat_move_index],
+            &self
+                .data
                 .puzzle1
                 .data
                 .search_generators_for_phase_coordinate_puzzle
-                .flat
-                .at(move2_info.flat_move_index),
+                .flat[move2_info.flat_move_index],
         );
         debug_assert_eq!(
             do_moves_commute,
             self.data.puzzle2.do_moves_commute(
-                self.data
+                &self
+                    .data
                     .puzzle2
                     .data
                     .search_generators_for_phase_coordinate_puzzle
-                    .flat
-                    .at(move1_info.flat_move_index),
-                self.data
+                    .flat[move1_info.flat_move_index],
+                &self
+                    .data
                     .puzzle2
                     .data
                     .search_generators_for_phase_coordinate_puzzle
-                    .flat
-                    .at(move2_info.flat_move_index),
+                    .flat[move2_info.flat_move_index],
             )
         );
         debug_assert_eq!(
             do_moves_commute,
             self.data.puzzle3.do_moves_commute(
-                self.data
+                &self
+                    .data
                     .puzzle3
                     .data
                     .search_generators_for_phase_coordinate_puzzle
-                    .flat
-                    .at(move1_info.flat_move_index),
-                self.data
+                    .flat[move1_info.flat_move_index],
+                &self
+                    .data
                     .puzzle3
                     .data
                     .search_generators_for_phase_coordinate_puzzle
-                    .flat
-                    .at(move2_info.flat_move_index),
+                    .flat[move2_info.flat_move_index],
             )
         );
         do_moves_commute
@@ -396,27 +396,9 @@ impl<
             TSemanticCoordinate3,
         > as SemiGroupActionPuzzle>::Pattern,
     ) -> Depth {
-        let depth1 = *self
-            .tpuzzle
-            .data
-            .puzzle1
-            .data
-            .exact_prune_table
-            .at(pattern.coordinate1);
-        let depth2 = *self
-            .tpuzzle
-            .data
-            .puzzle2
-            .data
-            .exact_prune_table
-            .at(pattern.coordinate2);
-        let depth3 = *self
-            .tpuzzle
-            .data
-            .puzzle3
-            .data
-            .exact_prune_table
-            .at(pattern.coordinate3);
+        let depth1 = self.tpuzzle.data.puzzle1.data.exact_prune_table[pattern.coordinate1];
+        let depth2 = self.tpuzzle.data.puzzle2.data.exact_prune_table[pattern.coordinate2];
+        let depth3 = self.tpuzzle.data.puzzle3.data.exact_prune_table[pattern.coordinate3];
         max(max(depth1, depth2), depth3)
     }
 

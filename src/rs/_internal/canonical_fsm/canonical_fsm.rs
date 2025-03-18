@@ -167,52 +167,46 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
 
             queue_index += CanonicalFSMState(1);
 
-            for move_class_index in generators.by_move_class.index_iter() {
-                let mut skip = false;
-                // If there's a greater move (multiple) in the state that
-                // commutes with this move's `move_class`, we can't move
-                // `move_class`.
-                skip |= dequeue_move_class_mask
-                    .0
-                    .iter()
-                    .zip(commutes[*move_class_index].0.iter())
-                    .skip(*move_class_index + 1)
-                    .any(|(&dequeue_move_class, &commute)| dequeue_move_class && commute);
-                skip |= dequeue_move_class_mask
-                    .0
-                    .iter()
-                    .zip(forbidden_transitions[*move_class_index].0.iter())
-                    .any(|(&dequeue_move_class, &forbidden_transition)| {
-                        dequeue_move_class && forbidden_transition
-                    });
-                skip |= dequeue_move_class_mask.0[*move_class_index];
-                if skip {
+            'outer: for move_class_index in generators.by_move_class.index_iter() {
+                for i in 0..num_move_classes {
+                    // If the transition is forbidden by the options, we can't
+                    // move `move_class`
+                    if dequeue_move_class_mask.0[i] && forbidden_transitions[*move_class_index].0[i]
+                    {
+                        continue 'outer;
+                    }
+
+                    // If there's a greater move (multiple) in the state that
+                    // commutes with this move's `move_class`, we can't move
+                    // `move_class`.
+                    if i > *move_class_index
+                        && dequeue_move_class_mask.0[i]
+                        && commutes[*move_class_index].0[i]
+                    {
+                        continue 'outer;
+                    }
+                }
+                if dequeue_move_class_mask.0[*move_class_index] {
                     continue;
                 }
-                let mut next_state_mask = dequeue_move_class_mask.0.clone();
-                for (next_state, commute) in next_state_mask
-                    .iter_mut()
-                    .zip(&commutes[*move_class_index].0)
-                {
-                    // TODO implement bit arithmetic for whole number newtypes.
-                    *next_state &= *commute;
-                }
-                next_state_mask[move_class_index.0] = true;
+                let mut next_state_mask = dequeue_move_class_mask.clone();
+                next_state_mask |= commutes[*move_class_index].clone();
+                next_state_mask.0[*move_class_index] = true;
 
                 // If a pair of bits are set with the same commutating moves, we
                 // can clear out the higher ones. This optimization keeps the
                 // state count from going exponential for very big cubes.
                 for i in 0..num_move_classes {
-                    if next_state_mask[i] {
+                    if next_state_mask.0[i] {
                         for j in (i + 1)..num_move_classes {
-                            if next_state_mask[j] && commutes[i] == commutes[j] {
-                                next_state_mask[i] = false;
+                            if next_state_mask.0[j] && commutes[i] == commutes[j] {
+                                next_state_mask.0[i] = false;
                             }
                         }
                     }
                 }
 
-                let next_move_mask_class = MoveClassMask(next_state_mask);
+                let next_move_mask_class = next_state_mask;
 
                 next_state.set(
                     move_class_index,

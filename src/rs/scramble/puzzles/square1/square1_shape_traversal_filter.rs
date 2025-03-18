@@ -17,7 +17,7 @@ impl PatternTraversalFilter<KPuzzle> for Square1ShapeTraversalFilter {
         for slot in SLOTS_THAT_ARE_AFTER_SLICES {
             let value = pattern.get_piece(orbit_info, slot);
 
-            // Note: the `WEDGE_TYPE_LOOKUP` lookup is not necessary for phase 1, but it is needed for a single-pahse search.
+            // Note: the `WEDGE_TYPE_LOOKUP` lookup is not necessary for phase 1, but it is needed for a single-phase search.
             if WEDGE_TYPE_LOOKUP[value as usize] == WedgeType::CornerUpper {
                 return false;
             }

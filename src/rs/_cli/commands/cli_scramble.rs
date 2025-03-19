@@ -1,4 +1,7 @@
-use cubing::alg::Alg;
+use cubing::alg::{
+    experimental_twizzle_link::{experimental_twizzle_link, ExperimentalTwizzleLinkParameters},
+    Alg,
+};
 use twsearch::{
     _internal::{
         cli::args::{ScrambleArgs, ScrambleFinderArgs, ScrambleFinderCommand},
@@ -27,13 +30,22 @@ pub fn cli_scramble_finder_solve(args: &ScrambleFinderArgs) -> Result<(), Comman
             let a = Event::try_from(l);
             let event = a?;
 
-            let test_scramble_alg = scramble_finder_solve_args
+            let scramble_setup_alg = scramble_finder_solve_args
                 .scramble_setup_alg
                 .parse::<Alg>()
                 .expect("Invalid alg");
 
-            let scramble = scramble_finder_solve(event, &test_scramble_alg)?;
+            let scramble = scramble_finder_solve(event, &scramble_setup_alg)?;
             println!("{}", scramble);
+            if scramble_finder_solve_args.print_link {
+                let link = experimental_twizzle_link(ExperimentalTwizzleLinkParameters {
+                    setup: Some(&scramble_setup_alg),
+                    alg: Some(&scramble),
+                    puzzle: Some(event.puzzle().id()),
+                    ..Default::default()
+                });
+                println!("{}", link);
+            }
         }
     };
     Ok(())

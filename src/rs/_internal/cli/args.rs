@@ -413,6 +413,10 @@ pub enum ScrambleFinderCommand {
 
 #[derive(Args, Debug)]
 pub struct ScrambleFinderSolveArgs {
+    /// Amount of scrambles
+    #[clap(long, default_value = "false")]
+    pub print_link: bool,
+
     /// Event ID (WCA or unofficial)
     pub event_id: String,
 

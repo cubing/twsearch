@@ -373,6 +373,8 @@ impl SemiGroupActionPuzzle for Coord84 {
 // impl Phase2PuzzleData {
 //     fn new() -> Self {
 //         let grouped_moves = vec![
+//             // TODO: We are removing Lw, Fw, and Bw. CS on the other hand, is removing L, D,
+//             // B, which makes a lot more sense!
 //             // Note: the first entry of each group must be the quantum move.
 //             vec![parse_move!("U"), parse_move!("U2"), parse_move!("U'")],
 //             vec![parse_move!("Uw2")],

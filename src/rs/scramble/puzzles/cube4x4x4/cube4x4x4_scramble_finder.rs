@@ -1,17 +1,19 @@
 use std::env::var;
 
 use cubing::alg::{parse_alg, Alg};
-use cubing::kpuzzle::KPuzzle;
+use cubing::kpuzzle::{KPattern, KPuzzle};
 
 use crate::_internal::cli::args::VerbosityLevel;
+use crate::_internal::search::coordinates::graph_enumerated_derived_pattern_puzzle::DerivedPattern;
 use crate::_internal::search::filter::filtering_decision::FilteringDecision;
 use crate::_internal::search::search_logger::SearchLogger;
 use crate::experimental_lib_api::{
     KPuzzleSimpleMaskPhase, KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,
 };
 use crate::scramble::puzzles::definitions::{
-    cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern, cube4x4x4_phase2_target_kpattern,
+    cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern, cube4x4x4_phase2_centers_target_kpattern,
 };
+use crate::scramble::randomize::{basic_parity, BasicParity};
 use crate::{_internal::errors::SearchError, scramble::scramble_search::move_list_from_vec};
 
 use crate::scramble::{
@@ -136,7 +138,11 @@ impl Default for Cube4x4x4ScrambleFinder {
             parse_alg!("Dw2 Rw2 Fw2"),
             parse_alg!("Fw2 Rw2 Uw2"),
         ]
-        .map(|alg| cube4x4x4_phase2_target_kpattern().apply_alg(alg).unwrap());
+        .map(|alg| {
+            cube4x4x4_phase2_centers_target_kpattern()
+                .apply_alg(alg)
+                .unwrap()
+        });
 
         // This would be inline, but we need to work around https://github.com/cubing/twsearch/issues/128
         let phase2_name =
@@ -162,7 +168,7 @@ impl Default for Cube4x4x4ScrambleFinder {
                 Box::new(
                     KPuzzleSimpleMaskPhase::try_new(
                         phase2_name,
-                        cube4x4x4_phase2_target_kpattern().clone(),
+                        cube4x4x4_phase2_centers_target_kpattern().clone(),
                         phase2_generator_moves,
                         KPuzzleSimpleMaskPhaseConstructionOptions {
                             search_logger: Some(search_logger.clone()),
@@ -219,5 +225,36 @@ impl Default for Cube4x4x4ScrambleFinder {
 impl Cube4x4x4ScrambleFinder {
     pub fn get_kpuzzle() -> &'static KPuzzle {
         cube4x4x4_kpuzzle()
+    }
+}
+
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
+struct WingParityPattern {
+    parity: BasicParity,
+}
+
+impl DerivedPattern<KPuzzle> for WingParityPattern {
+    fn derived_pattern_name() -> &'static str {
+        "phase 2 wing parity"
+    }
+
+    fn try_new(_puzzle: &KPuzzle, pattern: &KPattern) -> Option<Self> {
+        Some(Self {
+            parity: basic_parity(WingParityPattern::wing_permutation_slice(pattern)),
+        })
+    }
+}
+
+impl WingParityPattern {
+    // TODO: is there a good way to implement this without `unsafe`? Or should we expose this directly on `KPattern`?
+    pub(crate) fn wing_permutation_slice(pattern: &KPattern) -> &[u8] {
+        let orbit = &pattern.kpuzzle().data.ordered_orbit_info[0];
+        assert_eq!(orbit.name.0, "WINGS");
+
+        let from = orbit.orientations_offset;
+        let to = from + (orbit.num_pieces as usize);
+
+        let full_byte_slice = unsafe { pattern.byte_slice() };
+        &full_byte_slice[from..to]
     }
 }

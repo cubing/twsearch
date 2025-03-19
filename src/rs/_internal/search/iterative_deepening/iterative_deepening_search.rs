@@ -209,11 +209,11 @@ impl<
             &options.metric,
             options.random_start,
         )?;
-        let canonical_fsm = CanonicalFSM::try_new(
+        let canonical_fsm = CanonicalFSM::new(
             tpuzzle.clone(),
             search_generators.clone(),
             options.canonical_fsm_construction_options,
-        )?; // TODO: avoid a clone
+        ); // TODO: avoid a clone
         let api_data = Arc::new(IterativeDeepeningSearchAPIData {
             search_generators,
             canonical_fsm,

@@ -8,30 +8,32 @@ use cubing::alg::QuantumMove;
 
 use crate::{
     _internal::{
-        errors::SearchError, puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
-        search::indexed_vec::IndexedVec,
+        puzzle_traits::puzzle_traits::SemiGroupActionPuzzle, search::indexed_vec::IndexedVec,
     },
     whole_number_newtype,
 };
 
 use super::search_generators::{MoveTransformationInfo, SearchGenerators};
 
-const MAX_NUM_MOVE_CLASSES: usize = usize::BITS as usize;
-
 whole_number_newtype!(MoveClassIndex, usize);
 
 // Bit N is indexed by a `MoveClassIndex` value of N.
-whole_number_newtype!(MoveClassMask, u64);
+#[derive(Debug, Eq, Hash, PartialEq, Clone)]
+struct MoveClassMask(Vec<bool>);
 
 impl BitAndAssign for MoveClassMask {
     fn bitand_assign(&mut self, rhs: Self) {
-        self.0 = self.0 & rhs.0
+        for (entry, rhs_entry) in self.0.iter_mut().zip(rhs.0.iter()) {
+            *entry &= *rhs_entry;
+        }
     }
 }
 
 impl BitOrAssign for MoveClassMask {
     fn bitor_assign(&mut self, rhs: Self) {
-        self.0 = self.0 | rhs.0
+        for (entry, rhs_entry) in self.0.iter_mut().zip(rhs.0.iter()) {
+            *entry |= *rhs_entry;
+        }
     }
 }
 
@@ -48,8 +50,8 @@ impl MaskToState {
         self.0.insert(mask, state);
     }
 
-    pub fn get(&self, mask: MoveClassMask) -> Option<CanonicalFSMState> {
-        self.0.get(&mask).copied() // TODO: figure out how to do this safely and most performantly
+    pub fn get(&self, mask: &MoveClassMask) -> Option<CanonicalFSMState> {
+        self.0.get(mask).copied() // TODO: figure out how to do this safely and most performantly
     }
 }
 
@@ -66,20 +68,13 @@ impl StateToMask {
         self.0.push(mask);
     }
 
-    pub fn set(&mut self, state: CanonicalFSMState, value: MoveClassMask) {
-        self.0.set(state, value);
-    }
-
-    pub fn get(&self, state: CanonicalFSMState) -> MoveClassMask {
-        *self.0.at(state)
+    pub fn get(&self, state: CanonicalFSMState) -> &MoveClassMask {
+        self.0.at(state)
     }
 }
 
 #[derive(Debug)]
 pub struct CanonicalFSM<TPuzzle: SemiGroupActionPuzzle> {
-    // disallowed_move_classes, indexed by state ordinal, holds the set of move classes that should
-    // not be made from this state.
-    // disallowed_move_classes: StateToMask,
     pub(crate) next_state_lookup:
         IndexedVec<CanonicalFSMState, IndexedVec<MoveClassIndex, CanonicalFSMState>>,
 
@@ -112,24 +107,18 @@ impl CanonicalFSMConstructionOptions {
 }
 
 impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
-    // TODO: Return a more specific error.
     /// Pass `Default::default()` as for `options` when no options are needed.
-    pub fn try_new(
+    pub fn new(
         tpuzzle: TPuzzle,
         generators: SearchGenerators<TPuzzle>, // TODO: make this a field in the options?
         options: CanonicalFSMConstructionOptions,
-    ) -> Result<CanonicalFSM<TPuzzle>, SearchError> {
+    ) -> CanonicalFSM<TPuzzle> {
         let num_move_classes = generators.by_move_class.len();
-        if num_move_classes > MAX_NUM_MOVE_CLASSES {
-            return Err(SearchError {
-                description: "Too many move classes!".to_owned(),
-            });
-        }
 
         let mut commutes: Vec<MoveClassMask> =
-            vec![MoveClassMask((1 << num_move_classes) - 1); num_move_classes];
+            vec![MoveClassMask(vec![true; num_move_classes]); num_move_classes];
         let mut forbidden_transitions: Vec<MoveClassMask> =
-            vec![MoveClassMask(0); num_move_classes];
+            vec![MoveClassMask(vec![false; num_move_classes]); num_move_classes];
 
         // Written this way so if we later iterate over all moves instead of
         // all move classes. This is because multiples can commute differently than their quantum values.
@@ -144,12 +133,12 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
                 let move1_info = &generators.by_move_class.at(i)[0];
                 let move2_info = &generators.by_move_class.at(j)[0];
                 if !tpuzzle.do_moves_commute(move1_info, move2_info) {
-                    commutes[*i] &= MoveClassMask(!(1 << *j));
-                    commutes[*j] &= MoveClassMask(!(1 << *i));
+                    commutes[*i].0[*j] = false;
+                    commutes[*j].0[*i] = false;
                 }
                 if options.is_transition_forbidden(move1_info, move2_info) {
-                    forbidden_transitions[*i] |= MoveClassMask(1 << *j);
-                    forbidden_transitions[*j] |= MoveClassMask(1 << *i);
+                    forbidden_transitions[*i].0[*j] = true;
+                    forbidden_transitions[*j].0[*i] = true;
                 }
             }
         }
@@ -160,65 +149,71 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
         > = IndexedVec::default();
 
         let mut mask_to_state = MaskToState::default();
-        mask_to_state.insert(MoveClassMask(0), CANONICAL_FSM_START_STATE);
-        let mut state_to_mask = StateToMask::new(MoveClassMask(0));
+        mask_to_state.insert(
+            MoveClassMask(vec![false; num_move_classes]),
+            CANONICAL_FSM_START_STATE,
+        );
         // state_to_mask, indexed by state ordinal,  holds the set of move classes in the
         // move sequence so far for which there has not been a subsequent move that does not
         // commute with that move.
-        let mut disallowed_move_classes = StateToMask::new(MoveClassMask(0));
+        let mut state_to_mask = StateToMask::new(MoveClassMask(vec![false; num_move_classes]));
 
         let mut queue_index: CanonicalFSMState = CANONICAL_FSM_START_STATE;
-        while Into::<usize>::into(queue_index) < state_to_mask.0.len() {
+        while usize::from(queue_index) < state_to_mask.0.len() {
             let mut next_state: IndexedVec<MoveClassIndex, CanonicalFSMState> =
                 IndexedVec::new(vec![ILLEGAL_FSM_STATE; num_move_classes]);
 
-            let dequeue_move_class_mask: MoveClassMask = state_to_mask.get(queue_index);
-            disallowed_move_classes.push(MoveClassMask(0));
+            let dequeue_move_class_mask = state_to_mask.get(queue_index).clone();
 
             queue_index += CanonicalFSMState(1);
-            let from_state = queue_index;
 
-            for move_class_index in generators.by_move_class.index_iter() {
-                let mut skip = false;
-                // If there's a greater move (multiple) in the state that
-                // commutes with this move's `move_class`, we can't move
-                // `move_class`.
-                skip |= (*dequeue_move_class_mask & *commutes[*move_class_index])
-                    >> (*move_class_index + 1)
-                    != 0;
-                skip |= (*dequeue_move_class_mask & *forbidden_transitions[*move_class_index]) != 0;
-                skip |= ((*dequeue_move_class_mask >> *move_class_index) & 1) != 0;
-                if skip {
-                    let new_value = MoveClassMask(
-                        *disallowed_move_classes.get(from_state) | (1 << *move_class_index),
-                    );
-                    disallowed_move_classes.set(from_state, new_value);
+            'outer: for move_class_index in generators.by_move_class.index_iter() {
+                for i in 0..num_move_classes {
+                    // If the transition is forbidden by the options, we can't
+                    // move `move_class`
+                    if dequeue_move_class_mask.0[i] && forbidden_transitions[*move_class_index].0[i]
+                    {
+                        continue 'outer;
+                    }
+
+                    // If there's a greater move (multiple) in the state that
+                    // commutes with this move's `move_class`, we can't move
+                    // `move_class`.
+                    if i > *move_class_index
+                        && dequeue_move_class_mask.0[i]
+                        && commutes[*move_class_index].0[i]
+                    {
+                        continue 'outer;
+                    }
+                }
+                if dequeue_move_class_mask.0[*move_class_index] {
                     continue;
                 }
-                // TODO implement bit arithmetic for whole number newtypes.
-                let mut next_state_bits = (*dequeue_move_class_mask & *commutes[*move_class_index])
-                    | (1 << *move_class_index);
+                let mut next_state_mask = dequeue_move_class_mask.clone();
+                next_state_mask &= commutes[*move_class_index].clone();
+                next_state_mask.0[*move_class_index] = true;
+
                 // If a pair of bits are set with the same commutating moves, we
                 // can clear out the higher ones. This optimization keeps the
                 // state count from going exponential for very big cubes.
                 for i in 0..num_move_classes {
-                    if (next_state_bits >> i) & 1 != 0 {
+                    if next_state_mask.0[i] {
                         for j in (i + 1)..num_move_classes {
-                            if ((next_state_bits >> j) & 1) != 0 && commutes[i] == commutes[j] {
-                                next_state_bits &= !(1 << i);
+                            if next_state_mask.0[j] && commutes[i] == commutes[j] {
+                                next_state_mask.0[i] = false;
                             }
                         }
                     }
                 }
 
-                let next_move_mask_class = MoveClassMask(next_state_bits);
+                let next_move_mask_class = next_state_mask;
 
                 next_state.set(
                     move_class_index,
-                    match mask_to_state.get(next_move_mask_class) {
+                    match mask_to_state.get(&next_move_mask_class) {
                         None => {
                             let next_state = CanonicalFSMState(state_to_mask.0.len());
-                            mask_to_state.insert(next_move_mask_class, next_state);
+                            mask_to_state.insert(next_move_mask_class.clone(), next_state);
                             state_to_mask.push(next_move_mask_class);
                             next_state
                         }
@@ -229,10 +224,10 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
             next_state_lookup.push(next_state);
         }
 
-        Ok(Self {
+        Self {
             next_state_lookup,
             phantom_data: PhantomData,
-        })
+        }
     }
 
     pub(crate) fn next_state(

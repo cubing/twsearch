@@ -56,19 +56,18 @@ test-rust-examples: setup-rust \
 
 .PHONY: test-rust-example-kociemba_multiphase
 test-rust-example-kociemba_multiphase: setup-rust
-
 	cargo run --release --example kociemba_multiphase
+
 .PHONY: test-rust-example-scramble_all_events
 test-rust-example-scramble_all_events: setup-rust
-
 	cargo run --release --example scramble_all_events
+
 .PHONY: test-rust-example-2x2x2_three_phase
 test-rust-example-2x2x2_three_phase: setup-rust
-
 	cargo run --release --example 2x2x2_three_phase
+
 .PHONY: test-rust-example-readme_example
 test-rust-example-readme_example: setup-rust
-
 	cargo run --release --example readme_example
 
 .PHONY: benchmark-rust

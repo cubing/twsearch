@@ -1,5 +1,5 @@
 .PHONY: setup-js
-setup-js:
+setup-js: setup-gitignore-dirs
 	bun install --frozen-lockfile > /dev/null
 	bun run "./script/check-engine-versions.ts"
 

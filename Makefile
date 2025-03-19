@@ -8,7 +8,7 @@ all: \
 	build-rust-wasm
 
 .PHONY: setup
-setup: setup-js setup-rust
+setup: setup-gitignore-dirs setup-js setup-rust
 
 .PHONY: test
 test: \
@@ -49,6 +49,11 @@ publish: test-rust publish-rust
 .PHONY: print-current-commit-hash
 print-current-commit-hash:
 	@bun run ./script/print-current-commit-hash.ts
+
+.PHONY: setup-gitignore-dirs
+setup-gitignore-dirs:
+	./script/self-gitignore-dirs.ts ./.bin ./.temp ./build ./dist ./target
+
 
 TWSEARCH_VERSION=$(shell git describe --tags)
 

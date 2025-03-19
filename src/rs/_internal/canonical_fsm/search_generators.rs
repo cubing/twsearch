@@ -15,7 +15,7 @@ use crate::{
     whole_number_newtype,
 };
 
-use super::canonical_fsm::MoveClassIndex;
+use super::move_class_mask::MoveClassIndex;
 
 whole_number_newtype!(FlatMoveIndex, usize);
 

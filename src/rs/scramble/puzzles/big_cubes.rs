@@ -8,7 +8,8 @@ use rand::{seq::SliceRandom, thread_rng, Rng};
 
 use crate::_internal::{
     canonical_fsm::{
-        canonical_fsm::{CanonicalFSM, MoveClassIndex, CANONICAL_FSM_START_STATE},
+        canonical_fsm::{CanonicalFSM, CANONICAL_FSM_START_STATE},
+        move_class_mask::MoveClassIndex,
         search_generators::SearchGenerators,
     },
     cli::args::MetricEnum,

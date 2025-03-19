@@ -7,7 +7,9 @@ use cubing::{
 
 use crate::{
     _internal::{
-        canonical_fsm::{canonical_fsm::MoveClassIndex, search_generators::MoveTransformationInfo},
+        canonical_fsm::{
+            move_class_mask::MoveClassIndex, search_generators::MoveTransformationInfo,
+        },
         search::{
             coordinates::phase_coordinate_puzzle::{
                 PhaseCoordinatePruneTable, PhaseCoordinatePuzzle, SemanticCoordinate,

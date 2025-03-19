@@ -1,2 +1,1 @@
 pub mod graph_enumerated_derived_pattern_puzzle;
-pub mod triple_phase_coordinate_puzzle;

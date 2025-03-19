@@ -190,7 +190,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
                     continue;
                 }
                 let mut next_state_mask = dequeue_move_class_mask.clone();
-                next_state_mask |= commutes[*move_class_index].clone();
+                next_state_mask &= commutes[*move_class_index].clone();
                 next_state_mask.0[*move_class_index] = true;
 
                 // If a pair of bits are set with the same commutating moves, we

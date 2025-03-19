@@ -11,8 +11,8 @@ use crate::{
             move_class_mask::MoveClassIndex, search_generators::MoveTransformationInfo,
         },
         search::{
-            coordinates::phase_coordinate_puzzle::{
-                PhaseCoordinatePruneTable, PhaseCoordinatePuzzle, SemanticCoordinate,
+            coordinates::graph_enumerated_derived_pattern_puzzle::{
+                DerivedPattern, DerivedPatternPuzzlePruneTable, GraphEnumeratedDerivedPatternPuzzle,
             },
             iterative_deepening::search_adaptations::SearchAdaptations,
             mask_pattern::apply_mask,
@@ -41,8 +41,8 @@ pub(crate) struct Square1Phase1Coordinate {
     parity: BasicParity,
 }
 
-impl SemanticCoordinate<KPuzzle> for Square1Phase1Coordinate {
-    fn phase_name() -> &'static str {
+impl DerivedPattern<KPuzzle> for Square1Phase1Coordinate {
+    fn derived_pattern_name() -> &'static str {
         "U/D shape (Square-1 → phase 1)"
     }
 
@@ -65,7 +65,8 @@ impl SemanticCoordinate<KPuzzle> for Square1Phase1Coordinate {
     }
 }
 
-pub(crate) type Square1Phase1Puzzle = PhaseCoordinatePuzzle<KPuzzle, Square1Phase1Coordinate>;
+pub(crate) type Square1Phase1Puzzle =
+    GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Square1Phase1Coordinate>;
 
 // TODO: allow flipping this depending on whether this is for a scramble (backwards) or a solution (forwards)?
 const D_SQ_MOVE_RESTRICTED_RANGE: Range<i32> = -3..3;
@@ -100,7 +101,7 @@ pub(crate) struct Square1Phase1SearchAdaptations {}
 /// Explicitly specifies search adaptations for [`Square1Phase1Puzzle`].
 impl SearchAdaptations<Square1Phase1Puzzle> for Square1Phase1SearchAdaptations {
     type PatternTraversalFilter = PatternTraversalFilterNoOp;
-    type PruneTable = PhaseCoordinatePruneTable<KPuzzle, Square1Phase1Coordinate>;
+    type PruneTable = DerivedPatternPuzzlePruneTable<KPuzzle, Square1Phase1Coordinate>;
     type TransformationTraversalFilter = Square1Phase1Puzzle;
 }
 

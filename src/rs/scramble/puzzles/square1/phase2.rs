@@ -10,9 +10,9 @@ use crate::{
         canonical_fsm::search_generators::{FlatMoveIndex, MoveTransformationInfo},
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{
-            coordinates::phase_coordinate_puzzle::{
-                PhaseCoordinateConversionError, PhaseCoordinateIndex, PhaseCoordinatePuzzle,
-                SemanticCoordinate,
+            coordinates::graph_enumerated_derived_pattern_puzzle::{
+                DerivedPattern, DerivedPatternConversionError, DerivedPatternIndex,
+                GraphEnumeratedDerivedPatternPuzzle,
             },
             iterative_deepening::search_adaptations::{
                 DefaultSearchAdaptations, SearchAdaptations,
@@ -79,8 +79,8 @@ pub(crate) struct Phase2ShapeCoordinate {
     pub(crate) shape: KPattern,
 }
 
-impl SemanticCoordinate<KPuzzle> for Phase2ShapeCoordinate {
-    fn phase_name() -> &'static str {
+impl DerivedPattern<KPuzzle> for Phase2ShapeCoordinate {
+    fn derived_pattern_name() -> &'static str {
         "Shape (Square-1 → phase 2)"
     }
 
@@ -223,8 +223,8 @@ impl Square0EquatorlessCoordinate {
     }
 }
 
-impl SemanticCoordinate<KPuzzle> for Square0EquatorlessCoordinate {
-    fn phase_name() -> &'static str {
+impl DerivedPattern<KPuzzle> for Square0EquatorlessCoordinate {
+    fn derived_pattern_name() -> &'static str {
         "Square-0 equatorless (Square-1 → phase 2)"
     }
 
@@ -238,9 +238,13 @@ impl SemanticCoordinate<KPuzzle> for Square0EquatorlessCoordinate {
 // TODO: generalize this, similar to how `TriplePhaseCoordinatePuzzle` does.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Square1Phase2TripleCoordinate {
-    shape: PhaseCoordinateIndex<PhaseCoordinatePuzzle<KPuzzle, Phase2ShapeCoordinate>>, // TODO: rename to "shape"
-    edges: PhaseCoordinateIndex<PhaseCoordinatePuzzle<KPuzzle, Square0EquatorlessCoordinate>>,
-    corners: PhaseCoordinateIndex<PhaseCoordinatePuzzle<KPuzzle, Square0EquatorlessCoordinate>>,
+    shape: DerivedPatternIndex<GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Phase2ShapeCoordinate>>, // TODO: rename to "shape"
+    edges: DerivedPatternIndex<
+        GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Square0EquatorlessCoordinate>,
+    >,
+    corners: DerivedPatternIndex<
+        GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Square0EquatorlessCoordinate>,
+    >,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -248,8 +252,9 @@ pub struct Square1Phase2Transformation(FlatMoveIndex); // Index into search gene
 
 #[derive(Clone, Debug)]
 pub struct Square1Phase2Puzzle {
-    shape_puzzle: PhaseCoordinatePuzzle<KPuzzle, Phase2ShapeCoordinate>,
-    square0_equatorless_puzzle: PhaseCoordinatePuzzle<KPuzzle, Square0EquatorlessCoordinate>,
+    shape_puzzle: GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Phase2ShapeCoordinate>,
+    square0_equatorless_puzzle:
+        GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Square0EquatorlessCoordinate>,
 }
 
 #[allow(non_snake_case)]
@@ -393,7 +398,7 @@ impl Square1Phase2Puzzle {
             let start_pattern = square1_shape_kpattern()
                 .apply_alg(parse_alg!("(0, 0)"))
                 .unwrap();
-            PhaseCoordinatePuzzle::<KPuzzle, Phase2ShapeCoordinate>::new(
+            GraphEnumeratedDerivedPatternPuzzle::<KPuzzle, Phase2ShapeCoordinate>::new(
                 kpuzzle.clone(),
                 start_pattern,
                 full_generator_moves,
@@ -405,7 +410,7 @@ impl Square1Phase2Puzzle {
         let reduced_generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
         let square0_equatorless_puzzle = {
             let kpuzzle = square0_equatorless_kpuzzle();
-            PhaseCoordinatePuzzle::<KPuzzle, Square0EquatorlessCoordinate>::new(
+            GraphEnumeratedDerivedPatternPuzzle::<KPuzzle, Square0EquatorlessCoordinate>::new(
                 kpuzzle.clone(),
                 kpuzzle.default_pattern(),
                 reduced_generator_moves,
@@ -424,15 +429,15 @@ impl Square1Phase2Puzzle {
     pub fn full_pattern_to_phase_coordinate(
         &self,
         pattern: &KPattern,
-    ) -> Result<Square1Phase2TripleCoordinate, PhaseCoordinateConversionError> {
+    ) -> Result<Square1Phase2TripleCoordinate, DerivedPatternConversionError> {
         let offsets = get_phase2_shape_offsets(pattern);
 
-        let Ok(shape) = self.shape_puzzle.full_pattern_to_phase_coordinate(pattern) else {
-            return Err(PhaseCoordinateConversionError::InvalidSemanticCoordinate);
+        let Ok(shape) = self.shape_puzzle.full_pattern_to_derived_pattern(pattern) else {
+            return Err(DerivedPatternConversionError::InvalidDerivedPattern);
         };
         let Ok(edges) = self
             .square0_equatorless_puzzle
-            .full_pattern_to_phase_coordinate(
+            .full_pattern_to_derived_pattern(
                 &Square0EquatorlessCoordinate::from_edges_pattern(
                     &pattern
                         .apply_alg(&square1_tuple(
@@ -444,11 +449,11 @@ impl Square1Phase2Puzzle {
                 .pattern,
             )
         else {
-            return Err(PhaseCoordinateConversionError::InvalidSemanticCoordinate);
+            return Err(DerivedPatternConversionError::InvalidDerivedPattern);
         };
         let Ok(corners) = self
             .square0_equatorless_puzzle
-            .full_pattern_to_phase_coordinate(
+            .full_pattern_to_derived_pattern(
                 &Square0EquatorlessCoordinate::from_corners_pattern(
                     &pattern
                         .apply_alg(&square1_tuple(
@@ -460,7 +465,7 @@ impl Square1Phase2Puzzle {
                 .pattern,
             )
         else {
-            return Err(PhaseCoordinateConversionError::InvalidSemanticCoordinate);
+            return Err(DerivedPatternConversionError::InvalidDerivedPattern);
         };
         let pattern = Square1Phase2TripleCoordinate {
             shape,
@@ -502,14 +507,14 @@ impl SemiGroupActionPuzzle for Square1Phase2Puzzle {
         let move1_info = self
             .shape_puzzle
             .data
-            .search_generators_for_phase_coordinate_puzzle
+            .search_generators_for_derived_pattern_puzzle
             .by_move
             .get(&move1_info.r#move)
             .expect("TODO: invalid move lookup?");
         let move2_info = self
             .shape_puzzle
             .data
-            .search_generators_for_phase_coordinate_puzzle
+            .search_generators_for_derived_pattern_puzzle
             .by_move
             .get(&move2_info.r#move)
             .expect("TODO: invalid move lookup?");

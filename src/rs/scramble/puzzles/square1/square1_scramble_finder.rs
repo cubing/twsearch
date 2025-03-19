@@ -31,7 +31,7 @@ use crate::_internal::search::transformation_traversal_filter_trait::Transformat
 use crate::scramble::scramble_search::FilteredSearch;
 use crate::{
     _internal::search::{
-        coordinates::phase_coordinate_puzzle::PhaseCoordinatePuzzle,
+        coordinates::graph_enumerated_derived_pattern_puzzle::GraphEnumeratedDerivedPatternPuzzle,
         iterative_deepening::iterative_deepening_search::IterativeDeepeningSearchConstructionOptions,
         prune_table_trait::Depth,
     },
@@ -78,15 +78,17 @@ impl Default for Square1ScrambleFinder {
         let kpuzzle = square1_unbandaged_kpuzzle();
         let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
 
-        let square1_phase1_puzzle: PhaseCoordinatePuzzle<KPuzzle, Square1Phase1Coordinate> =
-            Square1Phase1Puzzle::new(
-                kpuzzle.clone(),
-                kpuzzle.default_pattern(),
-                generator_moves.clone(),
-            );
+        let square1_phase1_puzzle: GraphEnumeratedDerivedPatternPuzzle<
+            KPuzzle,
+            Square1Phase1Coordinate,
+        > = Square1Phase1Puzzle::new(
+            kpuzzle.clone(),
+            kpuzzle.default_pattern(),
+            generator_moves.clone(),
+        );
 
         let phase1_target_pattern = square1_phase1_puzzle
-            .full_pattern_to_phase_coordinate(&kpuzzle.default_pattern())
+            .full_pattern_to_derived_pattern(&kpuzzle.default_pattern())
             .unwrap();
 
         let phase1_iterative_deepening_search = IterativeDeepeningSearch::<
@@ -309,7 +311,7 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
     ) -> Result<cubing::alg::Alg, crate::_internal::errors::SearchError> {
         let Ok(phase1_start_pattern) = self
             .square1_phase1_puzzle
-            .full_pattern_to_phase_coordinate(pattern)
+            .full_pattern_to_derived_pattern(pattern)
         else {
             return Err(SearchError {
                 description: "invalid pattern".to_owned(),

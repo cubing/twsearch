@@ -18,8 +18,9 @@ use crate::_internal::{
     },
 };
 
-use super::phase_coordinate_puzzle::{
-    PhaseCoordinateConversionError, PhaseCoordinateIndex, PhaseCoordinatePuzzle, SemanticCoordinate,
+use super::graph_enumerated_derived_pattern_puzzle::{
+    DerivedPattern, DerivedPatternConversionError, DerivedPatternIndex,
+    GraphEnumeratedDerivedPatternPuzzle,
 };
 
 // TODO: modify the `DoublePhaseCoordinate` implementation so that `TriplePhaseCoordinate` can nest it.
@@ -27,28 +28,26 @@ use super::phase_coordinate_puzzle::{
 #[derive(Clone, Debug)]
 pub struct TriplePhaseCoordinate<
     TPuzzle: SemiGroupActionPuzzle,
-    TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
-    TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
-    TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
+    TDerivedPattern1: DerivedPattern<TPuzzle>,
+    TDerivedPattern2: DerivedPattern<TPuzzle>,
+    TDerivedPattern3: DerivedPattern<TPuzzle>,
 > {
-    pub coordinate1: PhaseCoordinateIndex<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate1>>,
-    pub coordinate2: PhaseCoordinateIndex<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate2>>,
-    pub coordinate3: PhaseCoordinateIndex<PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate3>>,
+    pub coordinate1:
+        DerivedPatternIndex<GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern1>>,
+    pub coordinate2:
+        DerivedPatternIndex<GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern2>>,
+    pub coordinate3:
+        DerivedPatternIndex<GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern3>>,
 }
 
 // TODO: why can't this be derived?
 impl<
         TPuzzle: SemiGroupActionPuzzle,
-        TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
-        TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
-        TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
+        TDerivedPattern1: DerivedPattern<TPuzzle>,
+        TDerivedPattern2: DerivedPattern<TPuzzle>,
+        TDerivedPattern3: DerivedPattern<TPuzzle>,
     > PartialEq
-    for TriplePhaseCoordinate<
-        TPuzzle,
-        TSemanticCoordinate1,
-        TSemanticCoordinate2,
-        TSemanticCoordinate3,
-    >
+    for TriplePhaseCoordinate<TPuzzle, TDerivedPattern1, TDerivedPattern2, TDerivedPattern3>
 {
     fn eq(&self, other: &Self) -> bool {
         self.coordinate1 == other.coordinate1
@@ -60,44 +59,38 @@ impl<
 // TODO: why can't this be derived?
 impl<
         TPuzzle: SemiGroupActionPuzzle,
-        TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
-        TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
-        TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
-    > Eq
-    for TriplePhaseCoordinate<
-        TPuzzle,
-        TSemanticCoordinate1,
-        TSemanticCoordinate2,
-        TSemanticCoordinate3,
-    >
+        TDerivedPattern1: DerivedPattern<TPuzzle>,
+        TDerivedPattern2: DerivedPattern<TPuzzle>,
+        TDerivedPattern3: DerivedPattern<TPuzzle>,
+    > Eq for TriplePhaseCoordinate<TPuzzle, TDerivedPattern1, TDerivedPattern2, TDerivedPattern3>
 {
 }
 
 #[derive(Clone, Debug)]
 pub struct TriplePhaseCoordinatePuzzleData<
     TPuzzle: SemiGroupActionPuzzle,
-    TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
-    TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
-    TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
+    TDerivedPattern1: DerivedPattern<TPuzzle>,
+    TDerivedPattern2: DerivedPattern<TPuzzle>,
+    TDerivedPattern3: DerivedPattern<TPuzzle>,
 > {
-    pub puzzle1: PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate1>,
-    pub puzzle2: PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate2>,
-    pub puzzle3: PhaseCoordinatePuzzle<TPuzzle, TSemanticCoordinate3>,
+    pub puzzle1: GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern1>,
+    pub puzzle2: GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern2>,
+    pub puzzle3: GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern3>,
 }
 
 #[derive(Clone, Debug)]
 pub struct TriplePhaseCoordinatePuzzle<
     TPuzzle: SemiGroupActionPuzzle,
-    TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
-    TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
-    TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
+    TDerivedPattern1: DerivedPattern<TPuzzle>,
+    TDerivedPattern2: DerivedPattern<TPuzzle>,
+    TDerivedPattern3: DerivedPattern<TPuzzle>,
 > {
     pub data: Arc<
         TriplePhaseCoordinatePuzzleData<
             TPuzzle,
-            TSemanticCoordinate1,
-            TSemanticCoordinate2,
-            TSemanticCoordinate3,
+            TDerivedPattern1,
+            TDerivedPattern2,
+            TDerivedPattern3,
         >,
     >,
 }
@@ -105,16 +98,10 @@ pub struct TriplePhaseCoordinatePuzzle<
 // TODO: make this a trait implementation
 impl<
         TPuzzle: SemiGroupActionPuzzle,
-        TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
-        TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
-        TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
-    >
-    TriplePhaseCoordinatePuzzle<
-        TPuzzle,
-        TSemanticCoordinate1,
-        TSemanticCoordinate2,
-        TSemanticCoordinate3,
-    >
+        TDerivedPattern1: DerivedPattern<TPuzzle>,
+        TDerivedPattern2: DerivedPattern<TPuzzle>,
+        TDerivedPattern3: DerivedPattern<TPuzzle>,
+    > TriplePhaseCoordinatePuzzle<TPuzzle, TDerivedPattern1, TDerivedPattern2, TDerivedPattern3>
 {
     pub fn new(
         puzzle: TPuzzle,
@@ -123,22 +110,22 @@ impl<
     ) -> Self {
         let data = TriplePhaseCoordinatePuzzleData::<
             TPuzzle,
-            TSemanticCoordinate1,
-            TSemanticCoordinate2,
-            TSemanticCoordinate3,
+            TDerivedPattern1,
+            TDerivedPattern2,
+            TDerivedPattern3,
         > {
             // TODO: avoid cloning?
-            puzzle1: PhaseCoordinatePuzzle::<TPuzzle, TSemanticCoordinate1>::new(
+            puzzle1: GraphEnumeratedDerivedPatternPuzzle::<TPuzzle, TDerivedPattern1>::new(
                 puzzle.clone(),
                 start_pattern.clone(),
                 generator_moves.clone(),
             ),
-            puzzle2: PhaseCoordinatePuzzle::<TPuzzle, TSemanticCoordinate2>::new(
+            puzzle2: GraphEnumeratedDerivedPatternPuzzle::<TPuzzle, TDerivedPattern2>::new(
                 puzzle.clone(),
                 start_pattern.clone(),
                 generator_moves.clone(),
             ),
-            puzzle3: PhaseCoordinatePuzzle::<TPuzzle, TSemanticCoordinate3>::new(
+            puzzle3: GraphEnumeratedDerivedPatternPuzzle::<TPuzzle, TDerivedPattern3>::new(
                 puzzle,
                 start_pattern,
                 generator_moves,
@@ -153,26 +140,12 @@ impl<
         &self,
         pattern: &TPuzzle::Pattern,
     ) -> Result<
-        TriplePhaseCoordinate<
-            TPuzzle,
-            TSemanticCoordinate1,
-            TSemanticCoordinate2,
-            TSemanticCoordinate3,
-        >,
-        PhaseCoordinateConversionError,
+        TriplePhaseCoordinate<TPuzzle, TDerivedPattern1, TDerivedPattern2, TDerivedPattern3>,
+        DerivedPatternConversionError,
     > {
-        let coordinate1 = self
-            .data
-            .puzzle1
-            .full_pattern_to_phase_coordinate(pattern)?;
-        let coordinate2 = self
-            .data
-            .puzzle2
-            .full_pattern_to_phase_coordinate(pattern)?;
-        let coordinate3 = self
-            .data
-            .puzzle3
-            .full_pattern_to_phase_coordinate(pattern)?;
+        let coordinate1 = self.data.puzzle1.full_pattern_to_derived_pattern(pattern)?;
+        let coordinate2 = self.data.puzzle2.full_pattern_to_derived_pattern(pattern)?;
+        let coordinate3 = self.data.puzzle3.full_pattern_to_derived_pattern(pattern)?;
         Ok(TriplePhaseCoordinate {
             coordinate1,
             coordinate2,
@@ -183,23 +156,14 @@ impl<
 
 impl<
         TPuzzle: SemiGroupActionPuzzle,
-        TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
-        TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
-        TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
+        TDerivedPattern1: DerivedPattern<TPuzzle>,
+        TDerivedPattern2: DerivedPattern<TPuzzle>,
+        TDerivedPattern3: DerivedPattern<TPuzzle>,
     > SemiGroupActionPuzzle
-    for TriplePhaseCoordinatePuzzle<
-        TPuzzle,
-        TSemanticCoordinate1,
-        TSemanticCoordinate2,
-        TSemanticCoordinate3,
-    >
+    for TriplePhaseCoordinatePuzzle<TPuzzle, TDerivedPattern1, TDerivedPattern2, TDerivedPattern3>
 {
-    type Pattern = TriplePhaseCoordinate<
-        TPuzzle,
-        TSemanticCoordinate1,
-        TSemanticCoordinate2,
-        TSemanticCoordinate3,
-    >;
+    type Pattern =
+        TriplePhaseCoordinate<TPuzzle, TDerivedPattern1, TDerivedPattern2, TDerivedPattern3>;
 
     type Transformation = FlatMoveIndex;
 
@@ -236,13 +200,13 @@ impl<
                 .data
                 .puzzle1
                 .data
-                .search_generators_for_phase_coordinate_puzzle
+                .search_generators_for_derived_pattern_puzzle
                 .flat[move1_info.flat_move_index],
             &self
                 .data
                 .puzzle1
                 .data
-                .search_generators_for_phase_coordinate_puzzle
+                .search_generators_for_derived_pattern_puzzle
                 .flat[move2_info.flat_move_index],
         );
         debug_assert_eq!(
@@ -252,13 +216,13 @@ impl<
                     .data
                     .puzzle2
                     .data
-                    .search_generators_for_phase_coordinate_puzzle
+                    .search_generators_for_derived_pattern_puzzle
                     .flat[move1_info.flat_move_index],
                 &self
                     .data
                     .puzzle2
                     .data
-                    .search_generators_for_phase_coordinate_puzzle
+                    .search_generators_for_derived_pattern_puzzle
                     .flat[move2_info.flat_move_index],
             )
         );
@@ -269,13 +233,13 @@ impl<
                     .data
                     .puzzle3
                     .data
-                    .search_generators_for_phase_coordinate_puzzle
+                    .search_generators_for_derived_pattern_puzzle
                     .flat[move1_info.flat_move_index],
                 &self
                     .data
                     .puzzle3
                     .data
-                    .search_generators_for_phase_coordinate_puzzle
+                    .search_generators_for_derived_pattern_puzzle
                     .flat[move2_info.flat_move_index],
             )
         );
@@ -331,53 +295,44 @@ impl<
 
 pub struct TriplePhaseCoordinatePruneTable<
     TPuzzle: SemiGroupActionPuzzle,
-    TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
-    TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
-    TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
+    TDerivedPattern1: DerivedPattern<TPuzzle>,
+    TDerivedPattern2: DerivedPattern<TPuzzle>,
+    TDerivedPattern3: DerivedPattern<TPuzzle>,
 > {
-    tpuzzle: TriplePhaseCoordinatePuzzle<
-        TPuzzle,
-        TSemanticCoordinate1,
-        TSemanticCoordinate2,
-        TSemanticCoordinate3,
-    >,
+    tpuzzle:
+        TriplePhaseCoordinatePuzzle<TPuzzle, TDerivedPattern1, TDerivedPattern2, TDerivedPattern3>,
 }
 
 impl<
         TPuzzle: SemiGroupActionPuzzle,
-        TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
-        TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
-        TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
+        TDerivedPattern1: DerivedPattern<TPuzzle>,
+        TDerivedPattern2: DerivedPattern<TPuzzle>,
+        TDerivedPattern3: DerivedPattern<TPuzzle>,
     >
     PruneTable<
-        TriplePhaseCoordinatePuzzle<
-            TPuzzle,
-            TSemanticCoordinate1,
-            TSemanticCoordinate2,
-            TSemanticCoordinate3,
-        >,
+        TriplePhaseCoordinatePuzzle<TPuzzle, TDerivedPattern1, TDerivedPattern2, TDerivedPattern3>,
     >
     for TriplePhaseCoordinatePruneTable<
         TPuzzle,
-        TSemanticCoordinate1,
-        TSemanticCoordinate2,
-        TSemanticCoordinate3,
+        TDerivedPattern1,
+        TDerivedPattern2,
+        TDerivedPattern3,
     >
 {
     fn new(
         puzzle: TriplePhaseCoordinatePuzzle<
             TPuzzle,
-            TSemanticCoordinate1,
-            TSemanticCoordinate2,
-            TSemanticCoordinate3,
+            TDerivedPattern1,
+            TDerivedPattern2,
+            TDerivedPattern3,
         >,
         _search_api_data: std::sync::Arc<
             IterativeDeepeningSearchAPIData<
                 TriplePhaseCoordinatePuzzle<
                     TPuzzle,
-                    TSemanticCoordinate1,
-                    TSemanticCoordinate2,
-                    TSemanticCoordinate3,
+                    TDerivedPattern1,
+                    TDerivedPattern2,
+                    TDerivedPattern3,
                 >,
             >,
         >,
@@ -391,9 +346,9 @@ impl<
         &self,
         pattern: &<TriplePhaseCoordinatePuzzle<
             TPuzzle,
-            TSemanticCoordinate1,
-            TSemanticCoordinate2,
-            TSemanticCoordinate3,
+            TDerivedPattern1,
+            TDerivedPattern2,
+            TDerivedPattern3,
         > as SemiGroupActionPuzzle>::Pattern,
     ) -> Depth {
         let depth1 = self.tpuzzle.data.puzzle1.data.exact_prune_table[pattern.coordinate1];
@@ -409,74 +364,59 @@ impl<
 
 pub struct TriplePhaseCoordinateSearchAdaptations<
     TPuzzle: SemiGroupActionPuzzle,
-    TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
-    TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
-    TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
+    TDerivedPattern1: DerivedPattern<TPuzzle>,
+    TDerivedPattern2: DerivedPattern<TPuzzle>,
+    TDerivedPattern3: DerivedPattern<TPuzzle>,
 > {
     phantom_data: PhantomData<(
         TPuzzle,
-        TSemanticCoordinate1,
-        TSemanticCoordinate2,
-        TSemanticCoordinate3,
+        TDerivedPattern1,
+        TDerivedPattern2,
+        TDerivedPattern3,
     )>,
 }
 
 impl<
         TPuzzle: SemiGroupActionPuzzle,
-        TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
-        TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
-        TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
+        TDerivedPattern1: DerivedPattern<TPuzzle>,
+        TDerivedPattern2: DerivedPattern<TPuzzle>,
+        TDerivedPattern3: DerivedPattern<TPuzzle>,
     >
     SearchAdaptations<
-        TriplePhaseCoordinatePuzzle<
-            TPuzzle,
-            TSemanticCoordinate1,
-            TSemanticCoordinate2,
-            TSemanticCoordinate3,
-        >,
+        TriplePhaseCoordinatePuzzle<TPuzzle, TDerivedPattern1, TDerivedPattern2, TDerivedPattern3>,
     >
     for TriplePhaseCoordinateSearchAdaptations<
         TPuzzle,
-        TSemanticCoordinate1,
-        TSemanticCoordinate2,
-        TSemanticCoordinate3,
+        TDerivedPattern1,
+        TDerivedPattern2,
+        TDerivedPattern3,
     >
 {
     type PatternTraversalFilter = PatternTraversalFilterNoOp; // TODO: reconcile this with fallible transformation application.
     type PruneTable = TriplePhaseCoordinatePruneTable<
         TPuzzle,
-        TSemanticCoordinate1,
-        TSemanticCoordinate2,
-        TSemanticCoordinate3,
+        TDerivedPattern1,
+        TDerivedPattern2,
+        TDerivedPattern3,
     >;
     type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
 }
 
 impl<
         TPuzzle: SemiGroupActionPuzzle,
-        TSemanticCoordinate1: SemanticCoordinate<TPuzzle>,
-        TSemanticCoordinate2: SemanticCoordinate<TPuzzle>,
-        TSemanticCoordinate3: SemanticCoordinate<TPuzzle>,
+        TDerivedPattern1: DerivedPattern<TPuzzle>,
+        TDerivedPattern2: DerivedPattern<TPuzzle>,
+        TDerivedPattern3: DerivedPattern<TPuzzle>,
     >
     DefaultSearchAdaptations<
-        TriplePhaseCoordinatePuzzle<
-            TPuzzle,
-            TSemanticCoordinate1,
-            TSemanticCoordinate2,
-            TSemanticCoordinate3,
-        >,
+        TriplePhaseCoordinatePuzzle<TPuzzle, TDerivedPattern1, TDerivedPattern2, TDerivedPattern3>,
     >
-    for TriplePhaseCoordinatePuzzle<
-        TPuzzle,
-        TSemanticCoordinate1,
-        TSemanticCoordinate2,
-        TSemanticCoordinate3,
-    >
+    for TriplePhaseCoordinatePuzzle<TPuzzle, TDerivedPattern1, TDerivedPattern2, TDerivedPattern3>
 {
     type Adaptations = TriplePhaseCoordinateSearchAdaptations<
         TPuzzle,
-        TSemanticCoordinate1,
-        TSemanticCoordinate2,
-        TSemanticCoordinate3,
+        TDerivedPattern1,
+        TDerivedPattern2,
+        TDerivedPattern3,
     >;
 }

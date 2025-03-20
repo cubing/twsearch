@@ -30,7 +30,13 @@ void recurorder(const puzdef &pd, int togo, int sp, int st, int mp) {
   int sm = (mp < 0 ? 0 : movehist[mp]);
   for (int m = sm; m < (int)pd.moves.size(); m++) {
     const moove &mv = pd.moves[m];
-    if ((mask >> mv.cs) & 1) {
+    // The shortest sequence can never start and end with the moves in
+    // the same move class. Otherwise the end could be rotated to the
+    // start and combined together, thus contradicting that assumption.
+    //
+    // This assumes that the first move is always the base (is this a
+    // problem?)
+    if ((mask >> mv.cs) & 1 || mv.base == movehist[0]) {
       nmp = rotateequiv - 1;
       continue;
     }

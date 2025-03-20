@@ -427,3 +427,9 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
         group_square_1_tuples(alg)
     }
 }
+
+impl Square1ScrambleFinder {
+    pub fn get_kpuzzle() -> &'static KPuzzle {
+        square1_unbandaged_kpuzzle()
+    }
+}

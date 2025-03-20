@@ -19,6 +19,7 @@ use crate::{
                 pattern_traversal_filter_trait::{
                     PatternTraversalFilter, PatternTraversalFilterNoOp,
                 },
+                search_solution_filter_trait::SearchSolutionFilterNoOp,
                 transformation_traversal_filter_trait::TransformationTraversalFilter,
             },
             iterative_deepening::search_adaptations::SearchAdaptations,
@@ -111,6 +112,7 @@ impl SearchAdaptations<Square1Phase1Puzzle> for Square1Phase1SearchAdaptations {
     type PatternTraversalFilter = PatternTraversalFilterNoOp;
     type PruneTable = DerivedPatternPuzzlePruneTable<KPuzzle, Square1Phase1Coordinate>;
     type TransformationTraversalFilter = Square1Phase1Puzzle;
+    type SearchSolutionFilter = SearchSolutionFilterNoOp;
 }
 
 impl Square1SearchPhase for Square1Phase1Puzzle {}

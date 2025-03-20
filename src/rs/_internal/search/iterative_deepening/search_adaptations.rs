@@ -4,8 +4,11 @@ use cubing::kpuzzle::KPuzzle;
 
 use crate::_internal::{
     puzzle_traits::puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
-    search::filter::transformation_traversal_filter_trait::{
-        TransformationTraversalFilter, TransformationTraversalFilterNoOp,
+    search::filter::{
+        search_solution_filter_trait::{SearchSolutionFilter, SearchSolutionFilterNoOp},
+        transformation_traversal_filter_trait::{
+            TransformationTraversalFilter, TransformationTraversalFilterNoOp,
+        },
     },
 };
 
@@ -55,6 +58,7 @@ pub trait SearchAdaptations<TPuzzle: SemiGroupActionPuzzle> {
     type PruneTable: PruneTable<TPuzzle>;
     type PatternTraversalFilter: PatternTraversalFilter<TPuzzle>;
     type TransformationTraversalFilter: TransformationTraversalFilter<TPuzzle>;
+    type SearchSolutionFilter: SearchSolutionFilter<TPuzzle>;
 }
 
 pub struct SearchAdaptationsHashPruneTableOnly<TPuzzle: HashablePatternPuzzle> {
@@ -67,6 +71,7 @@ impl<TPuzzle: HashablePatternPuzzle> SearchAdaptations<TPuzzle>
     type PatternTraversalFilter = PatternTraversalFilterNoOp;
     type PruneTable = HashPruneTable<TPuzzle, Self::PatternTraversalFilter>;
     type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
+    type SearchSolutionFilter = SearchSolutionFilterNoOp;
 }
 
 pub trait DefaultSearchAdaptations<TPuzzle: SemiGroupActionPuzzle> {

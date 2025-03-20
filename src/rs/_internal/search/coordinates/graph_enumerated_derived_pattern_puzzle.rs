@@ -19,8 +19,11 @@ use crate::{
         cli::args::MetricEnum,
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{
-            filter::pattern_traversal_filter_trait::PatternTraversalFilterNoOp,
-            filter::transformation_traversal_filter_trait::TransformationTraversalFilterNoOp,
+            filter::{
+                pattern_traversal_filter_trait::PatternTraversalFilterNoOp,
+                search_solution_filter_trait::SearchSolutionFilterNoOp,
+                transformation_traversal_filter_trait::TransformationTraversalFilterNoOp,
+            },
             indexed_vec::IndexedVec,
             iterative_deepening::{
                 iterative_deepening_search::IterativeDeepeningSearchAPIData,
@@ -379,6 +382,7 @@ impl<TPuzzle: SemiGroupActionPuzzle, TDerivedPattern: DerivedPattern<TPuzzle>>
     type PruneTable = DerivedPatternPuzzlePruneTable<TPuzzle, TDerivedPattern>;
     type PatternTraversalFilter = PatternTraversalFilterNoOp; // TODO: reconcile this with fallible transformation application.
     type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
+    type SearchSolutionFilter = SearchSolutionFilterNoOp;
 }
 
 impl<TPuzzle: SemiGroupActionPuzzle, TDerivedPattern: DerivedPattern<TPuzzle>>

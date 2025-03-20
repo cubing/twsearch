@@ -23,7 +23,9 @@ use crate::_internal::{
     cli::args::MetricEnum,
     errors::SearchError,
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
-    search::pattern_stack::PatternStack,
+    search::{
+        filter::search_solution_filter_trait::SearchSolutionFilter, pattern_stack::PatternStack,
+    },
 };
 
 use super::{
@@ -55,7 +57,7 @@ struct SolutionPreviousMoves<'a> {
 }
 
 #[derive(Clone)]
-struct SolutionMoves<'a>(Option<&'a SolutionPreviousMoves<'a>>);
+pub struct SolutionMoves<'a>(Option<&'a SolutionPreviousMoves<'a>>);
 
 impl<'a> From<SolutionMoves<'a>> for Alg {
     fn from(value: SolutionMoves<'a>) -> Self {
@@ -434,6 +436,13 @@ impl<
         if !self.is_target_pattern(current_pattern) {
             return SearchRecursionResult::ContinueSearchingDefault();
         }
+
+        if Adaptations::SearchSolutionFilter::filter_solution(current_pattern, &solution_moves)
+            .is_reject()
+        {
+            return SearchRecursionResult::ContinueSearchingDefault();
+        }
+
         if self
             .apply_optional_fsm_moves(
                 current_state,

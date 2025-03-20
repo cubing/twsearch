@@ -1,7 +1,10 @@
 use crate::{
     _internal::{
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
-        search::filter::filtering_decision::FilteringDecision,
+        search::filter::{
+            filtering_decision::FilteringDecision,
+            search_solution_filter_trait::SearchSolutionFilterNoOp,
+        },
     },
     scramble::solving_based_scramble_finder::{
         NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
@@ -63,6 +66,7 @@ impl SearchAdaptations<KPuzzle> for FilteringSearchAdaptations {
     type PruneTable = HashPruneTable<KPuzzle, Square1ShapeTraversalFilter>;
     type PatternTraversalFilter = Square1ShapeTraversalFilter;
     type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
+    type SearchSolutionFilter = SearchSolutionFilterNoOp;
 }
 
 pub(crate) struct Square1ScrambleFinder {

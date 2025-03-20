@@ -6,8 +6,11 @@ use crate::_internal::{
     canonical_fsm::search_generators::{FlatMoveIndex, MoveTransformationInfo},
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
-        filter::pattern_traversal_filter_trait::PatternTraversalFilterNoOp,
-        filter::transformation_traversal_filter_trait::TransformationTraversalFilterNoOp,
+        filter::{
+            pattern_traversal_filter_trait::PatternTraversalFilterNoOp,
+            search_solution_filter_trait::SearchSolutionFilterNoOp,
+            transformation_traversal_filter_trait::TransformationTraversalFilterNoOp,
+        },
         iterative_deepening::{
             iterative_deepening_search::IterativeDeepeningSearchAPIData,
             search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
@@ -400,6 +403,7 @@ impl<
         TDerivedPattern3,
     >;
     type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
+    type SearchSolutionFilter = SearchSolutionFilterNoOp;
 }
 
 impl<

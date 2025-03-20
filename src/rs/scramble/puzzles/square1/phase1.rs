@@ -1,4 +1,4 @@
-use std::{fmt::Debug, ops::Range};
+use std::{fmt::Debug, ops::Range, sync::Arc};
 
 use cubing::{
     alg::{parse_move, Move},
@@ -15,14 +15,7 @@ use crate::{
             coordinates::graph_enumerated_derived_pattern_puzzle::{
                 DerivedPattern, DerivedPatternPuzzlePruneTable, GraphEnumeratedDerivedPatternPuzzle,
             },
-            filter::{
-                filtering_decision::FilteringDecision,
-                pattern_traversal_filter_trait::{
-                    PatternTraversalFilter, PatternTraversalFilterNoOp,
-                },
-                search_solution_filter_trait::SearchSolutionFilter,
-                transformation_traversal_filter_trait::TransformationTraversalFilter,
-            },
+            filter::filtering_decision::FilteringDecision,
             iterative_deepening::{
                 iterative_deepening_search::SolutionMoves, search_adaptations::SearchAdaptations,
             },
@@ -35,8 +28,7 @@ use crate::{
 
 use super::{
     super::definitions::square1_square_square_shape_kpattern, parity::bandaged_wedge_parity,
-    square1_scramble_finder::Square1SearchPhase,
-    square1_shape_traversal_filter::Square1ShapeTraversalFilter,
+    square1_shape_traversal_filter::shape_traversal_filter_pattern,
 };
 
 use lazy_static::lazy_static;
@@ -45,12 +37,12 @@ use lazy_static::lazy_static;
 // The fields themselves are more like "subcoordinates" rather than coordinates in themselves.
 // TODO: Implement automatic coordinate composition?
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
-pub(crate) struct Square1Phase1Coordinate {
-    masked_pattern: KPattern,
+pub(crate) struct Square1Phase1Pattern {
+    masked_shape_pattern: KPattern,
     parity: BasicParity,
 }
 
-impl DerivedPattern<KPuzzle> for Square1Phase1Coordinate {
+impl DerivedPattern<KPuzzle> for Square1Phase1Pattern {
     fn derived_pattern_name() -> &'static str {
         "U/D shape (Square-1 → phase 1)"
     }
@@ -62,28 +54,28 @@ impl DerivedPattern<KPuzzle> for Square1Phase1Coordinate {
         };
 
         // TODO: this isn't a full validity check for scramble positions.
-        if Square1ShapeTraversalFilter::filter_pattern(&masked_pattern).is_reject() {
+        if shape_traversal_filter_pattern(&masked_pattern).is_reject() {
             return None;
         }
 
         let parity = bandaged_wedge_parity(full_pattern);
         Some(Self {
-            masked_pattern,
+            masked_shape_pattern: masked_pattern,
             parity,
         })
     }
 }
 
 pub(crate) type Square1Phase1Puzzle =
-    GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Square1Phase1Coordinate>;
+    GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Square1Phase1Pattern>;
 
 // TODO: allow flipping this depending on whether this is for a scramble (backwards) or a solution (forwards)?
 const D_SQ_MOVE_RESTRICTED_RANGE: Range<i32> = -3..3;
 
 // This is exported so it can be reused by phase 2.
 #[allow(non_snake_case)]
-pub fn restrict_D_move<Phase: Square1SearchPhase>(
-    move_transformation_info: &MoveTransformationInfo<Phase>,
+pub fn restrict_D_move(
+    move_transformation_info: &MoveTransformationInfo<Square1Phase1Puzzle>,
 ) -> bool {
     lazy_static! {
         // TODO: perform a one-time check that this matches the search generator indexing.
@@ -96,43 +88,40 @@ pub fn restrict_D_move<Phase: Square1SearchPhase>(
     D_SQ_MOVE_RESTRICTED_RANGE.contains(&amount)
 }
 
-impl TransformationTraversalFilter<Square1Phase1Puzzle> for Square1Phase1Puzzle {
-    fn filter_transformation(
-        move_transformation_info: &MoveTransformationInfo<Square1Phase1Puzzle>,
-        _remaining_depth: Depth,
-    ) -> FilteringDecision {
-        match restrict_D_move(move_transformation_info) {
-            true => FilteringDecision::Accept,
-            false => FilteringDecision::Reject,
-        }
+fn filter_transformation(
+    move_transformation_info: &MoveTransformationInfo<Square1Phase1Puzzle>,
+    _remaining_depth: Depth,
+) -> FilteringDecision {
+    match restrict_D_move(move_transformation_info) {
+        true => FilteringDecision::Accept,
+        false => FilteringDecision::Reject,
     }
 }
 
-impl SearchSolutionFilter<Square1Phase1Puzzle> for Square1Phase1Puzzle {
-    fn filter_solution(
-        _pattern: &<Square1Phase1Puzzle as SemiGroupActionPuzzle>::Pattern,
-        solution_moves: &SolutionMoves,
-    ) -> FilteringDecision {
-        for r#move in solution_moves.reverse_move_iter() {
-            if r#move == parse_move!("/") {
-                return FilteringDecision::Accept;
-            }
-            if r#move.amount > 2 || r#move.amount < 0 {
-                return FilteringDecision::Reject;
-            }
+fn filter_search_solution(
+    _pattern: &<Square1Phase1Puzzle as SemiGroupActionPuzzle>::Pattern,
+    solution_moves: &SolutionMoves,
+) -> FilteringDecision {
+    for r#move in solution_moves.reverse_move_iter() {
+        if r#move == parse_move!("/") {
+            return FilteringDecision::Accept;
         }
-        FilteringDecision::Accept
+        if r#move.amount > 2 || r#move.amount < 0 {
+            return FilteringDecision::Reject;
+        }
+    }
+    FilteringDecision::Accept
+}
+
+// TODO: we currently take `square1_phase1_puzzle` as an argument to keep construction DRY. There's probably a better way to do this.
+pub(crate) fn square1_phase1_search_adaptations(
+    square1_phase1_puzzle: GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Square1Phase1Pattern>,
+) -> SearchAdaptations<Square1Phase1Puzzle> {
+    let prune_table = Box::new(DerivedPatternPuzzlePruneTable::new(square1_phase1_puzzle));
+    SearchAdaptations {
+        prune_table,
+        filter_transformation_fn: Some(Arc::new(Box::new(filter_transformation))),
+        filter_pattern_fn: None,
+        filter_search_solution_fn: Some(Arc::new(Box::new(filter_search_solution))),
     }
 }
-
-pub(crate) struct Square1Phase1SearchAdaptations {}
-
-/// Explicitly specifies search adaptations for [`Square1Phase1Puzzle`].
-impl SearchAdaptations<Square1Phase1Puzzle> for Square1Phase1SearchAdaptations {
-    type PatternTraversalFilter = PatternTraversalFilterNoOp;
-    type PruneTable = DerivedPatternPuzzlePruneTable<KPuzzle, Square1Phase1Coordinate>;
-    type TransformationTraversalFilter = Square1Phase1Puzzle;
-    type SearchSolutionFilter = Square1Phase1Puzzle;
-}
-
-impl Square1SearchPhase for Square1Phase1Puzzle {}

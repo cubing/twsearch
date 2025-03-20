@@ -14,17 +14,8 @@ use crate::{
                 DerivedPattern, DerivedPatternConversionError, DerivedPatternIndex,
                 GraphEnumeratedDerivedPatternPuzzle,
             },
-            filter::{
-                filtering_decision::FilteringDecision,
-                pattern_traversal_filter_trait::{
-                    PatternTraversalFilter, PatternTraversalFilterNoOp,
-                },
-                search_solution_filter_trait::SearchSolutionFilterNoOp,
-                transformation_traversal_filter_trait::TransformationTraversalFilterNoOp,
-            },
-            iterative_deepening::search_adaptations::{
-                DefaultSearchAdaptations, SearchAdaptations,
-            },
+            filter::filtering_decision::FilteringDecision,
+            iterative_deepening::search_adaptations::SearchAdaptations,
             mask_pattern::apply_mask,
             prune_table_trait::{Depth, PruneTable},
         },
@@ -42,42 +33,38 @@ use crate::{
 
 use super::wedges::get_phase2_shape_offsets;
 
-struct Phase2Checker;
+fn phase2_filter_derived_pattern(pattern: &cubing::kpuzzle::KPattern) -> FilteringDecision {
+    let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
+    assert_eq!(orbit_info.name.0, "WEDGES");
 
-impl PatternTraversalFilter<KPuzzle> for Phase2Checker {
-    fn filter_pattern(pattern: &cubing::kpuzzle::KPattern) -> FilteringDecision {
-        let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
-        assert_eq!(orbit_info.name.0, "WEDGES");
+    for slot in [0, 1, 2, 12, 13, 14] {
+        let value = unsafe {
+            pattern
+                .packed_orbit_data()
+                .get_raw_piece_or_permutation_value(orbit_info, slot)
+        };
+        let wedge_type = &WEDGE_TYPE_LOOKUP[value as usize];
 
-        for slot in [0, 1, 2, 12, 13, 14] {
-            let value = unsafe {
-                pattern
-                    .packed_orbit_data()
-                    .get_raw_piece_or_permutation_value(orbit_info, slot)
-            };
-            let wedge_type = &WEDGE_TYPE_LOOKUP[value as usize];
-
-            if *wedge_type == WedgeType::CornerUpper && (slot == 0 || slot == 12) {
-                // We can't slice.
-                return FilteringDecision::Reject;
-            }
-
-            for slot_offset in [3, 6, 9] {
-                let offset_value = unsafe {
-                    pattern
-                        .packed_orbit_data()
-                        .get_raw_piece_or_permutation_value(orbit_info, slot + slot_offset)
-                };
-                let offset_wedge_type = &WEDGE_TYPE_LOOKUP[offset_value as usize];
-
-                if wedge_type != offset_wedge_type {
-                    return FilteringDecision::Reject;
-                }
-            }
+        if *wedge_type == WedgeType::CornerUpper && (slot == 0 || slot == 12) {
+            // We can't slice.
+            return FilteringDecision::Reject;
         }
 
-        FilteringDecision::Accept
+        for slot_offset in [3, 6, 9] {
+            let offset_value = unsafe {
+                pattern
+                    .packed_orbit_data()
+                    .get_raw_piece_or_permutation_value(orbit_info, slot + slot_offset)
+            };
+            let offset_wedge_type = &WEDGE_TYPE_LOOKUP[offset_value as usize];
+
+            if wedge_type != offset_wedge_type {
+                return FilteringDecision::Reject;
+            }
+        }
     }
+
+    FilteringDecision::Accept
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
@@ -92,7 +79,7 @@ impl DerivedPattern<KPuzzle> for Phase2ShapeCoordinate {
 
     fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
         // TODO: this isn't a full validity check for scramble positions.
-        if Phase2Checker::filter_pattern(full_pattern).is_reject() {
+        if phase2_filter_derived_pattern(full_pattern).is_reject() {
             return None;
         }
 
@@ -612,18 +599,13 @@ pub struct Square1Phase2PruneTable {
     tpuzzle: Square1Phase2Puzzle,
 }
 
-impl PruneTable<Square1Phase2Puzzle> for Square1Phase2PruneTable {
-    fn new(
-        tpuzzle: Square1Phase2Puzzle,
-        _search_api_data: std::sync::Arc<
-            crate::_internal::search::iterative_deepening::iterative_deepening_search::IterativeDeepeningSearchAPIData<Square1Phase2Puzzle>,
-        >,
-        _search_logger: std::sync::Arc<crate::_internal::search::search_logger::SearchLogger>,
-        _min_size: Option<usize>,
-    ) -> Self {
+impl Square1Phase2PruneTable {
+    fn new(tpuzzle: Square1Phase2Puzzle) -> Self {
         Self { tpuzzle }
     }
+}
 
+impl PruneTable<Square1Phase2Puzzle> for Square1Phase2PruneTable {
     fn lookup(&self, pattern: &<Square1Phase2Puzzle as SemiGroupActionPuzzle>::Pattern) -> Depth {
         let shape_depth = self.tpuzzle.shape_puzzle.data.exact_prune_table[pattern.shape];
         let edges_depth = self
@@ -640,21 +622,19 @@ impl PruneTable<Square1Phase2Puzzle> for Square1Phase2PruneTable {
     }
 
     fn extend_for_search_depth(&mut self, _search_depth: Depth, _approximate_num_entries: usize) {
-        // no-p
+        // no-op
     }
 }
 
-#[derive(Clone)]
-pub struct Square1Phase2SearchAdaptations {}
-
-/// Explicitly specifies search adaptations for [`Square1Phase2Puzzle`].
-impl SearchAdaptations<Square1Phase2Puzzle> for Square1Phase2SearchAdaptations {
-    type PatternTraversalFilter = PatternTraversalFilterNoOp;
-    type PruneTable = Square1Phase2PruneTable;
-    type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
-    type SearchSolutionFilter = SearchSolutionFilterNoOp;
-}
-
-impl DefaultSearchAdaptations<Square1Phase2Puzzle> for Square1Phase2Puzzle {
-    type Adaptations = Square1Phase2SearchAdaptations;
+// TODO: we currently take `square1_phase1_puzzle` as an argument to keep construction DRY. There's probably a better way to do this.
+pub(crate) fn square1_phase2_search_adaptations(
+    square1_phase2_puzzle: Square1Phase2Puzzle,
+) -> SearchAdaptations<Square1Phase2Puzzle> {
+    let prune_table = Box::new(Square1Phase2PruneTable::new(square1_phase2_puzzle));
+    SearchAdaptations {
+        prune_table,
+        filter_transformation_fn: None,
+        filter_pattern_fn: None,
+        filter_search_solution_fn: None,
+    }
 }

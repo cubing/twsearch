@@ -1,4 +1,4 @@
-use std::{cmp::max, marker::PhantomData, sync::Arc};
+use std::{cmp::max, sync::Arc};
 
 use cubing::{alg::Move, kpuzzle::InvalidAlgError};
 
@@ -6,17 +6,12 @@ use crate::_internal::{
     canonical_fsm::search_generators::{FlatMoveIndex, MoveTransformationInfo},
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
-        filter::{
-            pattern_traversal_filter_trait::PatternTraversalFilterNoOp,
-            search_solution_filter_trait::SearchSolutionFilterNoOp,
-            transformation_traversal_filter_trait::TransformationTraversalFilterNoOp,
-        },
         iterative_deepening::{
             iterative_deepening_search::IterativeDeepeningSearchAPIData,
-            search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
+            search_adaptations::SearchAdaptationsWithoutPruneTable,
         },
         move_count::MoveCount,
-        prune_table_trait::{Depth, PruneTable},
+        prune_table_trait::{Depth, LegacyConstructablePruneTable, PruneTable},
         search_logger::SearchLogger,
     },
 };
@@ -312,7 +307,7 @@ impl<
         TDerivedPattern2: DerivedPattern<TPuzzle>,
         TDerivedPattern3: DerivedPattern<TPuzzle>,
     >
-    PruneTable<
+    LegacyConstructablePruneTable<
         TriplePhaseCoordinatePuzzle<TPuzzle, TDerivedPattern1, TDerivedPattern2, TDerivedPattern3>,
     >
     for TriplePhaseCoordinatePruneTable<
@@ -341,10 +336,35 @@ impl<
         >,
         _search_logger: Arc<SearchLogger>,
         _min_size: Option<usize>,
+        _search_adaptations_without_prune_table: SearchAdaptationsWithoutPruneTable<
+            TriplePhaseCoordinatePuzzle<
+                TPuzzle,
+                TDerivedPattern1,
+                TDerivedPattern2,
+                TDerivedPattern3,
+            >,
+        >,
     ) -> Self {
         Self { tpuzzle: puzzle }
     }
+}
 
+impl<
+        TPuzzle: SemiGroupActionPuzzle,
+        TDerivedPattern1: DerivedPattern<TPuzzle>,
+        TDerivedPattern2: DerivedPattern<TPuzzle>,
+        TDerivedPattern3: DerivedPattern<TPuzzle>,
+    >
+    PruneTable<
+        TriplePhaseCoordinatePuzzle<TPuzzle, TDerivedPattern1, TDerivedPattern2, TDerivedPattern3>,
+    >
+    for TriplePhaseCoordinatePruneTable<
+        TPuzzle,
+        TDerivedPattern1,
+        TDerivedPattern2,
+        TDerivedPattern3,
+    >
+{
     fn lookup(
         &self,
         pattern: &<TriplePhaseCoordinatePuzzle<
@@ -363,64 +383,4 @@ impl<
     fn extend_for_search_depth(&mut self, _search_depth: Depth, _approximate_num_entries: usize) {
         // no-op
     }
-}
-
-pub struct TriplePhaseCoordinateSearchAdaptations<
-    TPuzzle: SemiGroupActionPuzzle,
-    TDerivedPattern1: DerivedPattern<TPuzzle>,
-    TDerivedPattern2: DerivedPattern<TPuzzle>,
-    TDerivedPattern3: DerivedPattern<TPuzzle>,
-> {
-    phantom_data: PhantomData<(
-        TPuzzle,
-        TDerivedPattern1,
-        TDerivedPattern2,
-        TDerivedPattern3,
-    )>,
-}
-
-impl<
-        TPuzzle: SemiGroupActionPuzzle,
-        TDerivedPattern1: DerivedPattern<TPuzzle>,
-        TDerivedPattern2: DerivedPattern<TPuzzle>,
-        TDerivedPattern3: DerivedPattern<TPuzzle>,
-    >
-    SearchAdaptations<
-        TriplePhaseCoordinatePuzzle<TPuzzle, TDerivedPattern1, TDerivedPattern2, TDerivedPattern3>,
-    >
-    for TriplePhaseCoordinateSearchAdaptations<
-        TPuzzle,
-        TDerivedPattern1,
-        TDerivedPattern2,
-        TDerivedPattern3,
-    >
-{
-    type PatternTraversalFilter = PatternTraversalFilterNoOp; // TODO: reconcile this with fallible transformation application.
-    type PruneTable = TriplePhaseCoordinatePruneTable<
-        TPuzzle,
-        TDerivedPattern1,
-        TDerivedPattern2,
-        TDerivedPattern3,
-    >;
-    type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
-    type SearchSolutionFilter = SearchSolutionFilterNoOp;
-}
-
-impl<
-        TPuzzle: SemiGroupActionPuzzle,
-        TDerivedPattern1: DerivedPattern<TPuzzle>,
-        TDerivedPattern2: DerivedPattern<TPuzzle>,
-        TDerivedPattern3: DerivedPattern<TPuzzle>,
-    >
-    DefaultSearchAdaptations<
-        TriplePhaseCoordinatePuzzle<TPuzzle, TDerivedPattern1, TDerivedPattern2, TDerivedPattern3>,
-    >
-    for TriplePhaseCoordinatePuzzle<TPuzzle, TDerivedPattern1, TDerivedPattern2, TDerivedPattern3>
-{
-    type Adaptations = TriplePhaseCoordinateSearchAdaptations<
-        TPuzzle,
-        TDerivedPattern1,
-        TDerivedPattern2,
-        TDerivedPattern3,
-    >;
 }

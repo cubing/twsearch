@@ -32,6 +32,11 @@ pub struct KPuzzleSimpleMaskPhase {
     pub individual_search_options: IndividualSearchOptions,
 }
 
+// TODO
+unsafe impl Sync for KPuzzleSimpleMaskPhase {}
+// TODO
+unsafe impl Send for KPuzzleSimpleMaskPhase {}
+
 impl KPuzzleSimpleMaskPhase {
     pub fn try_new(
         phase_name: String,
@@ -54,15 +59,18 @@ impl KPuzzleSimpleMaskPhase {
                 vec![target_pattern]
             }
         };
-        let Ok(iterative_deepening_search) = IterativeDeepeningSearch::<KPuzzle>::try_new(
-            kpuzzle.clone(),
-            generator_moves,
-            target_patterns,
-            IterativeDeepeningSearchConstructionOptions {
-                search_logger: options.search_logger.unwrap_or_default().into(),
-                ..Default::default()
-            },
-        ) else {
+        let Ok(iterative_deepening_search) =
+            IterativeDeepeningSearch::<KPuzzle>::try_new_kpuzzle_with_hash_prune_table_shim(
+                kpuzzle.clone(),
+                generator_moves,
+                target_patterns,
+                IterativeDeepeningSearchConstructionOptions {
+                    search_logger: options.search_logger.unwrap_or_default().into(),
+                    ..Default::default()
+                },
+                None,
+            )
+        else {
             return Err(SearchError {
                 description: format!(
                     "Could not apply mask to default pattern for phase: {}",

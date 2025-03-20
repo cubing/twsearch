@@ -309,7 +309,7 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
         let kpuzzle = cube3x3x3_kpuzzle().clone();
         let generators = move_list_from_vec(vec!["U", "L", "F", "R", "B", "D"]);
         let filtered_search = FilteredSearch::new(
-            IterativeDeepeningSearch::try_new(
+            IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
                 kpuzzle.clone(),
                 generators.clone(),
                 vec![kpuzzle.default_pattern()],
@@ -317,33 +317,38 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
                     min_prune_table_size: Some(32),
                     ..Default::default()
                 },
+                None,
             )
             .unwrap(),
         );
 
         let phase1_target_pattern = cube3x3x3_g1_target_kpattern().clone();
-        let phase1_iterative_deepening_search = IterativeDeepeningSearch::try_new(
-            kpuzzle.clone(),
-            generators.clone(),
-            vec![phase1_target_pattern.clone()],
-            IterativeDeepeningSearchConstructionOptions {
-                min_prune_table_size: Some(32),
-                ..Default::default()
-            },
-        )
-        .unwrap();
+        let phase1_iterative_deepening_search =
+            IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
+                kpuzzle.clone(),
+                generators.clone(),
+                vec![phase1_target_pattern.clone()],
+                IterativeDeepeningSearchConstructionOptions {
+                    min_prune_table_size: Some(32),
+                    ..Default::default()
+                },
+                None,
+            )
+            .unwrap();
 
         let phase2_generators = move_list_from_vec(vec!["U", "L2", "F2", "R2", "B2", "D"]);
-        let phase2_iterative_deepening_search = IterativeDeepeningSearch::try_new(
-            kpuzzle.clone(),
-            phase2_generators.clone(),
-            vec![kpuzzle.default_pattern()],
-            IterativeDeepeningSearchConstructionOptions {
-                min_prune_table_size: Some(1 << 24),
-                ..Default::default()
-            },
-        )
-        .unwrap();
+        let phase2_iterative_deepening_search =
+            IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
+                kpuzzle.clone(),
+                phase2_generators.clone(),
+                vec![kpuzzle.default_pattern()],
+                IterativeDeepeningSearchConstructionOptions {
+                    min_prune_table_size: Some(1 << 24),
+                    ..Default::default()
+                },
+                None,
+            )
+            .unwrap();
 
         Self {
             kpuzzle,

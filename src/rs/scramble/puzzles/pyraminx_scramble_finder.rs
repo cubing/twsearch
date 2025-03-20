@@ -40,11 +40,12 @@ impl Default for PyraminxScrambleFinder {
 
         let generator_moves = move_list_from_vec(vec!["U", "L", "R", "B"]);
         let filtered_search_without_tips = <FilteredSearch>::new(
-            IterativeDeepeningSearch::try_new(
+            IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
                 kpuzzle.clone(),
                 generator_moves,
                 vec![kpuzzle.default_pattern()],
                 Default::default(),
+                None,
             )
             .unwrap(),
         );

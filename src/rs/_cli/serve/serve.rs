@@ -80,26 +80,28 @@ fn solve_pattern(
         Ok(search_pattern) => search_pattern,
         Err(e) => return Response::text(e.to_string()).with_status_code(400),
     };
-    let mut search = match <IterativeDeepeningSearch<KPuzzle>>::try_new(
-        kpuzzle.clone(),
-        Generators::Custom(CustomGenerators {
-            moves: move_list.clone(),
-            algs: vec![],
-        })
-        .enumerate_moves_for_kpuzzle(&kpuzzle),
-        vec![target_pattern], // TODO: modify api to support multiple target patterns
-        IterativeDeepeningSearchConstructionOptions {
-            search_logger,
-            random_start: match args_for_individual_search.client_args {
-                Some(client_args) => client_args.random_start == Some(true),
-                None => false,
+    let mut search =
+        match <IterativeDeepeningSearch<KPuzzle>>::try_new_kpuzzle_with_hash_prune_table_shim(
+            kpuzzle.clone(),
+            Generators::Custom(CustomGenerators {
+                moves: move_list.clone(),
+                algs: vec![],
+            })
+            .enumerate_moves_for_kpuzzle(&kpuzzle),
+            vec![target_pattern], // TODO: modify api to support multiple target patterns
+            IterativeDeepeningSearchConstructionOptions {
+                search_logger,
+                random_start: match args_for_individual_search.client_args {
+                    Some(client_args) => client_args.random_start == Some(true),
+                    None => false,
+                },
+                ..Default::default()
             },
-            ..Default::default()
-        },
-    ) {
-        Ok(search) => search,
-        Err(e) => return Response::text(e.description).with_status_code(400),
-    };
+            None,
+        ) {
+            Ok(search) => search,
+            Err(e) => return Response::text(e.description).with_status_code(400),
+        };
     if let Some(solution) = search
         .search(
             &search_pattern,

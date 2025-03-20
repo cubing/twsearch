@@ -65,12 +65,14 @@ pub fn wasmTwsearch(
         None => Generators::Default,
     };
 
-    let iterative_deepening_search = <IterativeDeepeningSearch<KPuzzle>>::try_new(
-        kpuzzle.clone(),
-        generators.enumerate_moves_for_kpuzzle(&kpuzzle),
-        vec![target_pattern], // TODO: support multiple target patterns.
-        Default::default(),
-    );
+    let iterative_deepening_search =
+        <IterativeDeepeningSearch<KPuzzle>>::try_new_kpuzzle_with_hash_prune_table_shim(
+            kpuzzle.clone(),
+            generators.enumerate_moves_for_kpuzzle(&kpuzzle),
+            vec![target_pattern], // TODO: support multiple target patterns.
+            Default::default(),
+            None,
+        );
     let mut iterative_deepening_search = iterative_deepening_search.map_err(|e| e.description)?;
 
     match iterative_deepening_search

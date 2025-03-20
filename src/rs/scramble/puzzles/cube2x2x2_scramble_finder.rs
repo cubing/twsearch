@@ -42,18 +42,19 @@ impl Default for Cube2x2x2ScrambleFinder {
 
         #[allow(non_snake_case)] // Move meanings are case sensitive.
         let filtered_search_L_B_D = <FilteredSearch>::new(
-            IterativeDeepeningSearch::try_new(
+            IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
                 kpuzzle.clone(),
                 move_list_from_vec(vec!["L", "B", "D"]),
                 vec![kpuzzle.default_pattern()],
                 Default::default(),
+                None,
             )
             .unwrap(),
         );
 
         #[allow(non_snake_case)] // Move meanings are case sensitive.
         let filtered_search_U_L_F_R = <FilteredSearch>::new(
-            IterativeDeepeningSearch::try_new(
+            IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
                 kpuzzle.clone(),
                 move_list_from_vec(vec!["U", "L", "F", "R"]),
                 vec![kpuzzle.default_pattern()],
@@ -66,6 +67,7 @@ impl Default for Cube2x2x2ScrambleFinder {
                     },
                     ..Default::default()
                 },
+                None,
             )
             .unwrap(),
         );

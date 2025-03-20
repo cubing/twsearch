@@ -6,15 +6,15 @@ use crate::_internal::{
     canonical_fsm::search_generators::{FlatMoveIndex, MoveTransformationInfo},
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
+        filter::pattern_traversal_filter_trait::PatternTraversalFilterNoOp,
+        filter::transformation_traversal_filter_trait::TransformationTraversalFilterNoOp,
         iterative_deepening::{
             iterative_deepening_search::IterativeDeepeningSearchAPIData,
             search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
         },
         move_count::MoveCount,
-        pattern_traversal_filter_trait::PatternTraversalFilterNoOp,
         prune_table_trait::{Depth, PruneTable},
         search_logger::SearchLogger,
-        transformation_traversal_filter_trait::TransformationTraversalFilterNoOp,
     },
 };
 

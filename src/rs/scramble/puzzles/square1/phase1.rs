@@ -14,11 +14,16 @@ use crate::{
             coordinates::graph_enumerated_derived_pattern_puzzle::{
                 DerivedPattern, DerivedPatternPuzzlePruneTable, GraphEnumeratedDerivedPatternPuzzle,
             },
+            filter::{
+                filtering_decision::FilteringDecision,
+                pattern_traversal_filter_trait::{
+                    PatternTraversalFilter, PatternTraversalFilterNoOp,
+                },
+                transformation_traversal_filter_trait::TransformationTraversalFilter,
+            },
             iterative_deepening::search_adaptations::SearchAdaptations,
             mask_pattern::apply_mask,
-            pattern_traversal_filter_trait::{PatternTraversalFilter, PatternTraversalFilterNoOp},
             prune_table_trait::Depth,
-            transformation_traversal_filter_trait::TransformationTraversalFilter,
         },
     },
     scramble::randomize::BasicParity,
@@ -53,7 +58,7 @@ impl DerivedPattern<KPuzzle> for Square1Phase1Coordinate {
         };
 
         // TODO: this isn't a full validity check for scramble positions.
-        if !Square1ShapeTraversalFilter::is_valid(&masked_pattern) {
+        if Square1ShapeTraversalFilter::filter_pattern(&masked_pattern).is_reject() {
             return None;
         }
 
@@ -88,11 +93,14 @@ pub fn restrict_D_move<Phase: Square1SearchPhase>(
 }
 
 impl TransformationTraversalFilter<Square1Phase1Puzzle> for Square1Phase1Puzzle {
-    fn keep_move(
+    fn filter_transformation(
         move_transformation_info: &MoveTransformationInfo<Square1Phase1Puzzle>,
         _remaining_depth: Depth,
-    ) -> bool {
-        restrict_D_move(move_transformation_info)
+    ) -> FilteringDecision {
+        match restrict_D_move(move_transformation_info) {
+            true => FilteringDecision::Accept,
+            false => FilteringDecision::Reject,
+        }
     }
 }
 

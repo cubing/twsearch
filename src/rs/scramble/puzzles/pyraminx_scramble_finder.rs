@@ -4,7 +4,7 @@ use crate::{
     _internal::{
         errors::SearchError,
         search::{
-            filtering_decision::FilteringDecision,
+            filter::filtering_decision::FilteringDecision,
             iterative_deepening::iterative_deepening_search::IterativeDeepeningSearch,
             move_count::MoveCount,
         },

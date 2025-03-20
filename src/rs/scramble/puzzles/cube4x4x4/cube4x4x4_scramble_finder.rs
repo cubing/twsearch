@@ -4,7 +4,7 @@ use cubing::alg::{parse_alg, Alg};
 use cubing::kpuzzle::KPuzzle;
 
 use crate::_internal::cli::args::VerbosityLevel;
-use crate::_internal::search::filtering_decision::FilteringDecision;
+use crate::_internal::search::filter::filtering_decision::FilteringDecision;
 use crate::_internal::search::search_logger::SearchLogger;
 use crate::experimental_lib_api::{
     KPuzzleSimpleMaskPhase, KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,

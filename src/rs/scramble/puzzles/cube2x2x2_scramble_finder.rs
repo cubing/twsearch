@@ -11,11 +11,9 @@ use crate::{
         canonical_fsm::canonical_fsm::CanonicalFSMConstructionOptions,
         errors::SearchError,
         search::{
-            iterative_deepening::{
-                filtering_decision::FilteringDecision,
-                iterative_deepening_search::{
-                    IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
-                },
+            filter::filtering_decision::FilteringDecision,
+            iterative_deepening::iterative_deepening_search::{
+                IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
             },
             move_count::MoveCount,
         },

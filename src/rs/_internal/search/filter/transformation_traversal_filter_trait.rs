@@ -3,15 +3,15 @@ use crate::_internal::{
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
 };
 
-use super::prune_table_trait::Depth;
+use super::{super::prune_table_trait::Depth, filtering_decision::FilteringDecision};
 
 pub trait TransformationTraversalFilter<TPuzzle: SemiGroupActionPuzzle> {
     // TODO: if performance is not good enough, apply this filter earlier during the iterators?
     // TODO: figure out the appropriate params.
-    fn keep_move(
+    fn filter_transformation(
         move_transformation_info: &MoveTransformationInfo<TPuzzle>,
         remaining_depth: Depth,
-    ) -> bool;
+    ) -> FilteringDecision;
 }
 
 // TODO: unify struct with `AlwaysValid`?
@@ -20,10 +20,10 @@ pub struct TransformationTraversalFilterNoOp;
 impl<TPuzzle: SemiGroupActionPuzzle> TransformationTraversalFilter<TPuzzle>
     for TransformationTraversalFilterNoOp
 {
-    fn keep_move(
+    fn filter_transformation(
         _move_transformation_info: &MoveTransformationInfo<TPuzzle>,
         _remaining_depth: Depth,
-    ) -> bool {
-        true
+    ) -> FilteringDecision {
+        FilteringDecision::Accept
     }
 }

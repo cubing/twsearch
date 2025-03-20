@@ -9,8 +9,8 @@ use crate::_internal::{
     errors::SearchError,
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
+        filter::filtering_decision::FilteringDecision,
         iterative_deepening::{
-            filtering_decision::FilteringDecision,
             iterative_deepening_search::{IndividualSearchOptions, IterativeDeepeningSearch},
             search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
         },

@@ -14,13 +14,18 @@ use crate::{
                 DerivedPattern, DerivedPatternConversionError, DerivedPatternIndex,
                 GraphEnumeratedDerivedPatternPuzzle,
             },
+            filter::{
+                filtering_decision::FilteringDecision,
+                pattern_traversal_filter_trait::{
+                    PatternTraversalFilter, PatternTraversalFilterNoOp,
+                },
+                transformation_traversal_filter_trait::TransformationTraversalFilterNoOp,
+            },
             iterative_deepening::search_adaptations::{
                 DefaultSearchAdaptations, SearchAdaptations,
             },
             mask_pattern::apply_mask,
-            pattern_traversal_filter_trait::{PatternTraversalFilter, PatternTraversalFilterNoOp},
             prune_table_trait::{Depth, PruneTable},
-            transformation_traversal_filter_trait::TransformationTraversalFilterNoOp,
         },
     },
     scramble::{
@@ -39,7 +44,7 @@ use super::wedges::get_phase2_shape_offsets;
 struct Phase2Checker;
 
 impl PatternTraversalFilter<KPuzzle> for Phase2Checker {
-    fn is_valid(pattern: &cubing::kpuzzle::KPattern) -> bool {
+    fn filter_pattern(pattern: &cubing::kpuzzle::KPattern) -> FilteringDecision {
         let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[0];
         assert_eq!(orbit_info.name.0, "WEDGES");
 
@@ -53,7 +58,7 @@ impl PatternTraversalFilter<KPuzzle> for Phase2Checker {
 
             if *wedge_type == WedgeType::CornerUpper && (slot == 0 || slot == 12) {
                 // We can't slice.
-                return false;
+                return FilteringDecision::Reject;
             }
 
             for slot_offset in [3, 6, 9] {
@@ -65,12 +70,12 @@ impl PatternTraversalFilter<KPuzzle> for Phase2Checker {
                 let offset_wedge_type = &WEDGE_TYPE_LOOKUP[offset_value as usize];
 
                 if wedge_type != offset_wedge_type {
-                    return false;
+                    return FilteringDecision::Reject;
                 }
             }
         }
 
-        true
+        FilteringDecision::Accept
     }
 }
 
@@ -86,7 +91,7 @@ impl DerivedPattern<KPuzzle> for Phase2ShapeCoordinate {
 
     fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
         // TODO: this isn't a full validity check for scramble positions.
-        if !Phase2Checker::is_valid(full_pattern) {
+        if Phase2Checker::filter_pattern(full_pattern).is_reject() {
             return None;
         }
 

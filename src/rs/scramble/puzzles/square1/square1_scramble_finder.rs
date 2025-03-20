@@ -1,7 +1,7 @@
 use crate::{
     _internal::{
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
-        search::filtering_decision::FilteringDecision,
+        search::filter::filtering_decision::FilteringDecision,
     },
     scramble::solving_based_scramble_finder::{
         NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
@@ -13,8 +13,8 @@ use rand::{seq::SliceRandom, thread_rng};
 
 use crate::{
     _internal::search::{
-        mask_pattern::apply_mask, move_count::MoveCount,
-        pattern_traversal_filter_trait::PatternTraversalFilter,
+        filter::pattern_traversal_filter_trait::PatternTraversalFilter, mask_pattern::apply_mask,
+        move_count::MoveCount,
     },
     scramble::{
         puzzles::square1::square1_shape_traversal_filter::Square1ShapeTraversalFilter,
@@ -28,9 +28,9 @@ use super::super::definitions::{square1_square_square_shape_kpattern, square1_un
 use cubing::alg::{parse_move, AlgBuilder, AlgNode, Grouping, Move};
 use cubing::kpuzzle::KPuzzle;
 
+use crate::_internal::search::filter::transformation_traversal_filter_trait::TransformationTraversalFilterNoOp;
 use crate::_internal::search::hash_prune_table::HashPruneTable;
 use crate::_internal::search::iterative_deepening::search_adaptations::SearchAdaptations;
-use crate::_internal::search::transformation_traversal_filter_trait::TransformationTraversalFilterNoOp;
 use crate::scramble::scramble_search::FilteredSearch;
 use crate::{
     _internal::search::{
@@ -290,7 +290,7 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
             // Note: it is not safe in general to use a traversal filter for
             // scramble pattern filtering. However, this is safe here due to the
             // properties of the Square-1 puzzle.
-            if Square1ShapeTraversalFilter::is_valid(&phase1_start_pattern) {
+            if Square1ShapeTraversalFilter::filter_pattern(&phase1_start_pattern).is_accept() {
                 return (scramble_pattern, NoScrambleAssociatedData {});
             }
         }

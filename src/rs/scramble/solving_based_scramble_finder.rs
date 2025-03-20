@@ -5,7 +5,7 @@ use erased_set::ErasedSyncSet;
 
 use crate::_internal::{
     errors::SearchError, puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
-    search::filtering_decision::FilteringDecision,
+    search::filter::filtering_decision::FilteringDecision,
 };
 
 #[derive(Default)]

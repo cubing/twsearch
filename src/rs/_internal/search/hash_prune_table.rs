@@ -11,8 +11,8 @@ use crate::_internal::puzzle_traits::puzzle_traits::{
 };
 use crate::whole_number_newtype;
 
+use super::filter::pattern_traversal_filter_trait::PatternTraversalFilter;
 use super::iterative_deepening::iterative_deepening_search::IterativeDeepeningSearchAPIData;
-use super::pattern_traversal_filter_trait::PatternTraversalFilter;
 use super::prune_table_trait::{Depth, PruneTable};
 use super::recursive_work_tracker::RecursiveWorkTracker;
 use super::search_logger::SearchLogger;
@@ -130,7 +130,7 @@ impl<
                     continue;
                 };
 
-                if !TPatternTraversalFilter::is_valid(&next_pattern) {
+                if TPatternTraversalFilter::filter_pattern(&next_pattern).is_reject() {
                     mutable_data.set_invalid_depth(&next_pattern);
                     continue;
                 }

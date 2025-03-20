@@ -4,14 +4,14 @@ use cubing::kpuzzle::KPuzzle;
 
 use crate::_internal::{
     puzzle_traits::puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
-    search::transformation_traversal_filter_trait::{
+    search::filter::transformation_traversal_filter_trait::{
         TransformationTraversalFilter, TransformationTraversalFilterNoOp,
     },
 };
 
 use super::super::{
+    filter::pattern_traversal_filter_trait::{PatternTraversalFilter, PatternTraversalFilterNoOp},
     hash_prune_table::HashPruneTable,
-    pattern_traversal_filter_trait::{PatternTraversalFilter, PatternTraversalFilterNoOp},
     prune_table_trait::PruneTable,
 };
 

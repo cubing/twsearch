@@ -51,25 +51,27 @@ pub fn search(
         None => kpuzzle.default_pattern(),
     };
 
-    let mut iterative_deepening_search = <IterativeDeepeningSearch<KPuzzle>>::try_new(
-        kpuzzle.clone(),
-        search_command_optional_args
-            .generator_args
-            .parse()
-            .enumerate_moves_for_kpuzzle(kpuzzle),
-        vec![target_pattern], // TODO: support multiple target patterns in API
-        IterativeDeepeningSearchConstructionOptions {
-            search_logger: Arc::new(SearchLogger {
-                verbosity: search_command_optional_args
-                    .verbosity_args
-                    .verbosity
-                    .unwrap_or(VerbosityLevel::Error),
-            }),
-            metric: search_command_optional_args.metric_args.metric,
-            random_start: search_command_optional_args.search_args.random_start,
-            ..Default::default()
-        },
-    )?;
+    let mut iterative_deepening_search =
+        <IterativeDeepeningSearch<KPuzzle>>::try_new_kpuzzle_with_hash_prune_table_shim(
+            kpuzzle.clone(),
+            search_command_optional_args
+                .generator_args
+                .parse()
+                .enumerate_moves_for_kpuzzle(kpuzzle),
+            vec![target_pattern], // TODO: support multiple target patterns in API
+            IterativeDeepeningSearchConstructionOptions {
+                search_logger: Arc::new(SearchLogger {
+                    verbosity: search_command_optional_args
+                        .verbosity_args
+                        .verbosity
+                        .unwrap_or(VerbosityLevel::Error),
+                }),
+                metric: search_command_optional_args.metric_args.metric,
+                random_start: search_command_optional_args.search_args.random_start,
+                ..Default::default()
+            },
+            None,
+        )?;
 
     let solutions = iterative_deepening_search.search(
         search_pattern,

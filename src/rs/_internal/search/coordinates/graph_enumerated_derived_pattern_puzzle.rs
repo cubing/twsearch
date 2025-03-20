@@ -19,19 +19,9 @@ use crate::{
         cli::args::MetricEnum,
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{
-            filter::{
-                pattern_traversal_filter_trait::PatternTraversalFilterNoOp,
-                search_solution_filter_trait::SearchSolutionFilterNoOp,
-                transformation_traversal_filter_trait::TransformationTraversalFilterNoOp,
-            },
             indexed_vec::IndexedVec,
-            iterative_deepening::{
-                iterative_deepening_search::IterativeDeepeningSearchAPIData,
-                search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
-            },
             move_count::MoveCount,
             prune_table_trait::{Depth, PruneTable},
-            search_logger::SearchLogger,
         },
     },
     whole_number_newtype_generic,
@@ -339,22 +329,17 @@ pub struct DerivedPatternPuzzlePruneTable<
 }
 
 impl<TPuzzle: SemiGroupActionPuzzle, TDerivedPattern: DerivedPattern<TPuzzle>>
+    DerivedPatternPuzzlePruneTable<TPuzzle, TDerivedPattern>
+{
+    pub fn new(puzzle: GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>) -> Self {
+        Self { tpuzzle: puzzle }
+    }
+}
+
+impl<TPuzzle: SemiGroupActionPuzzle, TDerivedPattern: DerivedPattern<TPuzzle>>
     PruneTable<GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>>
     for DerivedPatternPuzzlePruneTable<TPuzzle, TDerivedPattern>
 {
-    fn new(
-        puzzle: GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>,
-        _search_api_data: Arc<
-            IterativeDeepeningSearchAPIData<
-                GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>,
-            >,
-        >,
-        _search_logger: Arc<SearchLogger>,
-        _min_size: Option<usize>,
-    ) -> Self {
-        Self { tpuzzle: puzzle }
-    }
-
     fn lookup(
         &self,
         pattern: &<GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern> as SemiGroupActionPuzzle>::Pattern,
@@ -365,29 +350,4 @@ impl<TPuzzle: SemiGroupActionPuzzle, TDerivedPattern: DerivedPattern<TPuzzle>>
     fn extend_for_search_depth(&mut self, _search_depth: Depth, _approximate_num_entries: usize) {
         // no-op
     }
-}
-
-// TODO: simplify the default for below.
-pub struct DerivedPatternPuzzlePuzzleAdaptations<
-    TPuzzle: SemiGroupActionPuzzle,
-    TDerivedPattern: DerivedPattern<TPuzzle>,
-> {
-    phantom_data: PhantomData<(TPuzzle, TDerivedPattern)>,
-}
-
-impl<TPuzzle: SemiGroupActionPuzzle, TDerivedPattern: DerivedPattern<TPuzzle>>
-    SearchAdaptations<GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>>
-    for DerivedPatternPuzzlePuzzleAdaptations<TPuzzle, TDerivedPattern>
-{
-    type PruneTable = DerivedPatternPuzzlePruneTable<TPuzzle, TDerivedPattern>;
-    type PatternTraversalFilter = PatternTraversalFilterNoOp; // TODO: reconcile this with fallible transformation application.
-    type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
-    type SearchSolutionFilter = SearchSolutionFilterNoOp;
-}
-
-impl<TPuzzle: SemiGroupActionPuzzle, TDerivedPattern: DerivedPattern<TPuzzle>>
-    DefaultSearchAdaptations<GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>>
-    for GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>
-{
-    type Adaptations = DerivedPatternPuzzlePuzzleAdaptations<TPuzzle, TDerivedPattern>;
 }

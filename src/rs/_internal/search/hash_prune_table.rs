@@ -1,4 +1,3 @@
-use std::marker::PhantomData;
 use std::sync::Arc;
 
 use thousands::Separable;
@@ -11,9 +10,9 @@ use crate::_internal::puzzle_traits::puzzle_traits::{
 };
 use crate::whole_number_newtype;
 
-use super::filter::pattern_traversal_filter_trait::PatternTraversalFilter;
 use super::iterative_deepening::iterative_deepening_search::IterativeDeepeningSearchAPIData;
-use super::prune_table_trait::{Depth, PruneTable};
+use super::iterative_deepening::search_adaptations::SearchAdaptationsWithoutPruneTable;
+use super::prune_table_trait::{Depth, LegacyConstructablePruneTable, PruneTable};
 use super::recursive_work_tracker::RecursiveWorkTracker;
 use super::search_logger::SearchLogger;
 
@@ -32,6 +31,7 @@ const DEFAULT_MIN_PRUNE_TABLE_SIZE: usize = 1 << 20;
 struct HashPruneTableImmutableData<TPuzzle: SemiGroupActionPuzzle> {
     // TODO
     search_api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
+    search_adaptations_without_prune_table: SearchAdaptationsWithoutPruneTable<TPuzzle>,
 }
 struct HashPruneTableMutableData<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> {
     tpuzzle: TPuzzle,
@@ -75,21 +75,13 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> HashPruneTableMutab
     }
 }
 
-pub struct HashPruneTable<
-    TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle,
-    TPatternTraversalFilter: PatternTraversalFilter<TPuzzle>,
-> {
+pub struct HashPruneTable<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> {
     // We would store a `tpuzzle` here, but the one stored in `.mutable` is sufficient.
     immutable: HashPruneTableImmutableData<TPuzzle>,
     mutable: HashPruneTableMutableData<TPuzzle>,
-    phantom_data: PhantomData<TPatternTraversalFilter>,
 }
 
-impl<
-        TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle,
-        TPatternTraversalFilter: PatternTraversalFilter<TPuzzle>,
-    > HashPruneTable<TPuzzle, TPatternTraversalFilter>
-{
+impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> HashPruneTable<TPuzzle> {
     // TODO: dedup with IterativeDeepeningSearch?
     // TODO: Store a reference to `search_api_data` so that you can't accidentally pass in the wrong `search_api_data`?
     fn recurse(
@@ -130,7 +122,11 @@ impl<
                     continue;
                 };
 
-                if TPatternTraversalFilter::filter_pattern(&next_pattern).is_reject() {
+                if immutable_data
+                    .search_adaptations_without_prune_table
+                    .filter_pattern(&next_pattern)
+                    .is_reject()
+                {
                     mutable_data.set_invalid_depth(&next_pattern);
                     continue;
                 }
@@ -146,23 +142,25 @@ impl<
     }
 }
 
-impl<
-        TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle,
-        TPatternTraversalFilter: PatternTraversalFilter<TPuzzle>,
-    > PruneTable<TPuzzle> for HashPruneTable<TPuzzle, TPatternTraversalFilter>
+impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> LegacyConstructablePruneTable<TPuzzle>
+    for HashPruneTable<TPuzzle>
 {
     fn new(
         tpuzzle: TPuzzle,
         search_api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
         search_logger: Arc<SearchLogger>,
         min_size: Option<usize>,
+        search_adaptations_without_prune_table: SearchAdaptationsWithoutPruneTable<TPuzzle>,
     ) -> Self {
         let min_size = match min_size {
             Some(min_size) => min_size.next_power_of_two(),
             None => DEFAULT_MIN_PRUNE_TABLE_SIZE,
         };
         let mut prune_table = Self {
-            immutable: HashPruneTableImmutableData { search_api_data },
+            immutable: HashPruneTableImmutableData {
+                search_api_data,
+                search_adaptations_without_prune_table,
+            },
             mutable: HashPruneTableMutableData {
                 tpuzzle,
                 min_size,
@@ -176,12 +174,15 @@ impl<
                 ),
                 search_logger,
             },
-            phantom_data: PhantomData,
         };
         prune_table.extend_for_search_depth(Depth(0), 1);
         prune_table
     }
+}
 
+impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> PruneTable<TPuzzle>
+    for HashPruneTable<TPuzzle>
+{
     // Returns a heuristic depth for the given pattern.
     fn lookup(&self, pattern: &TPuzzle::Pattern) -> Depth {
         self.mutable.lookup(pattern)

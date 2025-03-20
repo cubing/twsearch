@@ -32,18 +32,19 @@ pub fn scramble_baby_fto() -> Alg {
     let kpuzzle = baby_fto_kpuzzle();
     let filter_generator_moves = move_list_from_vec(vec!["U", "L", "F", "R"]);
     let mut filtered_search = <FilteredSearch>::new(
-        IterativeDeepeningSearch::try_new(
+        IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
             kpuzzle.clone(),
             filter_generator_moves,
             vec![kpuzzle.default_pattern()],
             Default::default(),
+            None,
         )
         .unwrap(),
     );
 
     let generator_moves = move_list_from_vec(vec!["U", "L", "F", "R", "BR"]);
     let mut search = <FilteredSearch>::new(
-        IterativeDeepeningSearch::try_new(
+        IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
             kpuzzle.clone(),
             generator_moves,
             vec![kpuzzle.default_pattern()],
@@ -56,6 +57,7 @@ pub fn scramble_baby_fto() -> Alg {
                 },
                 ..Default::default()
             },
+            None,
         )
         .unwrap(),
     );

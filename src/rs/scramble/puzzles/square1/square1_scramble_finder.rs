@@ -1,7 +1,10 @@
 use crate::{
-    _internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
+    _internal::{
+        puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
+        search::filtering_decision::FilteringDecision,
+    },
     scramble::solving_based_scramble_finder::{
-        FilteringDecision, NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
+        NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
     },
 };
 

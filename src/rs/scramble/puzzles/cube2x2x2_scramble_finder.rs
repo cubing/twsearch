@@ -11,8 +11,11 @@ use crate::{
         canonical_fsm::canonical_fsm::CanonicalFSMConstructionOptions,
         errors::SearchError,
         search::{
-            iterative_deepening::iterative_deepening_search::{
-                IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+            iterative_deepening::{
+                filtering_decision::FilteringDecision,
+                iterative_deepening_search::{
+                    IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+                },
             },
             move_count::MoveCount,
         },
@@ -22,9 +25,7 @@ use crate::{
         puzzles::static_move_list::{add_random_suffixes_from, static_parsed_opt_list},
         randomize::{ConstraintForFirstPiece, OrbitRandomizationConstraints},
         scramble_search::{move_list_from_vec, FilteredSearch},
-        solving_based_scramble_finder::{
-            FilteringDecision, NoScrambleOptions, SolvingBasedScrambleFinder,
-        },
+        solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
     },
 };
 

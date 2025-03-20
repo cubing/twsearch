@@ -10,6 +10,7 @@ use crate::{
     _internal::{
         errors::SearchError,
         search::{
+            filtering_decision::FilteringDecision,
             iterative_deepening::iterative_deepening_search::{
                 IndividualSearchOptions, IterativeDeepeningSearch,
                 IterativeDeepeningSearchConstructionOptions,
@@ -25,7 +26,7 @@ use crate::{
             OrbitPermutationConstraint, OrbitRandomizationConstraints,
         },
         scramble_search::{move_list_from_vec, FilteredSearch},
-        solving_based_scramble_finder::{FilteringDecision, SolvingBasedScrambleFinder},
+        solving_based_scramble_finder::SolvingBasedScrambleFinder,
     },
 };
 

@@ -3,12 +3,10 @@ use std::sync::{LazyLock, Mutex, RwLock};
 use cubing::alg::Alg;
 use erased_set::ErasedSyncSet;
 
-use crate::_internal::{errors::SearchError, puzzle_traits::puzzle_traits::SemiGroupActionPuzzle};
-
-pub enum FilteringDecision {
-    Accept,
-    Reject,
-}
+use crate::_internal::{
+    errors::SearchError, puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
+    search::filtering_decision::FilteringDecision,
+};
 
 #[derive(Default)]
 pub struct NoScrambleAssociatedData {}

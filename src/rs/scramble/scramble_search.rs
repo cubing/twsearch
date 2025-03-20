@@ -10,6 +10,7 @@ use crate::_internal::{
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
         iterative_deepening::{
+            filtering_decision::FilteringDecision,
             iterative_deepening_search::{IndividualSearchOptions, IterativeDeepeningSearch},
             search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
         },
@@ -17,8 +18,6 @@ use crate::_internal::{
         prune_table_trait::Depth,
     },
 };
-
-use super::solving_based_scramble_finder::FilteringDecision;
 
 pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
     move_str_list

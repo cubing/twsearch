@@ -1,4 +1,5 @@
 pub mod coordinates;
+pub mod filtering_decision;
 pub(crate) mod hash_prune_table;
 pub mod indexed_vec;
 pub mod iterative_deepening;

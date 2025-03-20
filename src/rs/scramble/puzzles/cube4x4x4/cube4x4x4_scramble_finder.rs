@@ -4,6 +4,7 @@ use cubing::alg::{parse_alg, Alg};
 use cubing::kpuzzle::KPuzzle;
 
 use crate::_internal::cli::args::VerbosityLevel;
+use crate::_internal::search::filtering_decision::FilteringDecision;
 use crate::_internal::search::search_logger::SearchLogger;
 use crate::experimental_lib_api::{
     KPuzzleSimpleMaskPhase, KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,
@@ -11,7 +12,6 @@ use crate::experimental_lib_api::{
 use crate::scramble::puzzles::definitions::{
     cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern, cube4x4x4_phase2_target_kpattern,
 };
-use crate::scramble::solving_based_scramble_finder::FilteringDecision;
 use crate::{_internal::errors::SearchError, scramble::scramble_search::move_list_from_vec};
 
 use crate::scramble::{

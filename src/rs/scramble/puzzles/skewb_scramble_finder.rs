@@ -4,6 +4,7 @@ use crate::{
     _internal::{
         errors::SearchError,
         search::{
+            filtering_decision::FilteringDecision,
             iterative_deepening::iterative_deepening_search::IterativeDeepeningSearch,
             move_count::MoveCount,
         },
@@ -13,8 +14,7 @@ use crate::{
         randomize::{ConstraintForFirstPiece, OrbitRandomizationConstraints},
         scramble_search::{move_list_from_vec, FilteredSearch},
         solving_based_scramble_finder::{
-            FilteringDecision, NoScrambleAssociatedData, NoScrambleOptions,
-            SolvingBasedScrambleFinder,
+            NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
         },
     },
 };

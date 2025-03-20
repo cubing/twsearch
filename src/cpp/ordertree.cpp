@@ -36,7 +36,7 @@ void recurorder(const puzdef &pd, int togo, int sp, int st, int mp) {
     //
     // This assumes that the first move is always the base (is this a
     // problem?)
-    if ((mask >> mv.cs) & 1 || mv.base == movehist[0]) {
+    if ((mask >> mv.cs) & 1 || togo == 1 && mv.base == movehist[0]) {
       nmp = rotateequiv - 1;
       continue;
     }

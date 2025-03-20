@@ -55,14 +55,14 @@ use crate::{
 use super::phase1::{Square1Phase1Coordinate, Square1Phase1SearchAdaptations};
 use super::phase2::{Square1Phase2Puzzle, Square1Phase2SearchAdaptations};
 
-const DEV_DEBUG_SQUARE1: bool = false;
+const DEV_DEBUG_SQUARE1: bool = true;
 
 // https://www.worldcubeassociation.org/regulations/#4b3d
 const SQUARE_1_SCRAMBLE_MIN_OPTIMAL_MOVE_COUNT: MoveCount = MoveCount(11);
 
-pub(crate) struct FilteringSearchAdaptations {}
+pub(crate) struct Square1DepthFilteringSearchAdaptations {}
 
-impl SearchAdaptations<KPuzzle> for FilteringSearchAdaptations {
+impl SearchAdaptations<KPuzzle> for Square1DepthFilteringSearchAdaptations {
     type PruneTable = HashPruneTable<KPuzzle, Square1ShapeTraversalFilter>;
     type PatternTraversalFilter = Square1ShapeTraversalFilter;
     type TransformationTraversalFilter = TransformationTraversalFilterNoOp;
@@ -77,7 +77,7 @@ pub(crate) struct Square1ScrambleFinder {
     phase2_iterative_deepening_search:
         IterativeDeepeningSearch<Square1Phase2Puzzle, Square1Phase2SearchAdaptations>,
     // TODO: lazy-initialize `depth_filtering_search`?
-    depth_filtering_search: FilteredSearch<KPuzzle, FilteringSearchAdaptations>,
+    depth_filtering_search: FilteredSearch<KPuzzle, Square1DepthFilteringSearchAdaptations>,
 }
 
 impl Default for Square1ScrambleFinder {
@@ -133,15 +133,19 @@ impl Default for Square1ScrambleFinder {
             let kpuzzle = square1_unbandaged_kpuzzle();
             let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
 
-            let iterative_deepening_search =
-                IterativeDeepeningSearch::<KPuzzle, FilteringSearchAdaptations>::try_new(
-                    kpuzzle.clone(),
-                    generator_moves,
-                    vec![kpuzzle.default_pattern()],
-                    Default::default(),
-                )
-                .unwrap();
-            FilteredSearch::<KPuzzle, FilteringSearchAdaptations>::new(iterative_deepening_search)
+            let iterative_deepening_search = IterativeDeepeningSearch::<
+                KPuzzle,
+                Square1DepthFilteringSearchAdaptations,
+            >::try_new(
+                kpuzzle.clone(),
+                generator_moves,
+                vec![kpuzzle.default_pattern()],
+                Default::default(),
+            )
+            .unwrap();
+            FilteredSearch::<KPuzzle, Square1DepthFilteringSearchAdaptations>::new(
+                iterative_deepening_search,
+            )
         };
 
         Self {
@@ -227,6 +231,17 @@ fn group_square_1_tuples(alg: Alg) -> Alg {
 
     flush_tuple(&mut current_tuple_U, &mut current_tuple_D, &mut alg_builder);
     alg_builder.to_alg()
+}
+
+pub fn debug_print_phase1_solutions_searched(found_phase1_solutions: usize, current_depth: usize) {
+    if DEV_DEBUG_SQUARE1 {
+        println!(
+            "Searched {} phase 1 solution{} at depth {}.",
+            found_phase1_solutions,
+            if found_phase1_solutions == 1 { "" } else { "s" },
+            current_depth
+        );
+    }
 }
 
 /// An empty trait that can implemented by traits to indicate that they are a
@@ -344,27 +359,8 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
             #[allow(non_snake_case)]
             let _SLASH_ = parse_move!("/");
             let mut found_phase1_solutions = 0;
-            let mut checked_phase1_solutions = 0;
-            'phase1_loop: for mut phase1_solution in phase1_search {
+            for phase1_solution in phase1_search {
                 found_phase1_solutions += 1;
-                // phase1_cumulative_time += Instant::now() - phase1_start_time;
-                // TODO: Push the candidate check into a trait for `IterativeDeepeningSearch`.
-                while let Some(cubing::alg::AlgNode::MoveNode(r#move)) =
-                    phase1_solution.nodes.last()
-                {
-                    if r#move == _SLASH_
-                    // TODO: redundant parsing
-                    {
-                        break;
-                    }
-                    // Discard equivalent phase 1 solutions (reduces redundant phase 2 searches by a factor of 16).
-                    if r#move.amount > 2 || r#move.amount < 0 {
-                        // phase1_start_time = Instant::now();
-                        continue 'phase1_loop;
-                    }
-                    phase1_solution.nodes.pop();
-                }
-                checked_phase1_solutions += 1;
                 // num_phase2_starts += 1;
                 // let phase2_start_time = Instant::now();
                 let Ok(phase2_start_pattern) =
@@ -397,12 +393,7 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
                 if let Some(mut phase2_solution) = phase2_solution {
                     let mut nodes = phase1_solution.nodes;
                     nodes.append(&mut phase2_solution.nodes);
-                    if DEV_DEBUG_SQUARE1 {
-                        println!(
-                            "-- depth {} returned sols {} checked sols {}",
-                            current_depth, found_phase1_solutions, checked_phase1_solutions
-                        );
-                    }
+                    debug_print_phase1_solutions_searched(found_phase1_solutions, current_depth);
                     return Ok(Alg { nodes });
                 }
 
@@ -417,11 +408,8 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
                 // }
             }
             // phase1_start_time = Instant::now();
-            if DEV_DEBUG_SQUARE1 && found_phase1_solutions > 0 {
-                println!(
-                    "At depth {} returned sols {} checked sols {}",
-                    current_depth, found_phase1_solutions, checked_phase1_solutions
-                );
+            if found_phase1_solutions > 0 {
+                debug_print_phase1_solutions_searched(found_phase1_solutions, current_depth);
             }
         }
         panic!("at the (lack of) disco(very)")

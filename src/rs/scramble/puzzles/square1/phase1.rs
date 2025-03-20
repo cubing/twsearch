@@ -1,7 +1,7 @@
 use std::{fmt::Debug, ops::Range};
 
 use cubing::{
-    alg::Move,
+    alg::{parse_move, Move},
     kpuzzle::{KPattern, KPuzzle},
 };
 
@@ -10,6 +10,7 @@ use crate::{
         canonical_fsm::{
             move_class_mask::MoveClassIndex, search_generators::MoveTransformationInfo,
         },
+        puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{
             coordinates::graph_enumerated_derived_pattern_puzzle::{
                 DerivedPattern, DerivedPatternPuzzlePruneTable, GraphEnumeratedDerivedPatternPuzzle,
@@ -19,10 +20,12 @@ use crate::{
                 pattern_traversal_filter_trait::{
                     PatternTraversalFilter, PatternTraversalFilterNoOp,
                 },
-                search_solution_filter_trait::SearchSolutionFilterNoOp,
+                search_solution_filter_trait::SearchSolutionFilter,
                 transformation_traversal_filter_trait::TransformationTraversalFilter,
             },
-            iterative_deepening::search_adaptations::SearchAdaptations,
+            iterative_deepening::{
+                iterative_deepening_search::SolutionMoves, search_adaptations::SearchAdaptations,
+            },
             mask_pattern::apply_mask,
             prune_table_trait::Depth,
         },
@@ -105,6 +108,23 @@ impl TransformationTraversalFilter<Square1Phase1Puzzle> for Square1Phase1Puzzle 
     }
 }
 
+impl SearchSolutionFilter<Square1Phase1Puzzle> for Square1Phase1Puzzle {
+    fn filter_solution(
+        _pattern: &<Square1Phase1Puzzle as SemiGroupActionPuzzle>::Pattern,
+        solution_moves: &SolutionMoves,
+    ) -> FilteringDecision {
+        for r#move in solution_moves.reverse_move_iter() {
+            if r#move == parse_move!("/") {
+                return FilteringDecision::Accept;
+            }
+            if r#move.amount > 2 || r#move.amount < 0 {
+                return FilteringDecision::Reject;
+            }
+        }
+        FilteringDecision::Accept
+    }
+}
+
 pub(crate) struct Square1Phase1SearchAdaptations {}
 
 /// Explicitly specifies search adaptations for [`Square1Phase1Puzzle`].
@@ -112,7 +132,7 @@ impl SearchAdaptations<Square1Phase1Puzzle> for Square1Phase1SearchAdaptations {
     type PatternTraversalFilter = PatternTraversalFilterNoOp;
     type PruneTable = DerivedPatternPuzzlePruneTable<KPuzzle, Square1Phase1Coordinate>;
     type TransformationTraversalFilter = Square1Phase1Puzzle;
-    type SearchSolutionFilter = SearchSolutionFilterNoOp;
+    type SearchSolutionFilter = Square1Phase1Puzzle;
 }
 
 impl Square1SearchPhase for Square1Phase1Puzzle {}

@@ -79,6 +79,26 @@ impl SolutionMoves<'_> {
             None => vec![],
         }
     }
+
+    pub fn reverse_move_iter(&self) -> SolutionMovesReverseIterator {
+        SolutionMovesReverseIterator {
+            solution_moves: self,
+        }
+    }
+}
+
+pub struct SolutionMovesReverseIterator<'a> {
+    solution_moves: &'a SolutionMoves<'a>,
+}
+
+impl<'a> Iterator for SolutionMovesReverseIterator<'a> {
+    type Item = &'a Move;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let solution_previous_moves = self.solution_moves.0?;
+        self.solution_moves = solution_previous_moves.previous_moves;
+        Some(solution_previous_moves.latest_move)
+    }
 }
 
 pub struct SearchSolutions {

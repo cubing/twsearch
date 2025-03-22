@@ -10,9 +10,8 @@ use crate::_internal::{
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
         filter::filtering_decision::FilteringDecision,
-        iterative_deepening::{
-            iterative_deepening_search::{IndividualSearchOptions, IterativeDeepeningSearch},
-            search_adaptations::{DefaultSearchAdaptations, SearchAdaptations},
+        iterative_deepening::iterative_deepening_search::{
+            IndividualSearchOptions, IterativeDeepeningSearch,
         },
         move_count::MoveCount,
         prune_table_trait::Depth,
@@ -26,23 +25,14 @@ pub fn move_list_from_vec(move_str_list: Vec<&str>) -> Vec<Move> {
         .collect()
 }
 
-pub struct FilteredSearch<
-    TPuzzle: SemiGroupActionPuzzle + DefaultSearchAdaptations<TPuzzle> = KPuzzle,
-    Adaptations: SearchAdaptations<TPuzzle> = <TPuzzle as DefaultSearchAdaptations<
-        TPuzzle,
-    >>::Adaptations,
-> {
-    pub(crate) iterative_deepening_search: IterativeDeepeningSearch<TPuzzle, Adaptations>,
+pub struct FilteredSearch<TPuzzle: SemiGroupActionPuzzle = KPuzzle> {
+    pub(crate) iterative_deepening_search: IterativeDeepeningSearch<TPuzzle>,
 
-    phantom_data: PhantomData<(TPuzzle, Adaptations)>,
+    phantom_data: PhantomData<TPuzzle>,
 }
 
-impl<
-        TPuzzle: SemiGroupActionPuzzle + DefaultSearchAdaptations<TPuzzle>,
-        Adaptations: SearchAdaptations<TPuzzle>,
-    > FilteredSearch<TPuzzle, Adaptations>
-{
-    pub fn new(iterative_deepening_search: IterativeDeepeningSearch<TPuzzle, Adaptations>) -> Self {
+impl<TPuzzle: SemiGroupActionPuzzle> FilteredSearch<TPuzzle> {
+    pub fn new(iterative_deepening_search: IterativeDeepeningSearch<TPuzzle>) -> Self {
         Self {
             iterative_deepening_search,
             phantom_data: PhantomData,

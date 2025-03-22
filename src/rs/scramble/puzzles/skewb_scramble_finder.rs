@@ -36,11 +36,12 @@ impl Default for SkewbScrambleFinder {
         let kpuzzle = skewb_fixed_corner_with_co_tweaks_kpuzzle();
         let generator_moves = move_list_from_vec(vec!["U", "L", "R", "B"]);
         let filtered_search = FilteredSearch::new(
-            IterativeDeepeningSearch::try_new(
+            IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
                 kpuzzle.clone(),
                 generator_moves,
                 vec![kpuzzle.default_pattern()],
                 Default::default(),
+                None,
             )
             .unwrap(),
         );

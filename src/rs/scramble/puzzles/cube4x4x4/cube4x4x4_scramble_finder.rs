@@ -99,12 +99,13 @@ impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
 impl Default for Cube4x4x4ScrambleFinder {
     fn default() -> Self {
         let kpuzzle = cube4x4x4_kpuzzle();
+        // TODO: should we reduce the move count here as we've done for phase2? For example, Fw and
+        // Bw are redundant, right?
         let phase1_generator_moves = move_list_from_vec(vec![
             "Uw", "U", "Lw", "L", "Fw", "F", "Rw", "R", "Bw", "B", "Dw", "D",
         ]);
-        let phase2_generator_moves = move_list_from_vec(vec![
-            "Uw2", "U", "Lw", "L", "Fw2", "F", "Rw", "R", "Bw2", "B", "Dw2", "D",
-        ]);
+        let phase2_generator_moves =
+            move_list_from_vec(vec!["Uw2", "U", "L", "Fw2", "F", "Rw", "R", "B", "D"]);
 
         // let phase1_ifds = <IterativeDeepeningSearch>::try_new(
         //     kpuzzle.clone(),

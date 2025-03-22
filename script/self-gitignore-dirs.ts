@@ -18,8 +18,8 @@ const folders = (() => {
   // The fork doesn't seem to save a lot of time on my system, but it can be beneficial if the file system is acting slow.
   // Since we only need these `.gitignore` files to be in place when switching to an old commit, we're in no hurry.
   const childProcess = spawn(
-    fileURLToPath(import.meta.url),
-    ["--pre-forked", ...args],
+    "bun",
+    ["run", fileURLToPath(import.meta.url), "--pre-forked", ...args],
     {
       detached: true,
       stdio: ["ignore", "ignore", "ignore"],

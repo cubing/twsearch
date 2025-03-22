@@ -147,6 +147,7 @@ impl Default for Cube4x4x4ScrambleFinder {
                         cube4x4x4_phase1_target_kpattern().clone(),
                         phase1_generator_moves,
                         KPuzzleSimpleMaskPhaseConstructionOptions {
+                            // TODO: figure out why the linter and formatter aren't catching this indentation: https://github.com/cubing/twsearch/issues/128
 search_logger:
                             Some(search_logger.clone()),
                             ..Default::default()

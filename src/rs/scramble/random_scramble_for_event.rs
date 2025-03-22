@@ -107,6 +107,7 @@ pub fn scramble_finder_solve(event: Event, scramble_setup_alg: &Alg) -> Result<A
                 .default_pattern()
                 .apply_alg(scramble_setup_alg)
                 .expect("Invalid alg for puzzle.");
+            // TODO: figure out why the linter and formatter aren't catching this extra whitespace: https://github.com/cubing/twsearch/issues/128
             let test_scramble =     scramble_finder_cacher_map(|scramble_finder: &mut Cube4x4x4ScrambleFinder| -> Result<Alg, crate::_internal::errors::SearchError> {scramble_finder.solve_pattern(&pattern, &NoScrambleAssociatedData{}, &NoScrambleOptions{})}).expect("Could not test scramble.");
             Ok(test_scramble)
         }
@@ -118,9 +119,8 @@ pub fn scramble_finder_solve(event: Event, scramble_setup_alg: &Alg) -> Result<A
             let test_scramble = scramble_finder_cacher_map(|scramble_finder: &mut Square1ScrambleFinder| -> Result<Alg, crate::_internal::errors::SearchError> {
                 let alg = scramble_finder.solve_pattern(&pattern, &NoScrambleAssociatedData{}, &NoScrambleOptions{})?;
                 Ok(scramble_finder.collapse_inverted_alg(  alg))
-            
             }).expect("Could not test scramble.");
-            Ok(test_scramble) 
+            Ok(test_scramble)
         }
         _ => err,
     }

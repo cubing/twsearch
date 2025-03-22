@@ -213,14 +213,18 @@ fn group_square_1_tuples(alg: Alg) -> Alg {
             let alg_node: AlgNode = r#move.into();
             alg_builder.push(&alg_node)
         } else if r#move.quantum == U_SQ_0.quantum {
-            if current_tuple_U.is_some() {
-                panic!("Invalid Square-1 scramble alg in internal code.");
+            #[allow(non_snake_case)]
+            if let Some(current_tuple_U) = &mut current_tuple_U {
+                // TODO: handle normalization elsewhere.
+                current_tuple_U.amount = (current_tuple_U.amount + r#move.amount + 5) % 12 - 5;
             } else {
                 current_tuple_U = Some(r#move);
             }
         } else if r#move.quantum == D_SQ_0.quantum {
-            if current_tuple_D.is_some() {
-                panic!("Invalid Square-1 scramble alg in internal code.");
+            #[allow(non_snake_case)]
+            if let Some(current_tuple_D) = &mut current_tuple_D {
+                // TODO: handle normalization elsewhere.
+                current_tuple_D.amount = (current_tuple_D.amount + r#move.amount + 5) % 12 - 5;
             } else {
                 current_tuple_D = Some(r#move);
             }

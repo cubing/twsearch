@@ -52,7 +52,7 @@ print-current-commit-hash:
 
 .PHONY: setup-gitignore-dirs
 setup-gitignore-dirs:
-	./script/self-gitignore-dirs.ts ./.bin ./.temp ./build ./dist ./target
+	bun run ./script/self-gitignore-dirs.ts ./.bin ./.temp ./build ./dist ./target
 
 
 TWSEARCH_VERSION=$(shell git describe --tags)

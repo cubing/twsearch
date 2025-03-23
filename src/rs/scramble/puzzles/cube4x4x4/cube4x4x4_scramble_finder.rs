@@ -138,6 +138,11 @@ impl Default for Cube4x4x4ScrambleFinder {
         ]
         .map(|alg| cube4x4x4_phase2_target_kpattern().apply_alg(alg).unwrap());
 
+        // This would be inline, but we need to work around https://github.com/cubing/twsearch/issues/128
+        let phase2_name =
+            "Place F/B and U/D centers on correct axes and make L/R solvable with half turns"
+                .to_owned();
+
         let multi_phase_search = MultiPhaseSearch::try_new(
             kpuzzle.clone(),
             vec![
@@ -148,8 +153,7 @@ impl Default for Cube4x4x4ScrambleFinder {
                         phase1_generator_moves,
                         KPuzzleSimpleMaskPhaseConstructionOptions {
                             // TODO: figure out why the linter and formatter aren't catching this indentation: https://github.com/cubing/twsearch/issues/128
-search_logger:
-                            Some(search_logger.clone()),
+                            search_logger: Some(search_logger.clone()),
                             ..Default::default()
                         },
                     )
@@ -157,15 +161,14 @@ search_logger:
                 ),
                 Box::new(
                     KPuzzleSimpleMaskPhase::try_new(
-                        "Place F/B and U/D centers on correct axes and make L/R solvable with half turns".to_owned(),
+                        phase2_name,
                         cube4x4x4_phase2_target_kpattern().clone(),
                         phase2_generator_moves,
                         KPuzzleSimpleMaskPhaseConstructionOptions {
-search_logger:
-                            Some(search_logger.clone()),
-                            masked_target_patterns:Some(phase2_target_patterns.to_vec()),
+                            search_logger: Some(search_logger.clone()),
+                            masked_target_patterns: Some(phase2_target_patterns.to_vec()),
                             ..Default::default()
-                        }
+                        },
                     )
                     .unwrap(),
                 ),

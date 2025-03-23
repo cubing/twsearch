@@ -1,5 +1,7 @@
 use cubing::{alg::Alg, puzzles::cube3x3x3_kpuzzle};
 
+use crate::_internal::errors::SearchError;
+
 use super::{
     puzzles::{
         baby_fto::scramble_baby_fto,
@@ -97,9 +99,21 @@ pub fn scramble_finder_solve(event: Event, scramble_setup_alg: &Alg) -> Result<A
                 .default_pattern()
                 .apply_alg(scramble_setup_alg)
                 .expect("Invalid alg for puzzle.");
-            let test_scramble =     scramble_finder_cacher_map(|scramble_finder: &mut TwoPhase3x3x3ScrambleFinder| -> Result<Alg, crate::_internal::errors::SearchError> {scramble_finder.solve_pattern(&pattern, &TwoPhase3x3x3ScrambleAssociatedData{ affixes:TwoPhase3x3x3ScrambleAssociatedAffixes::None  }, &TwoPhase3x3x3ScrambleOptions{
-                prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::None,
-            })}).expect("Could not test scramble.");
+            let test_scramble = scramble_finder_cacher_map(
+                |scramble_finder: &mut TwoPhase3x3x3ScrambleFinder| -> Result<Alg, SearchError> {
+                    scramble_finder.solve_pattern(
+                        &pattern,
+                        &TwoPhase3x3x3ScrambleAssociatedData {
+                            affixes: TwoPhase3x3x3ScrambleAssociatedAffixes::None,
+                        },
+                        &TwoPhase3x3x3ScrambleOptions {
+                            prefix_or_suffix_constraints:
+                                TwoPhase3x3x3PrefixOrSuffixConstraints::None,
+                        },
+                    )
+                },
+            )
+            .expect("Could not test scramble.");
             Ok(test_scramble)
         }
         Event::Cube4x4x4Speedsolving => {
@@ -108,7 +122,16 @@ pub fn scramble_finder_solve(event: Event, scramble_setup_alg: &Alg) -> Result<A
                 .apply_alg(scramble_setup_alg)
                 .expect("Invalid alg for puzzle.");
             // TODO: figure out why the linter and formatter aren't catching this extra whitespace: https://github.com/cubing/twsearch/issues/128
-            let test_scramble =     scramble_finder_cacher_map(|scramble_finder: &mut Cube4x4x4ScrambleFinder| -> Result<Alg, crate::_internal::errors::SearchError> {scramble_finder.solve_pattern(&pattern, &NoScrambleAssociatedData{}, &NoScrambleOptions{})}).expect("Could not test scramble.");
+            let test_scramble = scramble_finder_cacher_map(
+                |scramble_finder: &mut Cube4x4x4ScrambleFinder| -> Result<Alg, SearchError> {
+                    scramble_finder.solve_pattern(
+                        &pattern,
+                        &NoScrambleAssociatedData {},
+                        &NoScrambleOptions {},
+                    )
+                },
+            )
+            .expect("Could not test scramble.");
             Ok(test_scramble)
         }
         Event::Square1Speedsolving => {
@@ -116,10 +139,17 @@ pub fn scramble_finder_solve(event: Event, scramble_setup_alg: &Alg) -> Result<A
                 .default_pattern()
                 .apply_alg(scramble_setup_alg)
                 .expect("Invalid alg for puzzle.");
-            let test_scramble = scramble_finder_cacher_map(|scramble_finder: &mut Square1ScrambleFinder| -> Result<Alg, crate::_internal::errors::SearchError> {
-                let alg = scramble_finder.solve_pattern(&pattern, &NoScrambleAssociatedData{}, &NoScrambleOptions{})?;
-                Ok(scramble_finder.collapse_inverted_alg(  alg))
-            }).expect("Could not test scramble.");
+            let test_scramble = scramble_finder_cacher_map(
+                |scramble_finder: &mut Square1ScrambleFinder| -> Result<Alg, SearchError> {
+                    let alg = scramble_finder.solve_pattern(
+                        &pattern,
+                        &NoScrambleAssociatedData {},
+                        &NoScrambleOptions {},
+                    )?;
+                    Ok(scramble_finder.collapse_inverted_alg(alg))
+                },
+            )
+            .expect("Could not test scramble.");
             Ok(test_scramble)
         }
         _ => err,

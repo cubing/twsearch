@@ -1,23 +1,29 @@
 use std::env::var;
+use std::marker::PhantomData;
 
 use cubing::alg::{parse_alg, Alg};
 use cubing::kpuzzle::{KPattern, KPuzzle};
 
-use crate::_internal::cli::args::VerbosityLevel;
-use crate::_internal::search::coordinates::graph_enumerated_derived_pattern_puzzle::DerivedPattern;
+use crate::_internal::canonical_fsm::search_generators::SearchGenerators;
+use crate::_internal::cli::args::{MetricEnum, VerbosityLevel};
+use crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle;
+use crate::_internal::search::coordinates::pattern_deriver::{
+    DerivedPatternPuzzle, PatternDeriver,
+};
 use crate::_internal::search::filter::filtering_decision::FilteringDecision;
 use crate::_internal::search::mask_pattern::apply_mask;
 use crate::_internal::search::search_logger::SearchLogger;
 use crate::experimental_lib_api::{
-    KPuzzleSimpleMaskPhase, KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,
+    CompoundDerivedPuzzle, CompoundPuzzle, KPuzzleSimpleMaskPhase,
+    KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,
 };
 use crate::scramble::puzzles::definitions::{
     cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern, cube4x4x4_phase2_centers_target_kpattern,
     cube4x4x4_phase2_wing_separation_mask_kpattern,
 };
-use crate::scramble::randomize::{basic_parity, BasicParity};
 use crate::{_internal::errors::SearchError, scramble::scramble_search::move_list_from_vec};
 
+use super::phase2::{WingParityPattern, WingParityPuzzle};
 use crate::scramble::{
     collapse::collapse_adjacent_moves,
     randomize::{
@@ -179,6 +185,39 @@ impl Default for Cube4x4x4ScrambleFinder {
             "Place F/B and U/D centers on correct axes and make L/R solvable with half turns"
                 .to_owned();
 
+        let phase2_search_generators = SearchGenerators::try_new(
+            kpuzzle,
+            phase2_generator_moves.clone(),
+            &MetricEnum::Hand,
+            false,
+        )
+        .unwrap();
+
+        let wing_parity_puzzle = WingParityPuzzle {};
+        phase2_search_generators.transfer_move_classes(wing_parity_puzzle);
+        let f = CompoundDerivedPuzzle::<KPuzzle, WingParityPuzzle, WingParityPuzzle> {
+            tpuzzle: CompoundPuzzle::<WingParityPuzzle, WingParityPuzzle> {
+                tpuzzle0: wing_parity_puzzle.clone(),
+                tpuzzle1: wing_parity_puzzle.clone(),
+            },
+            phantom_data: PhantomData::<KPuzzle>,
+            // tpuzzle1: kpuzzle.clone(),
+            // tpuzzle2: kpuzzle.clone(),
+            // search_generators_t1: phase2_search_generators.clone(),
+            // search_generators_t2: phase2_search_generators.clone(),
+        };
+        let g: <CompoundDerivedPuzzle<
+            WingParityPuzzle,
+            WingParityPuzzle,
+        > as SemiGroupActionPuzzle>::Pattern = (WingParityPattern {
+            parity: crate::scramble::randomize::BasicParity::Even,
+        }, WingParityPattern {
+            parity: crate::scramble::randomize::BasicParity::Odd,
+        });
+
+        dbg!(f);
+        dbg!(g);
+
         let multi_phase_search = MultiPhaseSearch::try_new(
             kpuzzle.clone(),
             vec![
@@ -302,51 +341,35 @@ impl Cube4x4x4ScrambleFinder {
 }
 
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
-struct WingParityPattern {
-    parity: BasicParity,
-}
-
-impl DerivedPattern<KPuzzle> for WingParityPattern {
-    fn derived_pattern_name() -> &'static str {
-        "phase 2 wing parity"
-    }
-
-    fn try_new(_puzzle: &KPuzzle, pattern: &KPattern) -> Option<Self> {
-        Some(Self {
-            parity: basic_parity(WingParityPattern::wing_permutation_slice(pattern)),
-        })
-    }
-}
-
-impl WingParityPattern {
-    // TODO: is there a good way to implement this without `unsafe`? Or should we expose this directly on `KPattern`?
-    pub(crate) fn wing_permutation_slice(pattern: &KPattern) -> &[u8] {
-        let orbit = &pattern.kpuzzle().data.ordered_orbit_info[0];
-        assert_eq!(orbit.name.0, "WINGS");
-
-        let from = orbit.orientations_offset;
-        let to = from + (orbit.num_pieces as usize);
-
-        let full_byte_slice = unsafe { pattern.byte_slice() };
-        &full_byte_slice[from..to]
-    }
-}
-
-#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 struct Phase2WingSeparationPattern {
     pattern: KPattern,
 }
 
-impl DerivedPattern<KPuzzle> for Phase2WingSeparationPattern {
-    fn derived_pattern_name() -> &'static str {
-        "phase 2 wing separation"
-    }
+#[derive(Clone, Debug)]
+struct Phase2WingSeparationPuzzle {}
 
-    fn try_new(_puzzle: &KPuzzle, pattern: &KPattern) -> Option<Self> {
-        let Ok(pattern) = apply_mask(pattern, cube4x4x4_phase2_wing_separation_mask_kpattern())
-        else {
+impl PatternDeriver<KPuzzle> for Phase2WingSeparationPuzzle {
+    type DerivedPattern = Phase2WingSeparationPattern;
+
+    fn derive_pattern(&self, source_puzzle_pattern: &KPattern) -> Phase2WingSeparationPattern {
+        let Ok(pattern) = apply_mask(
+            source_puzzle_pattern,
+            cube4x4x4_phase2_wing_separation_mask_kpattern(),
+        ) else {
             return None;
         };
-        Some(Self { pattern })
+        Phase2WingSeparationPattern { pattern }
     }
+
+    // fn derived_pattern_name() -> &'static str {
+    //     "phase 2 wing separation"
+    // }
+
+    // fn try_new(_puzzle: &KPuzzle, pattern: &KPattern) -> Option<Self> {
+    //     let Ok(pattern) = apply_mask(pattern, cube4x4x4_phase2_wing_separation_mask_kpattern())
+    //     else {
+    //         return None;
+    //     };
+    //     Some(Self { pattern })
+    // }
 }

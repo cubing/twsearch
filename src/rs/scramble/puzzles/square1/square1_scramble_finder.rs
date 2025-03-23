@@ -21,7 +21,7 @@ use crate::{
 use super::{
     super::definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
     depth_filtering::square1_depth_filtering_search_adaptations_without_prune_table,
-    phase1::{square1_phase1_search_adaptations, Square1Phase1Pattern},
+    phase1::{square1_phase1_search_adaptations, Square1Phase1PatternDeriver},
     phase2::{square1_phase2_search_adaptations, Square1Phase2Puzzle},
 };
 use cubing::alg::{parse_move, AlgBuilder, AlgNode, Grouping, Move};
@@ -64,11 +64,14 @@ impl Default for Square1ScrambleFinder {
         let kpuzzle = square1_unbandaged_kpuzzle();
         let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
 
+        let square1_phase1_pattern_deriver = Square1Phase1PatternDeriver {};
+
         let square1_phase1_puzzle: GraphEnumeratedDerivedPatternPuzzle<
             KPuzzle,
-            Square1Phase1Pattern,
+            Square1Phase1PatternDeriver,
         > = Square1Phase1Puzzle::new(
             kpuzzle.clone(),
+            square1_phase1_pattern_deriver,
             kpuzzle.default_pattern(),
             generator_moves.clone(),
         );

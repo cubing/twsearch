@@ -10,9 +10,12 @@ use crate::{
         canonical_fsm::search_generators::{FlatMoveIndex, MoveTransformationInfo},
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{
-            coordinates::graph_enumerated_derived_pattern_puzzle::{
-                DerivedPattern, DerivedPatternConversionError, DerivedPatternIndex,
-                GraphEnumeratedDerivedPatternPuzzle,
+            coordinates::{
+                graph_enumerated_derived_pattern_puzzle::{
+                    DerivedPatternConversionError, DerivedPatternIndex,
+                    GraphEnumeratedDerivedPatternPuzzle,
+                },
+                pattern_deriver::PatternDeriver,
             },
             filter::filtering_decision::FilteringDecision,
             iterative_deepening::search_adaptations::SearchAdaptations,
@@ -68,39 +71,44 @@ fn phase2_filter_derived_pattern(pattern: &cubing::kpuzzle::KPattern) -> Filteri
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
-pub(crate) struct Phase2ShapeCoordinate {
+pub(crate) struct Phase2ShapePattern {
     pub(crate) shape: KPattern,
 }
 
-impl DerivedPattern<KPuzzle> for Phase2ShapeCoordinate {
-    fn derived_pattern_name() -> &'static str {
-        "Shape (Square-1 → phase 2)"
-    }
+// TODO: avoid the need for this intermediate struct
+#[derive(Clone, Debug)]
+struct Phase2ShapePatternDeriver {}
 
-    fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
+impl PatternDeriver<KPuzzle> for Phase2ShapePatternDeriver {
+    type DerivedPattern = Phase2ShapePattern;
+
+    fn derive_pattern(
+        &self,
+        source_puzzle_pattern: &<KPuzzle as SemiGroupActionPuzzle>::Pattern,
+    ) -> Option<Self::DerivedPattern> {
         // TODO: this isn't a full validity check for scramble positions.
-        if phase2_filter_derived_pattern(full_pattern).is_reject() {
+        if phase2_filter_derived_pattern(source_puzzle_pattern).is_reject() {
             return None;
         }
 
         let phase_mask = square1_shape_kpattern(); // TODO: Store this with the coordinate lookup?
-        let Ok(masked_pattern) = apply_mask(full_pattern, phase_mask) else {
+        let Ok(masked_pattern) = apply_mask(source_puzzle_pattern, phase_mask) else {
             panic!("Mask application failed");
         };
 
-        Some(Self {
+        Some(Phase2ShapePattern {
             shape: masked_pattern,
         })
     }
 }
 
 #[derive(PartialEq, Eq, Hash, Clone, Debug)]
-pub(crate) struct Square0EquatorlessCoordinate {
+pub(crate) struct Square0EquatorlessPattern {
     pub(crate) pattern: KPattern,
 }
 
 const NUM_SQUARE0_EQUATORLESS_WEDGES: u8 = 8;
-impl Square0EquatorlessCoordinate {
+impl Square0EquatorlessPattern {
     // TODO: define this as a static method instead and just output a `KPattern` instead of a `Square0EquatorlessCoordinate`? Or ideally add a type-safe way for coordinates to us different masks/conversions into the same coordinates (and tables).
     fn from_edges_pattern(square1_edges_pattern: &KPattern) -> Self {
         lazy_static! {
@@ -216,27 +224,38 @@ impl Square0EquatorlessCoordinate {
     }
 }
 
-impl DerivedPattern<KPuzzle> for Square0EquatorlessCoordinate {
-    fn derived_pattern_name() -> &'static str {
-        "Square-0 equatorless (Square-1 → phase 2)"
+// TODO: avoid the need for this intermediate struct
+#[derive(Clone, Debug)]
+struct Square0EquatorlessPatternDeriver {}
+
+impl PatternDeriver<KPuzzle> for Square0EquatorlessPatternDeriver {
+    type DerivedPattern = Square0EquatorlessPattern;
+
+    fn derive_pattern(
+        &self,
+        _source_puzzle_pattern: &<KPuzzle as SemiGroupActionPuzzle>::Pattern,
+    ) -> Option<Self::DerivedPattern> {
+        todo!()
     }
 
-    fn try_new(_kpuzzle: &KPuzzle, pattern: &KPattern) -> Option<Self> {
-        Some(Self {
-            pattern: pattern.clone(),
-        })
-    }
+    // fn try_new(_kpuzzle: &KPuzzle, pattern: &KPattern) -> Option<Self> {
+    //     Some(Self {
+    //         pattern: pattern.clone(),
+    //     })
+    // }
 }
 
 // TODO: generalize this, similar to how `TriplePhaseCoordinatePuzzle` does.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Square1Phase2TripleCoordinate {
-    shape: DerivedPatternIndex<GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Phase2ShapeCoordinate>>, // TODO: rename to "shape"
+    shape: DerivedPatternIndex<
+        GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Phase2ShapePatternDeriver>,
+    >, // TODO: rename to "shape"
     edges: DerivedPatternIndex<
-        GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Square0EquatorlessCoordinate>,
+        GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Square0EquatorlessPatternDeriver>,
     >,
     corners: DerivedPatternIndex<
-        GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Square0EquatorlessCoordinate>,
+        GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Square0EquatorlessPatternDeriver>,
     >,
 }
 
@@ -245,9 +264,9 @@ pub struct Square1Phase2Transformation(FlatMoveIndex); // Index into search gene
 
 #[derive(Clone, Debug)]
 pub struct Square1Phase2Puzzle {
-    shape_puzzle: GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Phase2ShapeCoordinate>,
+    shape_puzzle: GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Phase2ShapePatternDeriver>,
     square0_equatorless_puzzle:
-        GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Square0EquatorlessCoordinate>,
+        GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Square0EquatorlessPatternDeriver>,
 }
 
 #[allow(non_snake_case)]
@@ -385,26 +404,32 @@ impl Square1Phase2Puzzle {
     pub fn new() -> Self {
         let kpuzzle = square1_unbandaged_kpuzzle();
 
+        let phase2_shape_pattern_deriver = Phase2ShapePatternDeriver {};
+
         let shape_puzzle = {
             let full_generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
 
             let start_pattern = square1_shape_kpattern()
                 .apply_alg(parse_alg!("(0, 0)"))
                 .unwrap();
-            GraphEnumeratedDerivedPatternPuzzle::<KPuzzle, Phase2ShapeCoordinate>::new(
+            GraphEnumeratedDerivedPatternPuzzle::<KPuzzle, Phase2ShapePatternDeriver>::new(
                 kpuzzle.clone(),
+                phase2_shape_pattern_deriver,
                 start_pattern,
                 full_generator_moves,
             )
         };
+
+        let square0_equatorless_pattern_deriver = Square0EquatorlessPatternDeriver {};
 
         // TODO: when using `U_SQ_3` and `D_SQ_3` here (and in the def), `cubing.rs` runs into an error. So we use inconsistent moves for now.
         // let reduced_generator_moves = move_list_from_vec(vec!["U_SQ_3", "D_SQ_3", "/"]);
         let reduced_generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
         let square0_equatorless_puzzle = {
             let kpuzzle = square0_equatorless_kpuzzle();
-            GraphEnumeratedDerivedPatternPuzzle::<KPuzzle, Square0EquatorlessCoordinate>::new(
+            GraphEnumeratedDerivedPatternPuzzle::<KPuzzle, Square0EquatorlessPatternDeriver>::new(
                 kpuzzle.clone(),
+                square0_equatorless_pattern_deriver,
                 kpuzzle.default_pattern(),
                 reduced_generator_moves,
             )
@@ -431,7 +456,7 @@ impl Square1Phase2Puzzle {
         let Ok(edges) = self
             .square0_equatorless_puzzle
             .full_pattern_to_derived_pattern(
-                &Square0EquatorlessCoordinate::from_edges_pattern(
+                &Square0EquatorlessPattern::from_edges_pattern(
                     &pattern
                         .apply_alg(&square1_tuple(
                             offsets.edges_amount_U,
@@ -447,7 +472,7 @@ impl Square1Phase2Puzzle {
         let Ok(corners) = self
             .square0_equatorless_puzzle
             .full_pattern_to_derived_pattern(
-                &Square0EquatorlessCoordinate::from_corners_pattern(
+                &Square0EquatorlessPattern::from_corners_pattern(
                     &pattern
                         .apply_alg(&square1_tuple(
                             offsets.corners_amount_U,

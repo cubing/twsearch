@@ -18,22 +18,12 @@ use crate::{
         },
         cli::args::MetricEnum,
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
-        search::{
-            indexed_vec::IndexedVec,
-            move_count::MoveCount,
-            prune_table_trait::{Depth, PruneTable},
-        },
+        search::{indexed_vec::IndexedVec, move_count::MoveCount, prune_table_trait::Depth},
     },
     whole_number_newtype_generic,
 };
 
-pub trait DerivedPattern<TPuzzle: SemiGroupActionPuzzle>: Eq + Hash + Clone + Debug
-where
-    Self: std::marker::Sized,
-{
-    fn derived_pattern_name() -> &'static str; // TODO: signature
-    fn try_new(puzzle: &TPuzzle, pattern: &TPuzzle::Pattern) -> Option<Self>;
-}
+use super::pattern_deriver::PatternDeriver;
 
 whole_number_newtype_generic!(DerivedPatternIndex, usize, SemiGroupActionPuzzle);
 
@@ -42,54 +32,57 @@ pub type ExactDerivedPatternPruneTable<U> = IndexedVec<DerivedPatternIndex<U>, D
 
 #[derive(Debug)]
 pub struct DerivedPatternPuzzleTables<
-    TPuzzle: SemiGroupActionPuzzle,
-    TDerivedPattern: DerivedPattern<TPuzzle>,
+    TSourcePuzzle: SemiGroupActionPuzzle,
+    TPatternDeriver: PatternDeriver<TSourcePuzzle>,
 > where
-    GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>: SemiGroupActionPuzzle,
+    TPatternDeriver::DerivedPattern: Hash,
 {
-    pub(crate) tpuzzle: TPuzzle,
+    pub(crate) tpuzzle: TSourcePuzzle,
+
+    pub(crate) pattern_deriver: TPatternDeriver,
 
     pub(crate) derived_pattern_to_index: HashMap<
-        TDerivedPattern,
-        DerivedPatternIndex<GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>>,
+        TPatternDeriver::DerivedPattern,
+        DerivedPatternIndex<GraphEnumeratedDerivedPatternPuzzle<TSourcePuzzle, TPatternDeriver>>,
     >,
     #[allow(clippy::type_complexity)] // Can this even be simplified?
     pub(crate) move_application_table: IndexedVec<
-        DerivedPatternIndex<GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>>,
+        DerivedPatternIndex<GraphEnumeratedDerivedPatternPuzzle<TSourcePuzzle, TPatternDeriver>>,
         IndexedVec<
             FlatMoveIndex,
             Option<
-                DerivedPatternIndex<GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>>,
+                DerivedPatternIndex<
+                    GraphEnumeratedDerivedPatternPuzzle<TSourcePuzzle, TPatternDeriver>,
+                >,
             >,
         >,
     >,
     pub(crate) exact_prune_table: ExactDerivedPatternPruneTable<
-        GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>,
+        GraphEnumeratedDerivedPatternPuzzle<TSourcePuzzle, TPatternDeriver>,
     >,
 
-    pub(crate) search_generators_for_tpuzzle: SearchGenerators<TPuzzle>, // TODO: avoid the need for this
+    pub(crate) search_generators_for_tpuzzle: SearchGenerators<TSourcePuzzle>, // TODO: avoid the need for this
     pub(crate) search_generators_for_derived_pattern_puzzle:
-        SearchGenerators<GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>>,
+        SearchGenerators<GraphEnumeratedDerivedPatternPuzzle<TSourcePuzzle, TPatternDeriver>>,
 
     // This is useful for testing and debugging.
     #[allow(unused)]
     pub(crate) index_to_derived_pattern: IndexedVec<
-        DerivedPatternIndex<GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>>,
-        TDerivedPattern,
+        DerivedPatternIndex<GraphEnumeratedDerivedPatternPuzzle<TSourcePuzzle, TPatternDeriver>>,
+        TPatternDeriver::DerivedPattern,
     >, // TODO: support optimizations when the size is known ahead of time
-
-    pub(crate) phantom_data: PhantomData<TDerivedPattern>,
 }
 
-// TODO: Genericize this to `TPuzzle`.
+/// T
 #[derive(Clone, Debug)]
 pub struct GraphEnumeratedDerivedPatternPuzzle<
-    TPuzzle: SemiGroupActionPuzzle,
-    TDerivedPattern: DerivedPattern<TPuzzle>,
+    TSourcePuzzle: SemiGroupActionPuzzle,
+    TPatternDeriver: PatternDeriver<TSourcePuzzle>,
 > where
     Self: SemiGroupActionPuzzle,
+    TPatternDeriver::DerivedPattern: Hash,
 {
-    pub(crate) data: Arc<DerivedPatternPuzzleTables<TPuzzle, TDerivedPattern>>,
+    pub(crate) data: Arc<DerivedPatternPuzzleTables<TSourcePuzzle, TPatternDeriver>>,
 }
 
 #[derive(Debug)]
@@ -98,14 +91,16 @@ pub enum DerivedPatternConversionError {
     InvalidDerivedPatternPuzzle,
 }
 
-impl<TPuzzle: SemiGroupActionPuzzle, TDerivedPattern: DerivedPattern<TPuzzle>>
-    GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>
+impl<TSourcePuzzle: SemiGroupActionPuzzle, TPatternDeriver: PatternDeriver<TSourcePuzzle>>
+    GraphEnumeratedDerivedPatternPuzzle<TSourcePuzzle, TPatternDeriver>
 where
     Self: SemiGroupActionPuzzle<Transformation = FlatMoveIndex>,
+    TPatternDeriver::DerivedPattern: Hash,
 {
     pub fn new(
-        puzzle: TPuzzle,
-        start_pattern: TPuzzle::Pattern,
+        puzzle: TSourcePuzzle,
+        pattern_deriver: TPatternDeriver,
+        start_pattern: <TSourcePuzzle as SemiGroupActionPuzzle>::Pattern,
         generator_moves: Vec<Move>,
     ) -> Self {
         let random_start = false; // TODO: for scrambles, we may want this to be true
@@ -115,21 +110,21 @@ where
                     "Couldn't build SearchGenerators while building DerivedPatternPuzzlePuzzle",
                 );
 
-        let mut fringe = VecDeque::<(TPuzzle::Pattern, Depth)>::new();
+        let mut fringe = VecDeque::<(TSourcePuzzle::Pattern, Depth)>::new();
         fringe.push_back((start_pattern, Depth(0)));
 
         let mut index_to_derived_pattern =
-            IndexedVec::<DerivedPatternIndex<Self>, TDerivedPattern>::default();
+            IndexedVec::<DerivedPatternIndex<Self>, TPatternDeriver::DerivedPattern>::default();
         let mut derived_pattern_to_index =
-            HashMap::<TDerivedPattern, DerivedPatternIndex<Self>>::default();
+            HashMap::<TPatternDeriver::DerivedPattern, DerivedPatternIndex<Self>>::default();
         let mut exact_prune_table = IndexedVec::<DerivedPatternIndex<Self>, Depth>::default();
 
         let mut index_to_representative_pattern =
-            IndexedVec::<DerivedPatternIndex<Self>, TPuzzle::Pattern>::default();
+            IndexedVec::<DerivedPatternIndex<Self>, TSourcePuzzle::Pattern>::default();
 
         // TODO: Reuse `GodsAlgorithmTable` to enumerate patterns?
         while let Some((representative_pattern, depth)) = fringe.pop_front() {
-            let Some(lookup_pattern) = TDerivedPattern::try_new(&puzzle, &representative_pattern)
+            let Some(lookup_pattern) = pattern_deriver.derive_pattern(&representative_pattern)
             else {
                 continue;
             };
@@ -179,15 +174,14 @@ where
                     representative,
                     &move_transformation_info.transformation,
                 ) {
-                    Some(new_representative) => {
-                        TDerivedPattern::try_new(&puzzle, &new_representative)
-                            .map(|new_lookup_pattern| {
-                                derived_pattern_to_index
-                                    .get(&new_lookup_pattern)
-                                    .expect("Inconsistent pattern enumeration")
-                            })
-                            .copied()
-                    }
+                    Some(new_representative) => pattern_deriver
+                        .derive_pattern(&new_representative)
+                        .map(|new_lookup_pattern| {
+                            derived_pattern_to_index
+                                .get(&new_lookup_pattern)
+                                .expect("Inconsistent pattern enumeration")
+                        })
+                        .copied(),
                     None => None,
                 };
                 table_row.push(new_lookup_pattern);
@@ -202,9 +196,9 @@ where
 
         // TODO: Why can't we reuse the static `puzzle_transformation_from_move`?
         // TODO: come up with a cleaner way for `SearchGenerators` to share the same move classes.
-        fn puzzle_transformation_from_move<TPuzzle: SemiGroupActionPuzzle>(
+        fn puzzle_transformation_from_move<TSourcePuzzle: SemiGroupActionPuzzle>(
             r#move: &cubing::alg::Move,
-            by_move: &HashMap<Move, MoveTransformationInfo<TPuzzle>>,
+            by_move: &HashMap<Move, MoveTransformationInfo<TSourcePuzzle>>,
         ) -> Result<FlatMoveIndex, InvalidAlgError> {
             let Some(move_transformation_info) = by_move.get(r#move) else {
                 return Err(InvalidAlgError::InvalidMove(InvalidMoveError {
@@ -215,21 +209,23 @@ where
         }
 
         let search_generators_for_derived_pattern_puzzle: SearchGenerators<
-            GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>,
+            GraphEnumeratedDerivedPatternPuzzle<TSourcePuzzle, TPatternDeriver>,
         > = search_generators
             .transfer_move_classes::<Self>(puzzle_transformation_from_move)
             .unwrap();
 
-        let data = Arc::new(DerivedPatternPuzzleTables::<TPuzzle, TDerivedPattern> {
-            tpuzzle: puzzle,
-            index_to_derived_pattern,
-            derived_pattern_to_index,
-            move_application_table,
-            exact_prune_table,
-            search_generators_for_tpuzzle: search_generators,
-            search_generators_for_derived_pattern_puzzle,
-            phantom_data: PhantomData,
-        });
+        let data = Arc::new(
+            DerivedPatternPuzzleTables::<TSourcePuzzle, TPatternDeriver> {
+                tpuzzle: puzzle,
+                pattern_deriver,
+                index_to_derived_pattern,
+                derived_pattern_to_index,
+                move_application_table,
+                exact_prune_table,
+                search_generators_for_tpuzzle: search_generators,
+                search_generators_for_derived_pattern_puzzle,
+            },
+        );
 
         Self { data }
     }
@@ -237,9 +233,9 @@ where
     // TODO: report errors for invalid patterns
     pub fn full_pattern_to_derived_pattern(
         &self,
-        pattern: &TPuzzle::Pattern,
+        pattern: &<TSourcePuzzle as SemiGroupActionPuzzle>::Pattern,
     ) -> Result<DerivedPatternIndex<Self>, DerivedPatternConversionError> {
-        let Some(derived_pattern) = TDerivedPattern::try_new(&self.data.tpuzzle, pattern) else {
+        let Some(derived_pattern) = self.data.pattern_deriver.derive_pattern(pattern) else {
             return Err(DerivedPatternConversionError::InvalidDerivedPattern);
         };
         let Some(derived_pattern_index) = self.data.derived_pattern_to_index.get(&derived_pattern)
@@ -250,11 +246,9 @@ where
     }
 }
 
-fn puzzle_transformation_from_move<
-    TPuzzle: SemiGroupActionPuzzle<Transformation = FlatMoveIndex>,
->(
+fn puzzle_transformation_from_move<TSourcePuzzle: SemiGroupActionPuzzle>(
     r#move: &cubing::alg::Move,
-    by_move: &HashMap<Move, MoveTransformationInfo<TPuzzle>>,
+    by_move: &HashMap<Move, MoveTransformationInfo<TSourcePuzzle>>,
 ) -> Result<FlatMoveIndex, InvalidAlgError> {
     let Some(move_transformation_info) = by_move.get(r#move) else {
         return Err(InvalidAlgError::InvalidMove(InvalidMoveError {
@@ -264,11 +258,12 @@ fn puzzle_transformation_from_move<
     Ok(move_transformation_info.flat_move_index)
 }
 
-impl<TPuzzle: SemiGroupActionPuzzle, TDerivedPattern: DerivedPattern<TPuzzle>> SemiGroupActionPuzzle
-    for GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>
+impl<TSourcePuzzle: SemiGroupActionPuzzle, TPatternDeriver: PatternDeriver<TSourcePuzzle>>
+    SemiGroupActionPuzzle for GraphEnumeratedDerivedPatternPuzzle<TSourcePuzzle, TPatternDeriver>
+where
+    TPatternDeriver::DerivedPattern: Hash,
 {
     type Pattern = DerivedPatternIndex<Self>;
-
     type Transformation = FlatMoveIndex;
 
     fn move_order(&self, r#move: &cubing::alg::Move) -> Result<MoveCount, InvalidAlgError> {
@@ -318,36 +313,5 @@ impl<TPuzzle: SemiGroupActionPuzzle, TDerivedPattern: DerivedPattern<TPuzzle>> S
         };
         *into_pattern = pattern;
         true
-    }
-}
-
-pub struct DerivedPatternPuzzlePruneTable<
-    TPuzzle: SemiGroupActionPuzzle,
-    TDerivedPattern: DerivedPattern<TPuzzle>,
-> {
-    tpuzzle: GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>, // TODO: store just the prune table here
-}
-
-impl<TPuzzle: SemiGroupActionPuzzle, TDerivedPattern: DerivedPattern<TPuzzle>>
-    DerivedPatternPuzzlePruneTable<TPuzzle, TDerivedPattern>
-{
-    pub fn new(puzzle: GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>) -> Self {
-        Self { tpuzzle: puzzle }
-    }
-}
-
-impl<TPuzzle: SemiGroupActionPuzzle, TDerivedPattern: DerivedPattern<TPuzzle>>
-    PruneTable<GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern>>
-    for DerivedPatternPuzzlePruneTable<TPuzzle, TDerivedPattern>
-{
-    fn lookup(
-        &self,
-        pattern: &<GraphEnumeratedDerivedPatternPuzzle<TPuzzle, TDerivedPattern> as SemiGroupActionPuzzle>::Pattern,
-    ) -> Depth {
-        self.tpuzzle.data.exact_prune_table[*pattern]
-    }
-
-    fn extend_for_search_depth(&mut self, _search_depth: Depth, _approximate_num_entries: usize) {
-        // no-op
     }
 }

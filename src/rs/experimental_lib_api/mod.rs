@@ -23,7 +23,10 @@ pub use kpuzzle_simple_mask_phase::{
     KPuzzleSimpleMaskPhase, KPuzzleSimpleMaskPhaseConstructionOptions,
 };
 
-mod compound_derived_puzzle;
-pub use compound_derived_puzzle::{
-    CompoundDerivedPuzzle, QuadrupleCompoundPuzzle, TripleCompoundPuzzle,
+mod compound_puzzle;
+pub use compound_puzzle::{
+    CompoundPuzzle, // CompoundDerivedPuzzle, PuzzleWithDerivedPattern, QuadrupleCompoundPuzzle, TripleCompoundPuzzle,
 };
+
+mod compound_derived_puzzle;
+pub use compound_derived_puzzle::CompoundDerivedPuzzle;

@@ -1,1 +1,3 @@
 pub mod graph_enumerated_derived_pattern_puzzle;
+pub mod graph_enumerated_derived_pattern_puzzle_prune_table;
+pub mod pattern_deriver;

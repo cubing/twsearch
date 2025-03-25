@@ -45,7 +45,7 @@ pub(crate) struct Square1Phase1Pattern {
 }
 
 #[derive(Clone, Debug)]
-pub struct Square1Phase1PatternDeriver {}
+pub(crate) struct Square1Phase1PatternDeriver {}
 
 impl PatternDeriver for Square1Phase1PatternDeriver {
     type DerivedPattern = Square1Phase1Pattern;

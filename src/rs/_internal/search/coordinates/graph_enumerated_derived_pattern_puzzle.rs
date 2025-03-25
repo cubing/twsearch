@@ -61,7 +61,7 @@ pub struct DerivedPatternPuzzleTables<
         GraphEnumeratedDerivedPatternPuzzle<TSourcePuzzle, TPatternDeriver>,
     >,
 
-    pub(crate) search_generators_for_tpuzzle: SearchGenerators<TSourcePuzzle>, // TODO: avoid the need for this
+    // TODO: avoid the need for this?
     pub(crate) search_generators_for_derived_pattern_puzzle:
         SearchGenerators<GraphEnumeratedDerivedPatternPuzzle<TSourcePuzzle, TPatternDeriver>>,
 
@@ -222,7 +222,6 @@ where
                 derived_pattern_to_index,
                 move_application_table,
                 exact_prune_table,
-                search_generators_for_tpuzzle: search_generators,
                 search_generators_for_derived_pattern_puzzle,
             },
         );
@@ -283,14 +282,8 @@ where
         )
     }
 
-    fn do_moves_commute(
-        &self,
-        move1_info: &MoveTransformationInfo<Self>,
-        move2_info: &MoveTransformationInfo<Self>,
-    ) -> bool {
-        let move1_info = &self.data.search_generators_for_tpuzzle.flat[move1_info.flat_move_index];
-        let move2_info = &self.data.search_generators_for_tpuzzle.flat[move2_info.flat_move_index];
-        self.data.tpuzzle.do_moves_commute(move1_info, move2_info)
+    fn do_moves_commute(&self, move1: &Move, move2: &Move) -> Result<bool, InvalidAlgError> {
+        self.data.tpuzzle.do_moves_commute(move1, move2)
     }
 
     fn pattern_apply_transformation(

@@ -3,7 +3,7 @@ use std::{
     marker::PhantomData,
 };
 
-use cubing::alg::QuantumMove;
+use cubing::{alg::QuantumMove, kpuzzle::InvalidAlgError};
 
 use crate::{
     _internal::{
@@ -70,11 +70,11 @@ impl CanonicalFSMConstructionOptions {
 
 impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
     /// Pass `Default::default()` as for `options` when no options are needed.
-    pub fn new(
+    pub fn try_new(
         tpuzzle: TPuzzle,
         generators: SearchGenerators<TPuzzle>, // TODO: make this a field in the options?
         options: CanonicalFSMConstructionOptions,
-    ) -> CanonicalFSM<TPuzzle> {
+    ) -> Result<CanonicalFSM<TPuzzle>, InvalidAlgError> {
         let num_move_classes = generators.by_move_class.len();
 
         let mut commutes: IndexedVec<MoveClassIndex, MoveClassMask> =
@@ -94,7 +94,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
                 let j = MoveClassIndex(j);
                 let move1_info = &generators.by_move_class[i][0];
                 let move2_info = &generators.by_move_class[j][0];
-                if !tpuzzle.do_moves_commute(move1_info, move2_info) {
+                if !tpuzzle.do_moves_commute(&move1_info.r#move, &move2_info.r#move)? {
                     commutes[i][j] = false;
                     commutes[j][i] = false;
                 }
@@ -186,10 +186,10 @@ impl<TPuzzle: SemiGroupActionPuzzle> CanonicalFSM<TPuzzle> {
             next_state_lookup.push(next_state);
         }
 
-        Self {
+        Ok(Self {
             next_state_lookup,
             phantom_data: PhantomData,
-        }
+        })
     }
 
     pub(crate) fn next_state(

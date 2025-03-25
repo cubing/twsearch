@@ -297,11 +297,15 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             options.random_start,
         )?;
 
-        let canonical_fsm = CanonicalFSM::new(
+        let canonical_fsm = CanonicalFSM::try_new(
+            // TODO: avoid clones
             tpuzzle.clone(),
             search_generators.clone(),
             options.canonical_fsm_construction_options,
-        ); // TODO: avoid a clone
+        )
+        .map_err(|e| SearchError {
+            description: e.to_string(),
+        })?;
 
         Ok(Arc::new(IterativeDeepeningSearchAPIData {
             search_generators,

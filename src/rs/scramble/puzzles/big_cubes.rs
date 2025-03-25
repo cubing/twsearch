@@ -25,17 +25,17 @@ const NUM_5X5X5_RANDOM_MOVES: usize = 60;
 const NUM_6X6X6_RANDOM_MOVES: usize = 80;
 const NUM_7X7X7_RANDOM_MOVES: usize = 100;
 
-struct ScrambleInfo<TPuzzle: SemiGroupActionPuzzle> {
+struct BigCubeScrambleInfo<TPuzzle: SemiGroupActionPuzzle> {
     generators: SearchGenerators<TPuzzle>,
     canonical_fsm: CanonicalFSM<TPuzzle>,
 }
 
-impl<TPuzzle: SemiGroupActionPuzzle> ScrambleInfo<TPuzzle> {
+impl<TPuzzle: SemiGroupActionPuzzle> BigCubeScrambleInfo<TPuzzle> {
     pub fn new(tpuzzle: &TPuzzle, moves: Vec<Move>) -> Self {
         let generators =
             SearchGenerators::try_new(tpuzzle, moves, &MetricEnum::Hand, false).unwrap();
         let canonical_fsm =
-            CanonicalFSM::new(tpuzzle.clone(), generators.clone(), Default::default());
+            CanonicalFSM::try_new(tpuzzle.clone(), generators.clone(), Default::default()).unwrap();
         Self {
             generators,
             canonical_fsm,
@@ -43,10 +43,10 @@ impl<TPuzzle: SemiGroupActionPuzzle> ScrambleInfo<TPuzzle> {
     }
 }
 
-static CUBE5X5X5_SCRAMBLE_INFO_CELL: OnceLock<ScrambleInfo<KPuzzle>> = OnceLock::new();
+static CUBE5X5X5_SCRAMBLE_INFO_CELL: OnceLock<BigCubeScrambleInfo<KPuzzle>> = OnceLock::new();
 pub fn scramble_5x5x5() -> Alg {
     let scramble_info = CUBE5X5X5_SCRAMBLE_INFO_CELL.get_or_init(|| {
-        ScrambleInfo::new(
+        BigCubeScrambleInfo::new(
             cube5x5x5_kpuzzle(),
             static_parsed_list(&[
                 "U", "Uw", //
@@ -67,10 +67,10 @@ pub fn scramble_5x5x5_bld() -> Alg {
     add_random_suffixes_from(scramble_5x5x5(), [s1, s2])
 }
 
-static CUBE6X6X6_SCRAMBLE_INFO_CELL: OnceLock<ScrambleInfo<KPuzzle>> = OnceLock::new();
+static CUBE6X6X6_SCRAMBLE_INFO_CELL: OnceLock<BigCubeScrambleInfo<KPuzzle>> = OnceLock::new();
 pub fn scramble_6x6x6() -> Alg {
     let scramble_info = CUBE6X6X6_SCRAMBLE_INFO_CELL.get_or_init(|| {
-        ScrambleInfo::new(
+        BigCubeScrambleInfo::new(
             cube6x6x6_kpuzzle(),
             static_parsed_list(&[
                 "U", "Uw", "3Uw", //
@@ -85,10 +85,10 @@ pub fn scramble_6x6x6() -> Alg {
     scramble_big_cube(scramble_info, NUM_6X6X6_RANDOM_MOVES)
 }
 
-static CUBE7X7X7_SCRAMBLE_INFO_CELL: OnceLock<ScrambleInfo<KPuzzle>> = OnceLock::new();
+static CUBE7X7X7_SCRAMBLE_INFO_CELL: OnceLock<BigCubeScrambleInfo<KPuzzle>> = OnceLock::new();
 pub fn scramble_7x7x7() -> Alg {
     let scramble_info = CUBE7X7X7_SCRAMBLE_INFO_CELL.get_or_init(|| {
-        ScrambleInfo::new(
+        BigCubeScrambleInfo::new(
             cube7x7x7_kpuzzle(),
             static_parsed_list(&[
                 "U", "Uw", "3Uw", //
@@ -103,7 +103,7 @@ pub fn scramble_7x7x7() -> Alg {
     scramble_big_cube(scramble_info, NUM_7X7X7_RANDOM_MOVES)
 }
 
-fn scramble_big_cube(scramble_info: &ScrambleInfo<KPuzzle>, num_random_moves: usize) -> Alg {
+fn scramble_big_cube(scramble_info: &BigCubeScrambleInfo<KPuzzle>, num_random_moves: usize) -> Alg {
     // TODO: globally cache generators and `canonical_fsm` for each puzzle.
     let mut current_fsm_state = CANONICAL_FSM_START_STATE;
     let mut rng = thread_rng();

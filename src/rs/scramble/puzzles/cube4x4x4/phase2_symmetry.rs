@@ -177,8 +177,6 @@ impl SemiGroupActionPuzzle for Coord84 {
     }
 
     fn pattern_apply_transformation(
-        // TODO: this is a hack to allow `Phase2Puzzle` to access its tables, ideally we would avoid this.
-        // Then again, this might turn out to be necessary for similar high-performance implementations.
         &self,
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
@@ -187,8 +185,6 @@ impl SemiGroupActionPuzzle for Coord84 {
     }
 
     fn pattern_apply_transformation_into(
-        // TODO: this is a hack to allow `Phase2Puzzle` to access its tables, ideally we would avoid this.
-        // Then again, this might turn out to be necessary for similar high-performance implementations.
         &self,
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,

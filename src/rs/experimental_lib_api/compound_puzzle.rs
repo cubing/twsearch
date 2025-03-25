@@ -1,18 +1,14 @@
-use cubing::alg::Move;
+use cubing::{alg::Move, kpuzzle::InvalidAlgError};
 use num_integer::lcm;
 
 use crate::_internal::{
-    canonical_fsm::search_generators::{MoveTransformationInfo, SearchGenerators},
-    puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
-    search::move_count::MoveCount,
+    puzzle_traits::puzzle_traits::SemiGroupActionPuzzle, search::move_count::MoveCount,
 };
 
 #[derive(Clone, Debug)]
 pub struct CompoundPuzzle<TPuzzle0: SemiGroupActionPuzzle, TPuzzle1: SemiGroupActionPuzzle> {
     pub tpuzzle0: TPuzzle0,
     pub tpuzzle1: TPuzzle1,
-    pub search_generators_t0: SearchGenerators<TPuzzle0>, // TODO
-    pub search_generators_t1: SearchGenerators<TPuzzle1>, // TODO
 }
 
 impl<TPuzzle0: SemiGroupActionPuzzle, TPuzzle1: SemiGroupActionPuzzle> SemiGroupActionPuzzle
@@ -32,29 +28,21 @@ impl<TPuzzle0: SemiGroupActionPuzzle, TPuzzle1: SemiGroupActionPuzzle> SemiGroup
         &self,
         r#move: &Move,
     ) -> Result<Self::Transformation, cubing::kpuzzle::InvalidAlgError> {
+        dbg!(&self.tpuzzle1);
+        dbg!(&r#move);
+        dbg!(&self.tpuzzle1.puzzle_transformation_from_move(r#move));
         Ok((
             self.tpuzzle0.puzzle_transformation_from_move(r#move)?,
             self.tpuzzle1.puzzle_transformation_from_move(r#move)?,
         ))
     }
 
-    fn do_moves_commute(
-        &self,
-        move1_info: &MoveTransformationInfo<Self>,
-        move2_info: &MoveTransformationInfo<Self>,
-    ) -> bool {
-        self.tpuzzle0.do_moves_commute(
-            &self.search_generators_t0.flat[move1_info.flat_move_index],
-            &self.search_generators_t0.flat[move2_info.flat_move_index],
-        ) && self.tpuzzle1.do_moves_commute(
-            &self.search_generators_t1.flat[move1_info.flat_move_index],
-            &self.search_generators_t1.flat[move2_info.flat_move_index],
-        )
+    fn do_moves_commute(&self, move1: &Move, move2: &Move) -> Result<bool, InvalidAlgError> {
+        Ok(self.tpuzzle0.do_moves_commute(move1, move2)?
+            && self.tpuzzle1.do_moves_commute(move1, move2)?)
     }
 
     fn pattern_apply_transformation(
-        // TODO: this is a hack to allow `Phase2Puzzle` to access its tables, ideally we would avoid this.
-        // Then again, this might turn out to be necessary for similar high-performance implementations.
         &self,
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
@@ -69,8 +57,6 @@ impl<TPuzzle0: SemiGroupActionPuzzle, TPuzzle1: SemiGroupActionPuzzle> SemiGroup
     }
 
     fn pattern_apply_transformation_into(
-        // TODO: this is a hack to allow `Phase2Puzzle` to access its tables, ideally we would avoid this.
-        // Then again, this might turn out to be necessary for similar high-performance implementations.
         &self,
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,

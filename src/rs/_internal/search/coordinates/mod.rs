@@ -1,3 +1,5 @@
 pub mod graph_enumerated_derived_pattern_puzzle;
 pub mod graph_enumerated_derived_pattern_puzzle_prune_table;
+pub mod masked_kpuzzle_deriver;
 pub mod pattern_deriver;
+pub mod unenumerated_derived_pattern_puzzle;

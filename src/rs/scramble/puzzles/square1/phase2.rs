@@ -1,13 +1,13 @@
 use cubing::{
     alg::{parse_alg, parse_move, Alg, Move},
-    kpuzzle::{KPattern, KPuzzle, KPuzzleOrbitInfo},
+    kpuzzle::{InvalidAlgError, KPattern, KPuzzle, KPuzzleOrbitInfo},
 };
 use lazy_static::lazy_static;
 use std::cmp::max;
 
 use crate::{
     _internal::{
-        canonical_fsm::search_generators::{FlatMoveIndex, MoveTransformationInfo},
+        canonical_fsm::search_generators::FlatMoveIndex,
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{
             coordinates::{
@@ -233,9 +233,11 @@ impl PatternDeriver<KPuzzle> for Square0EquatorlessPatternDeriver {
 
     fn derive_pattern(
         &self,
-        _source_puzzle_pattern: &<KPuzzle as SemiGroupActionPuzzle>::Pattern,
+        source_puzzle_pattern: &<KPuzzle as SemiGroupActionPuzzle>::Pattern,
     ) -> Option<Self::DerivedPattern> {
-        todo!()
+        Some(Square0EquatorlessPattern {
+            pattern: source_puzzle_pattern.clone(),
+        })
     }
 
     // fn try_new(_kpuzzle: &KPuzzle, pattern: &KPattern) -> Option<Self> {
@@ -517,26 +519,8 @@ impl SemiGroupActionPuzzle for Square1Phase2Puzzle {
         ))
     }
 
-    fn do_moves_commute(
-        &self,
-        move1_info: &MoveTransformationInfo<Self>,
-        move2_info: &MoveTransformationInfo<Self>,
-    ) -> bool {
-        let move1_info = self
-            .shape_puzzle
-            .data
-            .search_generators_for_derived_pattern_puzzle
-            .by_move
-            .get(&move1_info.r#move)
-            .expect("TODO: invalid move lookup?");
-        let move2_info = self
-            .shape_puzzle
-            .data
-            .search_generators_for_derived_pattern_puzzle
-            .by_move
-            .get(&move2_info.r#move)
-            .expect("TODO: invalid move lookup?");
-        self.shape_puzzle.do_moves_commute(move1_info, move2_info)
+    fn do_moves_commute(&self, move1: &Move, move2: &Move) -> Result<bool, InvalidAlgError> {
+        self.shape_puzzle.do_moves_commute(move1, move2)
     }
 
     fn pattern_apply_transformation(

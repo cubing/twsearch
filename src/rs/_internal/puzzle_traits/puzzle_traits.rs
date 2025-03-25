@@ -2,9 +2,7 @@ use std::fmt::Debug;
 
 use cubing::{alg::Move, kpuzzle::InvalidAlgError};
 
-use crate::_internal::{
-    canonical_fsm::search_generators::MoveTransformationInfo, search::move_count::MoveCount,
-};
+use crate::_internal::search::move_count::MoveCount;
 
 // TODO: split this into 3 related traits.
 /// The `Clone` implementation must be cheap for both the main struct as well as the `Pattern` and `Transformation` types (e.g. implemented using data shared with an `Arc` under the hood whenever any non-trivial amount of data is associated).
@@ -31,17 +29,12 @@ pub trait SemiGroupActionPuzzle: Debug + Clone {
     ) -> Result<Self::Transformation, InvalidAlgError>;
 
     // TODO: this is a leaky abstraction. use traits and enums to create a natural API for this.
-    fn do_moves_commute(
-        &self,
-        move1_info: &MoveTransformationInfo<Self>,
-        move2_info: &MoveTransformationInfo<Self>,
-    ) -> bool;
+    // TODO: `InvalidMoveError`?
+    fn do_moves_commute(&self, move1: &Move, move2: &Move) -> Result<bool, InvalidAlgError>;
 
     /********* Functions "defined on the pattern". ********/
 
     fn pattern_apply_transformation(
-        // TODO: this is a hack to allow `Phase2Puzzle` to access its tables, ideally we would avoid this.
-        // Then again, this might turn out to be necessary for similar high-performance implementations.
         &self,
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
@@ -54,8 +47,6 @@ pub trait SemiGroupActionPuzzle: Debug + Clone {
     // state. The implementation must accept `into_pattern` values as input that
     // were left mangled by a previous call, without affecting semantics.
     fn pattern_apply_transformation_into(
-        // TODO: this is a hack to allow `Phase2Puzzle` to access its tables, ideally we would avoid this.
-        // Then again, this might turn out to be necessary for similar high-performance implementations.
         &self,
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,

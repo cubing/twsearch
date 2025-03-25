@@ -45,7 +45,7 @@ use crate::{
     },
 };
 
-const DEV_DEBUG_SQUARE1: bool = true;
+const DEV_DEBUG_SQUARE1: bool = false;
 
 // https://www.worldcubeassociation.org/regulations/#4b3d
 const SQUARE_1_SCRAMBLE_MIN_OPTIMAL_MOVE_COUNT: MoveCount = MoveCount(11);

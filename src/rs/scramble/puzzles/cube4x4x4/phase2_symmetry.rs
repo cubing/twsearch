@@ -177,8 +177,6 @@ impl SemiGroupActionPuzzle for Coord84 {
     }
 
     fn pattern_apply_transformation(
-        // TODO: this is a hack to allow `Phase2Puzzle` to access its tables, ideally we would avoid this.
-        // Then again, this might turn out to be necessary for similar high-performance implementations.
         &self,
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
@@ -187,8 +185,6 @@ impl SemiGroupActionPuzzle for Coord84 {
     }
 
     fn pattern_apply_transformation_into(
-        // TODO: this is a hack to allow `Phase2Puzzle` to access its tables, ideally we would avoid this.
-        // Then again, this might turn out to be necessary for similar high-performance implementations.
         &self,
         pattern: &Self::Pattern,
         transformation_to_apply: &Self::Transformation,
@@ -373,6 +369,8 @@ impl SemiGroupActionPuzzle for Coord84 {
 // impl Phase2PuzzleData {
 //     fn new() -> Self {
 //         let grouped_moves = vec![
+//             // TODO: We are removing Lw, Fw, and Bw. CS on the other hand, is removing L, D,
+//             // B, which makes a lot more sense!
 //             // Note: the first entry of each group must be the quantum move.
 //             vec![parse_move!("U"), parse_move!("U2"), parse_move!("U'")],
 //             vec![parse_move!("Uw2")],

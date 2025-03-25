@@ -18,7 +18,8 @@ pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), CommandError> {
         false,
     )?;
 
-    let canonical_fsm = CanonicalFSM::new(kpuzzle, search_generators, Default::default());
+    let canonical_fsm = CanonicalFSM::try_new(kpuzzle, search_generators, Default::default())
+        .expect("Could not construct FSM");
     dbg!(canonical_fsm);
 
     Ok(())

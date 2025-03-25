@@ -81,11 +81,14 @@ impl GodsAlgorithmSearch {
             quantum_metric,
             false,
         )?;
-        let canonical_fsm = CanonicalFSM::new(
+        let canonical_fsm = CanonicalFSM::try_new(
             kpuzzle.clone(),
             search_generators.clone(),
             Default::default(),
-        );
+        )
+        .map_err(|e| SearchError {
+            description: e.to_string(),
+        })?;
 
         let cached_inverses = IndexedVec::new(
             search_generators

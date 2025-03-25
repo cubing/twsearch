@@ -12,8 +12,10 @@ use crate::{
         },
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{
-            coordinates::graph_enumerated_derived_pattern_puzzle::{
-                DerivedPattern, DerivedPatternPuzzlePruneTable, GraphEnumeratedDerivedPatternPuzzle,
+            coordinates::{
+                graph_enumerated_derived_pattern_puzzle::GraphEnumeratedDerivedPatternPuzzle,
+                graph_enumerated_derived_pattern_puzzle_prune_table::GraphEnumeratedDerivedPatternPuzzlePruneTable,
+                pattern_deriver::PatternDeriver,
             },
             filter::filtering_decision::FilteringDecision,
             iterative_deepening::{
@@ -42,14 +44,15 @@ pub(crate) struct Square1Phase1Pattern {
     parity: BasicParity,
 }
 
-impl DerivedPattern<KPuzzle> for Square1Phase1Pattern {
-    fn derived_pattern_name() -> &'static str {
-        "U/D shape (Square-1 → phase 1)"
-    }
+#[derive(Clone, Debug)]
+pub(crate) struct Square1Phase1PatternDeriver {}
 
-    fn try_new(_kpuzzle: &KPuzzle, full_pattern: &KPattern) -> Option<Self> {
+impl PatternDeriver for Square1Phase1PatternDeriver {
+    type DerivedPattern = Square1Phase1Pattern;
+
+    fn derive_pattern(&self, source_puzzle_pattern: &KPattern) -> Option<Self::DerivedPattern> {
         let phase_mask = &square1_square_square_shape_kpattern(); // TODO: Store this with the coordinate lookup?
-        let Ok(masked_pattern) = apply_mask(full_pattern, phase_mask) else {
+        let Ok(masked_pattern) = apply_mask(source_puzzle_pattern, phase_mask) else {
             panic!("Mask application failed");
         };
 
@@ -58,16 +61,15 @@ impl DerivedPattern<KPuzzle> for Square1Phase1Pattern {
             return None;
         }
 
-        let parity = bandaged_wedge_parity(full_pattern);
-        Some(Self {
+        let parity = bandaged_wedge_parity(source_puzzle_pattern);
+        Some(Square1Phase1Pattern {
             masked_shape_pattern: masked_pattern,
             parity,
         })
     }
 }
-
 pub(crate) type Square1Phase1Puzzle =
-    GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Square1Phase1Pattern>;
+    GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Square1Phase1PatternDeriver>;
 
 // TODO: allow flipping this depending on whether this is for a scramble (backwards) or a solution (forwards)?
 const D_SQ_MOVE_RESTRICTED_RANGE: Range<i32> = -3..3;
@@ -115,9 +117,14 @@ fn filter_search_solution(
 
 // TODO: we currently take `square1_phase1_puzzle` as an argument to keep construction DRY. There's probably a better way to do this.
 pub(crate) fn square1_phase1_search_adaptations(
-    square1_phase1_puzzle: GraphEnumeratedDerivedPatternPuzzle<KPuzzle, Square1Phase1Pattern>,
+    square1_phase1_puzzle: GraphEnumeratedDerivedPatternPuzzle<
+        KPuzzle,
+        Square1Phase1PatternDeriver,
+    >,
 ) -> SearchAdaptations<Square1Phase1Puzzle> {
-    let prune_table = Box::new(DerivedPatternPuzzlePruneTable::new(square1_phase1_puzzle));
+    let prune_table = Box::new(GraphEnumeratedDerivedPatternPuzzlePruneTable::new(
+        square1_phase1_puzzle,
+    ));
     SearchAdaptations {
         prune_table,
         filter_transformation_fn: Some(Arc::new(Box::new(filter_transformation))),

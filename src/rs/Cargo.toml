@@ -18,6 +18,7 @@ erased_set = "0.8.0"
 indicatif = "0.17.6"
 instant = { version = "0.1.12", features = ["wasm-bindgen"] }
 lazy_static = "1.4.0"
+num-integer = "0.1.46"
 rand = "0.8.5"
 rouille = "3.6.2"
 serde = { version = "1.0.186", features = ["derive", "rc"] }

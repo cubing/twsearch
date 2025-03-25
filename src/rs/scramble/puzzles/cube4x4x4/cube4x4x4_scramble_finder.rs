@@ -1,19 +1,28 @@
 use std::env::var;
+use std::marker::PhantomData;
 
-use cubing::alg::{parse_alg, Alg};
+use cubing::alg::{parse_alg, parse_move, Alg};
 use cubing::kpuzzle::KPuzzle;
 
 use crate::_internal::cli::args::VerbosityLevel;
+use crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle;
+use crate::_internal::search::coordinates::masked_kpuzzle_deriver::MaskedPuzzleDeriver;
+use crate::_internal::search::coordinates::pattern_deriver::PatternDeriver;
+use crate::_internal::search::coordinates::unenumerated_derived_pattern_puzzle::UnenumeratedDerivedPatternPuzzle;
 use crate::_internal::search::filter::filtering_decision::FilteringDecision;
 use crate::_internal::search::search_logger::SearchLogger;
 use crate::experimental_lib_api::{
-    KPuzzleSimpleMaskPhase, KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,
+    CompoundDerivedPuzzle, CompoundPuzzle, KPuzzleSimpleMaskPhase,
+    KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,
 };
+use crate::scramble::puzzles::cube4x4x4::phase2::WingParityPuzzle;
 use crate::scramble::puzzles::definitions::{
-    cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern, cube4x4x4_phase2_target_kpattern,
+    cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern, cube4x4x4_phase2_centers_target_kpattern,
+    cube4x4x4_phase2_wing_parity_kpuzzle,
 };
 use crate::{_internal::errors::SearchError, scramble::scramble_search::move_list_from_vec};
 
+use super::phase2::WingParityPatternDeriver;
 use crate::scramble::{
     collapse::collapse_adjacent_moves,
     randomize::{
@@ -23,6 +32,33 @@ use crate::scramble::{
         NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
     },
 };
+
+/*
+
+Wings and centers are indexed by Speffz ordering: https://www.speedsolving.com/wiki/index.php?title=Speffz
+
+╭──────────────────────────────────────────────────╮
+│                  (16)                            │
+│               ╭─────┬───╮                        │
+│               │    0│   │                        │
+│               ├───┬─┤  1│                        │
+│               │3  ├─┴───┤(12)                    │
+│         (3)   │   │2    │   (1)       (0)        │
+│     ╭─────┬───┼───┴─┬───┼─────┬───┬─────┬───╮    │
+│     │    4│   │    8│   │   12│   │16   │   │    │
+│ (17)├───┬─┤  5├───┬─┤  9│───┬─┤ 13├───┬─┤  7│    │
+│     │7  ├─┴───┤11 ├─┴───┤15 ├─┴───┤19 ├─┴───┤(7) │
+│     │   │6    │   │10   │   │14   │   │18   │    │
+│     ╰───┴─────┼───┴─────┼───┴─────┴───┴─────╯    │
+│         (23)  │   20│   │   (21)      (22)       │
+│            (6)├───┬─┤ 21│                        │
+│               │23 ├─┴───┤(14)                    │
+│               │   │22   │                        │
+│               ╰───┴─────╯                        │
+│                   (18)                           │
+╰──────────────────────────────────────────────────╯
+
+*/
 
 pub(crate) struct Cube4x4x4ScrambleFinder {
     multi_phase_search: MultiPhaseSearch<KPuzzle>,
@@ -97,12 +133,13 @@ impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
 impl Default for Cube4x4x4ScrambleFinder {
     fn default() -> Self {
         let kpuzzle = cube4x4x4_kpuzzle();
+        // TODO: should we reduce the move count here as we've done for phase2? For example, Fw and
+        // Bw are redundant, right?
         let phase1_generator_moves = move_list_from_vec(vec![
             "Uw", "U", "Lw", "L", "Fw", "F", "Rw", "R", "Bw", "B", "Dw", "D",
         ]);
-        let phase2_generator_moves = move_list_from_vec(vec![
-            "Uw2", "U", "Lw", "L", "Fw2", "F", "Rw", "R", "Bw2", "B", "Dw2", "D",
-        ]);
+        let phase2_generator_moves =
+            move_list_from_vec(vec!["Uw2", "U", "L", "Fw2", "F", "Rw", "R", "B", "D"]);
 
         // let phase1_ifds = <IterativeDeepeningSearch>::try_new(
         //     kpuzzle.clone(),
@@ -136,12 +173,73 @@ impl Default for Cube4x4x4ScrambleFinder {
             parse_alg!("Dw2 Rw2 Fw2"),
             parse_alg!("Fw2 Rw2 Uw2"),
         ]
-        .map(|alg| cube4x4x4_phase2_target_kpattern().apply_alg(alg).unwrap());
+        .map(|alg| {
+            cube4x4x4_phase2_centers_target_kpattern()
+                .apply_alg(alg)
+                .unwrap()
+        });
 
         // This would be inline, but we need to work around https://github.com/cubing/twsearch/issues/128
         let phase2_name =
             "Place F/B and U/D centers on correct axes and make L/R solvable with half turns"
                 .to_owned();
+
+        let masked_centers_puzzle_deriver =
+            MaskedPuzzleDeriver::new(cube4x4x4_phase2_centers_target_kpattern().clone());
+        let masked_centers_derived_puzzle = UnenumeratedDerivedPatternPuzzle::new(
+            kpuzzle.clone(),
+            kpuzzle.clone(),
+            masked_centers_puzzle_deriver,
+        );
+
+        let wing_parity_pattern_deriver = WingParityPatternDeriver {};
+        let wing_parity_derived_puzzle = UnenumeratedDerivedPatternPuzzle::new(
+            kpuzzle.clone(),
+            cube4x4x4_phase2_wing_parity_kpuzzle().clone(),
+            wing_parity_pattern_deriver,
+        );
+
+        let compound_puzzle: CompoundPuzzle<
+            UnenumeratedDerivedPatternPuzzle<KPuzzle, KPuzzle, MaskedPuzzleDeriver>,
+            WingParityPuzzle,
+        > = CompoundPuzzle {
+            tpuzzle0: masked_centers_derived_puzzle,
+            tpuzzle1: wing_parity_derived_puzzle.clone(),
+        };
+        let f = CompoundDerivedPuzzle::<
+            KPuzzle,
+            UnenumeratedDerivedPatternPuzzle<KPuzzle, KPuzzle, MaskedPuzzleDeriver>,
+            WingParityPuzzle,
+        > {
+            compound_puzzle,
+            phantom_data: PhantomData::<KPuzzle>,
+            // tpuzzle1: kpuzzle.clone(),
+            // tpuzzle2: kpuzzle.clone(),
+            // search_generators_t1: phase2_search_generators.clone(),
+            // search_generators_t2: phase2_search_generators.clone(),
+        };
+
+        dbg!(parse_move!("2R"));
+
+        let derived_pattern = f.derive_pattern(&kpuzzle.default_pattern()).unwrap();
+        dbg!(&derived_pattern);
+        let derived_transformation = f
+            .puzzle_transformation_from_move(parse_move!("2R"))
+            .unwrap();
+        dbg!(&derived_transformation);
+        dbg!(f.pattern_apply_transformation(&derived_pattern, &derived_transformation));
+
+        // let g: <CompoundDerivedPuzzle<
+        //     WingParityPatternDeriver,
+        //     WingParityPatternDeriver,
+        // > as SemiGroupActionPuzzle>::Pattern = (WingParityPattern {
+        //     parity: crate::scramble::randomize::BasicParity::Even,
+        // }, WingParityPattern {
+        //     parity: crate::scramble::randomize::BasicParity::Odd,
+        // });
+
+        // dbg!(f);
+        // dbg!(g);
 
         let multi_phase_search = MultiPhaseSearch::try_new(
             kpuzzle.clone(),
@@ -159,10 +257,53 @@ impl Default for Cube4x4x4ScrambleFinder {
                     )
                     .unwrap(),
                 ),
+                // TODO: filter out phase2 solutions that don't obey the EP rules.
+                //                   00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+                //
+                // Analyzing move U: 03 00 01 02 08 05 06 07 12 09 10 11 16 13 14 15 04 17 18 19 20 21 22 23
+                //                    *  *  *  *  *           *           *           *
+                //
+                //
+                // Analyzing move D: 00 01 02 03 04 05 18 07 08 09 06 11 12 13 10 15 16 17 14 19 23 20 21 22
+                //                                      *           *           *           *     *  *  *  *
+                //
+                //
+                //
+                // Analyzing move B: 13 01 02 03 04 05 06 00 08 09 10 11 12 22 14 15 19 16 17 18 20 21 07 23
+                //                    *                    *                 *        *  *  *  *        *
+                //
+                // Analyzing move R: 00 09 02 03 04 05 06 07 08 21 10 11 15 12 13 14 16 17 18 01 20 19 22 23
+                //                       *                       *        *  *  *  *           *     *
+                //
+                // Analyzing move F: 00 01 05 03 04 20 06 07 11 08 09 10 12 13 14 02 16 17 18 19 15 21 22 23
+                //                          *        *        *  *  *  *           *              *
+                // Analyzing move L: 00 01 02 17 07 04 05 06 08 09 10 03 12 13 14 15 16 23 18 19 20 21 22 11
+                //                             *  *  *  *  *           *                 *                 *
+                //
+                //                   00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+                //
+                // slot_to_highness = [ 0,  0, 0, 0, 1,  0,  1,  0, 1,  1,  1, 1, 1,  0,  1, 0, 1, 1,  1,  1,  0,  0,  0, 0]
+                // edge_partner =     [16, 12, 8, 4, 3, 11, 23, 17, 2, 15, 20, 5, 1, 19, 21, 9, 0, 7, 22, 13, 10, 14, 18, 6]
+                //
+                // "low":   [0, 1, 2, 3, 5, 7, 13, 15, 20, 21, 22, 23]
+                // "high":  [4, 6, 8, 9, 10, 11, 12, 14, 16, 17, 18, 19]
+                //
+                // BR = 13, 19
+                // BL = 7, 17
+                // FR = 9, 15
+                // FL = 5, 11
+                // DR = 14, 21
+                // UF = 2, 8
+                // DF = 10, 20
+                // UB = 0, 16
+                // DB = 18, 22
+                // UL = 3, 4
+                // UR = 1, 12
+                // DL = 6, 23
                 Box::new(
                     KPuzzleSimpleMaskPhase::try_new(
                         phase2_name,
-                        cube4x4x4_phase2_target_kpattern().clone(),
+                        cube4x4x4_phase2_centers_target_kpattern().clone(),
                         phase2_generator_moves,
                         KPuzzleSimpleMaskPhaseConstructionOptions {
                             search_logger: Some(search_logger.clone()),
@@ -221,3 +362,37 @@ impl Cube4x4x4ScrambleFinder {
         cube4x4x4_kpuzzle()
     }
 }
+
+// #[derive(Debug, Clone, Hash, PartialEq, Eq)]
+// struct Phase2WingSeparationPattern {
+//     pattern: KPattern,
+// }
+
+// #[derive(Clone, Debug)]
+// struct Phase2WingSeparationPuzzle {}
+
+// impl DerivedPatternPuzzle<KPuzzle> for Phase2WingSeparationPuzzle {
+//     type DerivedPattern = Phase2WingSeparationPattern;
+
+//     fn derive_pattern(&self, source_puzzle_pattern: &KPattern) -> Phase2WingSeparationPattern {
+//         let Ok(pattern) = apply_mask(
+//             source_puzzle_pattern,
+//             cube4x4x4_phase2_wing_separation_mask_kpattern(),
+//         ) else {
+//             return None;
+//         };
+//         Phase2WingSeparationPattern { pattern }
+//     }
+
+//     // fn derived_pattern_name() -> &'static str {
+//     //     "phase 2 wing separation"
+//     // }
+
+//     // fn try_new(_puzzle: &KPuzzle, pattern: &KPattern) -> Option<Self> {
+//     //     let Ok(pattern) = apply_mask(pattern, cube4x4x4_phase2_wing_separation_mask_kpattern())
+//     //     else {
+//     //         return None;
+//     //     };
+//     //     Some(Self { pattern })
+//     // }
+// }

@@ -20,7 +20,24 @@ pub struct CompoundDerivedPuzzle<
     TDerivedPatternPuzzle1: DerivedPatternPuzzle<TPuzzle>,
 > {
     pub compound_puzzle: CompoundPuzzle<TDerivedPatternPuzzle0, TDerivedPatternPuzzle1>,
-    pub phantom_data: PhantomData<TPuzzle>,
+    phantom_data: PhantomData<TPuzzle>,
+}
+
+impl<
+        TPuzzle: SemiGroupActionPuzzle,
+        TDerivedPatternPuzzle0: DerivedPatternPuzzle<TPuzzle>,
+        TDerivedPatternPuzzle1: DerivedPatternPuzzle<TPuzzle>,
+    > From<CompoundPuzzle<TDerivedPatternPuzzle0, TDerivedPatternPuzzle1>>
+    for CompoundDerivedPuzzle<TPuzzle, TDerivedPatternPuzzle0, TDerivedPatternPuzzle1>
+{
+    fn from(
+        compound_puzzle: CompoundPuzzle<TDerivedPatternPuzzle0, TDerivedPatternPuzzle1>,
+    ) -> Self {
+        Self {
+            compound_puzzle,
+            phantom_data: PhantomData,
+        }
+    }
 }
 
 impl<

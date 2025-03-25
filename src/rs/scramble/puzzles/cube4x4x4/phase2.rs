@@ -2,11 +2,15 @@ use cubing::kpuzzle::{KPattern, KPuzzle};
 
 use crate::{
     _internal::search::coordinates::{
-        pattern_deriver::PatternDeriver,
+        masked_kpuzzle_deriver::MaskedPuzzleDeriver, pattern_deriver::PatternDeriver,
         unenumerated_derived_pattern_puzzle::UnenumeratedDerivedPatternPuzzle,
     },
+    experimental_lib_api::{CompoundDerivedPuzzle, CompoundPuzzle},
     scramble::{
-        puzzles::definitions::cube4x4x4_phase2_wing_parity_kpuzzle,
+        puzzles::definitions::{
+            cube4x4x4_kpuzzle, cube4x4x4_phase2_centers_target_kpattern,
+            cube4x4x4_phase2_wing_parity_kpuzzle,
+        },
         randomize::{basic_parity, BasicParity},
     },
 };
@@ -51,5 +55,41 @@ impl PatternDeriver<KPuzzle> for WingParityPatternDeriver {
     }
 }
 
-pub type WingParityPuzzle =
+pub(crate) type WingParityPuzzle =
     UnenumeratedDerivedPatternPuzzle<KPuzzle, KPuzzle, WingParityPatternDeriver>;
+
+pub(crate) type Cube4x4x4Phase2Puzzle = CompoundDerivedPuzzle<
+    KPuzzle,
+    UnenumeratedDerivedPatternPuzzle<KPuzzle, KPuzzle, MaskedPuzzleDeriver>,
+    WingParityPuzzle,
+>;
+
+impl Default for Cube4x4x4Phase2Puzzle {
+    fn default() -> Self {
+        let kpuzzle = cube4x4x4_kpuzzle();
+
+        let masked_centers_puzzle_deriver =
+            MaskedPuzzleDeriver::new(cube4x4x4_phase2_centers_target_kpattern().clone());
+        let masked_centers_derived_puzzle = UnenumeratedDerivedPatternPuzzle::new(
+            kpuzzle.clone(),
+            kpuzzle.clone(),
+            masked_centers_puzzle_deriver,
+        );
+
+        let wing_parity_pattern_deriver = WingParityPatternDeriver {};
+        let wing_parity_derived_puzzle = UnenumeratedDerivedPatternPuzzle::new(
+            kpuzzle.clone(),
+            cube4x4x4_phase2_wing_parity_kpuzzle().clone(),
+            wing_parity_pattern_deriver,
+        );
+
+        let compound_puzzle: CompoundPuzzle<
+            UnenumeratedDerivedPatternPuzzle<KPuzzle, KPuzzle, MaskedPuzzleDeriver>,
+            WingParityPuzzle,
+        > = CompoundPuzzle {
+            tpuzzle0: masked_centers_derived_puzzle,
+            tpuzzle1: wing_parity_derived_puzzle.clone(),
+        };
+        compound_puzzle.into()
+    }
+}

@@ -1,28 +1,22 @@
 use std::env::var;
-use std::marker::PhantomData;
 
 use cubing::alg::{parse_alg, parse_move, Alg};
 use cubing::kpuzzle::KPuzzle;
 
 use crate::_internal::cli::args::VerbosityLevel;
 use crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle;
-use crate::_internal::search::coordinates::masked_kpuzzle_deriver::MaskedPuzzleDeriver;
 use crate::_internal::search::coordinates::pattern_deriver::PatternDeriver;
-use crate::_internal::search::coordinates::unenumerated_derived_pattern_puzzle::UnenumeratedDerivedPatternPuzzle;
 use crate::_internal::search::filter::filtering_decision::FilteringDecision;
 use crate::_internal::search::search_logger::SearchLogger;
 use crate::experimental_lib_api::{
-    CompoundDerivedPuzzle, CompoundPuzzle, KPuzzleSimpleMaskPhase,
-    KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,
+    KPuzzleSimpleMaskPhase, KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,
 };
-use crate::scramble::puzzles::cube4x4x4::phase2::WingParityPuzzle;
+use crate::scramble::puzzles::cube4x4x4::phase2::Cube4x4x4Phase2Puzzle;
 use crate::scramble::puzzles::definitions::{
     cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern, cube4x4x4_phase2_centers_target_kpattern,
-    cube4x4x4_phase2_wing_parity_kpuzzle,
 };
 use crate::{_internal::errors::SearchError, scramble::scramble_search::move_list_from_vec};
 
-use super::phase2::WingParityPatternDeriver;
 use crate::scramble::{
     collapse::collapse_adjacent_moves,
     randomize::{
@@ -184,50 +178,20 @@ impl Default for Cube4x4x4ScrambleFinder {
             "Place F/B and U/D centers on correct axes and make L/R solvable with half turns"
                 .to_owned();
 
-        let masked_centers_puzzle_deriver =
-            MaskedPuzzleDeriver::new(cube4x4x4_phase2_centers_target_kpattern().clone());
-        let masked_centers_derived_puzzle = UnenumeratedDerivedPatternPuzzle::new(
-            kpuzzle.clone(),
-            kpuzzle.clone(),
-            masked_centers_puzzle_deriver,
-        );
-
-        let wing_parity_pattern_deriver = WingParityPatternDeriver {};
-        let wing_parity_derived_puzzle = UnenumeratedDerivedPatternPuzzle::new(
-            kpuzzle.clone(),
-            cube4x4x4_phase2_wing_parity_kpuzzle().clone(),
-            wing_parity_pattern_deriver,
-        );
-
-        let compound_puzzle: CompoundPuzzle<
-            UnenumeratedDerivedPatternPuzzle<KPuzzle, KPuzzle, MaskedPuzzleDeriver>,
-            WingParityPuzzle,
-        > = CompoundPuzzle {
-            tpuzzle0: masked_centers_derived_puzzle,
-            tpuzzle1: wing_parity_derived_puzzle.clone(),
-        };
-        let f = CompoundDerivedPuzzle::<
-            KPuzzle,
-            UnenumeratedDerivedPatternPuzzle<KPuzzle, KPuzzle, MaskedPuzzleDeriver>,
-            WingParityPuzzle,
-        > {
-            compound_puzzle,
-            phantom_data: PhantomData::<KPuzzle>,
-            // tpuzzle1: kpuzzle.clone(),
-            // tpuzzle2: kpuzzle.clone(),
-            // search_generators_t1: phase2_search_generators.clone(),
-            // search_generators_t2: phase2_search_generators.clone(),
-        };
-
         dbg!(parse_move!("2R"));
 
-        let derived_pattern = f.derive_pattern(&kpuzzle.default_pattern()).unwrap();
+        let cube4x4x4_phase2_puzzle = Cube4x4x4Phase2Puzzle::default();
+
+        let derived_pattern = cube4x4x4_phase2_puzzle
+            .derive_pattern(&kpuzzle.default_pattern())
+            .unwrap();
         dbg!(&derived_pattern);
-        let derived_transformation = f
+        let derived_transformation = cube4x4x4_phase2_puzzle
             .puzzle_transformation_from_move(parse_move!("2R"))
             .unwrap();
         dbg!(&derived_transformation);
-        dbg!(f.pattern_apply_transformation(&derived_pattern, &derived_transformation));
+        dbg!(cube4x4x4_phase2_puzzle
+            .pattern_apply_transformation(&derived_pattern, &derived_transformation));
 
         // let g: <CompoundDerivedPuzzle<
         //     WingParityPatternDeriver,

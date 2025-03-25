@@ -1,20 +1,16 @@
 use std::env::var;
+use std::sync::Arc;
 
-use cubing::alg::{parse_alg, parse_move, Alg};
+use cubing::alg::Alg;
 use cubing::kpuzzle::KPuzzle;
 
 use crate::_internal::cli::args::VerbosityLevel;
-use crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle;
-use crate::_internal::search::coordinates::pattern_deriver::PatternDeriver;
 use crate::_internal::search::filter::filtering_decision::FilteringDecision;
 use crate::_internal::search::search_logger::SearchLogger;
 use crate::experimental_lib_api::{
     KPuzzleSimpleMaskPhase, KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,
 };
-use crate::scramble::puzzles::cube4x4x4::phase2::Cube4x4x4Phase2Puzzle;
-use crate::scramble::puzzles::definitions::{
-    cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern, cube4x4x4_phase2_centers_target_kpattern,
-};
+use crate::scramble::puzzles::definitions::{cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern};
 use crate::{_internal::errors::SearchError, scramble::scramble_search::move_list_from_vec};
 
 use crate::scramble::{
@@ -26,6 +22,8 @@ use crate::scramble::{
         NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
     },
 };
+
+use super::phase2::phase2_search;
 
 /*
 
@@ -132,78 +130,9 @@ impl Default for Cube4x4x4ScrambleFinder {
         let phase1_generator_moves = move_list_from_vec(vec![
             "Uw", "U", "Lw", "L", "Fw", "F", "Rw", "R", "Bw", "B", "Dw", "D",
         ]);
-        let phase2_generator_moves =
-            move_list_from_vec(vec!["Uw2", "U", "L", "Fw2", "F", "Rw", "R", "B", "D"]);
-
-        // let phase1_ifds = <IterativeDeepeningSearch>::try_new(
-        //     kpuzzle.clone(),
-        //     generator_moves,
-        //     cube4x4x4_phase1_target_kpattern().clone(),
-        //     IterativeDeepeningSearchConstructionOptions {
-        //         search_logger: SearchLogger {
-        //             verbosity: VerbosityLevel::Info,
-        //         }
-        //         .into(),
-        //         ..Default::default()
-        //     },
-        // )
-        // .unwrap();
-
         let search_logger = SearchLogger {
             verbosity: VerbosityLevel::Info,
         };
-
-        let phase2_target_patterns = [
-            parse_alg!(""),
-            parse_alg!("y2"),
-            parse_alg!("Fw2"),
-            parse_alg!("Bw2"),
-            parse_alg!("Uw2"),
-            parse_alg!("Dw2"),
-            parse_alg!("Fw2 Rw2"),
-            parse_alg!("Bw2 Rw2"),
-            parse_alg!("Uw2 Rw2"),
-            parse_alg!("Dw2 Rw2"),
-            parse_alg!("Dw2 Rw2 Fw2"),
-            parse_alg!("Fw2 Rw2 Uw2"),
-        ]
-        .map(|alg| {
-            cube4x4x4_phase2_centers_target_kpattern()
-                .apply_alg(alg)
-                .unwrap()
-        });
-
-        // This would be inline, but we need to work around https://github.com/cubing/twsearch/issues/128
-        let phase2_name =
-            "Place F/B and U/D centers on correct axes and make L/R solvable with half turns"
-                .to_owned();
-
-        dbg!(parse_move!("2R"));
-
-        let cube4x4x4_phase2_puzzle = Cube4x4x4Phase2Puzzle::default();
-
-        let derived_pattern = cube4x4x4_phase2_puzzle
-            .derive_pattern(&kpuzzle.default_pattern())
-            .unwrap();
-        dbg!(&derived_pattern);
-        let derived_transformation = cube4x4x4_phase2_puzzle
-            .puzzle_transformation_from_move(parse_move!("2R"))
-            .unwrap();
-        dbg!(&derived_transformation);
-        dbg!(cube4x4x4_phase2_puzzle
-            .pattern_apply_transformation(&derived_pattern, &derived_transformation));
-
-        // let g: <CompoundDerivedPuzzle<
-        //     WingParityPatternDeriver,
-        //     WingParityPatternDeriver,
-        // > as SemiGroupActionPuzzle>::Pattern = (WingParityPattern {
-        //     parity: crate::scramble::randomize::BasicParity::Even,
-        // }, WingParityPattern {
-        //     parity: crate::scramble::randomize::BasicParity::Odd,
-        // });
-
-        // dbg!(f);
-        // dbg!(g);
 
         let multi_phase_search = MultiPhaseSearch::try_new(
             kpuzzle.clone(),
@@ -221,62 +150,7 @@ impl Default for Cube4x4x4ScrambleFinder {
                     )
                     .unwrap(),
                 ),
-                // TODO: filter out phase2 solutions that don't obey the EP rules.
-                //                   00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23
-                //
-                // Analyzing move U: 03 00 01 02 08 05 06 07 12 09 10 11 16 13 14 15 04 17 18 19 20 21 22 23
-                //                    *  *  *  *  *           *           *           *
-                //
-                //
-                // Analyzing move D: 00 01 02 03 04 05 18 07 08 09 06 11 12 13 10 15 16 17 14 19 23 20 21 22
-                //                                      *           *           *           *     *  *  *  *
-                //
-                //
-                //
-                // Analyzing move B: 13 01 02 03 04 05 06 00 08 09 10 11 12 22 14 15 19 16 17 18 20 21 07 23
-                //                    *                    *                 *        *  *  *  *        *
-                //
-                // Analyzing move R: 00 09 02 03 04 05 06 07 08 21 10 11 15 12 13 14 16 17 18 01 20 19 22 23
-                //                       *                       *        *  *  *  *           *     *
-                //
-                // Analyzing move F: 00 01 05 03 04 20 06 07 11 08 09 10 12 13 14 02 16 17 18 19 15 21 22 23
-                //                          *        *        *  *  *  *           *              *
-                // Analyzing move L: 00 01 02 17 07 04 05 06 08 09 10 03 12 13 14 15 16 23 18 19 20 21 22 11
-                //                             *  *  *  *  *           *                 *                 *
-                //
-                //                   00 01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 21 22 23
-                //
-                // slot_to_highness = [ 0,  0, 0, 0, 1,  0,  1,  0, 1,  1,  1, 1, 1,  0,  1, 0, 1, 1,  1,  1,  0,  0,  0, 0]
-                // edge_partner =     [16, 12, 8, 4, 3, 11, 23, 17, 2, 15, 20, 5, 1, 19, 21, 9, 0, 7, 22, 13, 10, 14, 18, 6]
-                //
-                // "low":   [0, 1, 2, 3, 5, 7, 13, 15, 20, 21, 22, 23]
-                // "high":  [4, 6, 8, 9, 10, 11, 12, 14, 16, 17, 18, 19]
-                //
-                // BR = 13, 19
-                // BL = 7, 17
-                // FR = 9, 15
-                // FL = 5, 11
-                // DR = 14, 21
-                // UF = 2, 8
-                // DF = 10, 20
-                // UB = 0, 16
-                // DB = 18, 22
-                // UL = 3, 4
-                // UR = 1, 12
-                // DL = 6, 23
-                Box::new(
-                    KPuzzleSimpleMaskPhase::try_new(
-                        phase2_name,
-                        cube4x4x4_phase2_centers_target_kpattern().clone(),
-                        phase2_generator_moves,
-                        KPuzzleSimpleMaskPhaseConstructionOptions {
-                            search_logger: Some(search_logger.clone()),
-                            masked_target_patterns: Some(phase2_target_patterns.to_vec()),
-                            ..Default::default()
-                        },
-                    )
-                    .unwrap(),
-                ),
+                Box::new(phase2_search(Arc::new(search_logger.clone()))),
             ],
             // Default::default(),
             Some(SearchLogger {

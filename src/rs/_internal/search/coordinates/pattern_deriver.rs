@@ -15,15 +15,7 @@ pub trait PatternDeriver<TSourcePuzzle: SemiGroupActionPuzzle = KPuzzle>: Clone 
     ) -> Option<Self::DerivedPattern>;
 }
 
-// pub trait DerivedPatternPuzzle<TSourcePuzzle: SemiGroupActionPuzzle>:
-//     SemiGroupActionPuzzle
-// {
-//     fn derive_pattern(
-//         source_puzzle_pattern: &TSourcePuzzle::Pattern,
-//     ) -> <Self as SemiGroupActionPuzzle>::Pattern;
-// }
-
-pub trait DerivedPatternPuzzle<TSourcePuzzle: SemiGroupActionPuzzle>:
+pub trait DerivedPuzzle<TSourcePuzzle: SemiGroupActionPuzzle>:
     PatternDeriver<TSourcePuzzle> + SemiGroupActionPuzzle<Pattern = Self::DerivedPattern>
 {
 }

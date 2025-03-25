@@ -6,7 +6,7 @@ use num_integer::lcm;
 use crate::_internal::{
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
-        coordinates::pattern_deriver::{DerivedPatternPuzzle, PatternDeriver},
+        coordinates::pattern_deriver::{DerivedPuzzle, PatternDeriver},
         move_count::MoveCount,
     },
 };
@@ -16,23 +16,21 @@ use super::CompoundPuzzle;
 #[derive(Clone, Debug)]
 pub struct CompoundDerivedPuzzle<
     TPuzzle: SemiGroupActionPuzzle,
-    TDerivedPatternPuzzle0: DerivedPatternPuzzle<TPuzzle>,
-    TDerivedPatternPuzzle1: DerivedPatternPuzzle<TPuzzle>,
+    TDerivedPuzzle0: DerivedPuzzle<TPuzzle>,
+    TDerivedPuzzle1: DerivedPuzzle<TPuzzle>,
 > {
-    pub compound_puzzle: CompoundPuzzle<TDerivedPatternPuzzle0, TDerivedPatternPuzzle1>,
+    pub compound_puzzle: CompoundPuzzle<TDerivedPuzzle0, TDerivedPuzzle1>,
     phantom_data: PhantomData<TPuzzle>,
 }
 
 impl<
         TPuzzle: SemiGroupActionPuzzle,
-        TDerivedPatternPuzzle0: DerivedPatternPuzzle<TPuzzle>,
-        TDerivedPatternPuzzle1: DerivedPatternPuzzle<TPuzzle>,
-    > From<CompoundPuzzle<TDerivedPatternPuzzle0, TDerivedPatternPuzzle1>>
-    for CompoundDerivedPuzzle<TPuzzle, TDerivedPatternPuzzle0, TDerivedPatternPuzzle1>
+        TDerivedPuzzle0: DerivedPuzzle<TPuzzle>,
+        TDerivedPuzzle1: DerivedPuzzle<TPuzzle>,
+    > From<CompoundPuzzle<TDerivedPuzzle0, TDerivedPuzzle1>>
+    for CompoundDerivedPuzzle<TPuzzle, TDerivedPuzzle0, TDerivedPuzzle1>
 {
-    fn from(
-        compound_puzzle: CompoundPuzzle<TDerivedPatternPuzzle0, TDerivedPatternPuzzle1>,
-    ) -> Self {
+    fn from(compound_puzzle: CompoundPuzzle<TDerivedPuzzle0, TDerivedPuzzle1>) -> Self {
         Self {
             compound_puzzle,
             phantom_data: PhantomData,
@@ -42,25 +40,22 @@ impl<
 
 impl<
         TPuzzle: SemiGroupActionPuzzle,
-        TDerivedPatternPuzzle0: DerivedPatternPuzzle<TPuzzle>,
-        TDerivedPatternPuzzle1: DerivedPatternPuzzle<TPuzzle>,
-    > PatternDeriver<TPuzzle>
-    for CompoundDerivedPuzzle<TPuzzle, TDerivedPatternPuzzle0, TDerivedPatternPuzzle1>
+        TDerivedPuzzle0: DerivedPuzzle<TPuzzle>,
+        TDerivedPuzzle1: DerivedPuzzle<TPuzzle>,
+    > PatternDeriver<TPuzzle> for CompoundDerivedPuzzle<TPuzzle, TDerivedPuzzle0, TDerivedPuzzle1>
 {
-    type DerivedPattern = <CompoundPuzzle<
-        TDerivedPatternPuzzle0,
-        TDerivedPatternPuzzle1,
-    > as SemiGroupActionPuzzle>::Pattern;
+    type DerivedPattern =
+        <CompoundPuzzle<TDerivedPuzzle0, TDerivedPuzzle1> as SemiGroupActionPuzzle>::Pattern;
 
     fn derive_pattern(
         &self,
         source_puzzle_pattern: &<TPuzzle as SemiGroupActionPuzzle>::Pattern,
     ) -> Option<Self::DerivedPattern> {
-        let pattern0: TDerivedPatternPuzzle0::Pattern = self
+        let pattern0: TDerivedPuzzle0::Pattern = self
             .compound_puzzle
             .tpuzzle0
             .derive_pattern(source_puzzle_pattern)?;
-        let pattern1: TDerivedPatternPuzzle1::Pattern = self
+        let pattern1: TDerivedPuzzle1::Pattern = self
             .compound_puzzle
             .tpuzzle1
             .derive_pattern(source_puzzle_pattern)?;
@@ -70,28 +65,22 @@ impl<
 
 impl<
         TPuzzle: SemiGroupActionPuzzle,
-        TDerivedPatternPuzzle0: DerivedPatternPuzzle<TPuzzle>,
-        TDerivedPatternPuzzle1: DerivedPatternPuzzle<TPuzzle>,
-    > DerivedPatternPuzzle<TPuzzle>
-    for CompoundDerivedPuzzle<TPuzzle, TDerivedPatternPuzzle0, TDerivedPatternPuzzle1>
+        TDerivedPuzzle0: DerivedPuzzle<TPuzzle>,
+        TDerivedPuzzle1: DerivedPuzzle<TPuzzle>,
+    > DerivedPuzzle<TPuzzle> for CompoundDerivedPuzzle<TPuzzle, TDerivedPuzzle0, TDerivedPuzzle1>
 {
 }
 
 impl<
         TPuzzle: SemiGroupActionPuzzle,
-        TDerivedPatternPuzzle0: DerivedPatternPuzzle<TPuzzle>,
-        TDerivedPatternPuzzle1: DerivedPatternPuzzle<TPuzzle>,
-    > SemiGroupActionPuzzle
-    for CompoundDerivedPuzzle<TPuzzle, TDerivedPatternPuzzle0, TDerivedPatternPuzzle1>
+        TDerivedPuzzle0: DerivedPuzzle<TPuzzle>,
+        TDerivedPuzzle1: DerivedPuzzle<TPuzzle>,
+    > SemiGroupActionPuzzle for CompoundDerivedPuzzle<TPuzzle, TDerivedPuzzle0, TDerivedPuzzle1>
 {
-    type Pattern = <CompoundPuzzle<
-    TDerivedPatternPuzzle0,
-    TDerivedPatternPuzzle1,
-> as SemiGroupActionPuzzle>::Pattern;
-    type Transformation = <CompoundPuzzle<
-    TDerivedPatternPuzzle0,
-    TDerivedPatternPuzzle1,
-> as SemiGroupActionPuzzle>::Transformation;
+    type Pattern =
+        <CompoundPuzzle<TDerivedPuzzle0, TDerivedPuzzle1> as SemiGroupActionPuzzle>::Pattern;
+    type Transformation =
+        <CompoundPuzzle<TDerivedPuzzle0, TDerivedPuzzle1> as SemiGroupActionPuzzle>::Transformation;
 
     fn move_order(
         &self,

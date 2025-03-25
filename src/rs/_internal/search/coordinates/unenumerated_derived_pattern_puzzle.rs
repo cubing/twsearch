@@ -4,7 +4,7 @@ use crate::_internal::{
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle, search::move_count::MoveCount,
 };
 
-use super::pattern_deriver::{DerivedPatternPuzzle, PatternDeriver};
+use super::pattern_deriver::{DerivedPuzzle, PatternDeriver};
 
 #[derive(Clone, Debug)]
 pub struct UnenumeratedDerivedPatternPuzzle<
@@ -114,7 +114,7 @@ impl<
         TSourcePuzzle: SemiGroupActionPuzzle,
         TDerivedPuzzle: SemiGroupActionPuzzle,
         TPatternDeriver: PatternDeriver<TSourcePuzzle, DerivedPattern = TDerivedPuzzle::Pattern>,
-    > DerivedPatternPuzzle<TSourcePuzzle>
+    > DerivedPuzzle<TSourcePuzzle>
     for UnenumeratedDerivedPatternPuzzle<TSourcePuzzle, TDerivedPuzzle, TPatternDeriver>
 {
 }

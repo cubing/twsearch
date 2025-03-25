@@ -30,3 +30,5 @@ pub use compound_puzzle::{
 
 mod compound_derived_puzzle;
 pub use compound_derived_puzzle::CompoundDerivedPuzzle;
+
+pub mod derived_puzzle_search_phase;

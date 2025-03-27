@@ -2,7 +2,7 @@ use std::{hash::Hasher, sync::Arc};
 
 use cubing::{
     alg::parse_alg,
-    kpuzzle::{KPattern, KPuzzle},
+    kpuzzle::{KPattern, KPuzzle, OrientationWithMod},
 };
 
 use crate::{
@@ -43,7 +43,7 @@ fn wing_permutation_slice(pattern: &KPattern) -> &[u8] {
     let orbit = &pattern.kpuzzle().data.ordered_orbit_info[1];
     assert_eq!(orbit.name.0, "WINGS");
 
-    let from = orbit.orientations_offset;
+    let from = orbit.pieces_or_permutations_offset;
     let to = from + (orbit.num_pieces as usize);
 
     let full_byte_slice = unsafe { pattern.byte_slice() };
@@ -62,12 +62,15 @@ impl PatternDeriver<KPuzzle> for WingParityPatternDeriver {
         let mut pattern = kpuzzle.default_pattern();
         let orbit = &kpuzzle.data.ordered_orbit_info[0];
         let parity = basic_parity(wing_permutation_slice(source_puzzle_pattern));
-        pattern.set_piece(
+        pattern.set_orientation_with_mod(
             orbit,
             0,
-            match parity {
-                BasicParity::Even => 0,
-                BasicParity::Odd => 1,
+            &OrientationWithMod {
+                orientation: match parity {
+                    BasicParity::Even => 0,
+                    BasicParity::Odd => 1,
+                },
+                orientation_mod: 0,
             },
         );
         Some(pattern)
@@ -165,7 +168,8 @@ pub(crate) fn phase2_search(
         // TODO: figure out a way to derive before alg application?
         cube4x4x4_phase2_puzzle
             .derive_pattern(
-                &cube4x4x4_phase2_centers_target_kpattern()
+                &cube4x4x4_kpuzzle()
+                    .default_pattern()
                     .apply_alg(alg)
                     .unwrap(),
             )

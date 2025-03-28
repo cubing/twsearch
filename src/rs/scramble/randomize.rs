@@ -1,3 +1,5 @@
+use std::num::NonZero;
+
 use cubing::kpuzzle::{KPattern, OrientationWithMod};
 use rand::{seq::SliceRandom, thread_rng, Rng};
 
@@ -103,20 +105,20 @@ pub(crate) fn randomize_orbit_naïve(
             (Some(OrbitOrientationConstraint::IgnoreAllOrientations), _, _, _) => {
                 OrientationWithMod {
                     orientation: 0,
-                    orientation_mod: 1,
+                    orientation_mod: NonZero::new(1),
                 }
             }
             (Some(OrbitOrientationConstraint::SumToZero), _, true, _) => OrientationWithMod {
                 orientation: subtract_u8_mod(0, total_orientation, orbit_info.num_orientations),
-                orientation_mod: 0,
+                orientation_mod: None,
             },
             (_, Some(ConstraintForFirstPiece::KeepSolved), _, true) => OrientationWithMod {
                 orientation: 0,
-                orientation_mod: 0,
+                orientation_mod: None,
             },
             (_, Some(ConstraintForFirstPiece::IgnoredOrientation), _, true) => OrientationWithMod {
                 orientation: 0,
-                orientation_mod: 1,
+                orientation_mod: NonZero::new(1),
             },
             // TODO: merge with next case?
             (
@@ -148,7 +150,7 @@ pub(crate) fn randomize_orbit_naïve(
                 );
                 OrientationWithMod {
                     orientation: random_orientation,
-                    orientation_mod: 0,
+                    orientation_mod: None,
                 }
             }
             (_, _, _, _) => {
@@ -160,7 +162,7 @@ pub(crate) fn randomize_orbit_naïve(
                 );
                 OrientationWithMod {
                     orientation: random_orientation,
-                    orientation_mod: 0,
+                    orientation_mod: None,
                 }
             }
         };

@@ -1,6 +1,6 @@
 extern crate cubing;
 
-use std::fmt::Display;
+use std::{fmt::Display, num::NonZero};
 
 use cubing::{
     alg::Move,
@@ -131,13 +131,17 @@ fn serialize_kpattern_data(kpuzzle: Option<&KPuzzle>, t: &KPatternData) -> Resul
             for i in 0..len {
                 match orbit_data.orientation_mod.as_ref().map(|vec| vec[i]) {
                     None => str_vec.push(orbit_data.orientation[i].to_string()),
-                    Some(0) => str_vec.push(orbit_data.orientation[i].to_string()),
-                    Some(1) => str_vec.push("?".to_owned()), // TODO: assert that `orbit_data.orientation[i] == 0`?
-                    Some(_) => {
-                        return Err(
+                    Some(None) => str_vec.push(orbit_data.orientation[i].to_string()),
+                    Some(Some(v)) => {
+                        match v.get() {
+                            1 => str_vec.push("?".to_owned()), // TODO: assert that `orbit_data.orientation[i] == 0`?
+                            _ => {
+                                return Err(
                             "Orientation mod entries other than 0 or 1 are not currently supported"
                                 .to_owned(),
                         );
+                            }
+                        }
                     }
                 }
             }

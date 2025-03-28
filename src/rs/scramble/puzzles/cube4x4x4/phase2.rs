@@ -70,7 +70,7 @@ impl PatternDeriver<KPuzzle> for WingParityPatternDeriver {
                     BasicParity::Even => 0,
                     BasicParity::Odd => 1,
                 },
-                orientation_mod: 0,
+                orientation_mod: None,
             },
         );
         Some(pattern)

@@ -1,4 +1,4 @@
-use std::cmp::min;
+use std::{cmp::min, num::NonZero};
 
 use cubing::kpuzzle::{KPattern, OrientationWithMod};
 
@@ -26,19 +26,8 @@ pub(crate) fn apply_mask(
                 });
             };
 
-            let source_mod = source_orientation_with_mod.orientation_mod;
-            let source_mod = if source_mod == 0 {
-                orbit_info.num_orientations
-            } else {
-                source_mod
-            };
-
-            let mask_mod = mask_orientation_with_mod.orientation_mod;
-            let mask_mod = if mask_mod == 0 {
-                orbit_info.num_orientations
-            } else {
-                mask_mod
-            };
+            let source_mod = source_orientation_with_mod.orientation_modulus_for_orbit(orbit_info);
+            let mask_mod = mask_orientation_with_mod.orientation_modulus_for_orbit(orbit_info);
 
             if source_mod % mask_mod != 0 && mask_mod % source_mod != 0 {
                 return Err(PuzzleError {
@@ -50,9 +39,9 @@ pub(crate) fn apply_mask(
             let orientation_with_mod = OrientationWithMod {
                 orientation: source_orientation_with_mod.orientation % masked_mod,
                 orientation_mod: if masked_mod == orbit_info.num_orientations {
-                    0
+                    None
                 } else {
-                    masked_mod
+                    NonZero::new(masked_mod)
                 },
             };
 

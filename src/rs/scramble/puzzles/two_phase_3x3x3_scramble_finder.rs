@@ -1,4 +1,4 @@
-use std::sync::LazyLock;
+use std::{num::NonZero, sync::LazyLock};
 
 use cubing::{
     alg::{parse_alg, parse_move, Alg, AlgNode, Move, QuantumMove},
@@ -67,8 +67,9 @@ fn kpattern_to_transformation(kpattern: &KPattern) -> Option<KTransformation> {
             transformation.set_permutation_idx(orbit_info, i, kpattern.get_piece(orbit_info, i));
             let orientation_with_mod = kpattern.get_orientation_with_mod(orbit_info, i);
             // TODO
-            if orientation_with_mod.orientation_mod != 0
-                && orientation_with_mod.orientation_mod != 1
+            #[allow(clippy::partialeq_to_none)]
+            if orientation_with_mod.orientation_mod != None
+                && orientation_with_mod.orientation_mod != NonZero::new(1)
             {
                 return None;
             }

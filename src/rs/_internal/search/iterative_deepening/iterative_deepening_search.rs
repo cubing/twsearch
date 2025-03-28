@@ -60,8 +60,8 @@ struct SolutionPreviousMoves<'a> {
 #[derive(Clone)]
 pub struct SolutionMoves<'a>(Option<&'a SolutionPreviousMoves<'a>>);
 
-impl<'a> From<SolutionMoves<'a>> for Alg {
-    fn from(value: SolutionMoves<'a>) -> Self {
+impl<'a> From<&SolutionMoves<'a>> for Alg {
+    fn from(value: &SolutionMoves<'a>) -> Self {
         let nodes = value.get_alg_nodes();
         Alg { nodes }
     }
@@ -576,12 +576,12 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         {
             self.api_data.search_logger.write_info(&format!(
                 "Rejecting potential solution for invalid end moves: {}",
-                Alg::from(solution_moves)
+                Alg::from(&solution_moves)
             ));
             return SearchRecursionResult::ContinueSearchingDefault();
         }
 
-        let alg = Alg::from(solution_moves);
+        let alg = Alg::from(&solution_moves);
         individual_search_data.num_solutions_sofar += 1;
         individual_search_data
             .solution_sender

@@ -1,6 +1,9 @@
 use cubing::alg::Alg;
 
-use crate::_internal::{errors::SearchError, puzzle_traits::puzzle_traits::SemiGroupActionPuzzle};
+use crate::_internal::{
+    errors::SearchError, puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
+    search::iterative_deepening::search_adaptations::IndividualSearchAdaptations,
+};
 
 pub trait SearchPhase<TPuzzle: SemiGroupActionPuzzle>: Send + Sync {
     // This can't be static, due to `dyn` constraints.
@@ -16,4 +19,13 @@ pub trait SearchPhase<TPuzzle: SemiGroupActionPuzzle>: Send + Sync {
         &mut self,
         phase_search_pattern: &TPuzzle::Pattern,
     ) -> Result<Option<Alg>, SearchError>;
+
+    // We use `#[allow(…)]` to avoid underscores in the parameter names.
+    #[allow(unused_variables)]
+    fn individual_search_adaptations(
+        &self,
+        underived_phase_search_pattern: &TPuzzle::Pattern,
+    ) -> Option<IndividualSearchAdaptations<TPuzzle>> {
+        None
+    }
 }

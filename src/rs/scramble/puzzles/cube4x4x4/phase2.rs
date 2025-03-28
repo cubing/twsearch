@@ -1,28 +1,34 @@
 use std::{hash::Hasher, sync::Arc};
 
 use cubing::{
-    alg::parse_alg,
+    alg::{parse_alg, Alg},
     kpuzzle::{KPattern, KPuzzle, OrientationWithMod},
 };
 
 use crate::{
     _internal::{
+        errors::SearchError,
         puzzle_traits::puzzle_traits::HashablePatternPuzzle,
         search::{
             coordinates::{
                 masked_kpuzzle_deriver::MaskedPuzzleDeriver, pattern_deriver::PatternDeriver,
                 unenumerated_derived_pattern_puzzle::UnenumeratedDerivedPatternPuzzle,
             },
+            filter::filtering_decision::FilteringDecision,
             hash_prune_table::HashPruneTable,
-            iterative_deepening::iterative_deepening_search::{
-                IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+            iterative_deepening::{
+                iterative_deepening_search::{
+                    IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+                    SolutionMoves,
+                },
+                search_adaptations::IndividualSearchAdaptations,
             },
             search_logger::SearchLogger,
         },
     },
     experimental_lib_api::{
         derived_puzzle_search_phase::DerivedPuzzleSearchPhase, CompoundDerivedPuzzle,
-        CompoundPuzzle,
+        CompoundPuzzle, SearchPhase,
     },
     scramble::{
         puzzles::definitions::{
@@ -138,9 +144,12 @@ impl HashablePatternPuzzle for Cube4x4x4Phase2Puzzle {
     }
 }
 
-pub(crate) fn phase2_search(
-    search_logger: Arc<SearchLogger>,
-) -> DerivedPuzzleSearchPhase<KPuzzle, Cube4x4x4Phase2Puzzle> {
+// TODO: We have to wrap `DerivedPuzzleSearchPhase<…>` in order to implement `pre_phase(…)`. There's probably a neat way around this.
+pub(crate) struct Cube4x4x4Phase2Search {
+    derived_puzzle_search_phase: DerivedPuzzleSearchPhase<KPuzzle, Cube4x4x4Phase2Puzzle>,
+}
+
+pub(crate) fn phase2_search(search_logger: Arc<SearchLogger>) -> Cube4x4x4Phase2Search {
     let phase2_generator_moves =
         move_list_from_vec(vec!["Uw2", "U", "L", "Fw2", "F", "Rw", "R", "B", "D"]);
 
@@ -190,10 +199,109 @@ pub(crate) fn phase2_search(
             None,
         )
         .unwrap();
-    DerivedPuzzleSearchPhase::new(
-        phase2_name,
-        cube4x4x4_phase2_puzzle,
-        phase2_iterative_deepening_search,
-        Default::default(),
-    )
+    Cube4x4x4Phase2Search {
+        derived_puzzle_search_phase: DerivedPuzzleSearchPhase::new(
+            phase2_name,
+            cube4x4x4_phase2_puzzle,
+            phase2_iterative_deepening_search,
+            Default::default(),
+        ),
+    }
+}
+
+impl SearchPhase<KPuzzle> for Cube4x4x4Phase2Search {
+    fn phase_name(&self) -> &str {
+        self.derived_puzzle_search_phase.phase_name()
+    }
+
+    fn first_solution(
+        &mut self,
+        phase_search_pattern: &KPattern,
+    ) -> Result<Option<Alg>, SearchError> {
+        let phase_search_pattern_owned = phase_search_pattern.clone();
+        let filter_search_solution_fn = move |_pattern: &(KPattern, KPattern),
+                                              solution_moves: &SolutionMoves|
+              -> FilteringDecision {
+            let alg: Alg = Alg::from(solution_moves);
+            let pattern = phase_search_pattern_owned.apply_alg(&alg).unwrap();
+            // dbg!(&phase_search_pattern_owned);
+            // dbg!(alg.to_string());
+            // dbg!(&pattern);
+            if is_each_wing_pair_separated_across_low_high(&pattern) {
+                FilteringDecision::Accept
+            } else {
+                FilteringDecision::Reject
+            }
+        };
+        self.derived_puzzle_search_phase
+            .first_solution_with_individual_search_adaptations(
+                phase_search_pattern,
+                IndividualSearchAdaptations {
+                    filter_search_solution_fn: Some(Arc::new(filter_search_solution_fn)),
+                },
+            )
+    }
+}
+
+enum LowHigh {
+    Low,
+    High,
+}
+
+const NUM_WINGS: u8 = 24;
+
+const POSITION_TO_LOW_PIECE: [u8; NUM_WINGS as usize] = [
+    0, 1, 2, 3, 3, 5, 23, 7, 2, 15, 20, 5, 1, 13, 21, 15, 0, 7, 22, 13, 20, 21, 22, 23,
+];
+
+// This is technically redundant with `POSITION_TO_LOW_PIECE` but it's simpler to define statically.
+const POSITION_TO_LOW_OR_HIGH: [LowHigh; NUM_WINGS as usize] = [
+    LowHigh::Low,
+    LowHigh::Low,
+    LowHigh::Low,
+    LowHigh::Low,
+    LowHigh::High,
+    LowHigh::Low,
+    LowHigh::High,
+    LowHigh::Low,
+    LowHigh::High,
+    LowHigh::High,
+    LowHigh::High,
+    LowHigh::High,
+    LowHigh::High,
+    LowHigh::Low,
+    LowHigh::High,
+    LowHigh::Low,
+    LowHigh::High,
+    LowHigh::High,
+    LowHigh::High,
+    LowHigh::High,
+    LowHigh::Low,
+    LowHigh::Low,
+    LowHigh::Low,
+    LowHigh::Low,
+];
+
+fn is_each_wing_pair_separated_across_low_high(pattern: &KPattern) -> bool {
+    let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[1];
+    assert_eq!(orbit_info.name.0, "WINGS");
+
+    // TODO: There are some clever ways to optimize this. Are any of them worth it?
+    let mut seen_low = [false; NUM_WINGS as usize];
+    let mut seen_high = [false; NUM_WINGS as usize];
+
+    // println!("is_each_wing_pair_separated_across_low_high");
+    for position in 0..NUM_WINGS {
+        let piece = pattern.get_piece(orbit_info, position);
+        let arr = match POSITION_TO_LOW_OR_HIGH[position as usize] {
+            LowHigh::Low => &mut seen_low,
+            LowHigh::High => &mut seen_high,
+        };
+        let low_piece = POSITION_TO_LOW_PIECE[piece as usize];
+        if arr[low_piece as usize] {
+            return false;
+        }
+        arr[low_piece as usize] = true;
+    }
+    true
 }

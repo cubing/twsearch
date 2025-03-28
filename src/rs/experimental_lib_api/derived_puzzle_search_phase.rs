@@ -1,12 +1,15 @@
 use std::marker::PhantomData;
 
+use cubing::alg::Alg;
+
 use crate::_internal::{
     errors::SearchError,
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
         coordinates::pattern_deriver::DerivedPuzzle,
-        iterative_deepening::iterative_deepening_search::{
-            IndividualSearchOptions, IterativeDeepeningSearch,
+        iterative_deepening::{
+            iterative_deepening_search::{IndividualSearchOptions, IterativeDeepeningSearch},
+            search_adaptations::IndividualSearchAdaptations,
         },
     },
 };
@@ -58,7 +61,7 @@ where
     fn first_solution(
         &mut self,
         phase_search_pattern: &TSourcePuzzle::Pattern,
-    ) -> Result<Option<cubing::alg::Alg>, crate::_internal::errors::SearchError> {
+    ) -> Result<Option<Alg>, SearchError> {
         let Some(search_pattern) = self.derived_puzzle.derive_pattern(phase_search_pattern) else {
             return Err(SearchError {
                 description: "Could not derive pattern for search.".to_owned(),
@@ -69,6 +72,35 @@ where
             .search_with_default_individual_search_adaptations(
                 &search_pattern,
                 self.individual_search_options.clone(),
+            )
+            .next())
+    }
+}
+
+impl<
+        TSourcePuzzle: SemiGroupActionPuzzle + Send + Sync,
+        TDerivedPuzzle: DerivedPuzzle<TSourcePuzzle> + Send + Sync,
+    > DerivedPuzzleSearchPhase<TSourcePuzzle, TDerivedPuzzle>
+where
+    TDerivedPuzzle::Pattern: Send + Sync,
+    TDerivedPuzzle::Transformation: Send + Sync,
+{
+    pub fn first_solution_with_individual_search_adaptations(
+        &mut self,
+        phase_search_pattern: &TSourcePuzzle::Pattern,
+        individual_search_adaptations: IndividualSearchAdaptations<TDerivedPuzzle>,
+    ) -> Result<Option<Alg>, SearchError> {
+        let Some(search_pattern) = self.derived_puzzle.derive_pattern(phase_search_pattern) else {
+            return Err(SearchError {
+                description: "Could not derive pattern for search.".to_owned(),
+            });
+        };
+        Ok(self
+            .iterative_deepening_search
+            .search(
+                &search_pattern,
+                self.individual_search_options.clone(),
+                individual_search_adaptations,
             )
             .next())
     }

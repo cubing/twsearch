@@ -1,7 +1,8 @@
 [package]
 name = "twsearch-cpp-wrapper"
-version = "0.7.2-dev"
-edition = "2021"
+version.workspace = true
+license.workspace = true
+edition.workspace = true
 
 [dependencies]
 clap = { version = "4.3.24", features = ["derive"] }

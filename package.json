@@ -9,7 +9,7 @@
     "bun": ">=1.2.7"
   },
   "dependencies": {
-    "cubing": "v0.54.4",
+    "cubing": "v0.54.4"
   },
   "devDependencies": {
     "@biomejs/biome": "^v1.9.4",

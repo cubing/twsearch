@@ -9,7 +9,7 @@ description = "Twizzle Search WASM — WASM build of twsearch for `cubing.js`"
 default = []
 
 [dependencies]
-twsearch = { path = "../rs", version = "0.7.1" }
+twsearch = { path = "../rs", version = "0.7.2-dev" }
 getrandom = { version = "0.2.10", features = ["js"] } # We don't use `getrandom` directly (only through `rand`), but this is the easiest way to enable the `js` feature that we need for WASM compat.
 console_error_panic_hook = "0.1.7"
 wasm-bindgen = "0.2.87"

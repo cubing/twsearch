@@ -152,24 +152,11 @@ impl Default for Cube4x4x4ScrambleFinder {
                 ),
                 Box::new(phase2_search(Arc::new(search_logger.clone()))),
             ],
-            // Default::default(),
             Some(SearchLogger {
                 verbosity: VerbosityLevel::Info,
             }),
         )
         .unwrap();
-
-        // let phase2_target_pattern = cube4x4x4_phase2_target_kpattern();
-        // let phase2_iterative_deepening_search =
-        //     IterativeDeepeningSearch::<Square1Phase2Puzzle, Square1Phase2SearchAdaptations>::try_new(
-        //         kpuzzle.clone(),
-        //         generator_moves.clone(),
-        //         phase2_target_pattern,
-        //         IterativeDeepeningSearchConstructionOptions {
-        //             ..Default::default()
-        //         },
-        //     )
-        //     .unwrap();
 
         // let depth_filtering_search = {
         //     let kpuzzle = square1_unbandaged_kpuzzle();

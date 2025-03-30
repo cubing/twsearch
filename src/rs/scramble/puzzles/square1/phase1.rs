@@ -91,7 +91,7 @@ pub fn restrict_D_move(
     D_SQ_MOVE_RESTRICTED_RANGE.contains(&amount)
 }
 
-fn filter_transformation(
+fn filter_move_transformation(
     move_transformation_info: &MoveTransformationInfo<Square1Phase1Puzzle>,
     _remaining_depth: Depth,
 ) -> FilteringDecision {
@@ -128,7 +128,7 @@ pub(crate) fn square1_phase1_stored_search_adaptations(
     ));
     StoredSearchAdaptations {
         prune_table,
-        filter_transformation_fn: Some(Arc::new(Box::new(filter_transformation))),
+        filter_move_transformation_fn: Some(Arc::new(Box::new(filter_move_transformation))),
         filter_pattern_fn: None,
     }
 }

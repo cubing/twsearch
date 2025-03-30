@@ -642,7 +642,7 @@ pub(crate) fn square1_phase2_stored_search_adaptations(
     let prune_table = Box::new(Square1Phase2PruneTable::new(square1_phase2_puzzle));
     StoredSearchAdaptations {
         prune_table,
-        filter_transformation_fn: None,
+        filter_move_transformation_fn: None,
         filter_pattern_fn: None,
     }
 }

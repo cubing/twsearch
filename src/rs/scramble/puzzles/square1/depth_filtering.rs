@@ -10,7 +10,7 @@ use super::square1_shape_traversal_filter::shape_traversal_filter_pattern;
 pub(crate) fn square1_depth_filtering_search_adaptations_without_prune_table(
 ) -> StoredSearchAdaptationsWithoutPruneTable<KPuzzle> {
     StoredSearchAdaptationsWithoutPruneTable {
-        filter_transformation_fn: None,
+        filter_move_transformation_fn: None,
         filter_pattern_fn: Some(Arc::new(Box::new(shape_traversal_filter_pattern))),
     }
 }

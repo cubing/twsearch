@@ -185,7 +185,7 @@ pub struct IterativeDeepeningSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
     pub search_logger: Arc<SearchLogger>,
 }
 
-/// For information on [`SearchAdaptations`], see the documentation for that trait.
+/// For information on [`StoredSearchAdaptations`], see the documentation for that trait.
 pub struct IterativeDeepeningSearch<TPuzzle: SemiGroupActionPuzzle = KPuzzle> {
     pub api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
     pub stored_search_adaptations: StoredSearchAdaptations<TPuzzle>,
@@ -256,7 +256,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         let search_adaptations_without_prune_table = match search_adaptations_without_prune_table {
             Some(search_adaptations_without_prune_table) => search_adaptations_without_prune_table,
             None => StoredSearchAdaptationsWithoutPruneTable {
-                filter_transformation_fn: None,
+                filter_move_transformation_fn: None,
                 filter_pattern_fn: None,
             },
         };
@@ -269,8 +269,8 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         ));
         let search_adaptations = StoredSearchAdaptations {
             prune_table,
-            filter_transformation_fn: search_adaptations_without_prune_table
-                .filter_transformation_fn,
+            filter_move_transformation_fn: search_adaptations_without_prune_table
+                .filter_move_transformation_fn,
             filter_pattern_fn: search_adaptations_without_prune_table.filter_pattern_fn,
         };
 
@@ -485,7 +485,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             for move_transformation_info in move_transformation_multiples {
                 if self
                     .stored_search_adaptations
-                    .filter_transformation(move_transformation_info, remaining_depth)
+                    .filter_move_transformation(move_transformation_info, remaining_depth)
                     .is_reject()
                 {
                     continue;

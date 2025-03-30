@@ -12,7 +12,7 @@ use super::{super::prune_table_trait::PruneTable, iterative_deepening_search::So
 #[derive(Clone)]
 #[allow(clippy::type_complexity)] // TODO
 pub struct StoredSearchAdaptationsWithoutPruneTable<TPuzzle: SemiGroupActionPuzzle> {
-    pub filter_transformation_fn:
+    pub filter_move_transformation_fn:
         Option<Arc<dyn Fn(&MoveTransformationInfo<TPuzzle>, Depth) -> FilteringDecision>>,
     pub filter_pattern_fn: Option<Arc<dyn Fn(&TPuzzle::Pattern) -> FilteringDecision>>,
 }
@@ -21,8 +21,8 @@ pub struct StoredSearchAdaptationsWithoutPruneTable<TPuzzle: SemiGroupActionPuzz
 pub struct StoredSearchAdaptations<TPuzzle: SemiGroupActionPuzzle> {
     // We require a prune table to avoid accidentally constructing a super slow search. The caller can explicitly pass in a useless prune table if they want.
     pub prune_table: Box<dyn PruneTable<TPuzzle>>,
-    // TODO: `HashPruneTable` doesn't call `filter_transformation_fn`.
-    pub filter_transformation_fn:
+    // TODO: `HashPruneTable` doesn't call `filter_move_transformation_fn`.
+    pub filter_move_transformation_fn:
         Option<Arc<dyn Fn(&MoveTransformationInfo<TPuzzle>, Depth) -> FilteringDecision>>,
     pub filter_pattern_fn: Option<Arc<dyn Fn(&TPuzzle::Pattern) -> FilteringDecision>>,
 }
@@ -47,13 +47,13 @@ unsafe impl<TPuzzle: SemiGroupActionPuzzle> Send for StoredSearchAdaptations<TPu
 unsafe impl<TPuzzle: SemiGroupActionPuzzle> Sync for StoredSearchAdaptations<TPuzzle> {}
 
 impl<TPuzzle: SemiGroupActionPuzzle> StoredSearchAdaptations<TPuzzle> {
-    pub fn filter_transformation(
+    pub fn filter_move_transformation(
         &self,
         candidate_move_transformation_info: &MoveTransformationInfo<TPuzzle>,
         remaining_depth: Depth,
     ) -> FilteringDecision {
-        if let Some(filter_transformation_fn) = &self.filter_transformation_fn {
-            filter_transformation_fn(candidate_move_transformation_info, remaining_depth)
+        if let Some(filter_move_transformation_fn) = &self.filter_move_transformation_fn {
+            filter_move_transformation_fn(candidate_move_transformation_info, remaining_depth)
         } else {
             FilteringDecision::Accept
         }

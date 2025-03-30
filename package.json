@@ -6,11 +6,10 @@
   },
   "engines": {
     "node": ">=22.3.0",
-    "bun": ">=1.2.0"
+    "bun": ">=1.2.7"
   },
   "dependencies": {
     "cubing": "v0.54.4",
-    "getbuiltinmodule-ponyfill": "^1.0.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^v1.9.4",

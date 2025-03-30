@@ -103,7 +103,7 @@ fn solve_pattern(
             Err(e) => return Response::text(e.description).with_status_code(400),
         };
     if let Some(solution) = search
-        .search(
+        .search_with_default_individual_search_adaptations(
             &search_pattern,
             IndividualSearchOptions {
                 min_num_solutions: None,

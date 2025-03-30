@@ -5,7 +5,7 @@ use crate::{_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle, whol
 use super::{
     iterative_deepening::{
         iterative_deepening_search::IterativeDeepeningSearchAPIData,
-        search_adaptations::SearchAdaptationsWithoutPruneTable,
+        search_adaptations::StoredSearchAdaptationsWithoutPruneTable,
     },
     search_logger::SearchLogger,
 };
@@ -28,6 +28,6 @@ pub trait LegacyConstructablePruneTable<TPuzzle: SemiGroupActionPuzzle>:
         search_api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
         search_logger: Arc<SearchLogger>,
         min_size: Option<usize>,
-        search_adaptations_without_prune_table: SearchAdaptationsWithoutPruneTable<TPuzzle>,
+        search_adaptations_without_prune_table: StoredSearchAdaptationsWithoutPruneTable<TPuzzle>,
     ) -> Self;
 }

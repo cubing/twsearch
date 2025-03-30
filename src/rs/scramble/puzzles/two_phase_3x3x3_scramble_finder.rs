@@ -258,7 +258,7 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
             apply_mask(&search_pattern, &self.phase1_target_pattern).unwrap();
         let Some(mut phase1_alg) = self
             .phase1_iterative_deepening_search
-            .search(
+            .search_with_default_individual_search_adaptations(
                 &phase1_search_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
@@ -278,7 +278,7 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
             let phase2_search_pattern = search_pattern
                 .apply_transformation(&self.kpuzzle.transformation_from_alg(&phase1_alg).unwrap());
             self.phase2_iterative_deepening_search
-                .search(
+                .search_with_default_individual_search_adaptations(
                     &phase2_search_pattern,
                     IndividualSearchOptions {
                         min_num_solutions: Some(1),

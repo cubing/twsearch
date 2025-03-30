@@ -19,7 +19,8 @@ use crate::{
             },
             filter::filtering_decision::FilteringDecision,
             iterative_deepening::{
-                iterative_deepening_search::SolutionMoves, search_adaptations::SearchAdaptations,
+                iterative_deepening_search::SolutionMoves,
+                search_adaptations::{IndividualSearchAdaptations, StoredSearchAdaptations},
             },
             mask_pattern::apply_mask,
             prune_table_trait::Depth,
@@ -116,19 +117,26 @@ fn filter_search_solution(
 }
 
 // TODO: we currently take `square1_phase1_puzzle` as an argument to keep construction DRY. There's probably a better way to do this.
-pub(crate) fn square1_phase1_search_adaptations(
+pub(crate) fn square1_phase1_stored_search_adaptations(
     square1_phase1_puzzle: GraphEnumeratedDerivedPatternPuzzle<
         KPuzzle,
         Square1Phase1PatternDeriver,
     >,
-) -> SearchAdaptations<Square1Phase1Puzzle> {
+) -> StoredSearchAdaptations<Square1Phase1Puzzle> {
     let prune_table = Box::new(GraphEnumeratedDerivedPatternPuzzlePruneTable::new(
         square1_phase1_puzzle,
     ));
-    SearchAdaptations {
+    StoredSearchAdaptations {
         prune_table,
         filter_transformation_fn: Some(Arc::new(Box::new(filter_transformation))),
         filter_pattern_fn: None,
+    }
+}
+
+// TODO: we currently take `square1_phase1_puzzle` as an argument to keep construction DRY. There's probably a better way to do this.
+pub(crate) fn square1_phase1_individual_search_adaptations(
+) -> IndividualSearchAdaptations<Square1Phase1Puzzle> {
+    IndividualSearchAdaptations {
         filter_search_solution_fn: Some(Arc::new(Box::new(filter_search_solution))),
     }
 }

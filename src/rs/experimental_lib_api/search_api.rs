@@ -73,7 +73,7 @@ pub fn search(
             None,
         )?;
 
-    let solutions = iterative_deepening_search.search(
+    let solutions = iterative_deepening_search.search_with_default_individual_search_adaptations(
         search_pattern,
         IndividualSearchOptions {
             min_num_solutions: search_command_optional_args.min_num_solutions,

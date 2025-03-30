@@ -1,7 +1,10 @@
 use crate::{
     _internal::search::filter::filtering_decision::FilteringDecision,
     scramble::{
-        puzzles::square1::square1_shape_traversal_filter::shape_traversal_filter_pattern,
+        puzzles::square1::{
+            phase1::square1_phase1_individual_search_adaptations,
+            square1_shape_traversal_filter::shape_traversal_filter_pattern,
+        },
         solving_based_scramble_finder::{
             NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
         },
@@ -21,8 +24,8 @@ use crate::{
 use super::{
     super::definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
     depth_filtering::square1_depth_filtering_search_adaptations_without_prune_table,
-    phase1::{square1_phase1_search_adaptations, Square1Phase1PatternDeriver},
-    phase2::{square1_phase2_search_adaptations, Square1Phase2Puzzle},
+    phase1::{square1_phase1_stored_search_adaptations, Square1Phase1PatternDeriver},
+    phase2::{square1_phase2_stored_search_adaptations, Square1Phase2Puzzle},
 };
 use cubing::alg::{parse_move, AlgBuilder, AlgNode, Grouping, Move};
 use cubing::kpuzzle::KPuzzle;
@@ -88,7 +91,7 @@ impl Default for Square1ScrambleFinder {
                 IterativeDeepeningSearchConstructionOptions {
                     ..Default::default()
                 },
-                square1_phase1_search_adaptations(square1_phase1_puzzle.clone()),
+                square1_phase1_stored_search_adaptations(square1_phase1_puzzle.clone()),
             )
             .unwrap();
 
@@ -105,7 +108,7 @@ impl Default for Square1ScrambleFinder {
                 IterativeDeepeningSearchConstructionOptions {
                     ..Default::default()
                 },
-                square1_phase2_search_adaptations(square1_phase2_puzzle.clone()),
+                square1_phase2_stored_search_adaptations(square1_phase2_puzzle.clone()),
             )
             .unwrap();
 
@@ -328,6 +331,7 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
                     max_depth: Some(Depth(current_depth + 1)),
                     ..Default::default()
                 },
+                square1_phase1_individual_search_adaptations(),
             );
             // let mut num_phase2_starts = 0;
             // let mut phase1_cumulative_time = Duration::default();
@@ -350,7 +354,7 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
                 };
                 let phase2_solution = self
                     .phase2_iterative_deepening_search
-                    .search(
+                    .search_with_default_individual_search_adaptations(
                         &phase2_start_pattern,
                         IndividualSearchOptions {
                             min_num_solutions: Some(1),

@@ -126,7 +126,10 @@ impl SearchPhase<KPuzzle> for KPuzzleSimpleMaskPhase {
         // TODO: can we avoid a clone of `individual_search_options`?
         Ok(self
             .iterative_deepening_search
-            .search(&masked_pattern, self.individual_search_options.clone())
+            .search_with_default_individual_search_adaptations(
+                &masked_pattern,
+                self.individual_search_options.clone(),
+            )
             .next())
     }
 }

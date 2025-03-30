@@ -48,7 +48,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> FilteredSearch<TPuzzle> {
             return None;
         }
         self.iterative_deepening_search
-            .search(
+            .search_with_default_individual_search_adaptations(
                 scramble_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
@@ -78,7 +78,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> FilteredSearch<TPuzzle> {
         min_scramble_moves: Option<MoveCount>,
     ) -> Option<Alg> {
         self.iterative_deepening_search
-            .search(
+            .search_with_default_individual_search_adaptations(
                 scramble_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),

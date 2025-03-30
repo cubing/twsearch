@@ -66,7 +66,10 @@ where
         };
         Ok(self
             .iterative_deepening_search
-            .search(&search_pattern, self.individual_search_options.clone())
+            .search_with_default_individual_search_adaptations(
+                &search_pattern,
+                self.individual_search_options.clone(),
+            )
             .next())
     }
 }

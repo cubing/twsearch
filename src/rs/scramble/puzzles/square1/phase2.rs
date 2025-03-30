@@ -18,7 +18,7 @@ use crate::{
                 pattern_deriver::PatternDeriver,
             },
             filter::filtering_decision::FilteringDecision,
-            iterative_deepening::search_adaptations::SearchAdaptations,
+            iterative_deepening::search_adaptations::StoredSearchAdaptations,
             mask_pattern::apply_mask,
             prune_table_trait::{Depth, PruneTable},
         },
@@ -636,14 +636,13 @@ impl PruneTable<Square1Phase2Puzzle> for Square1Phase2PruneTable {
 }
 
 // TODO: we currently take `square1_phase1_puzzle` as an argument to keep construction DRY. There's probably a better way to do this.
-pub(crate) fn square1_phase2_search_adaptations(
+pub(crate) fn square1_phase2_stored_search_adaptations(
     square1_phase2_puzzle: Square1Phase2Puzzle,
-) -> SearchAdaptations<Square1Phase2Puzzle> {
+) -> StoredSearchAdaptations<Square1Phase2Puzzle> {
     let prune_table = Box::new(Square1Phase2PruneTable::new(square1_phase2_puzzle));
-    SearchAdaptations {
+    StoredSearchAdaptations {
         prune_table,
         filter_transformation_fn: None,
         filter_pattern_fn: None,
-        filter_search_solution_fn: None,
     }
 }

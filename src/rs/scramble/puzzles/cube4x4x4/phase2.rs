@@ -244,21 +244,25 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase2Search {
     }
 }
 
-const NUM_WINGS: u8 = 24;
+pub(crate) const NUM_WINGS: u8 = 24;
 
 // A low position is any wing position that can be reached from piece 0 (UBl) using <U, L, R, D>.
 // A low piece is any piece that starts in a low position, and a high position/piece is any that is not a low position/piece.
 // This lookup does the following:
 //
-// - Given a low position, it returns that same position.
-// - Given a high position, it returns the low position that is part of the same dedge (double edge).
+// - Given a low piece, it returns that same piece.
+// - Given a high piece, it returns the low piece that is part of the same dedge (double edge) in the solved state.
 //
 // Note that the low position of a dedge may or may not have the lower index. (TODO: use a different terminology like "primary"/"secondary"?)
-const POSITION_TO_LOW_PIECE: [u8; NUM_WINGS as usize] = [
+pub(crate) const PIECE_TO_LOW_PIECE: [u8; NUM_WINGS as usize] = [
     0, 1, 2, 3, 3, 11, 23, 17, 2, 9, 20, 11, 1, 19, 21, 9, 0, 17, 22, 19, 20, 21, 22, 23,
 ];
 
-const POSITION_IS_LOW: [bool; NUM_WINGS as usize] = [
+pub(crate) const PIECE_TO_PARTNER_PIECE: [u8; NUM_WINGS as usize] = [
+    16, 12, 8, 4, 3, 11, 23, 17, 2, 15, 20, 5, 1, 19, 21, 9, 0, 7, 22, 13, 10, 14, 18, 6,
+];
+
+pub(crate) const POSITION_IS_LOW: [bool; NUM_WINGS as usize] = [
     true, true, true, true, false, false, false, false, false, true, false, true, false, false,
     false, false, false, true, false, true, true, true, true, true,
 ];
@@ -279,7 +283,7 @@ fn is_each_wing_pair_separated_across_low_high(pattern: &KPattern) -> bool {
         } else {
             &mut seen_high
         };
-        let low_piece = POSITION_TO_LOW_PIECE[piece as usize];
+        let low_piece = PIECE_TO_LOW_PIECE[piece as usize];
         if arr[low_piece as usize] {
             return false;
         }

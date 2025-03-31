@@ -60,8 +60,10 @@ impl<TPuzzle: SemiGroupActionPuzzle> MultiPhaseSearch<TPuzzle> {
             };
 
             // dbg!(&phase_search_pattern);
-            self.search_logger
-                .write_info(&format!("{:#?}", phase_search_pattern));
+            self.search_logger.write_info(&format!(
+                "phase_search_pattern: {:#?}",
+                phase_search_pattern
+            ));
             let Some(phase_solution) = phase.first_solution(&phase_search_pattern)? else {
                 return Err(SearchError {
                     description: format!(

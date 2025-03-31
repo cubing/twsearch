@@ -243,43 +243,10 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase2Search {
     }
 }
 
-enum LowHigh {
-    Low,
-    High,
-}
-
 const NUM_WINGS: u8 = 24;
 
 const POSITION_TO_LOW_PIECE: [u8; NUM_WINGS as usize] = [
     0, 1, 2, 3, 3, 5, 23, 7, 2, 15, 20, 5, 1, 13, 21, 15, 0, 7, 22, 13, 20, 21, 22, 23,
-];
-
-// This is technically redundant with `POSITION_TO_LOW_PIECE` but it's simpler to define statically.
-const POSITION_TO_LOW_OR_HIGH: [LowHigh; NUM_WINGS as usize] = [
-    LowHigh::Low,
-    LowHigh::Low,
-    LowHigh::Low,
-    LowHigh::Low,
-    LowHigh::High,
-    LowHigh::Low,
-    LowHigh::High,
-    LowHigh::Low,
-    LowHigh::High,
-    LowHigh::High,
-    LowHigh::High,
-    LowHigh::High,
-    LowHigh::High,
-    LowHigh::Low,
-    LowHigh::High,
-    LowHigh::Low,
-    LowHigh::High,
-    LowHigh::High,
-    LowHigh::High,
-    LowHigh::High,
-    LowHigh::Low,
-    LowHigh::Low,
-    LowHigh::Low,
-    LowHigh::Low,
 ];
 
 fn is_each_wing_pair_separated_across_low_high(pattern: &KPattern) -> bool {
@@ -293,11 +260,12 @@ fn is_each_wing_pair_separated_across_low_high(pattern: &KPattern) -> bool {
     // println!("is_each_wing_pair_separated_across_low_high");
     for position in 0..NUM_WINGS {
         let piece = pattern.get_piece(orbit_info, position);
-        let arr = match POSITION_TO_LOW_OR_HIGH[position as usize] {
-            LowHigh::Low => &mut seen_low,
-            LowHigh::High => &mut seen_high,
-        };
         let low_piece = POSITION_TO_LOW_PIECE[piece as usize];
+        let arr = if piece == low_piece {
+            &mut seen_low
+        } else {
+            &mut seen_high
+        };
         if arr[low_piece as usize] {
             return false;
         }

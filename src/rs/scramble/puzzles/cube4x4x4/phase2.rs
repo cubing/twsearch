@@ -1,8 +1,8 @@
-use std::{hash::Hasher, sync::Arc};
+use std::sync::Arc;
 
 use cubing::{
     alg::{parse_alg, Alg},
-    kpuzzle::{KPattern, KPuzzle, OrientationWithMod},
+    kpuzzle::{KPattern, KPuzzle, KPuzzleOrbitInfo, OrientationWithMod},
 };
 
 use crate::{
@@ -11,7 +11,7 @@ use crate::{
         puzzle_traits::puzzle_traits::HashablePatternPuzzle,
         search::{
             coordinates::{
-                masked_kpuzzle_deriver::MaskedPuzzleDeriver, pattern_deriver::PatternDeriver,
+                pattern_deriver::PatternDeriver,
                 unenumerated_derived_pattern_puzzle::UnenumeratedDerivedPatternPuzzle,
             },
             filter::filtering_decision::FilteringDecision,
@@ -23,18 +23,13 @@ use crate::{
                 },
                 search_adaptations::IndividualSearchAdaptations,
             },
+            mask_pattern::apply_mask,
             search_logger::SearchLogger,
         },
     },
-    experimental_lib_api::{
-        derived_puzzle_search_phase::DerivedPuzzleSearchPhase, CompoundDerivedPuzzle,
-        CompoundPuzzle, SearchPhase,
-    },
+    experimental_lib_api::{derived_puzzle_search_phase::DerivedPuzzleSearchPhase, SearchPhase},
     scramble::{
-        puzzles::definitions::{
-            cube4x4x4_kpuzzle, cube4x4x4_phase2_centers_target_kpattern,
-            cube4x4x4_phase2_wing_parity_kpuzzle,
-        },
+        puzzles::definitions::{cube4x4x4_kpuzzle, cube4x4x4_phase2_search_kpuzzle},
         randomize::{basic_parity, BasicParity},
         scramble_search::move_list_from_vec,
     },
@@ -56,91 +51,96 @@ fn wing_permutation_slice(pattern: &KPattern) -> &[u8] {
     &full_byte_slice[from..to]
 }
 
-#[derive(Clone, Debug)]
-pub(crate) struct WingParityPatternDeriver {}
+pub fn transfer_orbit(
+    source_pattern: &KPattern,
+    source_orbit_info: &KPuzzleOrbitInfo,
+    destination_pattern: &mut KPattern,
+    destination_orbit_info: &KPuzzleOrbitInfo,
+) {
+    assert_eq!(
+        source_orbit_info.num_pieces,
+        destination_orbit_info.num_pieces
+    );
+    assert_eq!(
+        source_orbit_info.num_orientations,
+        destination_orbit_info.num_orientations
+    );
+    for i in 0..source_orbit_info.num_pieces {
+        destination_pattern.set_piece(
+            destination_orbit_info,
+            i,
+            source_pattern.get_piece(source_orbit_info, i),
+        );
+        destination_pattern.set_orientation_with_mod(
+            destination_orbit_info,
+            i,
+            source_pattern.get_orientation_with_mod(source_orbit_info, i),
+        );
+    }
+}
 
-impl PatternDeriver<KPuzzle> for WingParityPatternDeriver {
+#[derive(Clone, Debug)]
+pub(crate) struct Cube4x4x4Phase2PatternDeriver {}
+
+impl PatternDeriver<KPuzzle> for Cube4x4x4Phase2PatternDeriver {
     type DerivedPattern = KPattern;
 
     fn derive_pattern(&self, source_puzzle_pattern: &KPattern) -> Option<Self::DerivedPattern> {
         // TODO: optimize this
-        let kpuzzle = cube4x4x4_phase2_wing_parity_kpuzzle(); // TODO: cache on self?
+        let kpuzzle = cube4x4x4_phase2_search_kpuzzle(); // TODO: cache on self?
         let mut pattern = kpuzzle.default_pattern();
-        let orbit = &kpuzzle.data.ordered_orbit_info[0];
-        let parity = basic_parity(wing_permutation_slice(source_puzzle_pattern));
-        pattern.set_orientation_with_mod(
-            orbit,
-            0,
-            &OrientationWithMod {
-                orientation: match parity {
-                    BasicParity::Even => 0,
-                    BasicParity::Odd => 1,
+        {
+            let source_centers_orbit_info = &cube4x4x4_kpuzzle().data.ordered_orbit_info[2];
+            assert_eq!(source_centers_orbit_info.name.0, "CENTERS");
+            let destination_centers_orbit_info = &kpuzzle.data.ordered_orbit_info[0];
+            assert_eq!(destination_centers_orbit_info.name.0, "CENTERS");
+            transfer_orbit(
+                source_puzzle_pattern,
+                source_centers_orbit_info,
+                &mut pattern,
+                destination_centers_orbit_info,
+            );
+        }
+        {
+            let orbit_info = &kpuzzle.data.ordered_orbit_info[1];
+            assert_eq!(orbit_info.name.0, "WING_PARITY");
+            let parity = basic_parity(wing_permutation_slice(source_puzzle_pattern));
+
+            pattern.set_orientation_with_mod(
+                orbit_info,
+                0,
+                &OrientationWithMod {
+                    orientation: match parity {
+                        BasicParity::Even => 0,
+                        BasicParity::Odd => 1,
+                    },
+                    orientation_mod: 0,
                 },
-                orientation_mod: 0,
-            },
-        );
-        Some(pattern)
+            );
+        }
+
+        Some(apply_mask(&pattern, &kpuzzle.default_pattern()).unwrap())
     }
 }
 
-pub(crate) type WingParityPuzzle =
-    UnenumeratedDerivedPatternPuzzle<KPuzzle, KPuzzle, WingParityPatternDeriver>;
-
-pub(crate) type Cube4x4x4Phase2Puzzle = CompoundDerivedPuzzle<
-    KPuzzle,
-    UnenumeratedDerivedPatternPuzzle<KPuzzle, KPuzzle, MaskedPuzzleDeriver>,
-    WingParityPuzzle,
->;
+pub(crate) type Cube4x4x4Phase2Puzzle =
+    UnenumeratedDerivedPatternPuzzle<KPuzzle, KPuzzle, Cube4x4x4Phase2PatternDeriver>;
 
 impl Default for Cube4x4x4Phase2Puzzle {
     fn default() -> Self {
-        let kpuzzle = cube4x4x4_kpuzzle();
+        let pattern_deriver = Cube4x4x4Phase2PatternDeriver {};
 
-        let masked_centers_puzzle_deriver =
-            MaskedPuzzleDeriver::new(cube4x4x4_phase2_centers_target_kpattern().clone());
-        let masked_centers_derived_puzzle = UnenumeratedDerivedPatternPuzzle::new(
-            kpuzzle.clone(),
-            kpuzzle.clone(),
-            masked_centers_puzzle_deriver,
-        );
-
-        let wing_parity_pattern_deriver = WingParityPatternDeriver {};
-        let wing_parity_derived_puzzle = UnenumeratedDerivedPatternPuzzle::new(
-            kpuzzle.clone(),
-            cube4x4x4_phase2_wing_parity_kpuzzle().clone(),
-            wing_parity_pattern_deriver,
-        );
-
-        let compound_puzzle: CompoundPuzzle<
-            UnenumeratedDerivedPatternPuzzle<KPuzzle, KPuzzle, MaskedPuzzleDeriver>,
-            WingParityPuzzle,
-        > = CompoundPuzzle {
-            tpuzzle0: masked_centers_derived_puzzle,
-            tpuzzle1: wing_parity_derived_puzzle.clone(),
-        };
-        compound_puzzle.into()
+        UnenumeratedDerivedPatternPuzzle {
+            source_puzzle: cube4x4x4_kpuzzle().clone(),
+            derived_puzzle: cube4x4x4_phase2_search_kpuzzle().clone(),
+            pattern_deriver,
+        }
     }
 }
 
 impl HashablePatternPuzzle for Cube4x4x4Phase2Puzzle {
     fn pattern_hash_u64(&self, pattern: &Self::Pattern) -> u64 {
-        // TODO: derive this in a performant way.
-        let mut city_hasher = cityhasher::CityHasher::new();
-        let pattern0_bytes = self
-            .compound_puzzle
-            .tpuzzle0
-            .source_puzzle
-            .pattern_hash_u64(&pattern.0)
-            .to_le_bytes();
-        city_hasher.write(&pattern0_bytes);
-        let pattern1_bytes = self
-            .compound_puzzle
-            .tpuzzle1
-            .source_puzzle
-            .pattern_hash_u64(&pattern.1)
-            .to_le_bytes();
-        city_hasher.write(&pattern1_bytes);
-        city_hasher.finish()
+        self.derived_puzzle.pattern_hash_u64(pattern)
     }
 }
 
@@ -221,20 +221,19 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase2Search {
         phase_search_pattern: &KPattern,
     ) -> Result<Option<Alg>, SearchError> {
         let phase_search_pattern_owned = phase_search_pattern.clone();
-        let filter_search_solution_fn = move |_pattern: &(KPattern, KPattern),
-                                              solution_moves: &SolutionMoves|
-              -> FilteringDecision {
-            let alg: Alg = Alg::from(solution_moves);
-            let pattern = phase_search_pattern_owned.apply_alg(&alg).unwrap();
-            // dbg!(&phase_search_pattern_owned);
-            // dbg!(alg.to_string());
-            // dbg!(&pattern);
-            if is_each_wing_pair_separated_across_low_high(&pattern) {
-                FilteringDecision::Accept
-            } else {
-                FilteringDecision::Reject
-            }
-        };
+        let filter_search_solution_fn =
+            move |_pattern: &KPattern, solution_moves: &SolutionMoves| -> FilteringDecision {
+                let alg: Alg = Alg::from(solution_moves);
+                let pattern = phase_search_pattern_owned.apply_alg(&alg).unwrap();
+                // dbg!(&phase_search_pattern_owned);
+                // dbg!(alg.to_string());
+                // dbg!(&pattern);
+                if is_each_wing_pair_separated_across_low_high(&pattern) {
+                    FilteringDecision::Accept
+                } else {
+                    FilteringDecision::Reject
+                }
+            };
         self.derived_puzzle_search_phase
             .first_solution_with_individual_search_adaptations(
                 phase_search_pattern,

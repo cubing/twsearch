@@ -24,6 +24,7 @@ use crate::scramble::{
 };
 
 use super::phase2::phase2_search;
+use super::phase3::Cube4x4x4Phase3Search;
 
 /*
 
@@ -150,6 +151,7 @@ impl Default for Cube4x4x4ScrambleFinder {
                     .unwrap(),
                 ),
                 Box::new(phase2_search(Arc::new(search_logger.clone()))),
+                Box::new(Cube4x4x4Phase3Search::default()),
             ],
             Some(SearchLogger {
                 verbosity: VerbosityLevel::Info,

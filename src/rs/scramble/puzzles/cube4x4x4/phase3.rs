@@ -286,7 +286,12 @@ pub(crate) struct Cube4x4x4Phase3Search {
 impl Default for Cube4x4x4Phase3Search {
     fn default() -> Self {
         let phase3_generator_moves = move_list_from_vec(vec![
-            "Uw2", "U", "Lw2", "L", "Fw", "F2", "Rw2", "R", "Bw2", "B2", "Dw2", "D",
+            "Uw2", "U", // U
+            "Lw2", "L", // L
+            "Fw2", "F2", // F
+            "Rw2", "R", // R
+            "Bw2", "B2", // B
+            "Dw2", "D", // D
         ]);
 
         let cube4x4x4_phase3_puzzle = Cube4x4x4Phase3Puzzle::default();

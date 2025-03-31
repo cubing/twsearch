@@ -151,27 +151,27 @@ pub(crate) struct Cube4x4x4Phase2Search {
 
 pub(crate) fn phase2_search(search_logger: Arc<SearchLogger>) -> Cube4x4x4Phase2Search {
     let phase2_generator_moves =
-        move_list_from_vec(vec!["Uw2", "U", "L", "Fw2", "F", "Rw", "R", "B", "D"]);
+        move_list_from_vec(vec!["Uw2", "U", "L", "Fw", "F", "Rw2", "R", "B", "D"]);
 
     // This would be inline, but we need to work around https://github.com/cubing/twsearch/issues/128
     let phase2_name =
-        "Place F/B and U/D centers on correct axes and make L/R solvable with half turns"
+        "Place L/R and U/D centers on correct axes and make F/B solvable with half turns"
             .to_owned();
 
     let cube4x4x4_phase2_puzzle = Cube4x4x4Phase2Puzzle::default();
     let phase2_target_patterns = [
         parse_alg!(""),
         parse_alg!("y2"),
-        parse_alg!("Fw2"),
-        parse_alg!("Bw2"),
+        parse_alg!("Lw2"),
+        parse_alg!("Rw2"),
         parse_alg!("Uw2"),
         parse_alg!("Dw2"),
-        parse_alg!("Fw2 Rw2"),
-        parse_alg!("Bw2 Rw2"),
-        parse_alg!("Uw2 Rw2"),
-        parse_alg!("Dw2 Rw2"),
-        parse_alg!("Dw2 Rw2 Fw2"),
-        parse_alg!("Fw2 Rw2 Uw2"),
+        parse_alg!("Lw2 Fw2"),
+        parse_alg!("Rw2 Fw2"),
+        parse_alg!("Uw2 Fw2"),
+        parse_alg!("Dw2 Fw2"),
+        parse_alg!("Dw2 Fw2 Lw2"),
+        parse_alg!("Lw2 Fw2 Uw2"),
     ]
     .map(|alg| {
         // TODO: figure out a way to derive before alg application?
@@ -184,6 +184,8 @@ pub(crate) fn phase2_search(search_logger: Arc<SearchLogger>) -> Cube4x4x4Phase2
             )
             .unwrap()
     });
+
+    dbg!(&phase2_target_patterns);
 
     let phase2_iterative_deepening_search =
         IterativeDeepeningSearch::<Cube4x4x4Phase2Puzzle>::try_new_prune_table_construction_shim::<
@@ -245,8 +247,21 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase2Search {
 
 const NUM_WINGS: u8 = 24;
 
+// A low position is any wing position that can be reached from piece 0 (UBl) using <U, L, R, D>.
+// A low piece is any piece that starts in a low position, and a high position/piece is any that is not a low position/piece.
+// This lookup does the following:
+//
+// - Given a low position, it returns that same position.
+// - Given a high position, it returns the low position that is part of the same dedge (double edge).
+//
+// Note that the low position of a dedge may or may not have the lower index. (TODO: use a different terminology like "primary"/"secondary"?)
 const POSITION_TO_LOW_PIECE: [u8; NUM_WINGS as usize] = [
-    0, 1, 2, 3, 3, 5, 23, 7, 2, 15, 20, 5, 1, 13, 21, 15, 0, 7, 22, 13, 20, 21, 22, 23,
+    0, 1, 2, 3, 3, 11, 23, 17, 2, 9, 20, 11, 1, 19, 21, 9, 0, 17, 22, 19, 20, 21, 22, 23,
+];
+
+const POSITION_IS_LOW: [bool; NUM_WINGS as usize] = [
+    true, true, true, true, false, false, false, false, false, true, false, true, false, false,
+    false, false, false, true, false, true, true, true, true, true,
 ];
 
 fn is_each_wing_pair_separated_across_low_high(pattern: &KPattern) -> bool {
@@ -260,12 +275,12 @@ fn is_each_wing_pair_separated_across_low_high(pattern: &KPattern) -> bool {
     // println!("is_each_wing_pair_separated_across_low_high");
     for position in 0..NUM_WINGS {
         let piece = pattern.get_piece(orbit_info, position);
-        let low_piece = POSITION_TO_LOW_PIECE[piece as usize];
-        let arr = if piece == low_piece {
+        let arr = if POSITION_IS_LOW[position as usize] {
             &mut seen_low
         } else {
             &mut seen_high
         };
+        let low_piece = POSITION_TO_LOW_PIECE[piece as usize];
         if arr[low_piece as usize] {
             return false;
         }

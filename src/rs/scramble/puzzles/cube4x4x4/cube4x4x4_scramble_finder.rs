@@ -38,7 +38,7 @@ Wings and centers are indexed by Speffz ordering: https://www.speedsolving.com/w
 │         (3)   │   │2    │   (1)       (0)        │
 │     ╭─────┬───┼───┴─┬───┼─────┬───┬─────┬───╮    │
 │     │    4│   │    8│   │   12│   │16   │   │    │
-│ (17)├───┬─┤  5├───┬─┤  9│───┬─┤ 13├───┬─┤  7│    │
+│ (17)├───┬─┤  5├───┬─┤  9│───┬─┤ 13├───┬─┤ 17│    │
 │     │7  ├─┴───┤11 ├─┴───┤15 ├─┴───┤19 ├─┴───┤(7) │
 │     │   │6    │   │10   │   │14   │   │18   │    │
 │     ╰───┴─────┼───┴─────┼───┴─────┴───┴─────╯    │
@@ -139,7 +139,7 @@ impl Default for Cube4x4x4ScrambleFinder {
             vec![
                 Box::new(
                     KPuzzleSimpleMaskPhase::try_new(
-                        "Place L/R centers on L/R".to_owned(),
+                        "Place F/B centers on F/B".to_owned(),
                         cube4x4x4_phase1_target_kpattern().clone(),
                         phase1_generator_moves,
                         KPuzzleSimpleMaskPhaseConstructionOptions {
@@ -186,37 +186,3 @@ impl Cube4x4x4ScrambleFinder {
         cube4x4x4_kpuzzle()
     }
 }
-
-// #[derive(Debug, Clone, Hash, PartialEq, Eq)]
-// struct Phase2WingSeparationPattern {
-//     pattern: KPattern,
-// }
-
-// #[derive(Clone, Debug)]
-// struct Phase2WingSeparationPuzzle {}
-
-// impl DerivedPatternPuzzle<KPuzzle> for Phase2WingSeparationPuzzle {
-//     type DerivedPattern = Phase2WingSeparationPattern;
-
-//     fn derive_pattern(&self, source_puzzle_pattern: &KPattern) -> Phase2WingSeparationPattern {
-//         let Ok(pattern) = apply_mask(
-//             source_puzzle_pattern,
-//             cube4x4x4_phase2_wing_separation_mask_kpattern(),
-//         ) else {
-//             return None;
-//         };
-//         Phase2WingSeparationPattern { pattern }
-//     }
-
-//     // fn derived_pattern_name() -> &'static str {
-//     //     "phase 2 wing separation"
-//     // }
-
-//     // fn try_new(_puzzle: &KPuzzle, pattern: &KPattern) -> Option<Self> {
-//     //     let Ok(pattern) = apply_mask(pattern, cube4x4x4_phase2_wing_separation_mask_kpattern())
-//     //     else {
-//     //         return None;
-//     //     };
-//     //     Some(Self { pattern })
-//     // }
-// }

@@ -13,8 +13,6 @@ kpuzzle_from_json_file!(pub(crate), cube4x4x4, "4x4x4.kpuzzle.json");
 kpattern_from_json_file!(pub(crate), cube4x4x4_phase1_target, "4x4x4-Phase1.target.json", cube4x4x4_kpuzzle());
 kpattern_from_json_file!(pub(crate), cube4x4x4_phase2_centers_target, "4x4x4-Phase2-centers.target.json", cube4x4x4_kpuzzle());
 kpuzzle_from_json_file!(pub(crate), cube4x4x4_phase2_wing_parity, "4x4x4-Phase2-wing-parity.kpuzzle.json");
-// TODO: reorient this by `y`, replacing the wing piece ordering with: `0,  1,  2,  3,  3, 11, 23, 17,  2,  9, 20, 11,  1, 19, 21,  9,  0, 17, 22, 19, 20, 21, 22, 23`
-kpattern_from_json_file!(pub(crate), cube4x4x4_phase2_wing_separation_mask, "4x4x4-Phase2-wing-separation.mask-pattern.json", cube4x4x4_kpuzzle());
 
 kpuzzle_from_json_file!(pub(crate), cube5x5x5, "5x5x5.kpuzzle.json");
 kpuzzle_from_json_file!(pub(crate), cube6x6x6, "6x6x6.kpuzzle.json");

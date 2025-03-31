@@ -40,6 +40,10 @@ impl<TPuzzle: SemiGroupActionPuzzle> MultiPhaseSearch<TPuzzle> {
             // TODO: avoid formatting unless it will be printed.
             self.search_logger
                 .write_info(&format!("Starting phase: {}", phase.phase_name()));
+            self.search_logger.write_info(&format!(
+                "Solution so far: {}",
+                current_solution.clone().unwrap_or_default()
+            ));
 
             // TODO: can we avoid clones?
             let Some(phase_search_pattern) = apply_flat_alg(

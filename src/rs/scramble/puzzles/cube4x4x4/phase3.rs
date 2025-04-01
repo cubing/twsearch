@@ -26,8 +26,6 @@ use crate::{
     },
 };
 
-use super::phase2::POSITION_IS_LOW;
-
 // pub(crate) fn cube4x4x4_phase3_search()
 #[derive(Clone, Debug)]
 pub(crate) struct Cube4x4x4Phase3Puzzle {
@@ -215,19 +213,19 @@ impl Cube4x4x4Phase3Puzzle {
         // }
 
         let mut piece_mapping: [Option<u8>; 24] = [None; 24];
-        let mut next_low_piece: u8 = 0;
+        let mut used_pieces: [bool; 24] = [false; 24];
+        let mut next_piece: u8 = 0;
         for i in 0..orbit_info.num_pieces {
-            if piece_mapping[pattern.get_piece(orbit_info, i) as usize].is_none() {
-                piece_mapping[pattern.get_piece(orbit_info, i) as usize] = Some(next_low_piece);
-                piece_mapping
-                    [PIECE_TO_PARTNER_PIECE[pattern.get_piece(orbit_info, i) as usize] as usize] =
-                    Some(PIECE_TO_PARTNER_PIECE[next_low_piece as usize]);
-
-                next_low_piece += 1;
-                while next_low_piece < orbit_info.num_pieces
-                    && !POSITION_IS_LOW[next_low_piece as usize]
-                {
-                    next_low_piece += 1;
+            let piece = pattern.get_piece(orbit_info, i) as usize;
+            if piece_mapping[piece].is_none() {
+                piece_mapping[piece] = Some(next_piece);
+                let partner_piece = PIECE_TO_PARTNER_PIECE[piece];
+                let next_partner_piece = PIECE_TO_PARTNER_PIECE[next_piece as usize];
+                piece_mapping[partner_piece as usize] = Some(next_partner_piece);
+                used_pieces[next_partner_piece as usize] = true;
+                next_piece += 1;
+                while next_piece < orbit_info.num_pieces && used_pieces[next_piece as usize] {
+                    next_piece += 1;
                 }
             }
         }
@@ -287,11 +285,11 @@ impl Default for Cube4x4x4Phase3Search {
     fn default() -> Self {
         let phase3_generator_moves = move_list_from_vec(vec![
             "Uw2", "U", // U
-            "Lw2", "L", // L
+            "L", // L
             "Fw2", "F2", // F
-            "Rw2", "R", // R
-            "Bw2", "B2", // B
-            "Dw2", "D", // D
+            "Rw2", "R",  // R
+            "B2", // B
+            "D",  // D
         ]);
 
         let cube4x4x4_phase3_puzzle = Cube4x4x4Phase3Puzzle::default();

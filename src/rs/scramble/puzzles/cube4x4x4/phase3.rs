@@ -19,8 +19,7 @@ use crate::{
     experimental_lib_api::{derived_puzzle_search_phase::DerivedPuzzleSearchPhase, SearchPhase},
     scramble::{
         puzzles::{
-            cube4x4x4::phase2::PIECE_TO_PARTNER_PIECE,
-            definitions::cube4x4x4_phase3_target_kpattern,
+            cube4x4x4::wings::WING_TO_PARTNER_WING, definitions::cube4x4x4_phase3_target_kpattern,
         },
         scramble_search::move_list_from_vec,
     },
@@ -216,20 +215,29 @@ impl Cube4x4x4Phase3Puzzle {
         //     }
         // }
 
+        // Tracks piece assignments for the canonicalization remapping.
+        // The piece with value `i` (regardless of its position) will be replaced with the value `piece_mapping[i]`.
         let mut piece_mapping: [Option<u8>; 24] = [None; 24];
-        let mut used_pieces: [bool; 24] = [false; 24];
-        let mut next_piece: u8 = 0;
+        // When a piece has not yet been assigned a mapping (due to its partner), we use this to select the next available value.
+        let mut next_assignment: u8 = 0;
+        // Tracks piece assignments that cannot be used for future pieces because they were used by (the partner of) a previous assigned piece.
+        let mut blocked_assignments: [bool; 24] = [false; 24];
         for i in 0..orbit_info.num_pieces {
             let piece = pattern.get_piece(orbit_info, i) as usize;
             if piece_mapping[piece].is_none() {
-                piece_mapping[piece] = Some(next_piece);
-                let partner_piece = PIECE_TO_PARTNER_PIECE[piece];
-                let next_partner_piece = PIECE_TO_PARTNER_PIECE[next_piece as usize];
-                piece_mapping[partner_piece as usize] = Some(next_partner_piece);
-                used_pieces[next_partner_piece as usize] = true;
-                next_piece += 1;
-                while next_piece < orbit_info.num_pieces && used_pieces[next_piece as usize] {
-                    next_piece += 1;
+                let assigned_piece = next_assignment;
+                piece_mapping[piece] = Some(assigned_piece);
+
+                let partner_piece = WING_TO_PARTNER_WING[piece];
+                let assigned_piece_partner = WING_TO_PARTNER_WING[assigned_piece as usize];
+                piece_mapping[partner_piece as usize] = Some(assigned_piece_partner);
+                blocked_assignments[assigned_piece_partner as usize] = true;
+
+                next_assignment += 1;
+                while next_assignment < orbit_info.num_pieces
+                    && blocked_assignments[next_assignment as usize]
+                {
+                    next_assignment += 1;
                 }
             }
         }
@@ -237,6 +245,8 @@ impl Cube4x4x4Phase3Puzzle {
             pattern.set_piece(
                 orbit_info,
                 i,
+                // By the time we reach this loop, every entry of `piece_mapping` has a `Some(…)` value.
+                // (If not, the input piece array was invalid. We don't perform validation in this function, since it's very hot code.)
                 piece_mapping[pattern.get_piece(orbit_info, i) as usize].unwrap(),
             );
         }

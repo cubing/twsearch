@@ -29,7 +29,10 @@ use crate::{
     },
     experimental_lib_api::{derived_puzzle_search_phase::DerivedPuzzleSearchPhase, SearchPhase},
     scramble::{
-        puzzles::definitions::{cube4x4x4_kpuzzle, cube4x4x4_phase2_search_kpuzzle},
+        puzzles::{
+            cube4x4x4::wings::{NUM_WINGS, POSITION_IS_PRIMARY, WING_TO_PRIMARY_WING_IN_DEDGE},
+            definitions::{cube4x4x4_kpuzzle, cube4x4x4_phase2_search_kpuzzle},
+        },
         randomize::{basic_parity, BasicParity},
         scramble_search::move_list_from_vec,
     },
@@ -228,7 +231,7 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase2Search {
                 // dbg!(&phase_search_pattern_owned);
                 // dbg!(alg.to_string());
                 // dbg!(&pattern);
-                if is_each_wing_pair_separated_across_low_high(&pattern) {
+                if is_each_wing_pair_separated_across_primary_and_secondary(&pattern) {
                     FilteringDecision::Accept
                 } else {
                     FilteringDecision::Reject
@@ -244,46 +247,23 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase2Search {
     }
 }
 
-pub(crate) const NUM_WINGS: u8 = 24;
-
-// A low position is any wing position that can be reached from piece 0 (UBl) using <U, L, R, D>.
-// A low piece is any piece that starts in a low position, and a high position/piece is any that is not a low position/piece.
-// This lookup does the following:
-//
-// - Given a low piece, it returns that same piece.
-// - Given a high piece, it returns the low piece that is part of the same dedge (double edge) in the solved state.
-//
-// Note that the low position of a dedge may or may not have the lower index. (TODO: use a different terminology like "primary"/"secondary"?)
-pub(crate) const PIECE_TO_LOW_PIECE: [u8; NUM_WINGS as usize] = [
-    0, 1, 2, 3, 3, 11, 23, 17, 2, 9, 20, 11, 1, 19, 21, 9, 0, 17, 22, 19, 20, 21, 22, 23,
-];
-
-pub(crate) const PIECE_TO_PARTNER_PIECE: [u8; NUM_WINGS as usize] = [
-    16, 12, 8, 4, 3, 11, 23, 17, 2, 15, 20, 5, 1, 19, 21, 9, 0, 7, 22, 13, 10, 14, 18, 6,
-];
-
-pub(crate) const POSITION_IS_LOW: [bool; NUM_WINGS as usize] = [
-    true, true, true, true, false, false, false, false, false, true, false, true, false, false,
-    false, false, false, true, false, true, true, true, true, true,
-];
-
-fn is_each_wing_pair_separated_across_low_high(pattern: &KPattern) -> bool {
+fn is_each_wing_pair_separated_across_primary_and_secondary(pattern: &KPattern) -> bool {
     let orbit_info = &pattern.kpuzzle().data.ordered_orbit_info[1];
-    assert_eq!(orbit_info.name.0, "WINGS");
+    debug_assert_eq!(orbit_info.name.0, "WINGS");
 
     // TODO: There are some clever ways to optimize this. Are any of them worth it?
-    let mut seen_low = [false; NUM_WINGS as usize];
-    let mut seen_high = [false; NUM_WINGS as usize];
+    let mut seen_in_primary_position = [false; NUM_WINGS as usize];
+    let mut seen_in_secondary_position = [false; NUM_WINGS as usize];
 
     // println!("is_each_wing_pair_separated_across_low_high");
     for position in 0..NUM_WINGS {
         let piece = pattern.get_piece(orbit_info, position);
-        let arr = if POSITION_IS_LOW[position as usize] {
-            &mut seen_low
+        let arr = if POSITION_IS_PRIMARY[position as usize] {
+            &mut seen_in_primary_position
         } else {
-            &mut seen_high
+            &mut seen_in_secondary_position
         };
-        let low_piece = PIECE_TO_LOW_PIECE[piece as usize];
+        let low_piece = WING_TO_PRIMARY_WING_IN_DEDGE[piece as usize];
         if arr[low_piece as usize] {
             return false;
         }

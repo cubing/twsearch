@@ -256,22 +256,22 @@ fn is_each_wing_pair_separated_across_primary_and_secondary(pattern: &KPattern) 
     let mut seen_in_secondary_position = [false; NUM_WINGS as usize];
 
     // println!("is_each_wing_pair_separated_across_low_high");
-    let mut lowinlow = 0;
+    let mut primary_pieces_in_primary_positions_parity = BasicParity::Even;
     for position in 0..NUM_WINGS {
         let piece = pattern.get_piece(orbit_info, position);
-        if POSITION_IS_PRIMARY[position as usize] && POSITION_IS_PRIMARY[piece as usize] {
-            lowinlow += 1;
-        }
         let arr = if POSITION_IS_PRIMARY[position as usize] {
+            if POSITION_IS_PRIMARY[piece as usize] {
+                primary_pieces_in_primary_positions_parity.flip();
+            }
             &mut seen_in_primary_position
         } else {
             &mut seen_in_secondary_position
         };
-        let low_piece = WING_TO_PRIMARY_WING_IN_DEDGE[piece as usize];
-        if arr[low_piece as usize] {
+        let primary_piece = WING_TO_PRIMARY_WING_IN_DEDGE[piece as usize];
+        if arr[primary_piece as usize] {
             return false;
         }
-        arr[low_piece as usize] = true;
+        arr[primary_piece as usize] = true;
     }
-    (lowinlow & 1) == 0
+    primary_pieces_in_primary_positions_parity == BasicParity::Even
 }

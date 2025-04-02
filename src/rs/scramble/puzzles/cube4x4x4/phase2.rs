@@ -29,11 +29,11 @@ use crate::{
     },
     experimental_lib_api::{derived_puzzle_search_phase::DerivedPuzzleSearchPhase, SearchPhase},
     scramble::{
+        parity::{basic_parity, BasicParity},
         puzzles::{
             cube4x4x4::wings::{NUM_WINGS, POSITION_IS_PRIMARY, WING_TO_PRIMARY_WING_IN_DEDGE},
             definitions::{cube4x4x4_kpuzzle, cube4x4x4_phase2_search_kpuzzle},
         },
-        randomize::{basic_parity, BasicParity},
         scramble_search::move_list_from_vec,
     },
 };
@@ -112,13 +112,7 @@ impl PatternDeriver<KPuzzle> for Cube4x4x4Phase2PatternDeriver {
             pattern.set_orientation_with_mod(
                 orbit_info,
                 0,
-                &OrientationWithMod {
-                    orientation: match parity {
-                        BasicParity::Even => 0,
-                        BasicParity::Odd => 1,
-                    },
-                    orientation_mod: 0,
-                },
+                &OrientationWithMod::new_using_default_orientation_mod(parity.to_0_or_1()),
             );
         }
 

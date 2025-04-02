@@ -21,9 +21,10 @@ use crate::{
     },
     scramble::{
         collapse::collapse_adjacent_moves,
+        parity::{basic_parity, BasicParity},
         randomize::{
-            basic_parity, randomize_orbit, BasicParity, OrbitOrientationConstraint,
-            OrbitPermutationConstraint, OrbitRandomizationConstraints,
+            randomize_orbit, OrbitOrientationConstraint, OrbitPermutationConstraint,
+            OrbitRandomizationConstraints,
         },
         scramble_search::{move_list_from_vec, FilteredSearch},
         solving_based_scramble_finder::SolvingBasedScrambleFinder,

@@ -26,7 +26,7 @@ use crate::{
             prune_table_trait::Depth,
         },
     },
-    scramble::randomize::BasicParity,
+    scramble::parity::BasicParity,
 };
 
 use super::{

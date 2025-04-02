@@ -1,8 +1,8 @@
 use cubing::kpuzzle::KPattern;
 
 use crate::scramble::{
+    parity::{basic_parity, BasicParity},
     puzzles::square1::wedges::{WedgeType, NUM_WEDGES, WEDGE_TYPE_LOOKUP},
-    randomize::{basic_parity, BasicParity},
 };
 
 pub(crate) fn bandaged_wedge_parity(pattern: &KPattern) -> BasicParity {

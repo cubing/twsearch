@@ -1,4 +1,5 @@
 mod collapse;
+mod parity;
 mod puzzles;
 mod randomize;
 mod scramble_search;

@@ -41,7 +41,7 @@ impl PatternDeriver<KPuzzle> for Cube4x4x4Phase3Puzzle {
             .masked_derived_puzzle
             .derive_pattern(source_puzzle_pattern)?;
         dbg!(&pattern);
-        Self::canonicalize_wings(&mut pattern);
+        self.canonicalize_wings(&mut pattern);
         Some(pattern)
     }
 }
@@ -82,7 +82,7 @@ impl SemiGroupActionPuzzle for Cube4x4x4Phase3Puzzle {
         let mut pattern = self
             .masked_derived_puzzle
             .pattern_apply_transformation(pattern, transformation_to_apply)?;
-        Self::canonicalize_wings(&mut pattern);
+        self.canonicalize_wings(&mut pattern);
         Some(pattern)
     }
 
@@ -99,7 +99,7 @@ impl SemiGroupActionPuzzle for Cube4x4x4Phase3Puzzle {
         {
             return false;
         }
-        Self::canonicalize_wings(into_pattern);
+        self.canonicalize_wings(into_pattern);
         true
     }
 }
@@ -140,9 +140,13 @@ impl Cube4x4x4Phase3Puzzle {
     /// any combination of 3 rotation moves (24 possibilities total), except
     /// that here you can conjugate by any of 6 face moves (12! * 2^12 states,
     /// ignoring parity considerations).
-    fn canonicalize_wings(pattern: &mut KPattern) {
-        let orbit_info = &pattern.kpuzzle().clone().data.ordered_orbit_info[1]; // TODO: avoid clone?
-                                                                                // assert_eq!(orbit_info.name.0, "WINGS");
+    fn canonicalize_wings(&self, pattern: &mut KPattern) {
+        let orbit_info = &self
+            .masked_derived_puzzle
+            .derived_puzzle
+            .data
+            .ordered_orbit_info[1];
+        debug_assert_eq!(orbit_info.name.0, "WINGS");
 
         // Input
         // [14, 16, 4, 18, 2, 17, 8, 12, 21, 7, 20, 6, 3, 5, 22, 23, 10, 15, 0, 9, 1, 13, 19, 11]

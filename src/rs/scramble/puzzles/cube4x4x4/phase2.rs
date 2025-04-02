@@ -260,7 +260,7 @@ fn is_each_wing_pair_separated_across_primary_and_secondary(pattern: &KPattern) 
     for position in 0..NUM_WINGS {
         let piece = pattern.get_piece(orbit_info, position);
         if POSITION_IS_PRIMARY[position as usize] && POSITION_IS_PRIMARY[piece as usize] {
-           lowinlow += 1;
+            lowinlow += 1;
         }
         let arr = if POSITION_IS_PRIMARY[position as usize] {
             &mut seen_in_primary_position

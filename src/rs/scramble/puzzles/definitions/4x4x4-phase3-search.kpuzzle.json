@@ -1,0 +1,155 @@
+{
+  "$schema": "../../../../../node_modules/cubing/experimental-json-schema/kpuzzle/KPuzzleDefinition.schema.json",
+  "name": "4x4x4",
+  "orbits": [
+    {
+      "orbitName": "WINGS",
+      "numPieces": 24,
+      "numOrientations": 1
+    },
+    {
+      "orbitName": "CENTERS",
+      "numPieces": 24,
+      "numOrientations": 1
+    },
+    {
+      "orbitName": "PLL_PARITY",
+      "numPieces": 1,
+      "numOrientations": 2
+    }
+  ],
+  "defaultPattern": {
+    "WINGS": {
+      "pieces": [
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+        20, 21, 22, 23
+      ],
+      "orientation": [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      ]
+    },
+    "CENTERS": {
+      "pieces": [
+        0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5
+      ],
+      "orientation": [
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+      ]
+    },
+    "PLL_PARITY": {
+      "pieces": [0],
+      "orientation": [0]
+    }
+  },
+  "moves": {
+    "Dv": {
+      "WINGS": {
+        "permutation": [
+          1, 2, 3, 0, 16, 17, 18, 19, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+          23, 20, 21, 22
+        ],
+        "orientationDelta": [
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ]
+      },
+      "CENTERS": {
+        "permutation": [
+          1, 2, 3, 0, 16, 17, 18, 19, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+          23, 20, 21, 22
+        ],
+        "orientationDelta": [
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ]
+      },
+      "PLL_PARITY": {
+        "permutation": [0],
+        "orientationDelta": [0]
+      }
+    },
+    "Rw_TWO_WORKAROUND": {
+      "CENTERS": {
+        "permutation": [
+          0, 21, 22, 3, 4, 5, 6, 7, 8, 19, 16, 11, 14, 15, 12, 13, 10, 17, 18,
+          9, 20, 1, 2, 23
+        ],
+        "orientationDelta": [
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ]
+      },
+      "WINGS": {
+        "permutation": [
+          0, 21, 22, 3, 4, 5, 6, 7, 8, 19, 16, 11, 14, 15, 12, 13, 10, 17, 18,
+          9, 20, 1, 2, 23
+        ],
+        "orientationDelta": [
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ]
+      },
+      "PLL_PARITY": {
+        "permutation": [0],
+        "orientationDelta": [1]
+      }
+    },
+    "R": {
+      "WINGS": {
+        "permutation": [
+          0, 9, 2, 3, 4, 5, 6, 7, 8, 21, 10, 11, 15, 12, 13, 14, 16, 17, 18, 1,
+          20, 19, 22, 23
+        ],
+        "orientationDelta": [
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ]
+      },
+      "CENTERS": {
+        "permutation": [
+          0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 15, 12, 13, 14, 16, 17, 18, 19,
+          20, 21, 22, 23
+        ],
+        "orientationDelta": [
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ]
+      },
+      "PLL_PARITY": {
+        "permutation": [0],
+        "orientationDelta": [0]
+      }
+    },
+    "Lv": {
+      "WINGS": {
+        "permutation": [
+          18, 19, 16, 17, 7, 4, 5, 6, 0, 1, 2, 3, 13, 14, 15, 12, 22, 23, 20,
+          21, 8, 9, 10, 11
+        ],
+        "orientationDelta": [
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ]
+      },
+      "CENTERS": {
+        "permutation": [
+          18, 19, 16, 17, 7, 4, 5, 6, 0, 1, 2, 3, 13, 14, 15, 12, 22, 23, 20,
+          21, 8, 9, 10, 11
+        ],
+        "orientationDelta": [
+          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ]
+      },
+      "PLL_PARITY": {
+        "permutation": [0],
+        "orientationDelta": [0]
+      }
+    }
+  },
+  "derivedMoves": {
+    "x": "Lv'",
+    "y": "Dv'",
+    "z": "[x: y]",
+    "Rw2": "Rw_TWO_WORKAROUND",
+    "U": "[z: R]",
+    "Uw2": "[z: Rw_TWO_WORKAROUND]",
+    "L": "[y2: R]",
+    "F": "[y': R]",
+    "Fw2": "[y': Rw_TWO_WORKAROUND]",
+    "B": "[y: R]",
+    "D": "[z': R]"
+  }
+}

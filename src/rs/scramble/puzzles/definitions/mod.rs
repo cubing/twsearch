@@ -13,10 +13,7 @@ kpuzzle_from_json_file!(pub(crate), cube4x4x4, "4x4x4.kpuzzle.json");
 kpattern_from_json_file!(pub(crate), cube4x4x4_phase1_target, "4x4x4-phase1.target.json", cube4x4x4_kpuzzle());
 // Note that this does not track wing separation.
 kpuzzle_from_json_file!(pub(crate), cube4x4x4_phase2_search, "4x4x4-phase2-search.kpuzzle.json");
-// TODO
-// - Restore wing permutation and implement symmetry reduction (upon transformation application).
-// - Add a permutation parity tracking orbit.
-kpattern_from_json_file!(pub(crate), cube4x4x4_phase3_target, "4x4x4-phase3.target.json", cube4x4x4_kpuzzle());
+kpuzzle_from_json_file!(pub(crate), cube4x4x4_phase3_search, "4x4x4-phase3-search.kpuzzle.json");
 
 kpuzzle_from_json_file!(pub(crate), cube5x5x5, "5x5x5.kpuzzle.json");
 kpuzzle_from_json_file!(pub(crate), cube6x6x6, "6x6x6.kpuzzle.json");

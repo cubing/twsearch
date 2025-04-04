@@ -1,4 +1,3 @@
-use std::env::var;
 use std::sync::Arc;
 
 use cubing::alg::Alg;
@@ -23,6 +22,7 @@ use crate::scramble::{
 
 use super::phase2::phase2_search;
 use super::phase3::Cube4x4x4Phase3Search;
+use super::phase4::Cube4x4x4Phase4Search;
 
 /*
 
@@ -53,16 +53,6 @@ Wings and centers are indexed by Speffz ordering: https://www.speedsolving.com/w
 
 pub(crate) struct Cube4x4x4ScrambleFinder {
     multi_phase_search: MultiPhaseSearch<KPuzzle>,
-}
-
-fn run_incomplete_scramble_finder_check() {
-    let run_incomplete_scramble_finders = match var("RUN_INCOMPLETE_SCRAMBLE_FINDERS") {
-        Ok(value) => value == "true",
-        _ => false,
-    };
-    if !run_incomplete_scramble_finders {
-        panic!("To run this finder, use: `env RUN_INCOMPLETE_SCRAMBLE_FINDERS=true`")
-    }
 }
 
 impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
@@ -110,8 +100,6 @@ impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
         _scramble_associated_data: &Self::ScrambleAssociatedData,
         _scramble_options: &Self::ScrambleOptions,
     ) -> Result<Alg, SearchError> {
-        run_incomplete_scramble_finder_check();
-
         self.multi_phase_search
             .chain_first_solution_for_each_phase(pattern)
     }
@@ -150,6 +138,7 @@ impl Default for Cube4x4x4ScrambleFinder {
                 ),
                 Box::new(phase2_search(Arc::new(search_logger.clone()))),
                 Box::new(Cube4x4x4Phase3Search::default()),
+                Box::new(Cube4x4x4Phase4Search::default()),
             ],
             Some(SearchLogger {
                 verbosity: VerbosityLevel::Info,

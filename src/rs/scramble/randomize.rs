@@ -19,7 +19,7 @@ pub(crate) enum OrbitOrientationConstraint {
 }
 
 // Note: this refers to the piece that is at index 0 in the *solved* pattern (i.e. the piece with value `0` in the `permutation` array), which may not necessarily be at index 0 in the *randomized* pattern.
-pub(crate) enum ConstraintForFirstPiece {
+pub(crate) enum ConstraintForPiece0 {
     KeepSolved,
     IgnoredOrientation,
 }
@@ -30,7 +30,7 @@ pub(crate) enum ConstraintForFirstPiece {
 /// use crate::scramble::randomize::{ConstraintForFirstPiece, OrbitRandomizationConstraints};
 ///
 /// OrbitRandomizationConstraints {
-///     first_piece: Some(ConstraintForFirstPiece::KeepSolved),
+///     piece_0: Some(ConstraintForPiece0::KeepSolved),
 ///     ..Default::default()
 /// }
 /// ```
@@ -38,7 +38,7 @@ pub(crate) enum ConstraintForFirstPiece {
 pub(crate) struct OrbitRandomizationConstraints {
     pub(crate) permutation: Option<OrbitPermutationConstraint>,
     pub(crate) orientation: Option<OrbitOrientationConstraint>,
-    pub(crate) first_piece: Option<ConstraintForFirstPiece>,
+    pub(crate) piece_0: Option<ConstraintForPiece0>,
     pub(crate) subset: Option<Vec<u8>>,
 }
 
@@ -62,14 +62,12 @@ pub(crate) fn randomize_orbit(
         .unwrap_or_else(|| (0..orbit_info.num_pieces).collect());
     let mut piece_order_shuffled = piece_order_original.clone();
     let first_randomized_piece = piece_order_shuffled[0];
-    let first_shuffled_piece_order_index = if matches!(
-        constraints.first_piece,
-        Some(ConstraintForFirstPiece::KeepSolved)
-    ) {
-        1
-    } else {
-        0
-    };
+    let first_shuffled_piece_order_index =
+        if matches!(constraints.piece_0, Some(ConstraintForPiece0::KeepSolved)) {
+            1
+        } else {
+            0
+        };
     let shuffling_slice = piece_order_shuffled
         .split_at_mut_checked(first_shuffled_piece_order_index)
         .unwrap()
@@ -96,7 +94,7 @@ pub(crate) fn randomize_orbit(
         let is_last_shuffled_piece = shuffled_i == piece_order_original.len() - 1;
         let orientation_with_mod = match (
             &constraints.orientation,
-            &constraints.first_piece,
+            &constraints.piece_0,
             is_last_shuffled_piece,
             *p == first_randomized_piece,
         ) {
@@ -110,11 +108,11 @@ pub(crate) fn randomize_orbit(
                 orientation: subtract_u8_mod(0, total_orientation, orbit_info.num_orientations),
                 orientation_mod: 0,
             },
-            (_, Some(ConstraintForFirstPiece::KeepSolved), _, true) => OrientationWithMod {
+            (_, Some(ConstraintForPiece0::KeepSolved), _, true) => OrientationWithMod {
                 orientation: 0,
                 orientation_mod: 0,
             },
-            (_, Some(ConstraintForFirstPiece::IgnoredOrientation), _, true) => OrientationWithMod {
+            (_, Some(ConstraintForPiece0::IgnoredOrientation), _, true) => OrientationWithMod {
                 orientation: 0,
                 orientation_mod: 1,
             },

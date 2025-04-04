@@ -21,7 +21,7 @@ use crate::{
     scramble::{
         collapse::collapse_adjacent_moves,
         puzzles::static_move_list::{add_random_suffixes_from, static_parsed_opt_list},
-        randomize::{ConstraintForFirstPiece, OrbitRandomizationConstraints},
+        randomize::{ConstraintForPiece0, OrbitRandomizationConstraints},
         scramble_search::{move_list_from_vec, FilteredSearch},
         solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
     },
@@ -102,7 +102,7 @@ impl SolvingBasedScrambleFinder for Cube2x2x2ScrambleFinder {
             "CORNERS",
             OrbitRandomizationConstraints {
                 orientation: Some(OrbitOrientationConstraint::SumToZero),
-                first_piece: Some(ConstraintForFirstPiece::KeepSolved),
+                piece_0: Some(ConstraintForPiece0::KeepSolved),
                 ..Default::default()
             },
         );

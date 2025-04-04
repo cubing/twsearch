@@ -11,7 +11,7 @@ use crate::{
     },
     scramble::{
         collapse::collapse_adjacent_moves,
-        randomize::{ConstraintForFirstPiece, OrbitRandomizationConstraints},
+        randomize::{ConstraintForPiece0, OrbitRandomizationConstraints},
         scramble_search::{move_list_from_vec, FilteredSearch},
         solving_based_scramble_finder::{
             NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
@@ -117,7 +117,7 @@ impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
             "CORNERS1",
             OrbitRandomizationConstraints {
                 permutation: Some(OrbitPermutationConstraint::EvenParity),
-                first_piece: Some(ConstraintForFirstPiece::IgnoredOrientation),
+                piece_0: Some(ConstraintForPiece0::IgnoredOrientation),
                 ..Default::default()
             },
         );
@@ -128,7 +128,7 @@ impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
             "CORNERS2",
             OrbitRandomizationConstraints {
                 permutation: Some(OrbitPermutationConstraint::EvenParity),
-                first_piece: Some(ConstraintForFirstPiece::IgnoredOrientation),
+                piece_0: Some(ConstraintForPiece0::IgnoredOrientation),
                 ..Default::default()
             },
         );

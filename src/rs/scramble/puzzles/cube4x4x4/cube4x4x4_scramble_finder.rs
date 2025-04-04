@@ -15,9 +15,7 @@ use crate::{_internal::errors::SearchError, scramble::scramble_search::move_list
 
 use crate::scramble::{
     collapse::collapse_adjacent_moves,
-    randomize::{
-        randomize_orbit_naïve, OrbitOrientationConstraint, OrbitRandomizationConstraints
-    },
+    randomize::{randomize_orbit, OrbitOrientationConstraint, OrbitRandomizationConstraints},
     solving_based_scramble_finder::{
         NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
     },
@@ -81,7 +79,7 @@ impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
     ){
         let mut scramble_pattern = cube4x4x4_kpuzzle().default_pattern();
 
-        randomize_orbit_naïve(
+        randomize_orbit(
             &mut scramble_pattern,
             0,
             "CORNERS",
@@ -90,8 +88,8 @@ impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
                 ..Default::default()
             },
         );
-        randomize_orbit_naïve(&mut scramble_pattern, 1, "WINGS", Default::default());
-        randomize_orbit_naïve(&mut scramble_pattern, 2, "CENTERS", Default::default());
+        randomize_orbit(&mut scramble_pattern, 1, "WINGS", Default::default());
+        randomize_orbit(&mut scramble_pattern, 2, "CENTERS", Default::default());
 
         (scramble_pattern, NoScrambleAssociatedData {})
     }

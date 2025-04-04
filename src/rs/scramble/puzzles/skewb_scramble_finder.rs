@@ -20,9 +20,7 @@ use crate::{
 };
 
 use super::{
-    super::randomize::{
-        randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
-    },
+    super::randomize::{randomize_orbit, OrbitOrientationConstraint, OrbitPermutationConstraint},
     definitions::skewb_fixed_corner_with_co_tweaks_kpuzzle,
 };
 
@@ -113,7 +111,7 @@ impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
          * This matches: https://www.jaapsch.net/puzzles/skewb.htm
          */
 
-        randomize_orbit_naïve(
+        randomize_orbit(
             &mut scramble_pattern,
             0,
             "CORNERS1",
@@ -124,7 +122,7 @@ impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
             },
         );
 
-        randomize_orbit_naïve(
+        randomize_orbit(
             &mut scramble_pattern,
             1,
             "CORNERS2",
@@ -135,7 +133,7 @@ impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
             },
         );
 
-        randomize_orbit_naïve(
+        randomize_orbit(
             &mut scramble_pattern,
             2,
             "CENTERS",

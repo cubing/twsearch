@@ -22,9 +22,7 @@ use crate::{
 };
 
 use super::{
-    super::randomize::{
-        randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
-    },
+    super::randomize::{randomize_orbit, OrbitOrientationConstraint, OrbitPermutationConstraint},
     definitions::baby_fto_kpuzzle,
 };
 
@@ -65,7 +63,7 @@ pub fn scramble_baby_fto() -> Alg {
     loop {
         let mut scramble_pattern = kpuzzle.default_pattern();
 
-        randomize_orbit_naïve(
+        randomize_orbit(
             &mut scramble_pattern,
             1,
             "C4RNER",
@@ -80,7 +78,7 @@ pub fn scramble_baby_fto() -> Alg {
         );
 
         for subset in [vec![0, 1, 2, 7], vec![3, 4, 5, 6]] {
-            randomize_orbit_naïve(
+            randomize_orbit(
                 &mut scramble_pattern,
                 0,
                 "CENTERS",

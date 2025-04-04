@@ -27,7 +27,7 @@ use crate::{
     },
 };
 
-use super::super::randomize::{randomize_orbit_naïve, OrbitOrientationConstraint};
+use super::super::randomize::{randomize_orbit, OrbitOrientationConstraint};
 
 #[allow(non_snake_case)] // Move meanings are case sensitive.
 pub(crate) struct Cube2x2x2ScrambleFinder {
@@ -96,7 +96,7 @@ impl SolvingBasedScrambleFinder for Cube2x2x2ScrambleFinder {
         Self::ScrambleAssociatedData,
     ){
         let mut scramble_pattern_fixed_corner = self.kpuzzle.default_pattern();
-        randomize_orbit_naïve(
+        randomize_orbit(
             &mut scramble_pattern_fixed_corner,
             0,
             "CORNERS",

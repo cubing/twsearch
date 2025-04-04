@@ -22,7 +22,7 @@ use crate::{
     scramble::{
         collapse::collapse_adjacent_moves,
         randomize::{
-            basic_parity, randomize_orbit_naïve, BasicParity, OrbitOrientationConstraint,
+            basic_parity, randomize_orbit, BasicParity, OrbitOrientationConstraint,
             OrbitPermutationConstraint, OrbitRandomizationConstraints,
         },
         scramble_search::{move_list_from_vec, FilteredSearch},
@@ -101,7 +101,7 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
     ) -> (KPattern, TwoPhase3x3x3ScrambleAssociatedData) {
         let kpuzzle = cube3x3x3_kpuzzle();
         let mut scramble_pattern = kpuzzle.default_pattern();
-        let edge_order = randomize_orbit_naïve(
+        let edge_order = randomize_orbit(
             &mut scramble_pattern,
             0,
             "EDGES",
@@ -111,7 +111,7 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
             },
         );
         let each_orbit_parity = basic_parity(&edge_order);
-        randomize_orbit_naïve(
+        randomize_orbit(
             &mut scramble_pattern,
             1,
             "CORNERS",

@@ -18,9 +18,7 @@ use crate::{
 };
 
 use super::{
-    super::randomize::{
-        randomize_orbit_naïve, OrbitOrientationConstraint, OrbitPermutationConstraint,
-    },
+    super::randomize::{randomize_orbit, OrbitOrientationConstraint, OrbitPermutationConstraint},
     definitions::pyraminx_kpuzzle,
     static_move_list::{add_random_suffixes_from, static_parsed_opt_list},
 };
@@ -70,7 +68,7 @@ impl SolvingBasedScrambleFinder for PyraminxScrambleFinder {
     ){
         let mut scramble_pattern = self.kpuzzle.default_pattern();
 
-        randomize_orbit_naïve(
+        randomize_orbit(
             &mut scramble_pattern,
             0,
             "EDGES",
@@ -80,7 +78,7 @@ impl SolvingBasedScrambleFinder for PyraminxScrambleFinder {
                 ..Default::default()
             },
         );
-        randomize_orbit_naïve(
+        randomize_orbit(
             &mut scramble_pattern,
             1,
             "CORNERS",

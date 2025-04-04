@@ -42,11 +42,11 @@ pub(crate) struct OrbitRandomizationConstraints {
     pub(crate) subset: Option<Vec<u8>>,
 }
 
-// Selects a random permutationa and applies a random orientation to each piece,
-// subject to the given constraints.
-//
-// Returns the piece order of the (subset of) randomized pieces.
-pub(crate) fn randomize_orbit_naïve(
+/// Selects a random permutation and applies a random orientation to each piece,
+/// subject to the given constraints.
+///
+/// Returns the piece order of the (subset of) randomized pieces.
+pub(crate) fn randomize_orbit(
     pattern: &mut KPattern,
     orbit_idx: usize,
     orbit_name: &str,

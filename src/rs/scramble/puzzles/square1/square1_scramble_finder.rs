@@ -17,7 +17,7 @@ use rand::{seq::SliceRandom, thread_rng};
 use crate::{
     _internal::search::{mask_pattern::apply_mask, move_count::MoveCount},
     scramble::randomize::{
-        randomize_orbit_naïve, ConstraintForFirstPiece, OrbitRandomizationConstraints,
+        randomize_orbit, ConstraintForFirstPiece, OrbitRandomizationConstraints,
     },
 };
 
@@ -271,7 +271,7 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
                 }
             }
 
-            randomize_orbit_naïve(
+            randomize_orbit(
                 &mut scramble_pattern,
                 1,
                 "EQUATOR",

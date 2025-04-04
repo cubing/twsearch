@@ -29,6 +29,7 @@ use crate::{
     },
     experimental_lib_api::{derived_puzzle_search_phase::DerivedPuzzleSearchPhase, SearchPhase},
     scramble::{
+        orbit_pieces_byte_slice::orbit_pieces_byte_slice,
         parity::{basic_parity, BasicParity},
         puzzles::{
             cube4x4x4::wings::{NUM_WINGS, POSITION_IS_PRIMARY, WING_TO_PRIMARY_WING_IN_DEDGE},
@@ -37,22 +38,6 @@ use crate::{
         scramble_search::move_list_from_vec,
     },
 };
-
-// #[derive(Debug, Clone, Hash, PartialEq, Eq)]
-// pub(crate) struct WingParityPattern {
-//     pub(crate) parity: BasicParity,
-// }
-
-fn wing_permutation_slice(pattern: &KPattern) -> &[u8] {
-    let orbit = &pattern.kpuzzle().data.ordered_orbit_info[1];
-    assert_eq!(orbit.name.0, "WINGS");
-
-    let from = orbit.pieces_or_permutations_offset;
-    let to = from + (orbit.num_pieces as usize);
-
-    let full_byte_slice = unsafe { pattern.byte_slice() };
-    &full_byte_slice[from..to]
-}
 
 pub fn transfer_orbit(
     source_pattern: &KPattern,
@@ -107,7 +92,7 @@ impl PatternDeriver<KPuzzle> for Cube4x4x4Phase2PatternDeriver {
         {
             let orbit_info = &kpuzzle.data.ordered_orbit_info[1];
             assert_eq!(orbit_info.name.0, "WING_PARITY");
-            let parity = basic_parity(wing_permutation_slice(source_puzzle_pattern));
+            let parity = basic_parity(orbit_pieces_byte_slice(source_puzzle_pattern, 1, "WINGS"));
 
             pattern.set_orientation_with_mod(
                 orbit_info,

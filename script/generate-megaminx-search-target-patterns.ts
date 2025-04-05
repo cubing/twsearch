@@ -80,9 +80,10 @@ await writeTargetPattern(1, [
   "BL",
   "FL",
   "FR",
-  "DL",
   "DR",
+  "DL",
   "B",
+  "D",
 ]);
 await writeTargetPattern(2, ["U", "L", "F", "R", "BR", "BL", "FL", "FR", "DR"]);
 await writeTargetPattern(3, ["U", "L", "F", "R", "BR", "BL", "FL", "FR"]);

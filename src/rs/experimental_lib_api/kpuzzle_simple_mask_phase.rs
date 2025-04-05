@@ -73,7 +73,7 @@ impl KPuzzleSimpleMaskPhase {
         else {
             return Err(SearchError {
                 description: format!(
-                    "Could not apply mask to default pattern for phase: {}",
+                    "Could not construct `IterativeDeepeningSearch` for phase: {}",
                     phase_name
                 ),
             });
@@ -123,6 +123,7 @@ impl SearchPhase<KPuzzle> for KPuzzleSimpleMaskPhase {
                 ),
             });
         };
+        dbg!(&masked_pattern);
         // TODO: can we avoid a clone of `individual_search_options`?
         Ok(self
             .iterative_deepening_search

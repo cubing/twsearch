@@ -31,3 +31,17 @@ kpattern_from_json_file!(pub(crate), square1_corners, "square1-corners.mask-patt
 kpuzzle_from_json_file!(pub(crate), square0_equatorless, "square0-equatorless.kpuzzle.json");
 
 kpuzzle_from_json_file!(pub(crate), baby_fto, "baby_fto.kpuzzle.json");
+
+// TODO: Rebase this definition to make it smaller.
+kpuzzle_from_json_file!(pub(crate), megaminx, "megaminx.kpuzzle.json");
+kpattern_from_json_file!(pub(crate), megaminx_phase1_target, "megaminx-phase1.target-pattern.json", megaminx_kpuzzle());
+kpattern_from_json_file!(pub(crate), megaminx_phase2_target, "megaminx-phase2.target-pattern.json", megaminx_kpuzzle());
+kpattern_from_json_file!(pub(crate), megaminx_phase3_target, "megaminx-phase3.target-pattern.json", megaminx_kpuzzle());
+kpattern_from_json_file!(pub(crate), megaminx_phase4_target, "megaminx-phase4.target-pattern.json", megaminx_kpuzzle());
+kpattern_from_json_file!(pub(crate), megaminx_phase5_target, "megaminx-phase5.target-pattern.json", megaminx_kpuzzle());
+kpattern_from_json_file!(pub(crate), megaminx_phase6_target, "megaminx-phase6.target-pattern.json", megaminx_kpuzzle());
+kpattern_from_json_file!(pub(crate), megaminx_phase7_target, "megaminx-phase7.target-pattern.json", megaminx_kpuzzle());
+kpattern_from_json_file!(pub(crate), megaminx_phase8_target, "megaminx-phase8.target-pattern.json", megaminx_kpuzzle());
+kpattern_from_json_file!(pub(crate), megaminx_phase9_target, "megaminx-phase9.target-pattern.json", megaminx_kpuzzle());
+kpattern_from_json_file!(pub(crate), megaminx_phase10_target, "megaminx-phase10.target-pattern.json", megaminx_kpuzzle());
+kpattern_from_json_file!(pub(crate), megaminx_phase11_target, "megaminx-phase11.target-pattern.json", megaminx_kpuzzle());

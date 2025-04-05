@@ -9,7 +9,7 @@ use super::{
         clock::scramble_clock,
         cube2x2x2_scramble_finder::Cube2x2x2ScrambleFinder,
         cube4x4x4::cube4x4x4_scramble_finder::Cube4x4x4ScrambleFinder,
-        megaminx::scramble_megaminx,
+        megaminx::{megaminx_solver::MegaminxSolver, scramble_megaminx::scramble_megaminx},
         pyraminx_scramble_finder::PyraminxScrambleFinder,
         skewb_scramble_finder::SkewbScrambleFinder,
         square1::square1_scramble_finder::Square1ScrambleFinder,
@@ -147,6 +147,23 @@ pub fn scramble_finder_solve(event: Event, scramble_setup_alg: &Alg) -> Result<A
                         &NoScrambleOptions {},
                     )?;
                     Ok(scramble_finder.collapse_inverted_alg(alg))
+                },
+            )
+            .expect("Could not test scramble.");
+            Ok(test_scramble)
+        }
+        Event::MegaminxSpeedsolving => {
+            let pattern = MegaminxSolver::get_kpuzzle()
+                .default_pattern()
+                .apply_alg(scramble_setup_alg)
+                .expect("Invalid alg for puzzle.");
+            let test_scramble = scramble_finder_cacher_map(
+                |scramble_finder: &mut MegaminxSolver| -> Result<Alg, SearchError> {
+                    scramble_finder.solve_pattern(
+                        &pattern,
+                        &NoScrambleAssociatedData {},
+                        &NoScrambleOptions {},
+                    )
                 },
             )
             .expect("Could not test scramble.");

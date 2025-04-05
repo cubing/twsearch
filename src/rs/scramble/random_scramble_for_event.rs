@@ -71,7 +71,9 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
         Event::Square1Speedsolving => Ok(generate_fair_scramble::<Square1ScrambleFinder>(
             &NoScrambleOptions {},
         )),
-        Event::Cube4x4x4Blindfolded => err,
+        Event::Cube4x4x4Blindfolded => Ok(generate_fair_scramble::<Cube4x4x4ScrambleFinder>(
+            &NoScrambleOptions {},
+        )),
         Event::Cube5x5x5Blindfolded => Ok(scramble_5x5x5_bld()),
         Event::Cube3x3x3MultiBlind => Ok(generate_fair_scramble::<TwoPhase3x3x3ScrambleFinder>(
             &TwoPhase3x3x3ScrambleOptions {

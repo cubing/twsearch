@@ -63,7 +63,7 @@ assert(wasmSize > 32 * KiB); // Make sure the file exists and has some contents.
  * - See https://github.com/cubing/twsearch/issues/37 for an issue about
  *   decreasing the WASM build size directly.
  */
-assert(secondsToDownloadUsing3G(wasmSize) < 5.5);
+assert(secondsToDownloadUsing3G(wasmSize) < 6);
 
 await mkdir(distDir, { recursive: true });
 

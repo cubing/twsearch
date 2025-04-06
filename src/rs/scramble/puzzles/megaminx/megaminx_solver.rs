@@ -1,3 +1,4 @@
+use cubing::alg::Alg;
 use cubing::kpuzzle::{KPattern, KPuzzle};
 
 use crate::{
@@ -25,8 +26,11 @@ use crate::{
             randomize_orbit, OrbitOrientationConstraint, OrbitPermutationConstraint,
             OrbitRandomizationConstraints,
         },
+        scramble_finder::{
+            scramble_finder::ScrambleFinder,
+            solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
+        },
         scramble_search::move_list_from_vec,
-        solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
     },
 };
 
@@ -117,10 +121,21 @@ impl Default for MegaminxSolver {
     }
 }
 
-impl SolvingBasedScrambleFinder for MegaminxSolver {
+impl ScrambleFinder for MegaminxSolver {
     type TPuzzle = KPuzzle;
     type ScrambleOptions = NoScrambleOptions;
 
+    fn filter_pattern(
+        &mut self,
+        _pattern: &KPattern,
+        _scramble_options: &Self::ScrambleOptions,
+    ) -> FilteringDecision {
+        dbg!("WARNING: Megaminx filtering is not implemented for `MegaminxSolver` yet.");
+        FilteringDecision::Accept
+    }
+}
+
+impl SolvingBasedScrambleFinder for MegaminxSolver {
     fn generate_fair_unfiltered_random_pattern(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
@@ -150,25 +165,16 @@ impl SolvingBasedScrambleFinder for MegaminxSolver {
         pattern
     }
 
-    fn filter_pattern(
-        &mut self,
-        _pattern: &KPattern,
-        _scramble_options: &Self::ScrambleOptions,
-    ) -> FilteringDecision {
-        dbg!("WARNING: Megaminx filtering is not implemented yet.");
-        FilteringDecision::Accept
-    }
-
     fn solve_pattern(
         &mut self,
         pattern: &KPattern,
         _scramble_options: &Self::ScrambleOptions,
-    ) -> Result<cubing::alg::Alg, crate::_internal::errors::SearchError> {
+    ) -> Result<Alg, crate::_internal::errors::SearchError> {
         self.multi_phase_search
             .chain_first_solution_for_each_phase(pattern)
     }
 
-    fn collapse_inverted_alg(&mut self, alg: cubing::alg::Alg) -> cubing::alg::Alg {
+    fn collapse_inverted_alg(&mut self, alg: Alg) -> Alg {
         collapse_adjacent_moves(alg, 5, -1)
     }
 }

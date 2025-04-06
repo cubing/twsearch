@@ -19,7 +19,7 @@ use crate::{
                 TwoPhase3x3x3ScrambleOptions,
             },
         },
-        solving_based_scramble_finder::SolvingBasedScrambleFinder,
+        scramble_finder::solving_based_scramble_finder::SolvingBasedScrambleFinder,
     },
 };
 

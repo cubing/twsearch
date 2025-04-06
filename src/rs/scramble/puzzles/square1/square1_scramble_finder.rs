@@ -6,7 +6,10 @@ use crate::{
             phase1::square1_phase1_individual_search_adaptations,
             square1_shape_traversal_filter::shape_traversal_filter_pattern,
         },
-        solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
+        scramble_finder::{
+            scramble_finder::ScrambleFinder,
+            solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
+        },
     },
 };
 
@@ -225,10 +228,21 @@ pub fn debug_print_phase1_solutions_searched(found_phase1_solutions: usize, curr
     }
 }
 
-impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
+impl ScrambleFinder for Square1ScrambleFinder {
     type TPuzzle = KPuzzle;
     type ScrambleOptions = NoScrambleOptions;
 
+    fn filter_pattern(
+        &mut self,
+        pattern: &KPattern,
+        _scramble_options: &Self::ScrambleOptions,
+    ) -> FilteringDecision {
+        self.depth_filtering_search
+            .filtering_decision(pattern, SQUARE_1_SCRAMBLE_MIN_OPTIMAL_MOVE_COUNT)
+    }
+}
+
+impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
     fn generate_fair_unfiltered_random_pattern(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
@@ -288,15 +302,6 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
                 return scramble_pattern;
             }
         }
-    }
-
-    fn filter_pattern(
-        &mut self,
-        pattern: &KPattern,
-        _scramble_options: &Self::ScrambleOptions,
-    ) -> FilteringDecision {
-        self.depth_filtering_search
-            .filtering_decision(pattern, SQUARE_1_SCRAMBLE_MIN_OPTIMAL_MOVE_COUNT)
     }
 
     fn solve_pattern(

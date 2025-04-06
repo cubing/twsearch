@@ -15,8 +15,11 @@ use crate::{
     scramble::{
         collapse::collapse_adjacent_moves,
         randomize::{ConstraintForPiece0, OrbitRandomizationConstraints},
+        scramble_finder::{
+            scramble_finder::ScrambleFinder,
+            solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
+        },
         scramble_search::{move_list_from_vec, FilteredSearch},
-        solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
     },
 };
 
@@ -51,10 +54,21 @@ impl Default for SkewbScrambleFinder {
     }
 }
 
-impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
+impl ScrambleFinder for SkewbScrambleFinder {
     type TPuzzle = KPuzzle;
     type ScrambleOptions = NoScrambleOptions;
 
+    fn filter_pattern(
+        &mut self,
+        pattern: &KPattern,
+        _scramble_options: &Self::ScrambleOptions,
+    ) -> FilteringDecision {
+        self.filtered_search
+            .filtering_decision(pattern, MoveCount(7))
+    }
+}
+
+impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
     fn generate_fair_unfiltered_random_pattern(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
@@ -141,15 +155,6 @@ impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
             },
         );
         scramble_pattern
-    }
-
-    fn filter_pattern(
-        &mut self,
-        pattern: &KPattern,
-        _scramble_options: &Self::ScrambleOptions,
-    ) -> FilteringDecision {
-        self.filtered_search
-            .filtering_decision(pattern, MoveCount(7))
     }
 
     fn solve_pattern(

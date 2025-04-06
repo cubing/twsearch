@@ -5,7 +5,9 @@ use std::{
     ptr::null_mut,
 };
 
-use twsearch::scramble::{free_memory_for_all_scramble_finders, random_scramble_for_event, Event};
+use twsearch::scramble::{
+    random_scramble_for_event, scramble_finder::free_memory_for_all_scramble_finders, Event,
+};
 
 /// # Safety
 ///

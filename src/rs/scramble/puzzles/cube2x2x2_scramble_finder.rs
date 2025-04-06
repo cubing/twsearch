@@ -22,8 +22,11 @@ use crate::{
         collapse::collapse_adjacent_moves,
         get_kpuzzle::GetKPuzzle,
         randomize::OrbitRandomizationConstraints,
+        scramble_finder::{
+            scramble_finder::ScrambleFinder,
+            solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
+        },
         scramble_search::{move_list_from_vec, FilteredSearch},
-        solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
     },
 };
 
@@ -85,10 +88,20 @@ impl Default for Cube2x2x2ScrambleFinder {
     }
 }
 
-impl SolvingBasedScrambleFinder for Cube2x2x2ScrambleFinder {
+impl ScrambleFinder for Cube2x2x2ScrambleFinder {
     type TPuzzle = KPuzzle;
     type ScrambleOptions = NoScrambleOptions;
 
+    fn filter_pattern(
+        &mut self,
+        pattern: &KPattern,
+        _scramble_options: &Self::ScrambleOptions,
+    ) -> FilteringDecision {
+        self.depth_filtering_search.depth_filter(pattern).unwrap() // TODO: avoid `.unwrap()`.
+    }
+}
+
+impl SolvingBasedScrambleFinder for Cube2x2x2ScrambleFinder {
     fn generate_fair_unfiltered_random_pattern(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
@@ -104,14 +117,6 @@ impl SolvingBasedScrambleFinder for Cube2x2x2ScrambleFinder {
             },
         );
         scramble_pattern
-    }
-
-    fn filter_pattern(
-        &mut self,
-        pattern: &KPattern,
-        _scramble_options: &Self::ScrambleOptions,
-    ) -> FilteringDecision {
-        self.depth_filtering_search.depth_filter(pattern).unwrap() // TODO: avoid `.unwrap()`.
     }
 
     fn solve_pattern(
@@ -140,8 +145,8 @@ mod tests {
         puzzles::cube2x2x2_kpuzzle,
     };
 
-    use crate::scramble::solving_based_scramble_finder::{
-        NoScrambleOptions, SolvingBasedScrambleFinder,
+    use crate::scramble::scramble_finder::{
+        scramble_finder::ScrambleFinder, solving_based_scramble_finder::NoScrambleOptions,
     };
 
     use super::Cube2x2x2ScrambleFinder;

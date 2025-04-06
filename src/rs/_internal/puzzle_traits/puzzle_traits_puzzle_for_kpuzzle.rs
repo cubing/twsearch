@@ -7,7 +7,9 @@ use cubing::{
 
 use crate::_internal::search::move_count::MoveCount;
 
-use super::puzzle_traits::{GroupActionPuzzle, HashablePatternPuzzle, SemiGroupActionPuzzle};
+use super::puzzle_traits::{
+    GroupActionPuzzle, HasDefaultPattern, HashablePatternPuzzle, SemiGroupActionPuzzle,
+};
 
 impl SemiGroupActionPuzzle for KPuzzle {
     type Pattern = KPattern;
@@ -123,4 +125,10 @@ impl GroupActionPuzzle for KPuzzle {
     //     let h = cityhasher::CityHasher::new();
     //     h.hash_one(unsafe { transformation.byte_slice() })
     // }
+}
+
+impl HasDefaultPattern for KPuzzle {
+    fn puzzle_default_pattern(&self) -> Self::Pattern {
+        self.default_pattern()
+    }
 }

@@ -27,8 +27,11 @@ use crate::{
             randomize_orbit, OrbitOrientationConstraint, OrbitPermutationConstraint,
             OrbitRandomizationConstraints,
         },
+        scramble_finder::{
+            scramble_finder::ScrambleFinder,
+            solving_based_scramble_finder::SolvingBasedScrambleFinder,
+        },
         scramble_search::move_list_from_vec,
-        solving_based_scramble_finder::SolvingBasedScrambleFinder,
     },
 };
 
@@ -88,10 +91,21 @@ fn apply_pre_alg(kpattern: &KPattern, alg: &Alg) -> Option<KPattern> {
     Some(alg_pattern.apply_transformation(&pattern_transformation))
 }
 
-impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
+impl ScrambleFinder for TwoPhase3x3x3ScrambleFinder {
     type TPuzzle = KPuzzle;
     type ScrambleOptions = TwoPhase3x3x3ScrambleOptions;
 
+    fn filter_pattern(
+        &mut self,
+        pattern: &KPattern,
+        _scramble_options: &TwoPhase3x3x3ScrambleOptions, // TODO: check that this matches the associated data?
+    ) -> FilteringDecision {
+        // TODO: is it a good idea to check for standard orientation for non-BLD scrambles?
+        self.depth_filtering_search.depth_filter(pattern).unwrap() // TODO: avoid `.unwrap()`
+    }
+}
+
+impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
     fn generate_fair_unfiltered_random_pattern(
         &mut self,
         scramble_options: &TwoPhase3x3x3ScrambleOptions,
@@ -132,15 +146,6 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
                 scramble_pattern.apply_alg(&suffix).unwrap()
             }
         }
-    }
-
-    fn filter_pattern(
-        &mut self,
-        pattern: &KPattern,
-        _scramble_options: &TwoPhase3x3x3ScrambleOptions, // TODO: check that this matches the associated data?
-    ) -> FilteringDecision {
-        // TODO: is it a good idea to check for standard orientation for non-BLD scrambles?
-        self.depth_filtering_search.depth_filter(pattern).unwrap() // TODO: avoid `.unwrap()`
     }
 
     // TODO: handle all `unwrap()`s.

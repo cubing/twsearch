@@ -80,6 +80,13 @@ pub trait GroupActionPuzzle: SemiGroupActionPuzzle {
     // // TODO: efficient `order` function?
 }
 
+// This would be named `DefaultPattern`, but having the prefix "default" could suggest a relationship to the `Default` trait (which is not intended).
+pub trait HasDefaultPattern: SemiGroupActionPuzzle {
+    // /********* Functions "defined on the puzzle". ********/
+    // TODO: Make this return a reference once `KPuzzle::default_pattern(…)` does.
+    fn puzzle_default_pattern(&self) -> Self::Pattern;
+}
+
 pub trait HashablePatternPuzzle: SemiGroupActionPuzzle {
     fn pattern_hash_u64(&self, pattern: &Self::Pattern) -> u64;
 }

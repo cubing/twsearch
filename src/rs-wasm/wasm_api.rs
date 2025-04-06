@@ -5,9 +5,10 @@ use twsearch::_internal::cli::args::{CustomGenerators, Generators};
 use twsearch::_internal::search::iterative_deepening::iterative_deepening_search::{
     IndividualSearchOptions, IterativeDeepeningSearch,
 };
+use twsearch::scramble::scramble_finder::free_memory_for_all_scramble_finders;
 use wasm_bindgen::prelude::*;
 
-use twsearch::scramble::{free_memory_for_all_scramble_finders, random_scramble_for_event, Event};
+use twsearch::scramble::{random_scramble_for_event, Event};
 
 pub fn internal_init() {
     console_error_panic_hook::set_once();

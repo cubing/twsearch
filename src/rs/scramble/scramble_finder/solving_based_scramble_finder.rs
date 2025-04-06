@@ -3,35 +3,22 @@ use std::sync::{LazyLock, Mutex, RwLock};
 use cubing::alg::Alg;
 use erased_set::ErasedSyncSet;
 
-use crate::_internal::{
-    errors::SearchError, puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
-    search::filter::filtering_decision::FilteringDecision,
-};
+use crate::_internal::{errors::SearchError, puzzle_traits::puzzle_traits::SemiGroupActionPuzzle};
 
-#[derive(Default)]
-pub struct NoScrambleAssociatedData {}
+use super::scramble_finder::ScrambleFinder;
 
 #[derive(Default)]
 pub struct NoScrambleOptions {}
 
-pub trait SolvingBasedScrambleFinder: Default {
-    type TPuzzle: SemiGroupActionPuzzle;
-    type ScrambleOptions;
-
+pub trait SolvingBasedScrambleFinder: ScrambleFinder {
     fn generate_fair_unfiltered_random_pattern(
         &mut self,
         scramble_options: &Self::ScrambleOptions,
-    ) -> <<Self as SolvingBasedScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern;
-
-    fn filter_pattern(
-        &mut self,
-        pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern,
-        scramble_options: &Self::ScrambleOptions,
-    ) -> FilteringDecision;
+    ) -> <<Self as ScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern;
 
     fn solve_pattern(
         &mut self,
-        pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern,
+        pattern: &<<Self as ScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern,
         scramble_options: &Self::ScrambleOptions,
     ) -> Result<Alg, SearchError>;
 
@@ -40,10 +27,7 @@ pub trait SolvingBasedScrambleFinder: Default {
     fn generate_fair_scramble(&mut self, scramble_options: &Self::ScrambleOptions) -> Alg {
         loop {
             let pattern = self.generate_fair_unfiltered_random_pattern(scramble_options);
-            if matches!(
-                self.filter_pattern(&pattern, scramble_options),
-                FilteringDecision::Reject
-            ) {
+            if self.filter_pattern(&pattern, scramble_options).is_reject() {
                 continue;
             }
             // Since we got the pattern from the trait implementation, it should be safe to `.unwrap()` — else, the trait implementation is broken.
@@ -54,14 +38,14 @@ pub trait SolvingBasedScrambleFinder: Default {
     }
 }
 
-pub fn scramble_finder_cacher_map<
+pub fn solving_based_scramble_finder_cacher_map<
     ScrambleFinder: SolvingBasedScrambleFinder + 'static + Sync + Send,
     ReturnValue,
     F: Fn(&mut ScrambleFinder) -> ReturnValue,
 >(
     f: F,
 ) -> ReturnValue {
-    ScrambleFinderCacher::map::<ScrambleFinder, ReturnValue, F>(f)
+    SolvingBasedScrambleFinderCacher::map::<ScrambleFinder, ReturnValue, F>(f)
 }
 
 pub fn generate_fair_scramble<
@@ -69,22 +53,24 @@ pub fn generate_fair_scramble<
 >(
     scramble_options: &ScrambleFinder::ScrambleOptions,
 ) -> Alg {
-    ScrambleFinderCacher::generate_fair_scramble::<ScrambleFinder>(scramble_options)
+    SolvingBasedScrambleFinderCacher::generate_fair_scramble::<ScrambleFinder>(scramble_options)
 }
 
-pub fn free_memory_for_all_scramble_finders() -> usize {
-    ScrambleFinderCacher::free_memory_for_all_scramble_finders()
+pub(crate) fn free_memory_for_all_solving_based_scramble_finders() -> usize {
+    SolvingBasedScrambleFinderCacher::free_memory_for_all_solving_based_scramble_finders()
 }
 
 #[derive(Default)]
-struct ScrambleFinderCacher {
+struct SolvingBasedScrambleFinderCacher {
     erased_sync_set: ErasedSyncSet,
 }
 
-static SCRAMBLE_FINDER_CACHER_SINGLETON: LazyLock<Mutex<ScrambleFinderCacher>> =
-    LazyLock::<Mutex<ScrambleFinderCacher>>::new(Default::default);
+static SOLVING_BASED_SCRAMBLE_FINDER_CACHER_SINGLETON: LazyLock<
+    Mutex<SolvingBasedScrambleFinderCacher>,
+> = LazyLock::<Mutex<SolvingBasedScrambleFinderCacher>>::new(Default::default);
 
-impl ScrambleFinderCacher {
+impl SolvingBasedScrambleFinderCacher {
+    // TODO: dedup with RandomMoveScrambleFinder?
     pub fn map<
         ScrambleFinder: SolvingBasedScrambleFinder + 'static + Sync + Send,
         ReturnValue,
@@ -95,7 +81,9 @@ impl ScrambleFinderCacher {
         // TODO: figure out how to share a concrete implementation instead of template code.
         // This is trickier than it sounds: https://stackoverflow.com/questions/40095383/how-to-return-a-reference-to-a-sub-value-of-a-value-that-is-under-a-mutex/40103840#40103840
         // There are some crates to do this, but not an obvious choice.
-        let mut mutex_guard = SCRAMBLE_FINDER_CACHER_SINGLETON.lock().unwrap();
+        let mut mutex_guard = SOLVING_BASED_SCRAMBLE_FINDER_CACHER_SINGLETON
+            .lock()
+            .unwrap();
 
         mutex_guard
             .erased_sync_set
@@ -118,7 +106,7 @@ impl ScrambleFinderCacher {
     >(
         scramble_options: &ScrambleFinder::ScrambleOptions,
     ) -> Alg {
-        ScrambleFinderCacher::map(|scramble_finder: &mut ScrambleFinder| {
+        SolvingBasedScrambleFinderCacher::map(|scramble_finder: &mut ScrambleFinder| {
             scramble_finder.generate_fair_scramble(scramble_options)
         })
     }
@@ -132,8 +120,10 @@ impl ScrambleFinderCacher {
 
     /// Returns the number of scramble finders freed.
     /// Note that some events share scramble finders, so this will not necessarily match the number of events scrambles have been generated for.
-    pub fn free_memory_for_all_scramble_finders() -> usize {
-        let mut mutex_guard = SCRAMBLE_FINDER_CACHER_SINGLETON.lock().unwrap();
+    pub fn free_memory_for_all_solving_based_scramble_finders() -> usize {
+        let mut mutex_guard = SOLVING_BASED_SCRAMBLE_FINDER_CACHER_SINGLETON
+            .lock()
+            .unwrap();
         let num_freed = mutex_guard.erased_sync_set.len();
         mutex_guard.erased_sync_set.clear();
         // The number of freed scramble finders is not super useful in itself, but it can be a useful sense check that scramble finders were actually allocated and freed.

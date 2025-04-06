@@ -1,2 +1,2 @@
+pub mod megaminx_scramble_finder;
 pub mod megaminx_solver;
-pub mod scramble_megaminx;

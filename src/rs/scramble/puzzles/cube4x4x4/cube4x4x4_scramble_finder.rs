@@ -20,12 +20,15 @@ use crate::scramble::puzzles::definitions::{
     cube4x4x4_kpuzzle, cube4x4x4_orientation_canonicalization_kpattern,
     cube4x4x4_phase1_target_kpattern, cube4x4x4_solved_kpattern,
 };
+use crate::scramble::scramble_finder::scramble_finder::ScrambleFinder;
 use crate::{_internal::errors::SearchError, scramble::scramble_search::move_list_from_vec};
 
 use crate::scramble::{
     collapse::collapse_adjacent_moves,
     randomize::{randomize_orbit, OrbitOrientationConstraint, OrbitRandomizationConstraints},
-    solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
+    scramble_finder::solving_based_scramble_finder::{
+        NoScrambleOptions, SolvingBasedScrambleFinder,
+    },
 };
 
 use super::phase2::phase2_search;
@@ -67,10 +70,22 @@ pub(crate) struct Cube4x4x4ScrambleFinder {
     canonicalizing_solved_kpattern_depth_filter: CanonicalizingSolvedKPatternDepthFilter,
 }
 
-impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
+impl ScrambleFinder for Cube4x4x4ScrambleFinder {
     type TPuzzle = KPuzzle;
     type ScrambleOptions = NoScrambleOptions;
 
+    fn filter_pattern(
+        &mut self,
+        pattern: &KPattern,
+        _scramble_options: &Self::ScrambleOptions,
+    ) -> FilteringDecision {
+        self.canonicalizing_solved_kpattern_depth_filter
+            .depth_filter(pattern)
+            .unwrap() // TODO
+    }
+}
+
+impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
     fn generate_fair_unfiltered_random_pattern(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
@@ -91,16 +106,6 @@ impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
         scramble_pattern = scramble_pattern.apply_alg(parse_alg!("R")).unwrap();
 
         scramble_pattern
-    }
-
-    fn filter_pattern(
-        &mut self,
-        pattern: &KPattern,
-        _scramble_options: &Self::ScrambleOptions,
-    ) -> FilteringDecision {
-        self.canonicalizing_solved_kpattern_depth_filter
-            .depth_filter(pattern)
-            .unwrap() // TODO
     }
 
     fn solve_pattern(

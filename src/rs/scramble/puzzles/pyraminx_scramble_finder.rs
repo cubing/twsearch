@@ -19,8 +19,11 @@ use crate::{
         collapse::collapse_adjacent_moves,
         get_kpuzzle::GetKPuzzle,
         randomize::OrbitRandomizationConstraints,
+        scramble_finder::{
+            scramble_finder::ScrambleFinder,
+            solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
+        },
         scramble_search::move_list_from_vec,
-        solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
     },
 };
 
@@ -59,11 +62,36 @@ impl Default for PyraminxScrambleFinder {
     }
 }
 
-impl SolvingBasedScrambleFinder for PyraminxScrambleFinder {
+impl ScrambleFinder for PyraminxScrambleFinder {
     type TPuzzle = KPuzzle;
-
     type ScrambleOptions = NoScrambleOptions;
 
+    fn filter_pattern(
+        &mut self,
+        pattern: &KPattern,
+        _scramble_options: &Self::ScrambleOptions,
+    ) -> FilteringDecision {
+        if self
+            .search
+            .search(
+                pattern,
+                IndividualSearchOptions {
+                    max_depth_exclusive: Some(Depth(PYRAMINX_SCRAMBLE_FILTERING_MIN_MOVE_COUNT.0)),
+                    ..Default::default()
+                },
+                Default::default(),
+            )
+            .next()
+            .is_some()
+        {
+            FilteringDecision::Reject
+        } else {
+            FilteringDecision::Accept
+        }
+    }
+}
+
+impl SolvingBasedScrambleFinder for PyraminxScrambleFinder {
     fn generate_fair_unfiltered_random_pattern(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
@@ -98,30 +126,6 @@ impl SolvingBasedScrambleFinder for PyraminxScrambleFinder {
             },
         );
         scramble_pattern
-    }
-
-    fn filter_pattern(
-        &mut self,
-        pattern: &KPattern,
-        _scramble_options: &Self::ScrambleOptions,
-    ) -> FilteringDecision {
-        if self
-            .search
-            .search(
-                pattern,
-                IndividualSearchOptions {
-                    max_depth_exclusive: Some(Depth(PYRAMINX_SCRAMBLE_FILTERING_MIN_MOVE_COUNT.0)),
-                    ..Default::default()
-                },
-                Default::default(),
-            )
-            .next()
-            .is_some()
-        {
-            FilteringDecision::Reject
-        } else {
-            FilteringDecision::Accept
-        }
     }
 
     fn solve_pattern(

@@ -10,7 +10,9 @@ use super::{
         clock::scramble_clock,
         cube2x2x2_scramble_finder::Cube2x2x2ScrambleFinder,
         cube4x4x4::cube4x4x4_scramble_finder::Cube4x4x4ScrambleFinder,
-        megaminx::{megaminx_solver::MegaminxSolver, scramble_megaminx::scramble_megaminx},
+        megaminx::{
+            megaminx_scramble_finder::MegaminxScrambleFinder, megaminx_solver::MegaminxSolver,
+        },
         pyraminx_scramble_finder::PyraminxScrambleFinder,
         skewb_scramble_finder::SkewbScrambleFinder,
         square1::square1_scramble_finder::Square1ScrambleFinder,
@@ -19,9 +21,12 @@ use super::{
             TwoPhase3x3x3ScrambleOptions,
         },
     },
-    solving_based_scramble_finder::{
-        generate_fair_scramble, scramble_finder_cacher_map, NoScrambleOptions,
-        SolvingBasedScrambleFinder,
+    scramble_finder::{
+        random_move_scramble_finder::generate_filtered_random_move_scramble,
+        solving_based_scramble_finder::{
+            generate_fair_scramble, solving_based_scramble_finder_cacher_map, NoScrambleOptions,
+            SolvingBasedScrambleFinder,
+        },
     },
     Event, PuzzleError,
 };
@@ -61,7 +66,9 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
             },
         )),
         Event::ClockSpeedsolving => Ok(scramble_clock()),
-        Event::MegaminxSpeedsolving => Ok(scramble_megaminx()),
+        Event::MegaminxSpeedsolving => Ok(generate_filtered_random_move_scramble::<
+            MegaminxScrambleFinder,
+        >(&NoScrambleOptions {})),
         Event::PyraminxSpeedsolving => Ok(generate_fair_scramble::<PyraminxScrambleFinder>(
             &NoScrambleOptions {},
         )),
@@ -97,7 +104,7 @@ fn filter_and_search<
     collapse_using_collapse_inverted_alg: bool,
     scramble_options: &ScrambleFinder::ScrambleOptions,
 ) -> Result<Alg, CommandError> {
-    let alg = match scramble_finder_cacher_map(
+    let alg = match solving_based_scramble_finder_cacher_map(
         |scramble_finder: &mut ScrambleFinder| -> Result<Alg, SearchError> {
             let pattern = scramble_finder
                 .get_kpuzzle()

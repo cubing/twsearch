@@ -2,9 +2,12 @@ use std::marker::PhantomData;
 
 use cubing::alg::{Alg, AlgNode, Pause};
 
-use crate::_internal::{
-    errors::SearchError, puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
-    search::search_logger::SearchLogger,
+use crate::{
+    _internal::{
+        errors::SearchError, puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
+        search::search_logger::SearchLogger,
+    },
+    scramble::apply_flat_alg::apply_flat_alg,
 };
 
 use super::SearchPhase;
@@ -54,7 +57,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> MultiPhaseSearch<TPuzzle> {
             // TODO: can we avoid clones?
             let Some(phase_search_pattern) = apply_flat_alg(
                 &self.tpuzzle,
-                search_pattern.clone(),
+                &search_pattern.clone(),
                 &current_solution.clone().unwrap_or_default(),
             ) else {
                 return Err(SearchError {
@@ -100,25 +103,4 @@ impl<TPuzzle: SemiGroupActionPuzzle> MultiPhaseSearch<TPuzzle> {
         }
         Ok(current_solution.expect("No phase solutions?"))
     }
-}
-
-fn apply_flat_alg<TPuzzle: SemiGroupActionPuzzle>(
-    tpuzzle: &TPuzzle,
-    pattern: TPuzzle::Pattern,
-    alg: &Alg,
-) -> Option<TPuzzle::Pattern> {
-    let mut pattern = pattern;
-    for r#move in alg.nodes.iter() {
-        match r#move {
-            AlgNode::MoveNode(r#move) => {
-                let transformation = tpuzzle.puzzle_transformation_from_move(r#move).ok()?;
-                pattern = tpuzzle.pattern_apply_transformation(&pattern, &transformation)?;
-            }
-            AlgNode::PauseNode(_) => {}
-            _ => todo!(
-                "Phase algs with nodes other than `Move`s and `Pause`s are not currently supported"
-            ),
-        }
-    }
-    Some(pattern)
 }

@@ -10,9 +10,7 @@ use super::{
         clock::scramble_clock,
         cube2x2x2_scramble_finder::Cube2x2x2ScrambleFinder,
         cube4x4x4::cube4x4x4_scramble_finder::Cube4x4x4ScrambleFinder,
-        megaminx::{
-            megaminx_scramble_finder::MegaminxScrambleFinder, megaminx_solver::MegaminxSolver,
-        },
+        megaminx::megaminx_scramble_finder::MegaminxScrambleFinder,
         pyraminx_scramble_finder::PyraminxScrambleFinder,
         skewb_scramble_finder::SkewbScrambleFinder,
         square1::square1_scramble_finder::Square1ScrambleFinder,
@@ -22,7 +20,10 @@ use super::{
         },
     },
     scramble_finder::{
-        random_move_scramble_finder::generate_filtered_random_move_scramble,
+        random_move_scramble_finder::{
+            generate_filtered_random_move_scramble, random_move_scramble_finder_cacher_map,
+            RandomMoveScrambleFinder,
+        },
         solving_based_scramble_finder::{
             generate_fair_scramble, solving_based_scramble_finder_cacher_map, NoScrambleOptions,
             SolvingBasedScrambleFinder,
@@ -95,37 +96,42 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
     }
 }
 
-fn filter_and_search<
+fn solving_based_filter_and_search<
     ScrambleFinder: SolvingBasedScrambleFinder<TPuzzle = KPuzzle> + GetKPuzzle + Send + Sync + 'static,
 >(
-    // pattern: &<ScrambleFinder::TPuzzle as SemiGroupActionPuzzle>::Pattern,
-    scramble_setup_alg: &Alg,
-    apply_filtering: bool,
+    options: &ExperimentalFilterAndOrSearchOptions,
     collapse_using_collapse_inverted_alg: bool,
     scramble_options: &ScrambleFinder::ScrambleOptions,
-) -> Result<Alg, CommandError> {
+) -> Result<Option<Alg>, CommandError> {
     let alg = match solving_based_scramble_finder_cacher_map(
-        |scramble_finder: &mut ScrambleFinder| -> Result<Alg, SearchError> {
+        |scramble_finder: &mut ScrambleFinder| -> Result<Option<Alg>, SearchError> {
             let pattern = scramble_finder
                 .get_kpuzzle()
                 .default_pattern()
-                .apply_alg(scramble_setup_alg)
+                .apply_alg(&options.scramble_setup_alg)
                 .expect("Invalid alg for puzzle.");
 
-            if apply_filtering
-                && scramble_finder
+            if options.apply_filtering {
+                if scramble_finder
                     .filter_pattern(&pattern, scramble_options)
                     .is_reject()
-            {
-                return Err(SearchError {
-                    description: "Rejected due to filtering".to_owned(),
-                });
+                {
+                    return Err(SearchError {
+                        description: "Rejected due to filtering".to_owned(),
+                    });
+                }
+                eprint!("Filtering decision: accepted")
             };
-            let alg = scramble_finder.solve_pattern(&pattern, scramble_options)?;
-            Ok(if collapse_using_collapse_inverted_alg {
-                scramble_finder.collapse_inverted_alg(alg)
+
+            Ok(if options.perform_search {
+                let alg = scramble_finder.solve_pattern(&pattern, scramble_options)?;
+                if collapse_using_collapse_inverted_alg {
+                    Some(scramble_finder.collapse_inverted_alg(alg))
+                } else {
+                    Some(alg)
+                }
             } else {
-                alg
+                None
             })
         },
     ) {
@@ -135,31 +141,83 @@ fn filter_and_search<
     Ok(alg)
 }
 
-fn filter_and_search_simple<
+fn solving_based_filter_and_search_with_no_scramble_options<
     ScrambleFinder: SolvingBasedScrambleFinder<TPuzzle = KPuzzle, ScrambleOptions = NoScrambleOptions>
         + GetKPuzzle
         + Send
         + Sync
         + 'static,
 >(
-    scramble_setup_alg: &Alg,
-    // pattern: &<ScrambleFinder::TPuzzle as SemiGroupActionPuzzle>::Pattern,
-    apply_filtering: bool,
+    options: &ExperimentalFilterAndOrSearchOptions,
     collapse_using_collapse_inverted_alg: bool,
-) -> Result<Alg, CommandError> {
-    filter_and_search::<ScrambleFinder>(
-        scramble_setup_alg,
-        apply_filtering,
+) -> Result<Option<Alg>, CommandError> {
+    solving_based_filter_and_search::<ScrambleFinder>(
+        options,
         collapse_using_collapse_inverted_alg,
         &NoScrambleOptions {},
     )
 }
 
-pub fn scramble_finder_solve(
+fn random_move_filter<
+    ScrambleFinder: RandomMoveScrambleFinder<TPuzzle = KPuzzle> + GetKPuzzle + Send + Sync + 'static,
+>(
+    options: &ExperimentalFilterAndOrSearchOptions,
+    scramble_options: &ScrambleFinder::ScrambleOptions,
+) -> Result<Option<Alg>, CommandError> {
+    random_move_scramble_finder_cacher_map(
+        |scramble_finder: &mut ScrambleFinder| -> Result<(), CommandError> {
+            let pattern = scramble_finder
+                .get_kpuzzle()
+                .default_pattern()
+                .apply_alg(&options.scramble_setup_alg)
+                .expect("Invalid alg for puzzle.");
+
+            if options.apply_filtering {
+                if scramble_finder
+                    .filter_pattern(&pattern, scramble_options)
+                    .is_reject()
+                {
+                    return Err(SearchError {
+                        description: "Rejected due to filtering".to_owned(),
+                    }
+                    .into());
+                }
+                eprint!("Filtering decision: accepted")
+            };
+            if options.perform_search {
+                return Err(CommandError::ArgumentError(
+                    "Tried to initiate a solve for a `RandomMoveScrambleFinder`".into(),
+                ));
+            };
+            Ok(())
+        },
+    )?;
+    Ok(None)
+}
+
+fn random_move_filter_with_no_scramble_options<
+    ScrambleFinder: RandomMoveScrambleFinder<TPuzzle = KPuzzle, ScrambleOptions = NoScrambleOptions>
+        + GetKPuzzle
+        + Send
+        + Sync
+        + 'static,
+>(
+    options: &ExperimentalFilterAndOrSearchOptions,
+) -> Result<Option<Alg>, CommandError> {
+    random_move_filter::<ScrambleFinder>(options, &NoScrambleOptions {})
+}
+// TODO: this is kind of gnarly, but it avoids some severe limitations with dynamic dispatch in Rust due to the associated type for `ScrambleFinder`.
+pub struct ExperimentalFilterAndOrSearchOptions {
+    // pattern: &<ScrambleFinder::TPuzzle as SemiGroupActionPuzzle>::Pattern,
+    pub scramble_setup_alg: Alg,
+    pub apply_filtering: bool,
+    pub perform_search: bool,
+}
+
+pub fn experimental_scramble_finder_filter_and_or_search(
     event: Event,
-    scramble_setup_alg: &Alg,
-    apply_filtering: bool,
-) -> Result<Alg, CommandError> {
+    options: &ExperimentalFilterAndOrSearchOptions,
+) -> Result<Option<Alg>, CommandError> {
     let err = Err(PuzzleError {
         description: format!(
             "Scramble finder testing is not implemented for this event yet: {}",
@@ -168,45 +226,39 @@ pub fn scramble_finder_solve(
     }
     .into());
     match event {
-        Event::Cube3x3x3Speedsolving => filter_and_search::<TwoPhase3x3x3ScrambleFinder>(
-            scramble_setup_alg,
-            apply_filtering,
-            false,
-            &TwoPhase3x3x3ScrambleOptions {
-                prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::None,
-            },
-        ),
-        Event::Cube3x3x3Blindfolded => filter_and_search::<TwoPhase3x3x3ScrambleFinder>(
-            scramble_setup_alg,
-            apply_filtering,
-            false,
-            &TwoPhase3x3x3ScrambleOptions {
-                prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::ForBLD,
-            },
-        ),
-        Event::Cube2x2x2Speedsolving => filter_and_search_simple::<Cube2x2x2ScrambleFinder>(
-            scramble_setup_alg,
-            apply_filtering,
-            false,
-        ),
-        Event::Cube4x4x4Speedsolving => filter_and_search_simple::<Cube4x4x4ScrambleFinder>(
-            scramble_setup_alg,
-            apply_filtering,
-            false,
-        ),
-        Event::MegaminxSpeedsolving => {
-            filter_and_search_simple::<MegaminxSolver>(scramble_setup_alg, apply_filtering, false)
+        Event::Cube3x3x3Speedsolving => {
+            solving_based_filter_and_search::<TwoPhase3x3x3ScrambleFinder>(
+                options,
+                false,
+                &TwoPhase3x3x3ScrambleOptions {
+                    prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::None,
+                },
+            )
         }
-        Event::PyraminxSpeedsolving => filter_and_search_simple::<PyraminxScrambleFinder>(
-            scramble_setup_alg,
-            apply_filtering,
-            false,
-        ),
-        Event::Square1Speedsolving => filter_and_search_simple::<Square1ScrambleFinder>(
-            scramble_setup_alg,
-            apply_filtering,
-            true,
-        ),
+        Event::Cube3x3x3Blindfolded => {
+            solving_based_filter_and_search::<TwoPhase3x3x3ScrambleFinder>(
+                options,
+                false,
+                &TwoPhase3x3x3ScrambleOptions {
+                    prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::ForBLD,
+                },
+            )
+        }
+        Event::Cube2x2x2Speedsolving => solving_based_filter_and_search_with_no_scramble_options::<
+            Cube2x2x2ScrambleFinder,
+        >(options, false),
+        Event::Cube4x4x4Speedsolving => solving_based_filter_and_search_with_no_scramble_options::<
+            Cube4x4x4ScrambleFinder,
+        >(options, false),
+        Event::MegaminxSpeedsolving => {
+            random_move_filter_with_no_scramble_options::<MegaminxScrambleFinder>(options)
+        }
+        Event::PyraminxSpeedsolving => solving_based_filter_and_search_with_no_scramble_options::<
+            PyraminxScrambleFinder,
+        >(options, false),
+        Event::Square1Speedsolving => solving_based_filter_and_search_with_no_scramble_options::<
+            Square1ScrambleFinder,
+        >(options, true),
         _ => err,
     }
 }

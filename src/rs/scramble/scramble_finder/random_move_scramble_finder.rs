@@ -44,6 +44,16 @@ static RANDOM_MOVE_SCRAMBLE_FINDER_CACHER_SINGLETON: LazyLock<
     Mutex<RandomMoveScrambleFinderCacher>,
 > = LazyLock::<Mutex<RandomMoveScrambleFinderCacher>>::new(Default::default);
 
+pub fn random_move_scramble_finder_cacher_map<
+    ScrambleFinder: RandomMoveScrambleFinder + 'static + Sync + Send,
+    ReturnValue,
+    F: Fn(&mut ScrambleFinder) -> ReturnValue,
+>(
+    f: F,
+) -> ReturnValue {
+    RandomMoveScrambleFinderCacher::map::<ScrambleFinder, ReturnValue, F>(f)
+}
+
 pub fn generate_filtered_random_move_scramble<
     ScrambleFinder: RandomMoveScrambleFinder + 'static + Sync + Send,
 >(

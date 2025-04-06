@@ -9,7 +9,10 @@ use twsearch::{
         cli::args::{ScrambleArgs, ScrambleFinderArgs, ScrambleFinderCommand},
         errors::CommandError,
     },
-    scramble::{random_scramble_for_event, scramble_finder_solve, Event},
+    scramble::{
+        experimental_scramble_finder_filter_and_or_search, random_scramble_for_event, Event,
+        ExperimentalFilterAndOrSearchOptions,
+    },
 };
 
 pub fn cli_scramble(args: &ScrambleArgs) -> Result<(), CommandError> {
@@ -39,27 +42,44 @@ pub fn cli_scramble(args: &ScrambleArgs) -> Result<(), CommandError> {
     Ok(())
 }
 
+// TODO: refactor this once `experimental_scramble_finder_filter_and_or_search` can support a less gnarly API.
 pub fn cli_scramble_finder_solve(args: &ScrambleFinderArgs) -> Result<(), CommandError> {
+    let (filter_args, apply_filtering, perform_search) = match &args.command {
+        ScrambleFinderCommand::Search(scramble_finder_solve_args) => (
+            &scramble_finder_solve_args.filter_args,
+            scramble_finder_solve_args.apply_filtering,
+            true,
+        ),
+        ScrambleFinderCommand::Filter(scramble_finder_filter_args) => {
+            (scramble_finder_filter_args, true, false)
+        }
+    };
+
+    let event_id = filter_args.event_id.as_str();
+    let event = Event::try_from(event_id)?;
+
+    let scramble_setup_alg = filter_args
+        .scramble_setup_alg
+        .parse::<Alg>()
+        .expect("Invalid alg");
+
+    let current_scramble_start_time = Instant::now();
+    let scramble = experimental_scramble_finder_filter_and_or_search(
+        event,
+        &ExperimentalFilterAndOrSearchOptions {
+            scramble_setup_alg: scramble_setup_alg.clone(),
+            apply_filtering,
+            perform_search,
+        },
+    )?;
+
     match &args.command {
-        ScrambleFinderCommand::Solve(scramble_finder_solve_args) => {
-            let event_id = scramble_finder_solve_args.event_id.as_str();
-            let event = Event::try_from(event_id)?;
-
-            let scramble_setup_alg = scramble_finder_solve_args
-                .scramble_setup_alg
-                .parse::<Alg>()
-                .expect("Invalid alg");
-
-            let current_scramble_start_time = Instant::now();
-            let scramble = scramble_finder_solve(
-                event,
-                &scramble_setup_alg,
-                scramble_finder_solve_args.apply_filtering,
-            )?;
+        ScrambleFinderCommand::Search(scramble_finder_solve_args) => {
             eprintln!(
                 "// Scramble found in: {:?}",
                 Instant::now() - current_scramble_start_time
             );
+            let scramble = scramble.unwrap();
             println!("{}", scramble);
             if scramble_finder_solve_args.print_link {
                 let link = experimental_twizzle_link(ExperimentalTwizzleLinkParameters {
@@ -71,6 +91,8 @@ pub fn cli_scramble_finder_solve(args: &ScrambleFinderArgs) -> Result<(), Comman
                 println!("{}", link);
             }
         }
+        ScrambleFinderCommand::Filter(_scramble_finder_filter_args) => {}
     };
+
     Ok(())
 }

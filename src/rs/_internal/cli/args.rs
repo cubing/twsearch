@@ -408,11 +408,13 @@ pub struct ScrambleFinderArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum ScrambleFinderCommand {
-    Solve(ScrambleFinderSolveArgs),
+    Search(ScrambleFinderSearchArgs),
+    Filter(ScrambleFinderFilterArgs),
 }
 
 #[derive(Args, Debug)]
-pub struct ScrambleFinderSolveArgs {
+// TODO: combine with `ScrambleFinderFilterArgs`?
+pub struct ScrambleFinderSearchArgs {
     /// Amount of scrambles
     #[clap(long, default_value = "false")]
     pub print_link: bool,
@@ -420,6 +422,13 @@ pub struct ScrambleFinderSolveArgs {
     #[clap(long, default_value = "false")]
     pub apply_filtering: bool,
 
+    #[command(flatten)]
+    pub filter_args: ScrambleFinderFilterArgs,
+}
+
+#[derive(Args, Debug)]
+// TODO: combine with `ScrambleFinderSolveArgs`?
+pub struct ScrambleFinderFilterArgs {
     /// Event ID (WCA or unofficial)
     pub event_id: String,
 

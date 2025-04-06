@@ -3,7 +3,7 @@ use crate::_internal::{
     search::filter::filtering_decision::FilteringDecision,
 };
 
-pub trait ScrambleFinder: Default {
+pub trait ScrambleFinder: Default + Send + Sync {
     type TPuzzle: SemiGroupActionPuzzle + HasDefaultPattern;
     type ScrambleOptions;
 

@@ -1,8 +1,9 @@
-use cubing::{alg::Alg, puzzles::cube3x3x3_kpuzzle};
+use cubing::{alg::Alg, kpuzzle::KPuzzle};
 
-use crate::_internal::errors::SearchError;
+use crate::_internal::errors::{CommandError, SearchError};
 
 use super::{
+    get_kpuzzle::GetKPuzzle,
     puzzles::{
         baby_fto::scramble_baby_fto,
         big_cubes::{scramble_5x5x5, scramble_5x5x5_bld, scramble_6x6x6, scramble_7x7x7},
@@ -88,88 +89,111 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
     }
 }
 
-pub fn scramble_finder_solve(event: Event, scramble_setup_alg: &Alg) -> Result<Alg, PuzzleError> {
+fn filter_and_search<
+    ScrambleFinder: SolvingBasedScrambleFinder<TPuzzle = KPuzzle> + GetKPuzzle + Send + Sync + 'static,
+>(
+    // pattern: &<ScrambleFinder::TPuzzle as SemiGroupActionPuzzle>::Pattern,
+    scramble_setup_alg: &Alg,
+    apply_filtering: bool,
+    collapse_using_collapse_inverted_alg: bool,
+    scramble_associated_data: &ScrambleFinder::ScrambleAssociatedData,
+    scramble_options: &ScrambleFinder::ScrambleOptions,
+) -> Result<Alg, CommandError> {
+    let alg = match scramble_finder_cacher_map(
+        |scramble_finder: &mut ScrambleFinder| -> Result<Alg, SearchError> {
+            let pattern = scramble_finder
+                .get_kpuzzle()
+                .default_pattern()
+                .apply_alg(scramble_setup_alg)
+                .expect("Invalid alg for puzzle.");
+
+            if apply_filtering
+                && scramble_finder
+                    .filter_pattern(&pattern, scramble_associated_data, scramble_options)
+                    .is_reject()
+            {
+                return Err(SearchError {
+                    description: "Rejected due to filtering".to_owned(),
+                });
+            };
+            let alg = scramble_finder.solve_pattern(
+                &pattern,
+                scramble_associated_data,
+                scramble_options,
+            )?;
+            Ok(if collapse_using_collapse_inverted_alg {
+                scramble_finder.collapse_inverted_alg(alg)
+            } else {
+                alg
+            })
+        },
+    ) {
+        Ok(alg) => alg,
+        Err(err) => return Err(CommandError::SearchError(err)),
+    };
+    Ok(alg)
+}
+
+fn filter_and_search_simple<
+    ScrambleFinder: SolvingBasedScrambleFinder<
+            TPuzzle = KPuzzle,
+            ScrambleAssociatedData = NoScrambleAssociatedData,
+            ScrambleOptions = NoScrambleOptions,
+        > + GetKPuzzle
+        + Send
+        + Sync
+        + 'static,
+>(
+    scramble_setup_alg: &Alg,
+    // pattern: &<ScrambleFinder::TPuzzle as SemiGroupActionPuzzle>::Pattern,
+    apply_filtering: bool,
+    collapse_using_collapse_inverted_alg: bool,
+) -> Result<Alg, CommandError> {
+    filter_and_search::<ScrambleFinder>(
+        scramble_setup_alg,
+        apply_filtering,
+        collapse_using_collapse_inverted_alg,
+        &NoScrambleAssociatedData {},
+        &NoScrambleOptions {},
+    )
+}
+
+pub fn scramble_finder_solve(
+    event: Event,
+    scramble_setup_alg: &Alg,
+    apply_filtering: bool,
+) -> Result<Alg, CommandError> {
     let err = Err(PuzzleError {
         description: format!(
             "Random scramble testing is not implemented for this event yet: {}",
             event
         ),
-    });
+    }
+    .into());
     match event {
-        Event::Cube3x3x3Speedsolving => {
-            let pattern = cube3x3x3_kpuzzle()
-                .default_pattern()
-                .apply_alg(scramble_setup_alg)
-                .expect("Invalid alg for puzzle.");
-            let test_scramble = scramble_finder_cacher_map(
-                |scramble_finder: &mut TwoPhase3x3x3ScrambleFinder| -> Result<Alg, SearchError> {
-                    scramble_finder.solve_pattern(
-                        &pattern,
-                        &TwoPhase3x3x3ScrambleAssociatedData {
-                            affixes: TwoPhase3x3x3ScrambleAssociatedAffixes::None,
-                        },
-                        &TwoPhase3x3x3ScrambleOptions {
-                            prefix_or_suffix_constraints:
-                                TwoPhase3x3x3PrefixOrSuffixConstraints::None,
-                        },
-                    )
-                },
-            )
-            .expect("Could not test scramble.");
-            Ok(test_scramble)
-        }
-        Event::Cube4x4x4Speedsolving => {
-            let pattern = Cube4x4x4ScrambleFinder::get_kpuzzle()
-                .default_pattern()
-                .apply_alg(scramble_setup_alg)
-                .expect("Invalid alg for puzzle.");
-            // TODO: figure out why the linter and formatter aren't catching this extra whitespace: https://github.com/cubing/twsearch/issues/128
-            let test_scramble = scramble_finder_cacher_map(
-                |scramble_finder: &mut Cube4x4x4ScrambleFinder| -> Result<Alg, SearchError> {
-                    scramble_finder.solve_pattern(
-                        &pattern,
-                        &NoScrambleAssociatedData {},
-                        &NoScrambleOptions {},
-                    )
-                },
-            )
-            .expect("Could not test scramble.");
-            Ok(test_scramble)
-        }
-        Event::Square1Speedsolving => {
-            let pattern = Square1ScrambleFinder::get_kpuzzle()
-                .default_pattern()
-                .apply_alg(scramble_setup_alg)
-                .expect("Invalid alg for puzzle.");
-            let test_scramble = scramble_finder_cacher_map(
-                |scramble_finder: &mut Square1ScrambleFinder| -> Result<Alg, SearchError> {
-                    let alg = scramble_finder.solve_pattern(
-                        &pattern,
-                        &NoScrambleAssociatedData {},
-                        &NoScrambleOptions {},
-                    )?;
-                    Ok(scramble_finder.collapse_inverted_alg(alg))
-                },
-            )
-            .expect("Could not test scramble.");
-            Ok(test_scramble)
-        }
+        Event::Cube3x3x3Speedsolving => filter_and_search::<TwoPhase3x3x3ScrambleFinder>(
+            scramble_setup_alg,
+            apply_filtering,
+            false,
+            &TwoPhase3x3x3ScrambleAssociatedData {
+                affixes: TwoPhase3x3x3ScrambleAssociatedAffixes::None,
+            },
+            &TwoPhase3x3x3ScrambleOptions {
+                prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::None,
+            },
+        ),
+        Event::Cube4x4x4Speedsolving => filter_and_search_simple::<Cube4x4x4ScrambleFinder>(
+            scramble_setup_alg,
+            apply_filtering,
+            false,
+        ),
+        Event::Square1Speedsolving => filter_and_search_simple::<Square1ScrambleFinder>(
+            scramble_setup_alg,
+            apply_filtering,
+            true,
+        ),
         Event::MegaminxSpeedsolving => {
-            let pattern = MegaminxSolver::get_kpuzzle()
-                .default_pattern()
-                .apply_alg(scramble_setup_alg)
-                .expect("Invalid alg for puzzle.");
-            let test_scramble = scramble_finder_cacher_map(
-                |scramble_finder: &mut MegaminxSolver| -> Result<Alg, SearchError> {
-                    scramble_finder.solve_pattern(
-                        &pattern,
-                        &NoScrambleAssociatedData {},
-                        &NoScrambleOptions {},
-                    )
-                },
-            )
-            .expect("Could not test scramble.");
-            Ok(test_scramble)
+            filter_and_search_simple::<MegaminxSolver>(scramble_setup_alg, apply_filtering, false)
         }
         _ => err,
     }

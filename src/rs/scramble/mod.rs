@@ -1,4 +1,5 @@
 mod collapse;
+pub mod get_kpuzzle;
 pub mod orbit_pieces_byte_slice;
 mod parity;
 mod puzzles;

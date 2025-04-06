@@ -417,6 +417,9 @@ pub struct ScrambleFinderSolveArgs {
     #[clap(long, default_value = "false")]
     pub print_link: bool,
 
+    #[clap(long, default_value = "false")]
+    pub apply_filtering: bool,
+
     /// Event ID (WCA or unofficial)
     pub event_id: String,
 

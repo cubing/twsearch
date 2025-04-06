@@ -1,6 +1,7 @@
 use crate::{
     _internal::search::filter::filtering_decision::FilteringDecision,
     scramble::{
+        get_kpuzzle::GetKPuzzle,
         puzzles::square1::{
             phase1::square1_phase1_individual_search_adaptations,
             square1_shape_traversal_filter::shape_traversal_filter_pattern,
@@ -398,8 +399,8 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
     }
 }
 
-impl Square1ScrambleFinder {
-    pub fn get_kpuzzle() -> &'static KPuzzle {
+impl GetKPuzzle for Square1ScrambleFinder {
+    fn get_kpuzzle(&self) -> &'static KPuzzle {
         square1_unbandaged_kpuzzle()
     }
 }

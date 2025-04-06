@@ -51,7 +51,11 @@ pub fn cli_scramble_finder_solve(args: &ScrambleFinderArgs) -> Result<(), Comman
                 .expect("Invalid alg");
 
             let current_scramble_start_time = Instant::now();
-            let scramble = scramble_finder_solve(event, &scramble_setup_alg)?;
+            let scramble = scramble_finder_solve(
+                event,
+                &scramble_setup_alg,
+                scramble_finder_solve_args.apply_filtering,
+            )?;
             eprintln!(
                 "// Scramble found in: {:?}",
                 Instant::now() - current_scramble_start_time

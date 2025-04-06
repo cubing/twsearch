@@ -1,15 +1,21 @@
 use std::sync::Arc;
 
-use cubing::alg::Alg;
+use cubing::alg::{parse_alg, Alg};
 use cubing::kpuzzle::KPuzzle;
 
 use crate::_internal::cli::args::VerbosityLevel;
 use crate::_internal::search::filter::filtering_decision::FilteringDecision;
+use crate::_internal::search::prune_table_trait::Depth;
 use crate::_internal::search::search_logger::SearchLogger;
 use crate::experimental_lib_api::{
     KPuzzleSimpleMaskPhase, KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,
 };
-use crate::scramble::puzzles::definitions::{cube4x4x4_kpuzzle, cube4x4x4_phase1_target_kpattern};
+use crate::scramble::get_kpuzzle::GetKPuzzle;
+use crate::scramble::puzzles::canonicalizing_solved_kpattern_depth_filter::CanonicalizingSolvedKPatternDepthFilter;
+use crate::scramble::puzzles::definitions::{
+    cube4x4x4_kpuzzle, cube4x4x4_orientation_canonicalization_kpattern,
+    cube4x4x4_phase1_target_kpattern, cube4x4x4_solved_kpattern,
+};
 use crate::{_internal::errors::SearchError, scramble::scramble_search::move_list_from_vec};
 
 use crate::scramble::{
@@ -23,6 +29,9 @@ use crate::scramble::{
 use super::phase2::phase2_search;
 use super::phase3::Cube4x4x4Phase3Search;
 use super::phase4::Cube4x4x4Phase4Search;
+
+#[allow(non_upper_case_globals)]
+const CUBE4x4x4_MINIMUM_OPTIMAL_SOLUTION_DEPTH: Depth = Depth(2);
 
 /*
 
@@ -53,6 +62,7 @@ Wings and centers are indexed by Speffz ordering: https://www.speedsolving.com/w
 
 pub(crate) struct Cube4x4x4ScrambleFinder {
     multi_phase_search: MultiPhaseSearch<KPuzzle>,
+    canonicalizing_solved_kpattern_depth_filter: CanonicalizingSolvedKPatternDepthFilter,
 }
 
 impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
@@ -80,18 +90,20 @@ impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
         );
         randomize_orbit(&mut scramble_pattern, 1, "WINGS", Default::default());
         randomize_orbit(&mut scramble_pattern, 2, "CENTERS", Default::default());
+        scramble_pattern = scramble_pattern.apply_alg(parse_alg!("R")).unwrap();
 
         (scramble_pattern, NoScrambleAssociatedData {})
     }
 
     fn filter_pattern(
         &mut self,
-        _pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
+        pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
         _scramble_associated_data: &Self::ScrambleAssociatedData,
         _scramble_options: &Self::ScrambleOptions,
     ) -> FilteringDecision {
-        dbg!("WARNING: 4×4×4 filtering is not implemented yet.");
-        FilteringDecision::Accept
+        self.canonicalizing_solved_kpattern_depth_filter
+            .depth_filter(pattern)
+            .unwrap() // TODO
     }
 
     fn solve_pattern(
@@ -146,32 +158,29 @@ impl Default for Cube4x4x4ScrambleFinder {
         )
         .unwrap();
 
-        // let depth_filtering_search = {
-        //     let kpuzzle = square1_unbandaged_kpuzzle();
-        //     let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
-
-        //     let iterative_deepening_search = IterativeDeepeningSearch::<KPuzzle, FilteringSearchAdaptations>::try_new(
-        //         kpuzzle.clone(),
-        //         generator_moves,
-        //         kpuzzle.default_pattern(),
-        //         Default::default(),
-        //     )
-        //     .unwrap();
-        //     FilteredSearch::<KPuzzle, FilteringSearchAdaptations>::new(iterative_deepening_search)
-        // };
+        let canonicalizing_solved_kpattern_depth_filter =
+            CanonicalizingSolvedKPatternDepthFilter::try_new(
+                cube4x4x4_orientation_canonicalization_kpattern().clone(),
+                move_list_from_vec(vec!["x", "y"]),
+                cube4x4x4_solved_kpattern().clone(),
+                move_list_from_vec(vec![
+                    "3Uw", "Uw", "U", // U
+                    "3Fw", "Fw", "F", // F
+                    "3Rw", "Rw", "R", // R
+                ]),
+                CUBE4x4x4_MINIMUM_OPTIMAL_SOLUTION_DEPTH,
+            )
+            .unwrap();
 
         Self {
-            // kpuzzle: kpuzzle.clone(),
-            // phase1_ifds,
-            multi_phase_search, // square1_phase2_puzzle,
-                                // phase2_iterative_deepening_search,
-                                // depth_filtering_search,
+            canonicalizing_solved_kpattern_depth_filter,
+            multi_phase_search,
         }
     }
 }
 
-impl Cube4x4x4ScrambleFinder {
-    pub fn get_kpuzzle() -> &'static KPuzzle {
+impl GetKPuzzle for Cube4x4x4ScrambleFinder {
+    fn get_kpuzzle(&self) -> &'static KPuzzle {
         cube4x4x4_kpuzzle()
     }
 }

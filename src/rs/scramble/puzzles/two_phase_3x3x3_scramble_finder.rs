@@ -21,6 +21,7 @@ use crate::{
     },
     scramble::{
         collapse::collapse_adjacent_moves,
+        get_kpuzzle::GetKPuzzle,
         parity::{basic_parity, BasicParity},
         randomize::{
             randomize_orbit, OrbitOrientationConstraint, OrbitPermutationConstraint,
@@ -360,6 +361,12 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
 
             phase2_iterative_deepening_search,
         }
+    }
+}
+
+impl GetKPuzzle for TwoPhase3x3x3ScrambleFinder {
+    fn get_kpuzzle(&self) -> &KPuzzle {
+        &self.kpuzzle
     }
 }
 

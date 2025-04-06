@@ -11,6 +11,7 @@ use crate::{
     },
     scramble::{
         collapse::collapse_adjacent_moves,
+        get_kpuzzle::GetKPuzzle,
         puzzles::definitions::{
             megaminx_kpuzzle, megaminx_phase10_target_kpattern, megaminx_phase11_target_kpattern,
             megaminx_phase1_target_kpattern, megaminx_phase2_target_kpattern,
@@ -173,8 +174,8 @@ impl SolvingBasedScrambleFinder for MegaminxSolver {
     }
 }
 
-impl MegaminxSolver {
-    pub fn get_kpuzzle() -> &'static KPuzzle {
+impl GetKPuzzle for MegaminxSolver {
+    fn get_kpuzzle(&self) -> &'static KPuzzle {
         megaminx_kpuzzle()
     }
 }

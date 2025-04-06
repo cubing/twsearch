@@ -6,9 +6,7 @@ use crate::{
             phase1::square1_phase1_individual_search_adaptations,
             square1_shape_traversal_filter::shape_traversal_filter_pattern,
         },
-        solving_based_scramble_finder::{
-            NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
-        },
+        solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
     },
 };
 
@@ -229,13 +227,12 @@ pub fn debug_print_phase1_solutions_searched(found_phase1_solutions: usize, curr
 
 impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
     type TPuzzle = KPuzzle;
-    type ScrambleAssociatedData = NoScrambleAssociatedData;
     type ScrambleOptions = NoScrambleOptions;
 
     fn generate_fair_unfiltered_random_pattern(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
-    ) -> (KPattern, Self::ScrambleAssociatedData) {
+    ) -> KPattern {
         let mut rng = thread_rng();
 
         loop {
@@ -288,7 +285,7 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
             // scramble pattern filtering. However, this is safe here due to the
             // properties of the Square-1 puzzle.
             if shape_traversal_filter_pattern(&phase1_start_pattern).is_accept() {
-                return (scramble_pattern, NoScrambleAssociatedData {});
+                return scramble_pattern;
             }
         }
     }
@@ -296,7 +293,6 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
     fn filter_pattern(
         &mut self,
         pattern: &KPattern,
-        _scramble_associated_data: &Self::ScrambleAssociatedData,
         _scramble_options: &Self::ScrambleOptions,
     ) -> FilteringDecision {
         self.depth_filtering_search
@@ -306,7 +302,6 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
     fn solve_pattern(
         &mut self,
         pattern: &KPattern,
-        _scramble_associated_data: &Self::ScrambleAssociatedData,
         _scramble_options: &Self::ScrambleOptions,
     ) -> Result<cubing::alg::Alg, crate::_internal::errors::SearchError> {
         let Ok(phase1_start_pattern) = self
@@ -326,8 +321,8 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
                 &phase1_start_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(num_solutions),
-                    min_depth: Some(Depth(current_depth)),
-                    max_depth: Some(Depth(current_depth + 1)),
+                    min_depth_inclusive: Some(Depth(current_depth)),
+                    max_depth_exclusive: Some(Depth(current_depth + 1)),
                     ..Default::default()
                 },
                 square1_phase1_individual_search_adaptations(),
@@ -360,7 +355,7 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
                             // TODO: we need to solve phase transition for 4x4x4, that will cause
                             // us to revisit this code.
                             // max_depth: Some(Depth(min(31 - phase1_solution.nodes.len(), 17))),
-                            max_depth: Some(Depth(17)),
+                            max_depth_exclusive: Some(Depth(17)),
                             ..Default::default()
                         },
                     )

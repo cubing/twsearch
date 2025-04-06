@@ -16,28 +16,22 @@ pub struct NoScrambleOptions {}
 
 pub trait SolvingBasedScrambleFinder: Default {
     type TPuzzle: SemiGroupActionPuzzle;
-    type ScrambleAssociatedData;
     type ScrambleOptions;
 
     fn generate_fair_unfiltered_random_pattern(
         &mut self,
         scramble_options: &Self::ScrambleOptions,
-    ) -> (
-        <<Self as SolvingBasedScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern,
-        Self::ScrambleAssociatedData,
-    );
+    ) -> <<Self as SolvingBasedScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern;
 
     fn filter_pattern(
         &mut self,
         pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern,
-        scramble_associated_data: &Self::ScrambleAssociatedData,
         scramble_options: &Self::ScrambleOptions,
     ) -> FilteringDecision;
 
     fn solve_pattern(
         &mut self,
         pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern,
-        scramble_associated_data: &Self::ScrambleAssociatedData,
         scramble_options: &Self::ScrambleOptions,
     ) -> Result<Alg, SearchError>;
 
@@ -45,19 +39,16 @@ pub trait SolvingBasedScrambleFinder: Default {
 
     fn generate_fair_scramble(&mut self, scramble_options: &Self::ScrambleOptions) -> Alg {
         loop {
-            let (pattern, scramble_associated_data) =
-                self.generate_fair_unfiltered_random_pattern(scramble_options);
+            let pattern = self.generate_fair_unfiltered_random_pattern(scramble_options);
             if matches!(
-                self.filter_pattern(&pattern, &scramble_associated_data, scramble_options),
+                self.filter_pattern(&pattern, scramble_options),
                 FilteringDecision::Reject
             ) {
                 continue;
             }
             // Since we got the pattern from the trait implementation, it should be safe to `.unwrap()` — else, the trait implementation is broken.
             // TODO: are there any puzzles for which we may want to change this?
-            let inverse_scramble = self
-                .solve_pattern(&pattern, &scramble_associated_data, scramble_options)
-                .unwrap();
+            let inverse_scramble = self.solve_pattern(&pattern, scramble_options).unwrap();
             return self.collapse_inverted_alg(inverse_scramble.invert());
         }
     }

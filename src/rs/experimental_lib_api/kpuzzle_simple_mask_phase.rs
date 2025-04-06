@@ -21,6 +21,7 @@ use super::SearchPhase;
 pub struct KPuzzleSimpleMaskPhaseConstructionOptions {
     pub search_logger: Option<SearchLogger>,
     pub individual_search_options: Option<IndividualSearchOptions>,
+    /// If unspecified, [KPuzzleSimpleMaskPhase::try_new] will compute a target pattern by applying the mask to the KPuzzle's default pattern.
     pub masked_target_patterns: Option<Vec<KPattern>>,
 }
 
@@ -123,6 +124,7 @@ impl SearchPhase<KPuzzle> for KPuzzleSimpleMaskPhase {
                 ),
             });
         };
+        dbg!(&masked_pattern);
         // TODO: can we avoid a clone of `individual_search_options`?
         Ok(self
             .iterative_deepening_search

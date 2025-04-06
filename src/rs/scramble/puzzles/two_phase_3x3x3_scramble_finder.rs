@@ -1,7 +1,7 @@
 use std::sync::LazyLock;
 
 use cubing::{
-    alg::{parse_alg, parse_move, Alg, AlgNode, Move, QuantumMove},
+    alg::{parse_alg, parse_move, Alg},
     kpuzzle::{KPattern, KPuzzle, KTransformation},
     puzzles::cube3x3x3_kpuzzle,
 };
@@ -27,13 +27,17 @@ use crate::{
             randomize_orbit, OrbitOrientationConstraint, OrbitPermutationConstraint,
             OrbitRandomizationConstraints,
         },
-        scramble_search::{move_list_from_vec, FilteredSearch},
+        scramble_search::move_list_from_vec,
         solving_based_scramble_finder::SolvingBasedScrambleFinder,
     },
 };
 
 use super::{
-    definitions::cube3x3x3_g1_target_kpattern,
+    canonicalizing_solved_kpattern_depth_filter::{
+        CanonicalizingSolvedKPatternDepthFilter,
+        CanonicalizingSolvedKPatternDepthFilterConstructionParameters,
+    },
+    definitions::{cube3x3x3_g1_target_kpattern, cube3x3x3_orientation_canonicalization_kpattern},
     static_move_list::{add_random_suffixes_from, static_parsed_opt_list},
 };
 
@@ -43,7 +47,9 @@ static FMC_AFFIX_ALG: LazyLock<Alg> = LazyLock::new(|| parse_alg!("R' U' F").clo
 pub(crate) struct TwoPhase3x3x3ScrambleFinder {
     kpuzzle: KPuzzle,
 
-    filtered_search: FilteredSearch<KPuzzle>,
+    depth_filtering_search: CanonicalizingSolvedKPatternDepthFilter,
+    // TODO: lazy initialization?
+    bld_orientation_search: IterativeDeepeningSearch<KPuzzle>,
 
     phase1_target_pattern: KPattern,
     phase1_iterative_deepening_search: IterativeDeepeningSearch<KPuzzle>,
@@ -53,12 +59,6 @@ pub(crate) struct TwoPhase3x3x3ScrambleFinder {
 
 pub(crate) struct TwoPhase3x3x3ScrambleOptions {
     pub(crate) prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints,
-}
-
-pub(crate) enum TwoPhase3x3x3ScrambleAssociatedAffixes {
-    None,
-    ForFMC,
-    ForBLD(Alg),
 }
 
 // TODO: validation
@@ -88,19 +88,14 @@ fn apply_pre_alg(kpattern: &KPattern, alg: &Alg) -> Option<KPattern> {
     Some(alg_pattern.apply_transformation(&pattern_transformation))
 }
 
-pub(crate) struct TwoPhase3x3x3ScrambleAssociatedData {
-    pub(crate) affixes: TwoPhase3x3x3ScrambleAssociatedAffixes,
-}
-
 impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
     type TPuzzle = KPuzzle;
-    type ScrambleAssociatedData = TwoPhase3x3x3ScrambleAssociatedData;
     type ScrambleOptions = TwoPhase3x3x3ScrambleOptions;
 
     fn generate_fair_unfiltered_random_pattern(
         &mut self,
         scramble_options: &TwoPhase3x3x3ScrambleOptions,
-    ) -> (KPattern, TwoPhase3x3x3ScrambleAssociatedData) {
+    ) -> KPattern {
         let kpuzzle = cube3x3x3_kpuzzle();
         let mut scramble_pattern = kpuzzle.default_pattern();
         let edge_order = randomize_orbit(
@@ -127,79 +122,32 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
             },
         );
 
-        let (scramble_pattern, affixes) = match scramble_options.prefix_or_suffix_constraints {
-            TwoPhase3x3x3PrefixOrSuffixConstraints::None => (
-                scramble_pattern,
-                TwoPhase3x3x3ScrambleAssociatedAffixes::None,
-            ),
-            TwoPhase3x3x3PrefixOrSuffixConstraints::ForFMC => (
-                scramble_pattern,
-                TwoPhase3x3x3ScrambleAssociatedAffixes::ForFMC,
-            ),
+        match scramble_options.prefix_or_suffix_constraints {
+            TwoPhase3x3x3PrefixOrSuffixConstraints::None => scramble_pattern,
+            TwoPhase3x3x3PrefixOrSuffixConstraints::ForFMC => scramble_pattern,
             TwoPhase3x3x3PrefixOrSuffixConstraints::ForBLD => {
                 // TODO: randomize centers directly?
+                // (Could use a God's algorithm table from the orientation filter)
                 let suffix = random_suffix_for_bld();
-                (
-                    scramble_pattern.apply_alg(&suffix).unwrap(),
-                    TwoPhase3x3x3ScrambleAssociatedAffixes::ForBLD(suffix),
-                )
+                scramble_pattern.apply_alg(&suffix).unwrap()
             }
-        };
-        (
-            scramble_pattern,
-            TwoPhase3x3x3ScrambleAssociatedData { affixes },
-        )
+        }
     }
 
     fn filter_pattern(
         &mut self,
         pattern: &KPattern,
-        scramble_associated_data: &TwoPhase3x3x3ScrambleAssociatedData,
         _scramble_options: &TwoPhase3x3x3ScrambleOptions, // TODO: check that this matches the associated data?
     ) -> FilteringDecision {
-        // TODO: Figure out how to avoid cloning `pattern`.
-        let pattern_to_filter = match &scramble_associated_data.affixes {
-            TwoPhase3x3x3ScrambleAssociatedAffixes::None => pattern.clone(),
-            TwoPhase3x3x3ScrambleAssociatedAffixes::ForFMC => pattern.clone(),
-            TwoPhase3x3x3ScrambleAssociatedAffixes::ForBLD(alg) => {
-                // TODO: make the code below less custom to 3x3x3.
-                let mut pattern = pattern.clone();
-                for node in alg.nodes.iter().rev() {
-                    let AlgNode::MoveNode(r#move) = node else {
-                        panic!("Invalid BLD orientation alg");
-                    };
-
-                    let family = match r#move.quantum.family.as_ref() {
-                        "Rw" => "x",
-                        "Uw" => "y",
-                        "Fw" => "z",
-                        _ => panic!("Invalid BLD orientation alg move"),
-                    }
-                    .to_owned();
-                    let inverse_move = Move {
-                        quantum: QuantumMove {
-                            family,
-                            prefix: r#move.quantum.prefix.clone(),
-                        }
-                        .into(),
-                        amount: r#move.amount,
-                    };
-                    pattern = pattern.apply_move(&inverse_move).unwrap(); // TODO
-                }
-                pattern
-            }
-        };
-        // dbg!(&pattern_to_filter);
-        self.filtered_search
-            .filtering_decision(&pattern_to_filter, MoveCount(2))
+        // TODO: is it a good idea to check for standard orientation for non-BLD scrambles?
+        self.depth_filtering_search.depth_filter(pattern).unwrap() // TODO: avoid `.unwrap()`
     }
 
     // TODO: handle all `unwrap()`s.
     fn solve_pattern(
         &mut self,
         pattern: &KPattern,
-        scramble_associated_data: &TwoPhase3x3x3ScrambleAssociatedData,
-        _scramble_options: &TwoPhase3x3x3ScrambleOptions,
+        scramble_options: &TwoPhase3x3x3ScrambleOptions,
     ) -> Result<Alg, SearchError> {
         // TODO: we pass premoves and postmoves to both phases in case the other
         // turns out to have an empty alg solution. We can handle this better by making
@@ -212,8 +160,9 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
             canonical_fsm_post_moves_phase1,
             canonical_fsm_pre_moves_phase2,
             canonical_fsm_post_moves_phase2,
-        ) = match &scramble_associated_data.affixes {
-            TwoPhase3x3x3ScrambleAssociatedAffixes::None => (
+        ) = match &scramble_options.prefix_or_suffix_constraints {
+            TwoPhase3x3x3PrefixOrSuffixConstraints::None => (
+                // TODO: output rotations for patterns in non-standard orientation?
                 Alg::default(),
                 pattern.clone(),
                 Alg::default(),
@@ -222,7 +171,7 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
                 None,
                 None,
             ),
-            TwoPhase3x3x3ScrambleAssociatedAffixes::ForFMC => {
+            TwoPhase3x3x3PrefixOrSuffixConstraints::ForFMC => {
                 let fmc_affix_alg = FMC_AFFIX_ALG.clone();
                 let a = fmc_affix_alg.invert();
                 let search_pattern = apply_pre_alg(pattern, &(a))
@@ -242,16 +191,23 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
                     Some(vec![parse_move!("R2'").to_owned()]),
                 )
             }
-            TwoPhase3x3x3ScrambleAssociatedAffixes::ForBLD(alg) => (
-                alg.clone().invert(),
-                // apply_pre_alg(pattern, &alg.invert()).unwrap(),
-                pattern.apply_alg(&alg.invert()).unwrap(),
-                Alg::default(),
-                None,
-                None,
-                None,
-                None,
-            ),
+            TwoPhase3x3x3PrefixOrSuffixConstraints::ForBLD => {
+                let masked_pattern =
+                    apply_mask(pattern, cube3x3x3_orientation_canonicalization_kpattern())
+                        .map_err(|err| SearchError {
+                            description: err.description,
+                        })?;
+                let Some(bld_prefix) = self
+                    .bld_orientation_search
+                    .search(&masked_pattern, Default::default(), Default::default())
+                    .next()
+                else {
+                    return Err("Could not apply orientation moves for BLD".into());
+                };
+                let pattern = pattern.apply_alg(&bld_prefix).unwrap();
+                dbg!(bld_prefix.to_string());
+                (bld_prefix, pattern, Alg::default(), None, None, None, None)
+            }
         };
 
         // dbg!(&search_pattern);
@@ -310,19 +266,28 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
         // TODO: add centerless optimizations where possible?
         let kpuzzle = cube3x3x3_kpuzzle().clone();
         let generators = move_list_from_vec(vec!["U", "L", "F", "R", "B", "D"]);
-        let filtered_search = FilteredSearch::new(
+        let depth_filtering_search = CanonicalizingSolvedKPatternDepthFilter::try_new(
+            CanonicalizingSolvedKPatternDepthFilterConstructionParameters {
+                canonicalization_mask: cube3x3x3_orientation_canonicalization_kpattern().clone(),
+                canonicalization_generator_moves: move_list_from_vec(vec!["x", "y"]),
+                solved_pattern: cube3x3x3_kpuzzle().default_pattern(),
+                depth_filtering_generator_moves: move_list_from_vec(vec![
+                    "U", "L", "F", "R", "B", "D",
+                ]),
+                min_optimal_solution_move_count: MoveCount(2),
+            },
+        )
+        .unwrap();
+
+        let bld_orientation_search =
             IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
-                kpuzzle.clone(),
-                generators.clone(),
-                vec![kpuzzle.default_pattern()],
-                IterativeDeepeningSearchConstructionOptions {
-                    min_prune_table_size: Some(32),
-                    ..Default::default()
-                },
-                None,
+                cube3x3x3_kpuzzle().clone(),
+                move_list_from_vec(vec!["Uw", "Fw", "Rw"]),
+                vec![cube3x3x3_orientation_canonicalization_kpattern().clone()],
+                Default::default(),
+                Default::default(),
             )
-            .unwrap(),
-        );
+            .unwrap();
 
         let phase1_target_pattern = cube3x3x3_g1_target_kpattern().clone();
         let phase1_iterative_deepening_search =
@@ -354,7 +319,8 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
 
         Self {
             kpuzzle,
-            filtered_search,
+            depth_filtering_search,
+            bld_orientation_search,
 
             phase1_target_pattern,
             phase1_iterative_deepening_search,
@@ -379,5 +345,6 @@ fn random_suffix_for_bld() -> Alg {
 pub(crate) enum TwoPhase3x3x3PrefixOrSuffixConstraints {
     None,
     ForFMC,
+    // TODO: Rename to `NoInspection`?
     ForBLD,
 }

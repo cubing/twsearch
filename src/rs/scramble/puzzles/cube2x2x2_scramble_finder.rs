@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use cubing::{
     alg::{Alg, QuantumMove},
-    kpuzzle::KPuzzle,
+    kpuzzle::{KPattern, KPuzzle},
     puzzles::cube2x2x2_kpuzzle,
 };
 
@@ -23,9 +23,7 @@ use crate::{
         get_kpuzzle::GetKPuzzle,
         randomize::OrbitRandomizationConstraints,
         scramble_search::{move_list_from_vec, FilteredSearch},
-        solving_based_scramble_finder::{
-            NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
-        },
+        solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
     },
 };
 
@@ -89,16 +87,12 @@ impl Default for Cube2x2x2ScrambleFinder {
 
 impl SolvingBasedScrambleFinder for Cube2x2x2ScrambleFinder {
     type TPuzzle = KPuzzle;
-    type ScrambleAssociatedData = NoScrambleAssociatedData;
     type ScrambleOptions = NoScrambleOptions;
 
     fn generate_fair_unfiltered_random_pattern(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
-    ) -> (
-        <<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
-        Self::ScrambleAssociatedData,
-    ){
+    ) -> KPattern {
         let mut scramble_pattern = self.kpuzzle.default_pattern();
         randomize_orbit(
             &mut scramble_pattern,
@@ -109,13 +103,12 @@ impl SolvingBasedScrambleFinder for Cube2x2x2ScrambleFinder {
                 ..Default::default()
             },
         );
-        (scramble_pattern, NoScrambleAssociatedData {})
+        scramble_pattern
     }
 
     fn filter_pattern(
         &mut self,
-        pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
-        _scramble_associated_data: &Self::ScrambleAssociatedData,
+        pattern: &KPattern,
         _scramble_options: &Self::ScrambleOptions,
     ) -> FilteringDecision {
         self.depth_filtering_search.depth_filter(pattern).unwrap() // TODO: avoid `.unwrap()`.
@@ -123,8 +116,7 @@ impl SolvingBasedScrambleFinder for Cube2x2x2ScrambleFinder {
 
     fn solve_pattern(
         &mut self,
-        pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
-        _scramble_associated_data: &Self::ScrambleAssociatedData,
+        pattern: &KPattern,
         _scramble_options: &Self::ScrambleOptions,
     ) -> Result<Alg, SearchError> {
         self.search.solve_or_error(pattern, Some(MoveCount(11)))
@@ -149,7 +141,7 @@ mod tests {
     };
 
     use crate::scramble::solving_based_scramble_finder::{
-        NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
+        NoScrambleOptions, SolvingBasedScrambleFinder,
     };
 
     use super::Cube2x2x2ScrambleFinder;
@@ -165,32 +157,16 @@ mod tests {
                 .unwrap()
         };
         assert!(scramble_finder
-            .filter_pattern(
-                &pattern(parse_alg!("U F R x y")),
-                &NoScrambleAssociatedData {},
-                &NoScrambleOptions {},
-            )
+            .filter_pattern(&pattern(parse_alg!("U F R x y")), &NoScrambleOptions {},)
             .is_reject());
         assert!(scramble_finder
-            .filter_pattern(
-                &pattern(parse_alg!("z")),
-                &NoScrambleAssociatedData {},
-                &NoScrambleOptions {},
-            )
+            .filter_pattern(&pattern(parse_alg!("z")), &NoScrambleOptions {},)
             .is_reject());
         assert!(scramble_finder
-            .filter_pattern(
-                &pattern(parse_alg!("L F2 R")),
-                &NoScrambleAssociatedData {},
-                &NoScrambleOptions {},
-            )
+            .filter_pattern(&pattern(parse_alg!("L F2 R")), &NoScrambleOptions {},)
             .is_reject());
         assert!(scramble_finder
-            .filter_pattern(
-                &pattern(parse_alg!("R2 F2 U2 R2")),
-                &NoScrambleAssociatedData {},
-                &NoScrambleOptions {},
-            )
+            .filter_pattern(&pattern(parse_alg!("R2 F2 U2 R2")), &NoScrambleOptions {},)
             .is_accept());
         Ok(())
     }

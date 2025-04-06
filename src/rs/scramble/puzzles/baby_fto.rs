@@ -125,7 +125,7 @@ pub fn scramble_baby_fto() -> Alg {
                 &scramble_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
-                    min_depth: Some(Depth(10)),
+                    min_depth_inclusive: Some(Depth(10)),
                     ..Default::default()
                 },
             )

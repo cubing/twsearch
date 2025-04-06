@@ -15,14 +15,13 @@ use super::{
         skewb_scramble_finder::SkewbScrambleFinder,
         square1::square1_scramble_finder::Square1ScrambleFinder,
         two_phase_3x3x3_scramble_finder::{
-            TwoPhase3x3x3PrefixOrSuffixConstraints, TwoPhase3x3x3ScrambleAssociatedAffixes,
-            TwoPhase3x3x3ScrambleAssociatedData, TwoPhase3x3x3ScrambleFinder,
+            TwoPhase3x3x3PrefixOrSuffixConstraints, TwoPhase3x3x3ScrambleFinder,
             TwoPhase3x3x3ScrambleOptions,
         },
     },
     solving_based_scramble_finder::{
-        generate_fair_scramble, scramble_finder_cacher_map, NoScrambleAssociatedData,
-        NoScrambleOptions, SolvingBasedScrambleFinder,
+        generate_fair_scramble, scramble_finder_cacher_map, NoScrambleOptions,
+        SolvingBasedScrambleFinder,
     },
     Event, PuzzleError,
 };
@@ -96,7 +95,6 @@ fn filter_and_search<
     scramble_setup_alg: &Alg,
     apply_filtering: bool,
     collapse_using_collapse_inverted_alg: bool,
-    scramble_associated_data: &ScrambleFinder::ScrambleAssociatedData,
     scramble_options: &ScrambleFinder::ScrambleOptions,
 ) -> Result<Alg, CommandError> {
     let alg = match scramble_finder_cacher_map(
@@ -109,18 +107,14 @@ fn filter_and_search<
 
             if apply_filtering
                 && scramble_finder
-                    .filter_pattern(&pattern, scramble_associated_data, scramble_options)
+                    .filter_pattern(&pattern, scramble_options)
                     .is_reject()
             {
                 return Err(SearchError {
                     description: "Rejected due to filtering".to_owned(),
                 });
             };
-            let alg = scramble_finder.solve_pattern(
-                &pattern,
-                scramble_associated_data,
-                scramble_options,
-            )?;
+            let alg = scramble_finder.solve_pattern(&pattern, scramble_options)?;
             Ok(if collapse_using_collapse_inverted_alg {
                 scramble_finder.collapse_inverted_alg(alg)
             } else {
@@ -135,11 +129,8 @@ fn filter_and_search<
 }
 
 fn filter_and_search_simple<
-    ScrambleFinder: SolvingBasedScrambleFinder<
-            TPuzzle = KPuzzle,
-            ScrambleAssociatedData = NoScrambleAssociatedData,
-            ScrambleOptions = NoScrambleOptions,
-        > + GetKPuzzle
+    ScrambleFinder: SolvingBasedScrambleFinder<TPuzzle = KPuzzle, ScrambleOptions = NoScrambleOptions>
+        + GetKPuzzle
         + Send
         + Sync
         + 'static,
@@ -153,7 +144,6 @@ fn filter_and_search_simple<
         scramble_setup_alg,
         apply_filtering,
         collapse_using_collapse_inverted_alg,
-        &NoScrambleAssociatedData {},
         &NoScrambleOptions {},
     )
 }
@@ -175,11 +165,16 @@ pub fn scramble_finder_solve(
             scramble_setup_alg,
             apply_filtering,
             false,
-            &TwoPhase3x3x3ScrambleAssociatedData {
-                affixes: TwoPhase3x3x3ScrambleAssociatedAffixes::None,
-            },
             &TwoPhase3x3x3ScrambleOptions {
                 prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::None,
+            },
+        ),
+        Event::Cube3x3x3Blindfolded => filter_and_search::<TwoPhase3x3x3ScrambleFinder>(
+            scramble_setup_alg,
+            apply_filtering,
+            false,
+            &TwoPhase3x3x3ScrambleOptions {
+                prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::ForBLD,
             },
         ),
         Event::Cube2x2x2Speedsolving => filter_and_search_simple::<Cube2x2x2ScrambleFinder>(
@@ -192,14 +187,19 @@ pub fn scramble_finder_solve(
             apply_filtering,
             false,
         ),
+        Event::MegaminxSpeedsolving => {
+            filter_and_search_simple::<MegaminxSolver>(scramble_setup_alg, apply_filtering, false)
+        }
+        Event::PyraminxSpeedsolving => filter_and_search_simple::<PyraminxScrambleFinder>(
+            scramble_setup_alg,
+            apply_filtering,
+            false,
+        ),
         Event::Square1Speedsolving => filter_and_search_simple::<Square1ScrambleFinder>(
             scramble_setup_alg,
             apply_filtering,
             true,
         ),
-        Event::MegaminxSpeedsolving => {
-            filter_and_search_simple::<MegaminxSolver>(scramble_setup_alg, apply_filtering, false)
-        }
         _ => err,
     }
 }

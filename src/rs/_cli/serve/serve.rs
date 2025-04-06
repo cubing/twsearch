@@ -107,11 +107,11 @@ fn solve_pattern(
             &search_pattern,
             IndividualSearchOptions {
                 min_num_solutions: None,
-                min_depth: args_for_individual_search
+                min_depth_inclusive: args_for_individual_search
                     .client_args
                     .as_ref()
                     .and_then(|client_args| client_args.min_depth),
-                max_depth: args_for_individual_search
+                max_depth_exclusive: args_for_individual_search
                     .client_args
                     .as_ref()
                     .and_then(|client_args| client_args.max_depth),

@@ -9,11 +9,11 @@ use cubing::{
 };
 use twsearch::{
     _internal::{cli::args::VerbosityLevel, search::search_logger::SearchLogger},
-    experimental_lib_api::{KPuzzleSimpleMaskPhase, MultiPhaseSearch},
+    experimental_lib_api::{KPuzzleSimpleMaskPhase, MultiPhaseSearch, MultiPhaseSearchOptions},
 };
 
-kpuzzle_from_json_file!(pub(crate), cube3x3x3_centerless, "../scramble/puzzles/definitions/3x3x3/3x3x3-centerless.kpuzzle.json");
-kpattern_from_json_file!(pub(crate), cube3x3x3_centerless_g1_target, "../scramble/puzzles/definitions/3x3x3/3x3x3-G1-centerless.target-pattern.json", cube3x3x3_centerless_kpuzzle());
+kpuzzle_from_json_file!(pub(crate), cube3x3x3_centerless, "./kociemba_multiphase/3x3x3-centerless.kpuzzle.json");
+kpattern_from_json_file!(pub(crate), cube3x3x3_centerless_g1_target, "./kociemba_multiphase/3x3x3-G1-centerless.target-pattern.json", cube3x3x3_centerless_kpuzzle());
 
 struct KociembaTwoPhase(MultiPhaseSearch<KPuzzle>);
 
@@ -57,9 +57,12 @@ impl KociembaTwoPhase {
                         .unwrap(),
                     ),
                 ],
-                Some(SearchLogger {
-                    verbosity: VerbosityLevel::Info,
-                }),
+                MultiPhaseSearchOptions {
+                    search_logger: SearchLogger {
+                        verbosity: VerbosityLevel::Info,
+                    },
+                    ..Default::default()
+                },
             )
             .unwrap(),
         )

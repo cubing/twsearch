@@ -1,4 +1,7 @@
-use cubing::{alg::Alg, kpuzzle::KPuzzle};
+use cubing::{
+    alg::Alg,
+    kpuzzle::{KPattern, KPuzzle},
+};
 
 use crate::{
     _internal::{
@@ -13,9 +16,7 @@ use crate::{
         collapse::collapse_adjacent_moves,
         randomize::{ConstraintForPiece0, OrbitRandomizationConstraints},
         scramble_search::{move_list_from_vec, FilteredSearch},
-        solving_based_scramble_finder::{
-            NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
-        },
+        solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
     },
 };
 
@@ -52,16 +53,12 @@ impl Default for SkewbScrambleFinder {
 
 impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
     type TPuzzle = KPuzzle;
-    type ScrambleAssociatedData = NoScrambleAssociatedData;
     type ScrambleOptions = NoScrambleOptions;
 
     fn generate_fair_unfiltered_random_pattern(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
-    ) -> (
-        <<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
-        Self::ScrambleAssociatedData,
-    ){
+    ) -> KPattern {
         let mut scramble_pattern = self.kpuzzle.default_pattern();
 
         /* The total orientation of each corner orbit is constrained by the permutation of the other.
@@ -143,13 +140,12 @@ impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
                 ..Default::default()
             },
         );
-        (scramble_pattern, NoScrambleAssociatedData {})
+        scramble_pattern
     }
 
     fn filter_pattern(
         &mut self,
-        pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
-        _scramble_associated_data: &Self::ScrambleAssociatedData,
+        pattern: &KPattern,
         _scramble_options: &Self::ScrambleOptions,
     ) -> FilteringDecision {
         self.filtered_search
@@ -158,8 +154,7 @@ impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
 
     fn solve_pattern(
         &mut self,
-        pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
-        _scramble_associated_data: &Self::ScrambleAssociatedData,
+        pattern: &KPattern,
         _scramble_options: &Self::ScrambleOptions,
     ) -> Result<Alg, SearchError> {
         Ok(self

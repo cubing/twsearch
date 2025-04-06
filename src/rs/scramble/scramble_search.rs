@@ -52,8 +52,8 @@ impl<TPuzzle: SemiGroupActionPuzzle> FilteredSearch<TPuzzle> {
                 scramble_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
-                    min_depth: Some(Depth(0)),
-                    max_depth: Some(Depth(min_optimal_moves.0)),
+                    min_depth_inclusive: Some(Depth(0)),
+                    max_depth_exclusive: Some(Depth(min_optimal_moves.0)),
                     ..Default::default()
                 },
             )
@@ -82,7 +82,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> FilteredSearch<TPuzzle> {
                 scramble_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
-                    min_depth: min_scramble_moves.map(|move_count| Depth(move_count.0)),
+                    min_depth_inclusive: min_scramble_moves.map(|move_count| Depth(move_count.0)),
                     ..Default::default()
                 },
             )

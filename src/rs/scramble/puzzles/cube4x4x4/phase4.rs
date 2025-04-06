@@ -15,8 +15,7 @@ use crate::{
             cube4x4x4::wings::POSITION_IS_PRIMARY,
             definitions::cube4x4x4_kpuzzle,
             two_phase_3x3x3_scramble_finder::{
-                TwoPhase3x3x3PrefixOrSuffixConstraints, TwoPhase3x3x3ScrambleAssociatedAffixes,
-                TwoPhase3x3x3ScrambleAssociatedData, TwoPhase3x3x3ScrambleFinder,
+                TwoPhase3x3x3PrefixOrSuffixConstraints, TwoPhase3x3x3ScrambleFinder,
                 TwoPhase3x3x3ScrambleOptions,
             },
         },
@@ -119,9 +118,6 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase4Search {
         };
         Ok(Some(self.cube3x3x3_scramble_finder.solve_pattern(
             &pattern,
-            &TwoPhase3x3x3ScrambleAssociatedData {
-                affixes: TwoPhase3x3x3ScrambleAssociatedAffixes::None,
-            },
             &TwoPhase3x3x3ScrambleOptions {
                 prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::None,
             },

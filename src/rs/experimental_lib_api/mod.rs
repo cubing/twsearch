@@ -13,7 +13,7 @@ mod gods_algorithm_api;
 pub use gods_algorithm_api::gods_algorithm;
 
 mod multi_phase_search;
-pub use multi_phase_search::MultiPhaseSearch;
+pub use multi_phase_search::{MultiPhaseSearch, MultiPhaseSearchOptions};
 
 mod search_phase;
 pub use search_phase::SearchPhase;

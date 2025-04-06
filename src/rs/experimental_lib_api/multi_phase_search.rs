@@ -9,10 +9,16 @@ use crate::_internal::{
 
 use super::SearchPhase;
 
+#[derive(Default)]
+pub struct MultiPhaseSearchOptions {
+    pub search_logger: SearchLogger,
+    pub include_pause_between_phases: bool,
+}
+
 pub struct MultiPhaseSearch<TPuzzle: SemiGroupActionPuzzle> {
     tpuzzle: TPuzzle,
     pub phases: Vec<Box<dyn SearchPhase<TPuzzle>>>,
-    pub search_logger: SearchLogger,
+    options: MultiPhaseSearchOptions,
     pub phantom_data: PhantomData<TPuzzle>,
 }
 
@@ -20,13 +26,12 @@ impl<TPuzzle: SemiGroupActionPuzzle> MultiPhaseSearch<TPuzzle> {
     pub fn try_new(
         tpuzzle: TPuzzle,
         phases: Vec<Box<dyn SearchPhase<TPuzzle>>>,
-        search_logger: Option<SearchLogger>,
+        options: MultiPhaseSearchOptions,
     ) -> Result<Self, SearchError> {
-        let search_logger: SearchLogger = search_logger.unwrap_or_default();
         Ok(Self {
             tpuzzle,
             phases,
-            search_logger,
+            options,
             phantom_data: PhantomData,
         })
     }
@@ -38,9 +43,10 @@ impl<TPuzzle: SemiGroupActionPuzzle> MultiPhaseSearch<TPuzzle> {
         let mut current_solution: Option<Alg> = None;
         for phase in self.phases.iter_mut() {
             // TODO: avoid formatting unless it will be printed.
-            self.search_logger
+            self.options
+                .search_logger
                 .write_info(&format!("Starting phase: {}", phase.phase_name()));
-            self.search_logger.write_info(&format!(
+            self.options.search_logger.write_info(&format!(
                 "Solution so far: {}",
                 current_solution.clone().unwrap_or_default()
             ));
@@ -60,7 +66,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> MultiPhaseSearch<TPuzzle> {
             };
 
             // dbg!(&phase_search_pattern);
-            self.search_logger.write_info(&format!(
+            self.options.search_logger.write_info(&format!(
                 "phase_search_pattern: {:#?}",
                 phase_search_pattern
             ));
@@ -78,7 +84,11 @@ impl<TPuzzle: SemiGroupActionPuzzle> MultiPhaseSearch<TPuzzle> {
                 Some(current_solution) => Some(Alg {
                     nodes: [
                         current_solution.nodes,
-                        vec![AlgNode::PauseNode(Pause {})],
+                        if self.options.include_pause_between_phases {
+                            vec![AlgNode::PauseNode(Pause {})]
+                        } else {
+                            vec![]
+                        },
                         phase_solution.nodes,
                     ]
                     .concat(),

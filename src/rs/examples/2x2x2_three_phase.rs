@@ -1,7 +1,7 @@
 use cubing::{alg::parse_move, kpuzzle::kpattern_from_json_file, puzzles::cube2x2x2_kpuzzle};
 use twsearch::{
     _internal::{cli::args::VerbosityLevel, search::search_logger::SearchLogger},
-    experimental_lib_api::{KPuzzleSimpleMaskPhase, MultiPhaseSearch},
+    experimental_lib_api::{KPuzzleSimpleMaskPhase, MultiPhaseSearch, MultiPhaseSearchOptions},
     scramble::{random_scramble_for_event, Event},
 };
 
@@ -72,9 +72,12 @@ pub fn main() {
                 .unwrap(),
             ),
         ],
-        Some(SearchLogger {
-            verbosity: VerbosityLevel::Info,
-        }),
+        MultiPhaseSearchOptions {
+            search_logger: SearchLogger {
+                verbosity: VerbosityLevel::Info,
+            },
+            ..Default::default()
+        },
     )
     .unwrap();
 

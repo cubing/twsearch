@@ -5,9 +5,7 @@ use cubing::{
 
 /******************************** 3×3×3 ********************************/
 
-kpuzzle_from_json_file!(pub(crate), cube3x3x3_centerless, "./3x3x3/3x3x3-centerless.kpuzzle.json");
-kpattern_from_json_file!(pub(crate), cube3x3x3_centerless_g1_target, "./3x3x3/3x3x3-G1-centerless.target-pattern.json", cube3x3x3_centerless_kpuzzle());
-
+kpattern_from_json_file!(pub(crate), cube3x3x3_orientation_canonicalization, "./3x3x3/3x3x3.orientation-canonicalization-pattern.json", cube3x3x3_kpuzzle());
 kpattern_from_json_file!(pub(crate), cube3x3x3_g1_target, "./3x3x3/3x3x3-G1.target-pattern.json", cube3x3x3_kpuzzle());
 
 /******************************** 2×2×2 ********************************/
@@ -60,10 +58,14 @@ kpattern_from_json_file!(pub(crate), megaminx_phase9_target, "./megaminx/megamin
 kpattern_from_json_file!(pub(crate), megaminx_phase10_target, "./megaminx/megaminx-phase10.target-pattern.json", megaminx_kpuzzle());
 kpattern_from_json_file!(pub(crate), megaminx_phase11_target, "./megaminx/megaminx-phase11.target-pattern.json", megaminx_kpuzzle());
 
+/******************************** Pyraminx ********************************/
+
+kpuzzle_from_json_file!(pub(crate), pyraminx, "./pyraminx/pyraminx.kpuzzle.json");
+kpattern_from_json_file!(pub(crate), pyraminx_ignoring_tips, "./pyraminx/pyraminx.ignoring-tips-pattern.json", pyraminx_kpuzzle());
+
 /******************************** Other WCA puzzles ********************************/
 
 // kpuzzle_from_json_file!(pub(crate), tetraminx, "tetraminx.kpuzzle.json");
-kpuzzle_from_json_file!(pub(crate), pyraminx, "./other_wca/pyraminx.kpuzzle.json");
 kpuzzle_from_json_file!(pub(crate), skewb_fixed_corner_with_co_tweaks, "./other_wca/skewb-fixed-corner-with-co-tweaks.kpuzzle.json");
 
 /******************************** Other puzzles ********************************/

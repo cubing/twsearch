@@ -151,8 +151,8 @@ impl Iterator for SearchSolutions {
 #[serde(rename_all = "camelCase")]
 pub struct IndividualSearchOptions {
     pub min_num_solutions: Option<usize>,
-    pub min_depth: Option<Depth>, // inclusive
-    pub max_depth: Option<Depth>, // exclusive
+    pub min_depth_inclusive: Option<Depth>, // inclusive
+    pub max_depth_exclusive: Option<Depth>, // exclusive
     pub canonical_fsm_pre_moves: Option<Vec<Move>>,
     pub canonical_fsm_post_moves: Option<Vec<Move>>,
 }
@@ -162,10 +162,11 @@ impl IndividualSearchOptions {
         self.min_num_solutions.unwrap_or(1)
     }
     pub fn get_min_depth(&self) -> Depth {
-        self.min_depth.unwrap_or(Depth(0))
+        self.min_depth_inclusive.unwrap_or(Depth(0))
     }
     pub fn get_max_depth(&self) -> Depth {
-        self.max_depth.unwrap_or(MAX_SUPPORTED_SEARCH_DEPTH)
+        self.max_depth_exclusive
+            .unwrap_or(MAX_SUPPORTED_SEARCH_DEPTH)
     }
 }
 
@@ -352,20 +353,20 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         individual_search_adaptations: IndividualSearchAdaptations<TPuzzle>,
     ) -> SearchSolutions {
         // TODO: do validation more consistently.
-        if let Some(min_depth) = individual_search_options.min_depth {
+        if let Some(min_depth) = individual_search_options.min_depth_inclusive {
             if min_depth > MAX_SUPPORTED_SEARCH_DEPTH {
                 self.api_data
                     .search_logger
                     .write_error("Min depth too large, capping at maximum.");
-                individual_search_options.min_depth = Some(MAX_SUPPORTED_SEARCH_DEPTH);
+                individual_search_options.min_depth_inclusive = Some(MAX_SUPPORTED_SEARCH_DEPTH);
             }
         }
-        if let Some(max_depth) = individual_search_options.max_depth {
+        if let Some(max_depth) = individual_search_options.max_depth_exclusive {
             if max_depth > MAX_SUPPORTED_SEARCH_DEPTH {
                 self.api_data
                     .search_logger
                     .write_error("Max depth too large, capping at maximum.");
-                individual_search_options.max_depth = Some(MAX_SUPPORTED_SEARCH_DEPTH);
+                individual_search_options.max_depth_exclusive = Some(MAX_SUPPORTED_SEARCH_DEPTH);
             }
         }
 

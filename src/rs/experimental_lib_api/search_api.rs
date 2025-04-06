@@ -77,8 +77,8 @@ pub fn search(
         search_pattern,
         IndividualSearchOptions {
             min_num_solutions: search_command_optional_args.min_num_solutions,
-            min_depth: search_command_optional_args.search_args.min_depth,
-            max_depth: search_command_optional_args.search_args.max_depth,
+            min_depth_inclusive: search_command_optional_args.search_args.min_depth,
+            max_depth_exclusive: search_command_optional_args.search_args.max_depth,
             ..Default::default()
         },
     );

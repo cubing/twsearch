@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use cubing::alg::{parse_alg, Alg};
-use cubing::kpuzzle::KPuzzle;
+use cubing::kpuzzle::{KPattern, KPuzzle};
 
 use crate::_internal::cli::args::VerbosityLevel;
 use crate::_internal::search::filter::filtering_decision::FilteringDecision;
@@ -9,6 +9,7 @@ use crate::_internal::search::move_count::MoveCount;
 use crate::_internal::search::search_logger::SearchLogger;
 use crate::experimental_lib_api::{
     KPuzzleSimpleMaskPhase, KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,
+    MultiPhaseSearchOptions,
 };
 use crate::scramble::get_kpuzzle::GetKPuzzle;
 use crate::scramble::puzzles::canonicalizing_solved_kpattern_depth_filter::{
@@ -24,9 +25,7 @@ use crate::{_internal::errors::SearchError, scramble::scramble_search::move_list
 use crate::scramble::{
     collapse::collapse_adjacent_moves,
     randomize::{randomize_orbit, OrbitOrientationConstraint, OrbitRandomizationConstraints},
-    solving_based_scramble_finder::{
-        NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
-    },
+    solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
 };
 
 use super::phase2::phase2_search;
@@ -40,8 +39,8 @@ const CUBE4x4x4_MINIMUM_OPTIMAL_SOLUTION_MOVE_COUNT: MoveCount = MoveCount(2);
 
 Wings and centers are indexed by Speffz ordering: https://www.speedsolving.com/wiki/index.php?title=Speffz
 
-╭──────────────────────────────────────────────────╮
 │                  (16)                            │
+╭──────────────────────────────────────────────────╮
 │               ╭─────┬───╮                        │
 │               │    0│   │                        │
 │               ├───┬─┤  1│                        │
@@ -70,16 +69,12 @@ pub(crate) struct Cube4x4x4ScrambleFinder {
 
 impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
     type TPuzzle = KPuzzle;
-    type ScrambleAssociatedData = NoScrambleAssociatedData;
     type ScrambleOptions = NoScrambleOptions;
 
     fn generate_fair_unfiltered_random_pattern(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
-    ) -> (
-        <<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
-        Self::ScrambleAssociatedData,
-    ){
+    ) -> KPattern {
         let mut scramble_pattern = cube4x4x4_kpuzzle().default_pattern();
 
         randomize_orbit(
@@ -95,13 +90,12 @@ impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
         randomize_orbit(&mut scramble_pattern, 2, "CENTERS", Default::default());
         scramble_pattern = scramble_pattern.apply_alg(parse_alg!("R")).unwrap();
 
-        (scramble_pattern, NoScrambleAssociatedData {})
+        scramble_pattern
     }
 
     fn filter_pattern(
         &mut self,
-        pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
-        _scramble_associated_data: &Self::ScrambleAssociatedData,
+        pattern: &KPattern,
         _scramble_options: &Self::ScrambleOptions,
     ) -> FilteringDecision {
         self.canonicalizing_solved_kpattern_depth_filter
@@ -111,8 +105,7 @@ impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
 
     fn solve_pattern(
         &mut self,
-        pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
-        _scramble_associated_data: &Self::ScrambleAssociatedData,
+        pattern: &KPattern,
         _scramble_options: &Self::ScrambleOptions,
     ) -> Result<Alg, SearchError> {
         self.multi_phase_search
@@ -155,9 +148,10 @@ impl Default for Cube4x4x4ScrambleFinder {
                 Box::new(Cube4x4x4Phase3Search::default()),
                 Box::new(Cube4x4x4Phase4Search::default()),
             ],
-            Some(SearchLogger {
-                verbosity: VerbosityLevel::Info,
-            }),
+            MultiPhaseSearchOptions {
+                include_pause_between_phases: false,
+                ..Default::default()
+            },
         )
         .unwrap();
 

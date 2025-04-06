@@ -114,7 +114,7 @@ impl CanonicalizingSolvedKPatternDepthFilter {
                 .search(
                     &canonicalized_pattern,
                     IndividualSearchOptions {
-                        max_depth: Some(Depth(self.min_optimal_solution_depth.0)),
+                        max_depth_exclusive: Some(Depth(self.min_optimal_solution_depth.0)),
                         ..Default::default()
                     },
                     Default::default(),

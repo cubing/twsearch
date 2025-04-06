@@ -8,6 +8,7 @@ use crate::{
     },
     experimental_lib_api::{
         KPuzzleSimpleMaskPhase, KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,
+        MultiPhaseSearchOptions,
     },
     scramble::{
         collapse::collapse_adjacent_moves,
@@ -25,9 +26,7 @@ use crate::{
             OrbitRandomizationConstraints,
         },
         scramble_search::move_list_from_vec,
-        solving_based_scramble_finder::{
-            NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
-        },
+        solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
     },
 };
 
@@ -108,7 +107,10 @@ impl Default for MegaminxSolver {
                 construct_phase(11, megaminx_phase11_target_kpattern(), vec!["U", "F", "R"]),
                 construct_phase(12, &kpuzzle.default_pattern(), vec!["U", "F", "R"]),
             ],
-            Some(search_logger),
+            MultiPhaseSearchOptions {
+                search_logger,
+                ..Default::default()
+            },
         )
         .unwrap();
         Self { multi_phase_search }
@@ -117,13 +119,12 @@ impl Default for MegaminxSolver {
 
 impl SolvingBasedScrambleFinder for MegaminxSolver {
     type TPuzzle = KPuzzle;
-    type ScrambleAssociatedData = NoScrambleAssociatedData;
     type ScrambleOptions = NoScrambleOptions;
 
     fn generate_fair_unfiltered_random_pattern(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
-    ) -> (KPattern, Self::ScrambleAssociatedData) {
+    ) -> KPattern {
         // TODO: centers?
         let mut pattern = megaminx_kpuzzle().default_pattern();
         randomize_orbit(
@@ -146,13 +147,12 @@ impl SolvingBasedScrambleFinder for MegaminxSolver {
                 ..Default::default()
             },
         );
-        (pattern, NoScrambleAssociatedData {})
+        pattern
     }
 
     fn filter_pattern(
         &mut self,
         _pattern: &KPattern,
-        _scramble_associated_data: &Self::ScrambleAssociatedData,
         _scramble_options: &Self::ScrambleOptions,
     ) -> FilteringDecision {
         dbg!("WARNING: Megaminx filtering is not implemented yet.");
@@ -162,7 +162,6 @@ impl SolvingBasedScrambleFinder for MegaminxSolver {
     fn solve_pattern(
         &mut self,
         pattern: &KPattern,
-        _scramble_associated_data: &Self::ScrambleAssociatedData,
         _scramble_options: &Self::ScrambleOptions,
     ) -> Result<cubing::alg::Alg, crate::_internal::errors::SearchError> {
         self.multi_phase_search

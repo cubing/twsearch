@@ -351,9 +351,9 @@ The Rust implementation contains scrambling code intended to replace [`tnoodle-l
 
 This repo also contains a Rust build that wraps the C++ implementation (in a single binary). This allows running a server to connect with web UIs:
 
-```
+```shell
 cargo run --package twsearch-cpp-wrapper -- serve
-// Now open https://experiments.cubing.net/cubing.js/twsearch/text-ui.html
+# Now open https://experiments.cubing.net/cubing.js/twsearch/text-ui.html
 ```
 
 To run commands similar to the examples above:

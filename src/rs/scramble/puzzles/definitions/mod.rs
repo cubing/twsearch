@@ -1,6 +1,6 @@
 use cubing::{
     kpuzzle::{kpattern_from_json_file, kpuzzle_from_json_file},
-    puzzles::cube3x3x3_kpuzzle,
+    puzzles::{cube2x2x2_kpuzzle, cube3x3x3_kpuzzle},
 };
 
 /******************************** 3×3×3 ********************************/
@@ -9,6 +9,11 @@ kpuzzle_from_json_file!(pub(crate), cube3x3x3_centerless, "./3x3x3/3x3x3-centerl
 kpattern_from_json_file!(pub(crate), cube3x3x3_centerless_g1_target, "./3x3x3/3x3x3-G1-centerless.target-pattern.json", cube3x3x3_centerless_kpuzzle());
 
 kpattern_from_json_file!(pub(crate), cube3x3x3_g1_target, "./3x3x3/3x3x3-G1.target-pattern.json", cube3x3x3_kpuzzle());
+
+/******************************** 2×2×2 ********************************/
+
+// TODO: if we were sneaky, we could reuse the 3×3×3 or 4×4×4 definition for this (since 2×2×2 has a subset of those orbits with the same semantics). 🤣
+kpattern_from_json_file!(pub(crate), cube2x2x2_orientation_canonicalization, "./2x2x2/2x2x2.orientation-canonicalization-pattern.json", cube2x2x2_kpuzzle());
 
 /******************************** 4×4×4 ********************************/
 

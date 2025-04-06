@@ -11,6 +11,7 @@ use crate::_internal::{
             IndividualSearchOptions, IterativeDeepeningSearch,
         },
         mask_pattern::apply_mask,
+        move_count::MoveCount,
         prune_table_trait::Depth,
     },
 };
@@ -21,16 +22,21 @@ pub struct CanonicalizingSolvedKPatternDepthFilter {
     solved_pattern: KPattern,
     depth_filtering_search: IterativeDeepeningSearch<KPuzzle>,
     // Note: the obvious implementation at this moment would allow accepting the depth dynamically. But we may use it for initialization-time optimizations in the future.
-    min_optimal_solution_depth: Depth,
+    min_optimal_solution_depth: MoveCount,
+}
+
+pub struct CanonicalizingSolvedKPatternDepthFilterConstructionParameters {
+    pub canonicalization_mask: KPattern,
+    pub canonicalization_generator_moves: Vec<Move>,
+    pub solved_pattern: KPattern,
+    pub depth_filtering_generator_moves: Vec<Move>,
+    // Note: the obvious implementation at this moment would allow accepting the depth dynamically. But we may use it for initialization-time optimizations in the future.
+    pub min_optimal_solution_move_count: MoveCount,
 }
 
 impl CanonicalizingSolvedKPatternDepthFilter {
     pub fn try_new(
-        canonicalization_mask: KPattern,
-        canonicalization_generator_moves: Vec<Move>,
-        solved_pattern: KPattern,
-        depth_filtering_generator_moves: Vec<Move>,
-        min_optimal_solution_depth: Depth,
+        parameters: CanonicalizingSolvedKPatternDepthFilterConstructionParameters,
     ) -> Result<Self, SearchError> {
         // let pattern_deriver = MaskedKPuzzleDeriver::new(canonicalization_mask.clone());
         // let canonicalization_puzzle = GraphEnumeratedDerivedPatternPuzzle::new(
@@ -41,14 +47,17 @@ impl CanonicalizingSolvedKPatternDepthFilter {
         // );
         // let canonicalization_prune_table =
         //     GraphEnumeratedDerivedPatternPuzzlePruneTable::new(canonicalization_puzzle);
-        let kpuzzle = canonicalization_mask.kpuzzle().clone();
-        let canonical_masked_solved_pattern =
-            apply_mask(&canonicalization_mask, &solved_pattern).unwrap();
+        let kpuzzle = parameters.canonicalization_mask.kpuzzle().clone();
+        let canonical_masked_solved_pattern = apply_mask(
+            &parameters.canonicalization_mask,
+            &parameters.solved_pattern,
+        )
+        .unwrap();
         // TODO: use exact prune table (`GraphEnumeratedDerivedPatternPuzzlePruneTable`).
         let canonicalization_search =
             IterativeDeepeningSearch::<KPuzzle>::try_new_kpuzzle_with_hash_prune_table_shim(
                 kpuzzle.clone(),
-                canonicalization_generator_moves,
+                parameters.canonicalization_generator_moves,
                 vec![canonical_masked_solved_pattern],
                 Default::default(),
                 Default::default(),
@@ -56,32 +65,27 @@ impl CanonicalizingSolvedKPatternDepthFilter {
         let depth_filtering_search =
             IterativeDeepeningSearch::<KPuzzle>::try_new_kpuzzle_with_hash_prune_table_shim(
                 kpuzzle,
-                depth_filtering_generator_moves,
-                vec![solved_pattern.clone()],
+                parameters.depth_filtering_generator_moves,
+                vec![parameters.solved_pattern.clone()],
                 Default::default(),
                 None,
             )
             .unwrap();
         Ok(Self {
-            canonicalization_mask,
             canonicalization_search,
-            solved_pattern,
             depth_filtering_search,
-            min_optimal_solution_depth,
+            canonicalization_mask: parameters.canonicalization_mask,
+            solved_pattern: parameters.solved_pattern,
+            min_optimal_solution_depth: parameters.min_optimal_solution_move_count,
         })
     }
 
     pub fn depth_filter(&mut self, pattern: &KPattern) -> Result<FilteringDecision, SearchError> {
-        dbg!("depth_filter");
-        dbg!(&pattern);
-        dbg!(&self.canonicalization_mask);
         let masked_pattern = apply_mask(pattern, &self.canonicalization_mask).map_err(|err| {
             SearchError {
                 description: err.description, // TODO: we shouldn't need to manually adapt errors here.
             }
         })?;
-        dbg!(&masked_pattern);
-        dbg!(self.canonicalization_mask == masked_pattern);
         let Some(canonicalizing_alg) = self
             .canonicalization_search
             .search(&masked_pattern, Default::default(), Default::default())
@@ -89,7 +93,6 @@ impl CanonicalizingSolvedKPatternDepthFilter {
         else {
             return Err("Could not canonicalize the puzzle pattern for depth filtering".into());
         };
-        dbg!(canonicalizing_alg.to_string());
         // TODO: this shouldn't be necessary, but we have to fix some masking stuff for 4×4×4 first.
         let Ok(pattern_with_canonicalizing_alg) = pattern.apply_alg(&canonicalizing_alg) else {
             return Err(
@@ -105,14 +108,13 @@ impl CanonicalizingSolvedKPatternDepthFilter {
                     .into(),
             );
         };
-        dbg!(&canonicalized_pattern);
         Ok(
             match self
                 .depth_filtering_search
                 .search(
                     &canonicalized_pattern,
                     IndividualSearchOptions {
-                        max_depth: Some(self.min_optimal_solution_depth),
+                        max_depth: Some(Depth(self.min_optimal_solution_depth.0)),
                         ..Default::default()
                     },
                     Default::default(),

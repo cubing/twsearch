@@ -165,7 +165,7 @@ pub fn scramble_finder_solve(
 ) -> Result<Alg, CommandError> {
     let err = Err(PuzzleError {
         description: format!(
-            "Random scramble testing is not implemented for this event yet: {}",
+            "Scramble finder testing is not implemented for this event yet: {}",
             event
         ),
     }
@@ -181,6 +181,11 @@ pub fn scramble_finder_solve(
             &TwoPhase3x3x3ScrambleOptions {
                 prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::None,
             },
+        ),
+        Event::Cube2x2x2Speedsolving => filter_and_search_simple::<Cube2x2x2ScrambleFinder>(
+            scramble_setup_alg,
+            apply_filtering,
+            false,
         ),
         Event::Cube4x4x4Speedsolving => filter_and_search_simple::<Cube4x4x4ScrambleFinder>(
             scramble_setup_alg,

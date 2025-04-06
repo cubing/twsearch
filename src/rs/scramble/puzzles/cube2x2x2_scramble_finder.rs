@@ -20,40 +20,48 @@ use crate::{
     },
     scramble::{
         collapse::collapse_adjacent_moves,
-        puzzles::static_move_list::{add_random_suffixes_from, static_parsed_opt_list},
-        randomize::{ConstraintForPiece0, OrbitRandomizationConstraints},
+        get_kpuzzle::GetKPuzzle,
+        randomize::OrbitRandomizationConstraints,
         scramble_search::{move_list_from_vec, FilteredSearch},
-        solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
+        solving_based_scramble_finder::{
+            NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
+        },
     },
 };
 
-use super::super::randomize::{randomize_orbit, OrbitOrientationConstraint};
+use super::{
+    super::randomize::{randomize_orbit, OrbitOrientationConstraint},
+    canonicalizing_solved_kpattern_depth_filter::{
+        CanonicalizingSolvedKPatternDepthFilter,
+        CanonicalizingSolvedKPatternDepthFilterConstructionParameters,
+    },
+    definitions::cube2x2x2_orientation_canonicalization_kpattern,
+};
 
 #[allow(non_snake_case)] // Move meanings are case sensitive.
 pub(crate) struct Cube2x2x2ScrambleFinder {
     kpuzzle: KPuzzle,
-    filtered_search_L_B_D: FilteredSearch<KPuzzle>,
-    filtered_search_U_L_F_R: FilteredSearch<KPuzzle>,
+    depth_filtering_search: CanonicalizingSolvedKPatternDepthFilter,
+    search: FilteredSearch<KPuzzle>,
 }
 
 impl Default for Cube2x2x2ScrambleFinder {
     fn default() -> Self {
         let kpuzzle = cube2x2x2_kpuzzle();
 
-        #[allow(non_snake_case)] // Move meanings are case sensitive.
-        let filtered_search_L_B_D = <FilteredSearch>::new(
-            IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
-                kpuzzle.clone(),
-                move_list_from_vec(vec!["L", "B", "D"]),
-                vec![kpuzzle.default_pattern()],
-                Default::default(),
-                None,
-            )
-            .unwrap(),
-        );
+        let depth_filtering_search = CanonicalizingSolvedKPatternDepthFilter::try_new(
+            CanonicalizingSolvedKPatternDepthFilterConstructionParameters {
+                canonicalization_mask: cube2x2x2_orientation_canonicalization_kpattern().clone(),
+                canonicalization_generator_moves: move_list_from_vec(vec!["x", "y"]),
+                solved_pattern: cube2x2x2_kpuzzle().default_pattern(),
+                depth_filtering_generator_moves: move_list_from_vec(vec!["U", "F", "R"]),
+                min_optimal_solution_move_count: MoveCount(4), // store associated with events?
+            },
+        )
+        .unwrap();
 
         #[allow(non_snake_case)] // Move meanings are case sensitive.
-        let filtered_search_U_L_F_R = <FilteredSearch>::new(
+        let search = <FilteredSearch>::new(
             IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
                 kpuzzle.clone(),
                 move_list_from_vec(vec!["U", "L", "F", "R"]),
@@ -73,19 +81,15 @@ impl Default for Cube2x2x2ScrambleFinder {
         );
         Self {
             kpuzzle: kpuzzle.clone(),
-            filtered_search_L_B_D,
-            filtered_search_U_L_F_R,
+            depth_filtering_search,
+            search,
         }
     }
 }
 
-pub(crate) struct Cube2x2x2ScrambleAssociatedData {
-    orientation_randomization_alg: Alg,
-}
-
 impl SolvingBasedScrambleFinder for Cube2x2x2ScrambleFinder {
     type TPuzzle = KPuzzle;
-    type ScrambleAssociatedData = Cube2x2x2ScrambleAssociatedData;
+    type ScrambleAssociatedData = NoScrambleAssociatedData;
     type ScrambleOptions = NoScrambleOptions;
 
     fn generate_fair_unfiltered_random_pattern(
@@ -95,55 +99,26 @@ impl SolvingBasedScrambleFinder for Cube2x2x2ScrambleFinder {
         <<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
         Self::ScrambleAssociatedData,
     ){
-        let mut scramble_pattern_fixed_corner = self.kpuzzle.default_pattern();
+        let mut scramble_pattern = self.kpuzzle.default_pattern();
         randomize_orbit(
-            &mut scramble_pattern_fixed_corner,
+            &mut scramble_pattern,
             0,
             "CORNERS",
             OrbitRandomizationConstraints {
                 orientation: Some(OrbitOrientationConstraint::SumToZero),
-                piece_0: Some(ConstraintForPiece0::KeepSolved),
                 ..Default::default()
             },
         );
-
-        #[allow(non_snake_case)] // Move meanings are case sensitive.
-        let orientation_randomization_U = static_parsed_opt_list(&["", "x", "x2", "x'", "z", "z'"]);
-        #[allow(non_snake_case)] // Move meanings are case sensitive.
-        let orientation_randomization_F = static_parsed_opt_list(&["", "y", "y2", "y'"]);
-        let orientation_randomization_alg = add_random_suffixes_from(
-            Alg::default(),
-            [orientation_randomization_U, orientation_randomization_F],
-        );
-
-        let scramble_pattern = scramble_pattern_fixed_corner
-            .apply_alg(&orientation_randomization_alg)
-            .unwrap();
-
-        (
-            scramble_pattern,
-            Cube2x2x2ScrambleAssociatedData {
-                orientation_randomization_alg,
-            },
-        )
+        (scramble_pattern, NoScrambleAssociatedData {})
     }
 
     fn filter_pattern(
         &mut self,
         pattern: &<<Self as SolvingBasedScrambleFinder>::TPuzzle as crate::_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle>::Pattern,
-        scramble_associated_data: &Self::ScrambleAssociatedData,
+        _scramble_associated_data: &Self::ScrambleAssociatedData,
         _scramble_options: &Self::ScrambleOptions,
     ) -> FilteringDecision {
-        let oriented_pattern = pattern
-            .apply_alg(
-                &scramble_associated_data
-                    .orientation_randomization_alg
-                    .invert(),
-            )
-            .unwrap(); // TODO
-
-        self.filtered_search_L_B_D
-            .filtering_decision(&oriented_pattern, MoveCount(4))
+        self.depth_filtering_search.depth_filter(pattern).unwrap() // TODO: avoid `.unwrap()`.
     }
 
     fn solve_pattern(
@@ -152,11 +127,71 @@ impl SolvingBasedScrambleFinder for Cube2x2x2ScrambleFinder {
         _scramble_associated_data: &Self::ScrambleAssociatedData,
         _scramble_options: &Self::ScrambleOptions,
     ) -> Result<Alg, SearchError> {
-        self.filtered_search_U_L_F_R
-            .solve_or_error(pattern, Some(MoveCount(11)))
+        self.search.solve_or_error(pattern, Some(MoveCount(11)))
     }
 
     fn collapse_inverted_alg(&mut self, alg: Alg) -> Alg {
         collapse_adjacent_moves(alg, 4, -1)
+    }
+}
+
+impl GetKPuzzle for Cube2x2x2ScrambleFinder {
+    fn get_kpuzzle(&self) -> &KPuzzle {
+        &self.kpuzzle
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use cubing::{
+        alg::{parse_alg, Alg},
+        puzzles::cube2x2x2_kpuzzle,
+    };
+
+    use crate::scramble::solving_based_scramble_finder::{
+        NoScrambleAssociatedData, NoScrambleOptions, SolvingBasedScrambleFinder,
+    };
+
+    use super::Cube2x2x2ScrambleFinder;
+
+    #[test]
+    // TODO: generalize and automate this across all events.
+    fn simple_scramble_filtering_test() -> Result<(), String> {
+        let mut scramble_finder = Cube2x2x2ScrambleFinder::default();
+        let pattern = |alg: &Alg| {
+            cube2x2x2_kpuzzle()
+                .default_pattern()
+                .apply_alg(alg)
+                .unwrap()
+        };
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("U F R x y")),
+                &NoScrambleAssociatedData {},
+                &NoScrambleOptions {},
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("z")),
+                &NoScrambleAssociatedData {},
+                &NoScrambleOptions {},
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("L F2 R")),
+                &NoScrambleAssociatedData {},
+                &NoScrambleOptions {},
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("R2 F2 U2 R2")),
+                &NoScrambleAssociatedData {},
+                &NoScrambleOptions {},
+            )
+            .is_accept());
+        Ok(())
     }
 }

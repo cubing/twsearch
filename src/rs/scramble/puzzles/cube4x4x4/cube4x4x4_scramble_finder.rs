@@ -5,13 +5,16 @@ use cubing::kpuzzle::KPuzzle;
 
 use crate::_internal::cli::args::VerbosityLevel;
 use crate::_internal::search::filter::filtering_decision::FilteringDecision;
-use crate::_internal::search::prune_table_trait::Depth;
+use crate::_internal::search::move_count::MoveCount;
 use crate::_internal::search::search_logger::SearchLogger;
 use crate::experimental_lib_api::{
     KPuzzleSimpleMaskPhase, KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,
 };
 use crate::scramble::get_kpuzzle::GetKPuzzle;
-use crate::scramble::puzzles::canonicalizing_solved_kpattern_depth_filter::CanonicalizingSolvedKPatternDepthFilter;
+use crate::scramble::puzzles::canonicalizing_solved_kpattern_depth_filter::{
+    CanonicalizingSolvedKPatternDepthFilter,
+    CanonicalizingSolvedKPatternDepthFilterConstructionParameters,
+};
 use crate::scramble::puzzles::definitions::{
     cube4x4x4_kpuzzle, cube4x4x4_orientation_canonicalization_kpattern,
     cube4x4x4_phase1_target_kpattern, cube4x4x4_solved_kpattern,
@@ -31,7 +34,7 @@ use super::phase3::Cube4x4x4Phase3Search;
 use super::phase4::Cube4x4x4Phase4Search;
 
 #[allow(non_upper_case_globals)]
-const CUBE4x4x4_MINIMUM_OPTIMAL_SOLUTION_DEPTH: Depth = Depth(2);
+const CUBE4x4x4_MINIMUM_OPTIMAL_SOLUTION_MOVE_COUNT: MoveCount = MoveCount(2);
 
 /*
 
@@ -160,15 +163,18 @@ impl Default for Cube4x4x4ScrambleFinder {
 
         let canonicalizing_solved_kpattern_depth_filter =
             CanonicalizingSolvedKPatternDepthFilter::try_new(
-                cube4x4x4_orientation_canonicalization_kpattern().clone(),
-                move_list_from_vec(vec!["x", "y"]),
-                cube4x4x4_solved_kpattern().clone(),
-                move_list_from_vec(vec![
-                    "3Uw", "Uw", "U", // U
-                    "3Fw", "Fw", "F", // F
-                    "3Rw", "Rw", "R", // R
-                ]),
-                CUBE4x4x4_MINIMUM_OPTIMAL_SOLUTION_DEPTH,
+                CanonicalizingSolvedKPatternDepthFilterConstructionParameters {
+                    canonicalization_mask: cube4x4x4_orientation_canonicalization_kpattern()
+                        .clone(),
+                    canonicalization_generator_moves: move_list_from_vec(vec!["x", "y"]),
+                    solved_pattern: cube4x4x4_solved_kpattern().clone(),
+                    depth_filtering_generator_moves: move_list_from_vec(vec![
+                        "3Uw", "Uw", "U", // U
+                        "3Fw", "Fw", "F", // F
+                        "3Rw", "Rw", "R", // R
+                    ]),
+                    min_optimal_solution_move_count: CUBE4x4x4_MINIMUM_OPTIMAL_SOLUTION_MOVE_COUNT,
+                },
             )
             .unwrap();
 

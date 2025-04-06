@@ -12,8 +12,8 @@ use twsearch::{
     experimental_lib_api::{KPuzzleSimpleMaskPhase, MultiPhaseSearch},
 };
 
-kpuzzle_from_json_file!(pub(crate), cube3x3x3_centerless, "../scramble/puzzles/definitions/3x3x3-centerless.kpuzzle.json");
-kpattern_from_json_file!(pub(crate), cube3x3x3_centerless_g1_target, "../scramble/puzzles/definitions/3x3x3-G1-centerless.target-pattern.json", cube3x3x3_centerless_kpuzzle());
+kpuzzle_from_json_file!(pub(crate), cube3x3x3_centerless, "../scramble/puzzles/definitions/3x3x3/3x3x3-centerless.kpuzzle.json");
+kpattern_from_json_file!(pub(crate), cube3x3x3_centerless_g1_target, "../scramble/puzzles/definitions/3x3x3/3x3x3-G1-centerless.target-pattern.json", cube3x3x3_centerless_kpuzzle());
 
 struct KociembaTwoPhase(MultiPhaseSearch<KPuzzle>);
 

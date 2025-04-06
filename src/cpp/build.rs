@@ -29,7 +29,7 @@ fn main() {
         build.file(cpp_file);
     }
     build
-        .flag("-std=c++20")
+        .flag("-std=c++17")
         .flag("-DASLIBRARY")
         .flag("-DTWSEARCH_VERSION=v0.4.2-7-g4a9107fa")
         // .flag("-lpthread") # Unneeded?

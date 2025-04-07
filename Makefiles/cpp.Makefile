@@ -1,4 +1,5 @@
-TWSEARCH_VERSION=$(shell git describe --tags)
+# This uses a pattern to cache a lazy evaluation: https://make.mad-scientist.net/deferred-simple-variable-expansion/
+TWSEARCH_VERSION = $(eval TWSEARCH_VERSION := $$(shell bun "script/print-current-version-description.ts"))$(TWSEARCH_VERSION)
 
 # MAKEFLAGS += -j
 # CXXFLAGS = -fsanitize=address -fsanitize=undefined -O3 -Warray-bounds -Wextra -Wall -pedantic -std=c++20 -g -Wsign-compare

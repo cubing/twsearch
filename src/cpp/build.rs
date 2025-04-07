@@ -2,7 +2,7 @@ fn main() {
     let cpp_files = [
         "antipode.cpp",
         "canon.cpp",
-        "cityhash/src/city.cc",
+        "vendor/cityhash/src/city.cc",
         "cmdlineops.cpp",
         "cmds.cpp",
         "ffi/ffi_api.cpp",

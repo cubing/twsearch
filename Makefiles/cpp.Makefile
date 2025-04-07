@@ -1,8 +1,9 @@
 TWSEARCH_VERSION=$(shell git describe --tags)
 
 # MAKEFLAGS += -j
-CXXFLAGS = -O3 -Warray-bounds -Wextra -Wall -pedantic -std=c++17 -g -Wsign-compare
-FLAGS = -DTWSEARCH_VERSION=${TWSEARCH_VERSION} -DUSE_PTHREADS
+# CXXFLAGS = -fsanitize=address -fsanitize=undefined -O3 -Warray-bounds -Wextra -Wall -pedantic -std=c++20 -g -Wsign-compare
+CXXFLAGS = -O3 -Warray-bounds -Wextra -Wall -pedantic -std=c++20 -g -Wsign-compare
+FLAGS = -DTWSEARCH_VERSION=${TWSEARCH_VERSION} -DUSE_PTHREADS -DUSE_PPQSORT
 LDFLAGS = -lpthread
 
 BASESOURCE = src/cpp/canon.cpp src/cpp/cityhash/src/city.cc \
@@ -54,11 +55,11 @@ build/bin/twsearch: $(OBJ) | build/bin/
 
 .PHONY: lint-cpp
 lint-cpp:
-	find ./src/cpp -iname "*.h" -o -iname "*.cpp" | xargs clang-format --dry-run -Werror
+	find ./src/cpp -iname "*.h" -o -iname "*.cpp" | grep -v ppqsort | xargs clang-format --dry-run -Werror
 
 .PHONY: format-cpp
 format-cpp:
-	find ./src/cpp -iname "*.h" -o -iname "*.cpp" | xargs clang-format -i
+	find ./src/cpp -iname "*.h" -o -iname "*.cpp" | grep -v ppqsort | xargs clang-format -i
 
 .PHONY: cpp-clean
 cpp-clean:

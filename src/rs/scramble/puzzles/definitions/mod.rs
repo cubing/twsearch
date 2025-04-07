@@ -29,6 +29,14 @@ kpuzzle_from_json_file!(pub(crate), cube4x4x4_phase3_search, "./4x4x4/4x4x4-phas
 
 /******************************** Big cubes ********************************/
 
+/* TODO(https://github.com/cubing/twsearch/issues/138): replace these definitions with Speffz from `puzzle-geometry` once that's supported.
+ *
+ * These current definitions have a few issues:
+ *
+ * - Wings orbits are represented as 48 stickers instead of 24 pieces.
+ * - Midges are not represented like 3×3×3 edges.
+ * - The definition name and orbit names are temporary.
+ */
 kpuzzle_from_json_file!(pub(crate), cube5x5x5, "./big_cubes/5x5x5.kpuzzle.json");
 kpuzzle_from_json_file!(pub(crate), cube6x6x6, "./big_cubes/6x6x6.kpuzzle.json");
 kpuzzle_from_json_file!(pub(crate), cube7x7x7, "./big_cubes/7x7x7.kpuzzle.json");

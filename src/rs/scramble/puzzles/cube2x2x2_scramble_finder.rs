@@ -54,6 +54,7 @@ impl Default for Cube2x2x2ScrambleFinder {
             CanonicalizingSolvedKPatternDepthFilterConstructionParameters {
                 canonicalization_mask: cube2x2x2_orientation_canonicalization_kpattern().clone(),
                 canonicalization_generator_moves: move_list_from_vec(vec!["x", "y"]),
+                max_canonicalizing_move_count_below: MoveCount(4),
                 solved_pattern: cube2x2x2_kpuzzle().default_pattern(),
                 depth_filtering_generator_moves: move_list_from_vec(vec!["U", "F", "R"]),
                 min_optimal_solution_move_count: MoveCount(4), // store associated with events?
@@ -166,6 +167,9 @@ mod tests {
             .is_reject());
         assert!(scramble_finder
             .filter_pattern(&pattern(parse_alg!("z")), &NoScrambleOptions {},)
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("x y x")), &NoScrambleOptions {},)
             .is_reject());
         assert!(scramble_finder
             .filter_pattern(&pattern(parse_alg!("L F2 R")), &NoScrambleOptions {},)

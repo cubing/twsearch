@@ -210,7 +210,6 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
                     return Err("Could not apply orientation moves for BLD".into());
                 };
                 let pattern = pattern.apply_alg(&bld_prefix).unwrap();
-                dbg!(bld_prefix.to_string());
                 (bld_prefix, pattern, Alg::default(), None, None, None, None)
             }
         };
@@ -275,6 +274,7 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
             CanonicalizingSolvedKPatternDepthFilterConstructionParameters {
                 canonicalization_mask: cube3x3x3_orientation_canonicalization_kpattern().clone(),
                 canonicalization_generator_moves: move_list_from_vec(vec!["x", "y"]),
+                max_canonicalizing_move_count_below: MoveCount(4),
                 solved_pattern: cube3x3x3_kpuzzle().default_pattern(),
                 depth_filtering_generator_moves: move_list_from_vec(vec![
                     "U", "L", "F", "R", "B", "D",
@@ -344,7 +344,7 @@ impl GetKPuzzle for TwoPhase3x3x3ScrambleFinder {
 fn random_suffix_for_bld() -> Alg {
     let s1 = static_parsed_opt_list(&["", "Rw", "Rw2", "Rw'", "Fw", "Fw'"]);
     let s2 = static_parsed_opt_list(&["", "Uw", "Uw2", "Uw'"]);
-    add_random_suffixes_from(Alg::default(), [s1, s2])
+    add_random_suffixes_from(Alg::default(), &[s1, s2])
 }
 
 pub(crate) enum TwoPhase3x3x3PrefixOrSuffixConstraints {

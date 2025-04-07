@@ -5,11 +5,9 @@ use crate::{
     _internal::search::{
         filter::filtering_decision::FilteringDecision,
         iterative_deepening::iterative_deepening_search::IndividualSearchOptions,
-        search_logger::SearchLogger,
     },
     experimental_lib_api::{
         KPuzzleSimpleMaskPhase, KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,
-        MultiPhaseSearchOptions,
     },
     scramble::{
         collapse::collapse_adjacent_moves,
@@ -42,9 +40,6 @@ pub struct MegaminxSolver {
 
 impl Default for MegaminxSolver {
     fn default() -> Self {
-        let search_logger = SearchLogger {
-            verbosity: crate::_internal::cli::args::VerbosityLevel::Info,
-        };
         let kpuzzle = megaminx_kpuzzle();
 
         let construct_phase = |phase_number: usize,
@@ -57,7 +52,6 @@ impl Default for MegaminxSolver {
                     mask.clone(),
                     move_list_from_vec(move_list_vec),
                     KPuzzleSimpleMaskPhaseConstructionOptions {
-                        search_logger: Some(search_logger.clone()),
                         individual_search_options: Some(IndividualSearchOptions {
                             ..Default::default()
                         }),
@@ -111,10 +105,7 @@ impl Default for MegaminxSolver {
                 construct_phase(11, megaminx_phase11_target_kpattern(), vec!["U", "F", "R"]),
                 construct_phase(12, &kpuzzle.default_pattern(), vec!["U", "F", "R"]),
             ],
-            MultiPhaseSearchOptions {
-                search_logger,
-                ..Default::default()
-            },
+            Default::default(),
         )
         .unwrap();
         Self { multi_phase_search }
@@ -130,7 +121,7 @@ impl ScrambleFinder for MegaminxSolver {
         _pattern: &KPattern,
         _scramble_options: &Self::ScrambleOptions,
     ) -> FilteringDecision {
-        dbg!("WARNING: Megaminx filtering is not implemented for `MegaminxSolver` yet.");
+        eprintln!("WARNING: Megaminx filtering is not implemented for `MegaminxSolver` yet. Use `MegaminxScrambleFinder` if you want to filter.");
         FilteringDecision::Accept
     }
 }

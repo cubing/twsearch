@@ -49,7 +49,8 @@ pub(crate) fn apply_mask(
             let masked_mod = min(source_mod, mask_mod);
             let orientation_with_mod = OrientationWithMod {
                 orientation: source_orientation_with_mod.orientation % masked_mod,
-                orientation_mod: if masked_mod == orbit_info.num_orientations {
+                // TODO: this logic probably needs to be more subtle.
+                orientation_mod: if masked_mod == orbit_info.num_orientations && mask_mod != 1 {
                     0
                 } else {
                     masked_mod

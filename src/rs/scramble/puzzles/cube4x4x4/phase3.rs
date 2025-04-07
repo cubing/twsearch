@@ -2,7 +2,6 @@ use cubing::kpuzzle::{KPattern, KPuzzle, KTransformation, OrientationWithMod};
 
 use crate::{
     _internal::{
-        cli::args::VerbosityLevel,
         puzzle_traits::puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
         search::{
             coordinates::{
@@ -11,10 +10,7 @@ use crate::{
                 unenumerated_derived_pattern_puzzle::UnenumeratedDerivedPatternPuzzle,
             },
             hash_prune_table::HashPruneTable,
-            iterative_deepening::iterative_deepening_search::{
-                IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
-            },
-            search_logger::SearchLogger,
+            iterative_deepening::iterative_deepening_search::IterativeDeepeningSearch,
         },
     },
     experimental_lib_api::{derived_puzzle_search_phase::DerivedPuzzleSearchPhase, SearchPhase},
@@ -420,12 +416,7 @@ impl Default for Cube4x4x4Phase3Search {
                     cube4x4x4_phase3_puzzle.clone(),
                     phase3_generator_moves,
                     vec![cube4x4x4_phase3_search_kpuzzle().default_pattern()],
-                    IterativeDeepeningSearchConstructionOptions {
-                        search_logger: SearchLogger {
-                            verbosity: VerbosityLevel::Info, // TODO
-                        }.into(),
-                        ..Default::default()
-                    },
+                    Default::default(),
                     None,
                 )
                 .unwrap();

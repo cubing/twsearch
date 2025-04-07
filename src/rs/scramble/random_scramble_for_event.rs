@@ -6,7 +6,10 @@ use super::{
     get_kpuzzle::GetKPuzzle,
     puzzles::{
         baby_fto::scramble_baby_fto,
-        big_cubes::{scramble_5x5x5, scramble_5x5x5_bld, scramble_6x6x6, scramble_7x7x7},
+        big_cubes::{
+            BigCubeScrambleFinderScrambleOptions, BigCubeScrambleFinderSuffixConstraints,
+            Cube5x5x5ScrambleFinder, Cube6x6x6ScrambleFinder, Cube7x7x7ScrambleFinder,
+        },
         clock_scramble_finder::ClockScrambleFinder,
         cube2x2x2_scramble_finder::Cube2x2x2ScrambleFinder,
         cube4x4x4::cube4x4x4_scramble_finder::Cube4x4x4ScrambleFinder,
@@ -48,9 +51,21 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
         Event::Cube4x4x4Speedsolving => Ok(generate_fair_scramble::<Cube4x4x4ScrambleFinder>(
             &NoScrambleOptions {},
         )),
-        Event::Cube5x5x5Speedsolving => Ok(scramble_5x5x5()),
-        Event::Cube6x6x6Speedsolving => Ok(scramble_6x6x6()),
-        Event::Cube7x7x7Speedsolving => Ok(scramble_7x7x7()),
+        Event::Cube5x5x5Speedsolving => Ok(generate_filtered_random_move_scramble::<
+            Cube5x5x5ScrambleFinder,
+        >(&BigCubeScrambleFinderScrambleOptions {
+            suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None,
+        })),
+        Event::Cube6x6x6Speedsolving => Ok(generate_filtered_random_move_scramble::<
+            Cube6x6x6ScrambleFinder,
+        >(&BigCubeScrambleFinderScrambleOptions {
+            suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None,
+        })),
+        Event::Cube7x7x7Speedsolving => Ok(generate_filtered_random_move_scramble::<
+            Cube7x7x7ScrambleFinder,
+        >(&BigCubeScrambleFinderScrambleOptions {
+            suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None,
+        })),
         Event::Cube3x3x3Blindfolded => Ok(generate_fair_scramble::<TwoPhase3x3x3ScrambleFinder>(
             &TwoPhase3x3x3ScrambleOptions {
                 prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::ForBLD,
@@ -84,7 +99,11 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
         Event::Cube4x4x4Blindfolded => Ok(generate_fair_scramble::<Cube4x4x4ScrambleFinder>(
             &NoScrambleOptions {},
         )),
-        Event::Cube5x5x5Blindfolded => Ok(scramble_5x5x5_bld()),
+        Event::Cube5x5x5Blindfolded => Ok(generate_filtered_random_move_scramble::<
+            Cube5x5x5ScrambleFinder,
+        >(&BigCubeScrambleFinderScrambleOptions {
+            suffix_constraints: BigCubeScrambleFinderSuffixConstraints::ForNoInspection,
+        })),
         Event::Cube3x3x3MultiBlind => Ok(generate_fair_scramble::<TwoPhase3x3x3ScrambleFinder>(
             &TwoPhase3x3x3ScrambleOptions {
                 prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::ForBLD,
@@ -208,6 +227,7 @@ fn random_move_filter_with_no_scramble_options<
 ) -> Result<Option<Alg>, CommandError> {
     random_move_filter::<ScrambleFinder>(options, &NoScrambleOptions {})
 }
+
 // TODO: this is kind of gnarly, but it avoids some severe limitations with dynamic dispatch in Rust due to the associated type for `ScrambleFinder`.
 pub struct ExperimentalFilterAndOrSearchOptions {
     // pattern: &<ScrambleFinder::TPuzzle as SemiGroupActionPuzzle>::Pattern,
@@ -252,6 +272,24 @@ pub fn experimental_scramble_finder_filter_and_or_search(
         Event::Cube4x4x4Speedsolving => solving_based_filter_and_search_with_no_scramble_options::<
             Cube4x4x4ScrambleFinder,
         >(options, false),
+        Event::Cube5x5x5Speedsolving => random_move_filter::<Cube5x5x5ScrambleFinder>(
+            options,
+            &BigCubeScrambleFinderScrambleOptions {
+                suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None,
+            },
+        ),
+        Event::Cube6x6x6Speedsolving => random_move_filter::<Cube6x6x6ScrambleFinder>(
+            options,
+            &BigCubeScrambleFinderScrambleOptions {
+                suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None,
+            },
+        ),
+        Event::Cube7x7x7Speedsolving => random_move_filter::<Cube7x7x7ScrambleFinder>(
+            options,
+            &BigCubeScrambleFinderScrambleOptions {
+                suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None,
+            },
+        ),
         Event::ClockSpeedsolving => {
             random_move_filter_with_no_scramble_options::<ClockScrambleFinder>(options)
         }
@@ -264,6 +302,15 @@ pub fn experimental_scramble_finder_filter_and_or_search(
         Event::Square1Speedsolving => solving_based_filter_and_search_with_no_scramble_options::<
             Square1ScrambleFinder,
         >(options, true),
+        Event::Cube4x4x4Blindfolded => solving_based_filter_and_search_with_no_scramble_options::<
+            Cube4x4x4ScrambleFinder,
+        >(options, false),
+        Event::Cube5x5x5Blindfolded => random_move_filter::<Cube5x5x5ScrambleFinder>(
+            options,
+            &BigCubeScrambleFinderScrambleOptions {
+                suffix_constraints: BigCubeScrambleFinderSuffixConstraints::ForNoInspection,
+            },
+        ),
         _ => err,
     }
 }

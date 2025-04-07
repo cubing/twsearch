@@ -37,6 +37,7 @@ impl Default for ClockScrambleFinder {
             CanonicalizingSolvedKPatternDepthFilterConstructionParameters {
                 canonicalization_mask: clock_orientation_canonicalization_kpattern().clone(),
                 canonicalization_generator_moves: move_list_from_vec(vec!["z", "y2"]),
+                max_canonicalizing_move_count_below: MoveCount(3),
                 solved_pattern: kpuzzle.default_pattern(),
                 depth_filtering_generator_moves: move_list_from_vec(vec![
                     "U_PLUS_",

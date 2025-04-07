@@ -38,6 +38,7 @@ impl Default for MegaminxScrambleFinder {
                 CanonicalizingSolvedKPatternDepthFilterConstructionParameters {
                     canonicalization_mask: megaminx_phase1_target_kpattern().clone(),
                     canonicalization_generator_moves: move_list_from_vec(vec!["Uv", "Lv"]),
+                    max_canonicalizing_move_count_below: MoveCount(5),
                     solved_pattern: megaminx_kpuzzle().default_pattern().clone(),
                     depth_filtering_generator_moves: move_list_from_vec(vec![
                         "U", "L", "F", "R", "BR", "BL", "FL", "FR", "DL", "DR", "B",

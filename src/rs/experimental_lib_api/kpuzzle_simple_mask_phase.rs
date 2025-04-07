@@ -124,7 +124,6 @@ impl SearchPhase<KPuzzle> for KPuzzleSimpleMaskPhase {
                 ),
             });
         };
-        dbg!(&masked_pattern);
         // TODO: can we avoid a clone of `individual_search_options`?
         Ok(self
             .iterative_deepening_search

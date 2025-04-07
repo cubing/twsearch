@@ -33,14 +33,10 @@ kpuzzle_from_json_file!(pub(crate), cube5x5x5, "./big_cubes/5x5x5.kpuzzle.json")
 kpuzzle_from_json_file!(pub(crate), cube6x6x6, "./big_cubes/6x6x6.kpuzzle.json");
 kpuzzle_from_json_file!(pub(crate), cube7x7x7, "./big_cubes/7x7x7.kpuzzle.json");
 
-/******************************** Square-1 ********************************/
+/******************************** Clock ********************************/
 
-kpuzzle_from_json_file!(pub(crate), square1_unbandaged, "./square1/square1-unbandaged.kpuzzle.json");
-kpattern_from_json_file!(pub(crate), square1_square_square_shape, "./square1/square1-square-square-shape.target-pattern.json", square1_unbandaged_kpuzzle());
-kpattern_from_json_file!(pub(crate), square1_shape, "./square1/square1-shape.mask-pattern.json", square1_unbandaged_kpuzzle());
-kpattern_from_json_file!(pub(crate), square1_edges, "./square1/square1-edges.mask-pattern.json", square1_unbandaged_kpuzzle());
-kpattern_from_json_file!(pub(crate), square1_corners, "./square1/square1-corners.mask-pattern.json", square1_unbandaged_kpuzzle());
-kpuzzle_from_json_file!(pub(crate), square0_equatorless, "./square1/square0-equatorless.kpuzzle.json");
+kpuzzle_from_json_file!(pub(crate), clock, "./clock/clock.kpuzzle.json");
+kpattern_from_json_file!(pub(crate), clock_orientation_canonicalization, "./clock/clock.orientation-canonicalization-pattern.json", clock_kpuzzle());
 
 /******************************** Megaminx ********************************/
 
@@ -62,6 +58,15 @@ kpattern_from_json_file!(pub(crate), megaminx_phase11_target, "./megaminx/megami
 
 kpuzzle_from_json_file!(pub(crate), pyraminx, "./pyraminx/pyraminx.kpuzzle.json");
 kpattern_from_json_file!(pub(crate), pyraminx_ignoring_tips, "./pyraminx/pyraminx.ignoring-tips-pattern.json", pyraminx_kpuzzle());
+
+/******************************** Square-1 ********************************/
+
+kpuzzle_from_json_file!(pub(crate), square1_unbandaged, "./square1/square1-unbandaged.kpuzzle.json");
+kpattern_from_json_file!(pub(crate), square1_square_square_shape, "./square1/square1-square-square-shape.target-pattern.json", square1_unbandaged_kpuzzle());
+kpattern_from_json_file!(pub(crate), square1_shape, "./square1/square1-shape.mask-pattern.json", square1_unbandaged_kpuzzle());
+kpattern_from_json_file!(pub(crate), square1_edges, "./square1/square1-edges.mask-pattern.json", square1_unbandaged_kpuzzle());
+kpattern_from_json_file!(pub(crate), square1_corners, "./square1/square1-corners.mask-pattern.json", square1_unbandaged_kpuzzle());
+kpuzzle_from_json_file!(pub(crate), square0_equatorless, "./square1/square0-equatorless.kpuzzle.json");
 
 /******************************** Other WCA puzzles ********************************/
 

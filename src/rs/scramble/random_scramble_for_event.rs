@@ -7,7 +7,7 @@ use super::{
     puzzles::{
         baby_fto::scramble_baby_fto,
         big_cubes::{scramble_5x5x5, scramble_5x5x5_bld, scramble_6x6x6, scramble_7x7x7},
-        clock::scramble_clock,
+        clock_scramble_finder::ClockScrambleFinder,
         cube2x2x2_scramble_finder::Cube2x2x2ScrambleFinder,
         cube4x4x4::cube4x4x4_scramble_finder::Cube4x4x4ScrambleFinder,
         megaminx::megaminx_scramble_finder::MegaminxScrambleFinder,
@@ -66,7 +66,9 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
                 prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::None,
             },
         )),
-        Event::ClockSpeedsolving => Ok(scramble_clock()),
+        Event::ClockSpeedsolving => Ok(
+            generate_filtered_random_move_scramble::<ClockScrambleFinder>(&NoScrambleOptions {}),
+        ),
         Event::MegaminxSpeedsolving => Ok(generate_filtered_random_move_scramble::<
             MegaminxScrambleFinder,
         >(&NoScrambleOptions {})),
@@ -120,7 +122,7 @@ fn solving_based_filter_and_search<
                         description: "Rejected due to filtering".to_owned(),
                     });
                 }
-                eprint!("Filtering decision: accepted")
+                eprintln!("Filtering decision: accepted")
             };
 
             Ok(if options.perform_search {
@@ -250,6 +252,9 @@ pub fn experimental_scramble_finder_filter_and_or_search(
         Event::Cube4x4x4Speedsolving => solving_based_filter_and_search_with_no_scramble_options::<
             Cube4x4x4ScrambleFinder,
         >(options, false),
+        Event::ClockSpeedsolving => {
+            random_move_filter_with_no_scramble_options::<ClockScrambleFinder>(options)
+        }
         Event::MegaminxSpeedsolving => {
             random_move_filter_with_no_scramble_options::<MegaminxScrambleFinder>(options)
         }

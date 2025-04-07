@@ -10,7 +10,6 @@ use crate::scramble::puzzles::canonicalizing_solved_kpattern_depth_filter::{
 use crate::{
     _internal::search::filter::filtering_decision::FilteringDecision,
     scramble::{
-        get_kpuzzle::GetKPuzzle,
         puzzles::definitions::{megaminx_kpuzzle, megaminx_phase1_target_kpattern},
         scramble_finder::{
             random_move_scramble_finder::RandomMoveScrambleFinder, scramble_finder::ScrambleFinder,
@@ -103,12 +102,6 @@ impl RandomMoveScrambleFinder for MegaminxScrambleFinder {
     }
 
     fn puzzle(&self) -> &Self::TPuzzle {
-        megaminx_kpuzzle()
-    }
-}
-
-impl GetKPuzzle for MegaminxScrambleFinder {
-    fn get_kpuzzle(&self) -> &'static KPuzzle {
         megaminx_kpuzzle()
     }
 }

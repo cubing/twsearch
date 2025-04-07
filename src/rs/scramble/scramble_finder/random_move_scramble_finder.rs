@@ -1,11 +1,11 @@
 use std::sync::{LazyLock, Mutex, RwLock};
 
-use cubing::alg::Alg;
+use cubing::{alg::Alg, kpuzzle::KPuzzle};
 use erased_set::ErasedSyncSet;
 
 use crate::{
     _internal::puzzle_traits::puzzle_traits::HasDefaultPattern,
-    scramble::apply_flat_alg::apply_flat_alg,
+    scramble::{apply_flat_alg::apply_flat_alg, get_kpuzzle::GetKPuzzle},
 };
 
 use super::scramble_finder::ScrambleFinder;
@@ -32,6 +32,12 @@ pub trait RandomMoveScrambleFinder: ScrambleFinder {
             }
             return scramble_alg;
         }
+    }
+}
+
+impl<T: RandomMoveScrambleFinder<TPuzzle = KPuzzle>> GetKPuzzle for T {
+    fn get_kpuzzle(&self) -> &KPuzzle {
+        self.puzzle()
     }
 }
 

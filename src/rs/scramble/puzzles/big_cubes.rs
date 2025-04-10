@@ -37,6 +37,8 @@ use super::{
 #[allow(non_upper_case_globals)]
 const BIG_CUBES_MINIMUM_OPTIMAL_SOLUTION_MOVE_COUNT: MoveCount = MoveCount(2);
 
+const SPEFFZ_DLB_INDEX: u8 = 6;
+
 pub struct BigCubeScrambleInfo {
     kpuzzle: KPuzzle,
     size: u32,
@@ -85,7 +87,7 @@ impl BigCubeScrambleInfo {
             let orbit_is_CORNERS = orbit_info.num_pieces == 8;
 
             for i in 0..orbit_info.num_pieces {
-                if orbit_is_CORNERS && (i == 6) {
+                if orbit_is_CORNERS && (i == SPEFFZ_DLB_INDEX) {
                     continue;
                 }
                 mask.set_orientation_with_mod(

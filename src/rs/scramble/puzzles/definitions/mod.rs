@@ -78,6 +78,15 @@ kpuzzle_from_json_file!(pub(crate), square0_equatorless, "./square1/square0-equa
 // kpuzzle_from_json_file!(pub(crate), tetraminx, "tetraminx.kpuzzle.json");
 kpuzzle_from_json_file!(pub(crate), skewb_fixed_corner_with_co_tweaks, "./other_wca/skewb-fixed-corner-with-co-tweaks.kpuzzle.json");
 
+/******************************** Kilominx ********************************/
+
+kpuzzle_from_json_file!(pub(crate), kilominx, "./kilominx/kilominx.kpuzzle.json");
+kpattern_from_json_file!(pub(crate), kilominx_orientation_canonicalization, "./kilominx/kilominx.orientation-canonicalization-pattern.json", kilominx_kpuzzle());
+kpattern_from_json_file!(pub(crate), kilominx_phase1_bogus_mask, "./kilominx/kilominx.phase1-bogus-mask.json", kilominx_kpuzzle());
+kpattern_from_json_file!(pub(crate), kilominx_phase2_target, "./kilominx/kilominx.phase2.target-pattern.json", kilominx_kpuzzle());
+kpattern_from_json_file!(pub(crate), kilominx_phase2_mask, "./kilominx/kilominx.phase2.mask.json", kilominx_kpuzzle());
+kpattern_from_json_file!(pub(crate), kilominx_phase3_target, "./kilominx/kilominx.phase3.target-pattern.json", kilominx_kpuzzle());
+
 /******************************** Other puzzles ********************************/
 
 kpuzzle_from_json_file!(pub(crate), baby_fto, "./other/baby_fto.kpuzzle.json");

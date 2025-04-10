@@ -32,3 +32,6 @@ mod compound_derived_puzzle;
 pub use compound_derived_puzzle::CompoundDerivedPuzzle;
 
 pub mod derived_puzzle_search_phase;
+
+mod constant_alg_search_phase;
+pub use constant_alg_search_phase::ConstantAlgSearchPhase;

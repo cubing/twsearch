@@ -6,9 +6,12 @@ use cubing::{
 use crate::_internal::{
     errors::SearchError,
     search::{
-        iterative_deepening::iterative_deepening_search::{
-            IndividualSearchOptions, IterativeDeepeningSearch,
-            IterativeDeepeningSearchConstructionOptions,
+        iterative_deepening::{
+            iterative_deepening_search::{
+                IndividualSearchOptions, IterativeDeepeningSearch,
+                IterativeDeepeningSearchConstructionOptions,
+            },
+            target_pattern_signature::check_target_pattern_basic_consistency,
         },
         mask_pattern::apply_mask,
         search_logger::SearchLogger,
@@ -124,6 +127,14 @@ impl SearchPhase<KPuzzle> for KPuzzleSimpleMaskPhase {
                 ),
             });
         };
+        check_target_pattern_basic_consistency::<KPuzzle>(
+            &masked_pattern,
+            &mut self
+                .iterative_deepening_search
+                .api_data
+                .target_patterns
+                .iter(),
+        )?;
         // TODO: can we avoid a clone of `individual_search_options`?
         Ok(self
             .iterative_deepening_search

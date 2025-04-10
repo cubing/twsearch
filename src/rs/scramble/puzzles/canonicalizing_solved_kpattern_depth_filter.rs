@@ -9,7 +9,7 @@ use crate::_internal::{
         filter::filtering_decision::FilteringDecision,
         iterative_deepening::{
             iterative_deepening_search::{IndividualSearchOptions, IterativeDeepeningSearch},
-            target_pattern_signature::check_target_pattern_consistency,
+            target_pattern_signature::check_target_pattern_basic_consistency,
         },
         mask_pattern::apply_mask,
         move_count::MoveCount,
@@ -93,7 +93,7 @@ impl CanonicalizingSolvedKPatternDepthFilter {
             }
         })?;
 
-        check_target_pattern_consistency::<KPuzzle>(
+        check_target_pattern_basic_consistency::<KPuzzle>(
             &masked_pattern,
             &mut self.canonicalization_search.api_data.target_patterns.iter(),
         )?;
@@ -113,6 +113,7 @@ impl CanonicalizingSolvedKPatternDepthFilter {
         else {
             return Err("Could not canonicalize the puzzle pattern for depth filtering".into());
         };
+        dbg!(canonicalizing_alg.to_string());
         let Ok(pattern_with_canonicalizing_alg) = pattern.apply_alg(&canonicalizing_alg) else {
             return Err(
                 "Could not apply the canonicalizing alg to the puzzle pattern for depth filtering"
@@ -120,7 +121,7 @@ impl CanonicalizingSolvedKPatternDepthFilter {
             );
         };
 
-        check_target_pattern_consistency::<KPuzzle>(
+        check_target_pattern_basic_consistency::<KPuzzle>(
             &pattern_with_canonicalizing_alg,
             &mut self.depth_filtering_search.api_data.target_patterns.iter(),
         )?;

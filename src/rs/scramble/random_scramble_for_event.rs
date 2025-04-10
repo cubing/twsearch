@@ -13,6 +13,7 @@ use super::{
         clock_scramble_finder::ClockScrambleFinder,
         cube2x2x2_scramble_finder::Cube2x2x2ScrambleFinder,
         cube4x4x4::cube4x4x4_scramble_finder::Cube4x4x4ScrambleFinder,
+        kilominx::kilominx_scramble_finder::KilominxScrambleFinder,
         megaminx::megaminx_scramble_finder::MegaminxScrambleFinder,
         pyraminx_scramble_finder::PyraminxScrambleFinder,
         skewb_scramble_finder::SkewbScrambleFinder,
@@ -111,7 +112,9 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
         )), // TODO: represent multiple returned scrambles without affecting ergonomics for other events.
         Event::FTOSpeedsolving => err,
         Event::MasterTetraminxSpeedsolving => err,
-        Event::KilominxSpeedsolving => err,
+        Event::KilominxSpeedsolving => Ok(generate_fair_scramble::<KilominxScrambleFinder>(
+            &Default::default(),
+        )),
         Event::RediCubeSpeedsolving => err,
         Event::BabyFTOSpeedsolving => Ok(scramble_baby_fto()),
     }
@@ -311,6 +314,9 @@ pub fn experimental_scramble_finder_filter_and_or_search(
                 suffix_constraints: BigCubeScrambleFinderSuffixConstraints::ForNoInspection,
             },
         ),
+        Event::KilominxSpeedsolving => solving_based_filter_and_search_with_no_scramble_options::<
+            KilominxScrambleFinder,
+        >(options, false),
         _ => err,
     }
 }

@@ -2,7 +2,7 @@ use std::sync::LazyLock;
 
 use cubing::{
     alg::{parse_alg, parse_move, Alg},
-    kpuzzle::{KPattern, KPuzzle, KTransformation},
+    kpuzzle::{KPattern, KPuzzle},
     puzzles::cube3x3x3_kpuzzle,
 };
 
@@ -41,6 +41,7 @@ use super::{
         CanonicalizingSolvedKPatternDepthFilterConstructionParameters,
     },
     definitions::{cube3x3x3_g1_target_kpattern, cube3x3x3_orientation_canonicalization_kpattern},
+    kpattern_to_ktransformation::kpattern_to_transformation,
     static_move_list::{add_random_suffixes_from, static_parsed_opt_list},
 };
 
@@ -62,25 +63,6 @@ pub(crate) struct TwoPhase3x3x3ScrambleFinder {
 
 pub(crate) struct TwoPhase3x3x3ScrambleOptions {
     pub(crate) prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints,
-}
-
-// TODO: validation
-fn kpattern_to_transformation(kpattern: &KPattern) -> Option<KTransformation> {
-    let mut transformation = kpattern.kpuzzle().identity_transformation();
-    for orbit_info in kpattern.kpuzzle().orbit_info_iter() {
-        for i in 0..orbit_info.num_pieces {
-            transformation.set_permutation_idx(orbit_info, i, kpattern.get_piece(orbit_info, i));
-            let orientation_with_mod = kpattern.get_orientation_with_mod(orbit_info, i);
-            // TODO
-            if orientation_with_mod.orientation_mod != 0
-                && orientation_with_mod.orientation_mod != 1
-            {
-                return None;
-            }
-            transformation.set_orientation_delta(orbit_info, i, orientation_with_mod.orientation);
-        }
-    }
-    Some(transformation)
 }
 
 fn apply_pre_alg(kpattern: &KPattern, alg: &Alg) -> Option<KPattern> {

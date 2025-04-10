@@ -353,3 +353,64 @@ pub(crate) enum TwoPhase3x3x3PrefixOrSuffixConstraints {
     // TODO: Rename to `NoInspection`?
     ForBLD,
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::scramble::{
+        puzzles::two_phase_3x3x3_scramble_finder::{
+            TwoPhase3x3x3PrefixOrSuffixConstraints, TwoPhase3x3x3ScrambleFinder,
+            TwoPhase3x3x3ScrambleOptions,
+        },
+        scramble_finder::scramble_finder::ScrambleFinder,
+    };
+    use cubing::{
+        alg::{parse_alg, Alg},
+        puzzles::cube3x3x3_kpuzzle,
+    };
+
+    #[test]
+    // TODO: generalize and automate this across all events.
+    fn simple_scramble_filtering_test_4x4x4() -> Result<(), String> {
+        let mut scramble_finder = TwoPhase3x3x3ScrambleFinder::default();
+        let pattern = |alg: &Alg| {
+            cube3x3x3_kpuzzle()
+                .default_pattern()
+                .apply_alg(alg)
+                .unwrap()
+        };
+        let options = TwoPhase3x3x3ScrambleOptions {
+            prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::None,
+        };
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("z")), &options)
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("x y x")), &options)
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("L z U")), &options)
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("L z U' R")), &options)
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("R z' U")), &options)
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("R U")), &options)
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("R L")), &options)
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("U L F R B D")), &options)
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("U F Rw Uw2")), &options)
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("Rw L")), &options)
+            .is_reject());
+        Ok(())
+    }
+}

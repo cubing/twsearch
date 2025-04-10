@@ -31,7 +31,7 @@ pub static CUBING_EVENT_444BF: &[u8; 6] = b"444bf\0";
 #[no_mangle]
 pub static CUBING_EVENT_555BF: &[u8; 6] = b"555bf\0";
 #[no_mangle]
-pub static CUBING_EVENT_333MB: &[u8; 6] = b"333mb\0";
+pub static CUBING_EVENT_333MBF: &[u8; 7] = b"333mbf\0";
 #[no_mangle]
 pub static CUBING_EVENT_FTO: &[u8; 4] = b"fto\0";
 #[no_mangle]

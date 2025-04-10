@@ -1,8 +1,10 @@
 use cubing::alg::{parse_alg, Alg};
 use cubing::kpuzzle::{KPattern, KPuzzle};
 
+use crate::_internal::cli::args::VerbosityLevel;
 use crate::_internal::search::filter::filtering_decision::FilteringDecision;
 use crate::_internal::search::move_count::MoveCount;
+use crate::_internal::search::search_logger::SearchLogger;
 use crate::experimental_lib_api::{
     KPuzzleSimpleMaskPhase, MultiPhaseSearch, MultiPhaseSearchOptions,
 };
@@ -143,8 +145,11 @@ impl Default for Cube4x4x4ScrambleFinder {
                 Box::new(Cube4x4x4Phase4Search::default()),
             ],
             MultiPhaseSearchOptions {
+                // TODO: change the verbosity once 4×4×4 scrambles are much faster.
+                search_logger: SearchLogger {
+                    verbosity: VerbosityLevel::Info,
+                },
                 include_pause_between_phases: false,
-                ..Default::default()
             },
         )
         .unwrap();

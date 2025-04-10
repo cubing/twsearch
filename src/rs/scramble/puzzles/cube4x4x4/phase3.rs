@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use cubing::{
     alg::Alg,
     kpuzzle::{KPattern, KPuzzle, KTransformation, OrientationWithMod},
@@ -5,6 +7,7 @@ use cubing::{
 
 use crate::{
     _internal::{
+        cli::args::VerbosityLevel,
         errors::SearchError,
         puzzle_traits::puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
         search::{
@@ -14,7 +17,10 @@ use crate::{
                 unenumerated_derived_pattern_puzzle::UnenumeratedDerivedPatternPuzzle,
             },
             hash_prune_table::HashPruneTable,
-            iterative_deepening::iterative_deepening_search::IterativeDeepeningSearch,
+            iterative_deepening::iterative_deepening_search::{
+                IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+            },
+            search_logger::SearchLogger,
         },
     },
     experimental_lib_api::{derived_puzzle_search_phase::DerivedPuzzleSearchPhase, SearchPhase},
@@ -420,7 +426,12 @@ impl Default for Cube4x4x4Phase3Search {
                     cube4x4x4_phase3_puzzle.clone(),
                     phase3_generator_moves,
                     vec![cube4x4x4_phase3_search_kpuzzle().default_pattern()],
-                    Default::default(),
+                    IterativeDeepeningSearchConstructionOptions {
+                        search_logger: Arc::new(SearchLogger {
+                            verbosity: VerbosityLevel::Info,
+                        }),
+                        ..Default::default()
+                    },
                     None,
                 )
                 .unwrap();

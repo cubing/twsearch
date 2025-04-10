@@ -179,3 +179,58 @@ impl GetKPuzzle for Cube4x4x4ScrambleFinder {
         cube4x4x4_kpuzzle()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::scramble::{
+        puzzles::{
+            cube4x4x4::cube4x4x4_scramble_finder::Cube4x4x4ScrambleFinder,
+            definitions::cube4x4x4_kpuzzle,
+        },
+        scramble_finder::scramble_finder::ScrambleFinder,
+    };
+    use cubing::alg::{parse_alg, Alg};
+
+    #[test]
+    // TODO: generalize and automate this across all events.
+    fn simple_scramble_filtering_test_4x4x4() -> Result<(), String> {
+        let mut scramble_finder = Cube4x4x4ScrambleFinder::default();
+        let pattern = |alg: &Alg| {
+            cube4x4x4_kpuzzle()
+                .default_pattern()
+                .apply_alg(alg)
+                .unwrap()
+        };
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("z")), &Default::default())
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("x y x")), &Default::default())
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("Lw z Uw")), &Default::default())
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("Lw z Uw' R")), &Default::default())
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("Rw z' Uw")), &Default::default())
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("R U")), &Default::default())
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("Rw L")), &Default::default())
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("U L F R B D")), &Default::default())
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("U F 3Rw 3Uw2")), &Default::default())
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("Rw Lw")), &Default::default())
+            .is_reject());
+        Ok(())
+    }
+}

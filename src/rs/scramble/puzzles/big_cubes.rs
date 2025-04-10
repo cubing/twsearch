@@ -402,14 +402,6 @@ mod tests {
             .is_accept());
         assert!(scramble_finder
             .filter_pattern(
-                &pattern(parse_alg!("U F 3Rw 3Uw2")),
-                &BigCubeScrambleFinderScrambleOptions {
-                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::ForNoInspection
-                },
-            )
-            .is_accept());
-        assert!(scramble_finder
-            .filter_pattern(
                 &pattern(parse_alg!("3Rw Lw")),
                 &BigCubeScrambleFinderScrambleOptions {
                     suffix_constraints: BigCubeScrambleFinderSuffixConstraints::ForNoInspection

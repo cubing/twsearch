@@ -107,7 +107,6 @@ impl CanonicalizingSolvedKPatternDepthFilter {
         else {
             return Err("Could not canonicalize the puzzle pattern for depth filtering".into());
         };
-        // TODO: this shouldn't be necessary, but we have to fix some masking stuff for 4×4×4 first.
         let Ok(pattern_with_canonicalizing_alg) = pattern.apply_alg(&canonicalizing_alg) else {
             return Err(
                 "Could not apply the canonicalizing alg to the puzzle pattern for depth filtering"

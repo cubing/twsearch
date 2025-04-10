@@ -47,9 +47,9 @@ const MAX_SUPPORTED_SEARCH_DEPTH: Depth = Depth(500); // TODO: increase
 // TODO: use https://doc.rust-lang.org/std/ops/enum.ControlFlow.html as a wrapper instead?
 #[allow(clippy::enum_variant_names)]
 enum SearchRecursionResult {
-    DoneSearching(),
-    ContinueSearchingDefault(),
-    ContinueSearchingExcludingCurrentMoveClass(),
+    DoneSearching,
+    ContinueSearchingDefault,
+    ContinueSearchingExcludingCurrentMoveClass,
 }
 
 struct SolutionPreviousMoves<'a> {
@@ -425,7 +425,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             individual_search_data
                 .recursive_work_tracker
                 .finish_latest_depth();
-            if let SearchRecursionResult::DoneSearching() = recursion_result {
+            if let SearchRecursionResult::DoneSearching = recursion_result {
                 break;
             }
         }
@@ -447,7 +447,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             .filter_pattern(current_pattern)
             .is_reject()
         {
-            return SearchRecursionResult::ContinueSearchingDefault();
+            return SearchRecursionResult::ContinueSearchingDefault;
         }
 
         individual_search_data
@@ -466,10 +466,10 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             .prune_table
             .lookup(current_pattern);
         if prune_table_depth > remaining_depth + Depth(1) {
-            return SearchRecursionResult::ContinueSearchingExcludingCurrentMoveClass();
+            return SearchRecursionResult::ContinueSearchingExcludingCurrentMoveClass;
         }
         if prune_table_depth > remaining_depth {
-            return SearchRecursionResult::ContinueSearchingDefault();
+            return SearchRecursionResult::ContinueSearchingDefault;
         }
 
         for (move_class_index, move_transformation_multiples) in
@@ -509,17 +509,17 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                 pattern_stack.pop();
 
                 match recursive_result {
-                    SearchRecursionResult::DoneSearching() => {
-                        return SearchRecursionResult::DoneSearching();
+                    SearchRecursionResult::DoneSearching => {
+                        return SearchRecursionResult::DoneSearching;
                     }
-                    SearchRecursionResult::ContinueSearchingDefault() => {}
-                    SearchRecursionResult::ContinueSearchingExcludingCurrentMoveClass() => {
+                    SearchRecursionResult::ContinueSearchingDefault => {}
+                    SearchRecursionResult::ContinueSearchingExcludingCurrentMoveClass => {
                         break;
                     }
                 }
             }
         }
-        SearchRecursionResult::ContinueSearchingDefault()
+        SearchRecursionResult::ContinueSearchingDefault
     }
 
     // Returns `None` if the moves cannot be applied, else returns the result of applying the moves.
@@ -555,7 +555,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         solution_moves: SolutionMoves,
     ) -> SearchRecursionResult {
         if !self.is_target_pattern(current_pattern) {
-            return SearchRecursionResult::ContinueSearchingDefault();
+            return SearchRecursionResult::ContinueSearchingDefault;
         }
 
         if individual_search_data
@@ -563,7 +563,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             .filter_search_solution(current_pattern, &solution_moves)
             .is_reject()
         {
-            return SearchRecursionResult::ContinueSearchingDefault();
+            return SearchRecursionResult::ContinueSearchingDefault;
         }
 
         if self
@@ -579,7 +579,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                 "Rejecting potential solution for invalid end moves: {}",
                 Alg::from(&solution_moves)
             ));
-            return SearchRecursionResult::ContinueSearchingDefault();
+            return SearchRecursionResult::ContinueSearchingDefault;
         }
 
         let alg = Alg::from(&solution_moves);
@@ -597,9 +597,9 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                 .solution_sender
                 .send(None)
                 .expect("Internal error: could not send end of search");
-            SearchRecursionResult::DoneSearching()
+            SearchRecursionResult::DoneSearching
         } else {
-            SearchRecursionResult::ContinueSearchingDefault()
+            SearchRecursionResult::ContinueSearchingDefault
         }
     }
 

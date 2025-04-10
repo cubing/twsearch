@@ -295,9 +295,19 @@ pub type Cube7x7x7ScrambleFinder = BigCubeScrambleFinder<Cube7x7x7>;
 
 #[cfg(test)]
 mod tests {
-    use crate::_internal::search::move_count::MoveCount;
+    use crate::scramble::{
+        puzzles::{
+            big_cubes::{
+                BigCubeScrambleFinderScrambleOptions, BigCubeScrambleFinderSuffixConstraints,
+                Cube5x5x5ScrambleFinder, Cube6x6x6ScrambleFinder, Cube7x7x7ScrambleFinder,
+            },
+            definitions::{cube5x5x5_kpuzzle, cube6x6x6_kpuzzle, cube7x7x7_kpuzzle},
+        },
+        scramble_finder::scramble_finder::ScrambleFinder,
+    };
+    use cubing::alg::{parse_alg, Alg};
 
-    use super::Cube5x5x5ScrambleFinder;
+    use crate::_internal::search::move_count::MoveCount;
 
     #[test]
     fn num_moves() -> Result<(), String> {
@@ -305,6 +315,277 @@ mod tests {
             Cube5x5x5ScrambleFinder::default().info.num_random_moves(),
             MoveCount(60)
         );
+        Ok(())
+    }
+
+    #[test]
+    // TODO: generalize and automate this across all events.
+    fn simple_scramble_filtering_test_5x5x5() -> Result<(), String> {
+        let mut scramble_finder = Cube5x5x5ScrambleFinder::default();
+        let pattern = |alg: &Alg| {
+            cube5x5x5_kpuzzle()
+                .default_pattern()
+                .apply_alg(alg)
+                .unwrap()
+        };
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("z")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("x y x")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("Lw z Uw")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("Lw z Uw' R")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("Rw z' Uw")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("R U")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("Rw L")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("U L F R B D")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("U F 3Rw 3Uw2")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("U F 3Rw 3Uw2")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::ForNoInspection
+                },
+            )
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("3Rw Lw")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::ForNoInspection
+                },
+            )
+            .is_reject());
+        Ok(())
+    }
+
+    #[test]
+    // TODO: generalize and automate this across all events.
+    fn simple_scramble_filtering_test_6x6x6() -> Result<(), String> {
+        let mut scramble_finder = Cube6x6x6ScrambleFinder::default();
+        let pattern = |alg: &Alg| {
+            cube6x6x6_kpuzzle()
+                .default_pattern()
+                .apply_alg(alg)
+                .unwrap()
+        };
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("z")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("x y x")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("Lw z Uw")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("Lw z Uw' R")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("Rw z' Uw")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("R U")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("Rw L")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("U L F R B D")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("3Rw 3Lw")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::ForNoInspection
+                },
+            )
+            .is_reject());
+        Ok(())
+    }
+
+    #[test]
+    // TODO: generalize and automate this across all events.
+    fn simple_scramble_filtering_test_7x7x7() -> Result<(), String> {
+        let mut scramble_finder = Cube7x7x7ScrambleFinder::default();
+        let pattern = |alg: &Alg| {
+            cube7x7x7_kpuzzle()
+                .default_pattern()
+                .apply_alg(alg)
+                .unwrap()
+        };
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("z")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("x y x")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("Lw z Uw")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("Lw z Uw' R")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("Rw z' Uw")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_reject());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("R U")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("Rw L")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("U L F R B D")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::None
+                },
+            )
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(
+                &pattern(parse_alg!("3Rw 4Lw")),
+                &BigCubeScrambleFinderScrambleOptions {
+                    suffix_constraints: BigCubeScrambleFinderSuffixConstraints::ForNoInspection
+                },
+            )
+            .is_reject());
         Ok(())
     }
 }

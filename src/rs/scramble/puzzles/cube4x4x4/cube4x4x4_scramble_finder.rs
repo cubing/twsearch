@@ -13,7 +13,7 @@ use crate::scramble::puzzles::canonicalizing_solved_kpattern_depth_filter::{
 };
 use crate::scramble::puzzles::definitions::{
     cube4x4x4_kpuzzle, cube4x4x4_orientation_canonicalization_kpattern,
-    cube4x4x4_phase1_target_kpattern, cube4x4x4_solved_kpattern,
+    cube4x4x4_phase1_target_kpattern,
 };
 use crate::scramble::scramble_finder::scramble_finder::ScrambleFinder;
 use crate::{_internal::errors::SearchError, scramble::scramble_search::move_list_from_vec};
@@ -156,7 +156,7 @@ impl Default for Cube4x4x4ScrambleFinder {
                         .clone(),
                     canonicalization_generator_moves: move_list_from_vec(vec!["x", "y"]),
                     max_canonicalizing_move_count_below: MoveCount(4),
-                    solved_pattern: cube4x4x4_solved_kpattern().clone(),
+                    solved_pattern: kpuzzle.default_pattern(),
                     depth_filtering_generator_moves: move_list_from_vec(vec![
                         "3Uw", "Uw", "U", // U
                         "3Fw", "Fw", "F", // F

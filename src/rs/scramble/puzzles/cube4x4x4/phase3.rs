@@ -1,7 +1,11 @@
-use cubing::kpuzzle::{KPattern, KPuzzle, KTransformation, OrientationWithMod};
+use cubing::{
+    alg::Alg,
+    kpuzzle::{KPattern, KPuzzle, KTransformation, OrientationWithMod},
+};
 
 use crate::{
     _internal::{
+        errors::SearchError,
         puzzle_traits::puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
         search::{
             coordinates::{
@@ -441,7 +445,7 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase3Search {
     fn first_solution(
         &mut self,
         phase_search_pattern: &KPattern,
-    ) -> Result<Option<cubing::alg::Alg>, crate::_internal::errors::SearchError> {
+    ) -> Result<Option<Alg>, SearchError> {
         self.derived_puzzle_search_phase
             .first_solution(phase_search_pattern)
     }

@@ -54,8 +54,8 @@ impl CanonicalizingSolvedKPatternDepthFilter {
         //     GraphEnumeratedDerivedPatternPuzzlePruneTable::new(canonicalization_puzzle);
         let kpuzzle = parameters.canonicalization_mask.kpuzzle().clone();
         let canonical_masked_solved_pattern = apply_mask(
-            &parameters.canonicalization_mask,
             &parameters.solved_pattern,
+            &parameters.canonicalization_mask,
         )
         .unwrap();
         // TODO: use exact prune table (`GraphEnumeratedDerivedPatternPuzzlePruneTable`).

@@ -15,12 +15,9 @@ kpattern_from_json_file!(pub(crate), cube2x2x2_orientation_canonicalization, "./
 
 /******************************** 4×4×4 ********************************/
 
-// TODO: Handle a default pattern with indistinguishable pieces on `apply_mask(…)`.
 kpuzzle_from_json_file!(pub(crate), cube4x4x4, "./4x4x4/4x4x4.kpuzzle.json");
 
 kpattern_from_json_file!(pub(crate), cube4x4x4_orientation_canonicalization, "./4x4x4/4x4x4.orientation-canonicalization-pattern.json", cube4x4x4_kpuzzle());
-// TODO: This should be in `4x4x4.kpuzzle.json` once we can support it.
-kpattern_from_json_file!(pub(crate), cube4x4x4_solved, "./4x4x4/4x4x4.solved-pattern.json", cube4x4x4_kpuzzle());
 
 kpattern_from_json_file!(pub(crate), cube4x4x4_phase1_target, "./4x4x4/4x4x4-phase1.target.json", cube4x4x4_kpuzzle());
 // Note that this does not track wing separation.

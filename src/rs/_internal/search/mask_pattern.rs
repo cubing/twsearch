@@ -33,11 +33,11 @@ pub(crate) fn apply_mask(
                 source_mod
             };
 
-            let mask_mod = mask_orientation_with_mod.orientation_mod;
-            let mask_mod = if mask_mod == 0 {
+            let serialized_mask_mod = mask_orientation_with_mod.orientation_mod;
+            let mask_mod = if serialized_mask_mod == 0 {
                 orbit_info.num_orientations
             } else {
-                mask_mod
+                serialized_mask_mod
             };
 
             if source_mod % mask_mod != 0 && mask_mod % source_mod != 0 {
@@ -50,7 +50,9 @@ pub(crate) fn apply_mask(
             let orientation_with_mod = OrientationWithMod {
                 orientation: source_orientation_with_mod.orientation % masked_mod,
                 // TODO: this logic probably needs to be more subtle.
-                orientation_mod: if masked_mod == orbit_info.num_orientations && mask_mod != 1 {
+                orientation_mod: if masked_mod == orbit_info.num_orientations
+                    && serialized_mask_mod != 1
+                {
                     0
                 } else {
                     masked_mod

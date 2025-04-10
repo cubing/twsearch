@@ -28,9 +28,6 @@ impl<TPuzzle0: SemiGroupActionPuzzle, TPuzzle1: SemiGroupActionPuzzle> SemiGroup
         &self,
         r#move: &Move,
     ) -> Result<Self::Transformation, cubing::kpuzzle::InvalidAlgError> {
-        dbg!(&self.tpuzzle1);
-        dbg!(&r#move);
-        dbg!(&self.tpuzzle1.puzzle_transformation_from_move(r#move));
         Ok((
             self.tpuzzle0.puzzle_transformation_from_move(r#move)?,
             self.tpuzzle1.puzzle_transformation_from_move(r#move)?,

@@ -77,9 +77,6 @@ impl<
         &self,
         r#move: &Move,
     ) -> Result<Self::Transformation, InvalidAlgError> {
-        dbg!(&self.derived_puzzle);
-        dbg!(&r#move);
-        dbg!(&self.derived_puzzle.puzzle_transformation_from_move(r#move));
         self.derived_puzzle.puzzle_transformation_from_move(r#move)
     }
 

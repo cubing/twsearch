@@ -167,8 +167,6 @@ pub(crate) fn phase2_search(search_logger: Arc<SearchLogger>) -> Cube4x4x4Phase2
             .unwrap()
     });
 
-    dbg!(&phase2_target_patterns);
-
     let phase2_iterative_deepening_search =
         IterativeDeepeningSearch::<Cube4x4x4Phase2Puzzle>::try_new_prune_table_construction_shim::<
             HashPruneTable<Cube4x4x4Phase2Puzzle>,

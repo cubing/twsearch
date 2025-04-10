@@ -16,18 +16,23 @@ use crate::_internal::{
     },
 };
 
+// TODO: reuse data stucture between canonicalization and depth search.
 pub struct CanonicalizingSolvedKPatternDepthFilter {
     canonicalization_mask: KPattern,
     canonicalization_search: IterativeDeepeningSearch<KPuzzle>,
-    solved_pattern: KPattern,
+    max_canonicalizing_move_count_exclusive: MoveCount,
+
     depth_filtering_search: IterativeDeepeningSearch<KPuzzle>,
     // Note: the obvious implementation at this moment would allow accepting the depth dynamically. But we may use it for initialization-time optimizations in the future.
     min_optimal_solution_depth: MoveCount,
 }
 
+// TODO: reuse data stucture between canonicalization and depth search.
 pub struct CanonicalizingSolvedKPatternDepthFilterConstructionParameters {
     pub canonicalization_mask: KPattern,
     pub canonicalization_generator_moves: Vec<Move>,
+    pub max_canonicalizing_move_count_below: MoveCount,
+
     pub solved_pattern: KPattern,
     pub depth_filtering_generator_moves: Vec<Move>,
     // Note: the obvious implementation at this moment would allow accepting the depth dynamically. But we may use it for initialization-time optimizations in the future.
@@ -74,8 +79,8 @@ impl CanonicalizingSolvedKPatternDepthFilter {
         Ok(Self {
             canonicalization_search,
             depth_filtering_search,
+            max_canonicalizing_move_count_exclusive: parameters.max_canonicalizing_move_count_below,
             canonicalization_mask: parameters.canonicalization_mask,
-            solved_pattern: parameters.solved_pattern,
             min_optimal_solution_depth: parameters.min_optimal_solution_move_count,
         })
     }
@@ -88,7 +93,16 @@ impl CanonicalizingSolvedKPatternDepthFilter {
         })?;
         let Some(canonicalizing_alg) = self
             .canonicalization_search
-            .search(&masked_pattern, Default::default(), Default::default())
+            .search(
+                &masked_pattern,
+                IndividualSearchOptions {
+                    max_depth_exclusive: Some(Depth(
+                        self.max_canonicalizing_move_count_exclusive.0,
+                    )),
+                    ..Default::default()
+                },
+                Default::default(),
+            )
             .next()
         else {
             return Err("Could not canonicalize the puzzle pattern for depth filtering".into());
@@ -100,19 +114,11 @@ impl CanonicalizingSolvedKPatternDepthFilter {
                     .into(),
             );
         };
-        let Ok(canonicalized_pattern) =
-            apply_mask(&pattern_with_canonicalizing_alg, &self.solved_pattern)
-        else {
-            return Err(
-                "Could not apply the solved pattern to the puzzle pattern for depth filtering"
-                    .into(),
-            );
-        };
         Ok(
             match self
                 .depth_filtering_search
                 .search(
-                    &canonicalized_pattern,
+                    &pattern_with_canonicalizing_alg,
                     IndividualSearchOptions {
                         max_depth_exclusive: Some(Depth(self.min_optimal_solution_depth.0)),
                         ..Default::default()

@@ -7,7 +7,7 @@ pub fn main() {
     for event in [
         Event::Cube3x3x3Speedsolving,
         Event::Cube2x2x2Speedsolving,
-        //Event::Cube4x4x4Speedsolving
+        // Event::Cube4x4x4Speedsolving,
         Event::Cube5x5x5Speedsolving,
         Event::Cube6x6x6Speedsolving,
         Event::Cube7x7x7Speedsolving,
@@ -19,7 +19,7 @@ pub fn main() {
         Event::PyraminxSpeedsolving,
         Event::SkewbSpeedsolving,
         Event::Square1Speedsolving,
-        //Event::Cube4x4x4Blindfolded
+        // Event::Cube4x4x4Blindfolded,
         Event::Cube5x5x5Blindfolded,
         Event::Cube3x3x3MultiBlind,
         //Event::FTOSpeedsolving

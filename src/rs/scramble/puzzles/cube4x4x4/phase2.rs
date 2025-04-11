@@ -22,6 +22,7 @@ use crate::{
                     SolutionMoves,
                 },
                 search_adaptations::IndividualSearchAdaptations,
+                target_pattern_signature::check_target_pattern_consistency_single_iter,
             },
             mask_pattern::apply_mask,
             search_logger::SearchLogger,
@@ -166,6 +167,9 @@ pub(crate) fn phase2_search(search_logger: Arc<SearchLogger>) -> Cube4x4x4Phase2
             )
             .unwrap()
     });
+
+    check_target_pattern_consistency_single_iter::<KPuzzle>(&mut phase2_target_patterns.iter())
+        .unwrap();
 
     let phase2_iterative_deepening_search =
         IterativeDeepeningSearch::<Cube4x4x4Phase2Puzzle>::try_new_prune_table_construction_shim::<

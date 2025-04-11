@@ -321,9 +321,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             search_logger: options.search_logger.clone(),
         }))
     }
-}
 
-impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
     fn try_new_internal(
         api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
         search_adaptations: StoredSearchAdaptations<TPuzzle>,

@@ -7,8 +7,9 @@ use crate::_internal::{
     errors::SearchError,
     search::{
         filter::filtering_decision::FilteringDecision,
-        iterative_deepening::iterative_deepening_search::{
-            IndividualSearchOptions, IterativeDeepeningSearch,
+        iterative_deepening::{
+            iterative_deepening_search::{IndividualSearchOptions, IterativeDeepeningSearch},
+            target_pattern_signature::check_target_pattern_consistency,
         },
         mask_pattern::apply_mask,
         move_count::MoveCount,
@@ -91,6 +92,11 @@ impl CanonicalizingSolvedKPatternDepthFilter {
                 description: err.description, // TODO: we shouldn't need to manually adapt errors here.
             }
         })?;
+
+        check_target_pattern_consistency::<KPuzzle>(
+            &masked_pattern,
+            &mut self.canonicalization_search.api_data.target_patterns.iter(),
+        )?;
         let Some(canonicalizing_alg) = self
             .canonicalization_search
             .search(
@@ -113,6 +119,11 @@ impl CanonicalizingSolvedKPatternDepthFilter {
                     .into(),
             );
         };
+
+        check_target_pattern_consistency::<KPuzzle>(
+            &pattern_with_canonicalizing_alg,
+            &mut self.depth_filtering_search.api_data.target_patterns.iter(),
+        )?;
         Ok(
             match self
                 .depth_filtering_search

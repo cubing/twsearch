@@ -17,10 +17,14 @@ use crate::{
         MultiPhaseSearch, MultiPhaseSearchOptions,
     },
     scramble::{
+        collapse::collapse_adjacent_moves,
         get_kpuzzle::GetKPuzzle,
-        puzzles::definitions::{
-            kilominx_phase2_mask_kpattern, kilominx_phase2_target_kpattern,
-            kilominx_phase3_target_kpattern,
+        puzzles::{
+            definitions::{
+                kilominx_phase2_mask_kpattern, kilominx_phase2_target_kpattern,
+                kilominx_phase3_target_kpattern,
+            },
+            kpattern_to_ktransformation::invert_kpattern_as_transformation,
         },
         randomize::{OrbitPermutationConstraint, OrbitRandomizationConstraints},
         scramble_finder::{
@@ -178,13 +182,19 @@ impl SolvingBasedScrambleFinder for KilominxScrambleFinder {
         pattern: &KPattern,
         _scramble_options: &Self::ScrambleOptions,
     ) -> Result<Alg, SearchError> {
-        self.multi_phase_search
-            .chain_first_solution_for_each_phase(pattern)
+        // We solve the inverse (and reverse the solution) to ensure the `x2` moves are at the start.
+        let Some(pattern) = invert_kpattern_as_transformation(pattern) else {
+            return Err("Could not invert pattern for solving".into());
+        };
+        Ok(self
+            .multi_phase_search
+            .chain_first_solution_for_each_phase(&pattern)?
+            .invert())
     }
 
     fn collapse_inverted_alg(&mut self, alg: Alg) -> Alg {
-        // TODO: `x2` and other moves have different orders.
-        alg
+        // TODO: this relies on the fact that `x2` is unmodified (even though it has order 2).
+        collapse_adjacent_moves(alg, 5, -2)
     }
 }
 

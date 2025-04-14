@@ -166,7 +166,7 @@ impl SolvingBasedScrambleFinder for MegaminxSolver {
     }
 
     fn collapse_inverted_alg(&mut self, alg: Alg) -> Alg {
-        collapse_adjacent_moves(alg, 5, -1)
+        collapse_adjacent_moves(alg, 5, -2)
     }
 }
 

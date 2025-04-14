@@ -90,3 +90,4 @@ kpattern_from_json_file!(pub(crate), kilominx_phase3_target, "./kilominx/kilomin
 /******************************** Other puzzles ********************************/
 
 kpuzzle_from_json_file!(pub(crate), baby_fto, "./other/baby_fto.kpuzzle.json");
+kpuzzle_from_json_file!(pub(crate), master_tetraminx, "./other/master_tetraminx.kpuzzle.json");

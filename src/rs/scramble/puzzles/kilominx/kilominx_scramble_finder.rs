@@ -5,12 +5,8 @@ use cubing::{
 
 use crate::{
     _internal::{
-        cli::args::VerbosityLevel,
         errors::SearchError,
-        search::{
-            filter::filtering_decision::FilteringDecision, move_count::MoveCount,
-            search_logger::SearchLogger,
-        },
+        search::{filter::filtering_decision::FilteringDecision, move_count::MoveCount},
     },
     experimental_lib_api::{
         ConstantAlgSearchPhase, KPuzzleSimpleMaskPhase, KPuzzleSimpleMaskPhaseConstructionOptions,
@@ -129,9 +125,9 @@ impl Default for KilominxScrambleFinder {
                 ),
             ],
             MultiPhaseSearchOptions {
-                search_logger: SearchLogger {
-                    verbosity: VerbosityLevel::Info,
-                },
+                // search_logger: SearchLogger {
+                //     verbosity: VerbosityLevel::Info,
+                // },
                 ..Default::default()
             },
         )

@@ -113,7 +113,7 @@ impl CanonicalizingSolvedKPatternDepthFilter {
         else {
             return Err("Could not canonicalize the puzzle pattern for depth filtering".into());
         };
-        dbg!(canonicalizing_alg.to_string());
+        // dbg!(canonicalizing_alg.to_string());
         let Ok(pattern_with_canonicalizing_alg) = pattern.apply_alg(&canonicalizing_alg) else {
             return Err(
                 "Could not apply the canonicalizing alg to the puzzle pattern for depth filtering"

@@ -151,7 +151,9 @@ impl Iterator for SearchSolutions {
 #[serde(rename_all = "camelCase")]
 pub struct IndividualSearchOptions {
     pub min_num_solutions: Option<usize>,
+    #[serde(rename = "minDepth")] // TODO
     pub min_depth_inclusive: Option<Depth>, // inclusive
+    #[serde(rename = "maxDepth")] // TODO
     pub max_depth_exclusive: Option<Depth>, // exclusive
     pub canonical_fsm_pre_moves: Option<Vec<Move>>,
     pub canonical_fsm_post_moves: Option<Vec<Move>>,

@@ -6,6 +6,7 @@ members = [
   "src/rs-cli",
   "src/rs-ffi",
   "src/rs-wasm",
+  "src/ruby-gem/ext/twsearch",
   "script/cargo-run-bin",
 ]
 default-members = ["src/rs-cli"]

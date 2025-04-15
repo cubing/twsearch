@@ -1,0 +1,15 @@
+[package]
+name = "twsearch-rb"
+version.workspace = true
+license.workspace = true
+edition.workspace = true
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+magnus = { version = "0.7.1" }
+twsearch = { version = "0.9.1-dev", path = "../../../rs" }
+rb-sys = { version = "0.9.117", default-features = false, features = [
+    "stable-api-compiled-fallback",
+] }

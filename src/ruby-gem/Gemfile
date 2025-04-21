@@ -2,7 +2,7 @@
 
 source "https://rubygems.org"
 
-# Specify your gem's dependencies in tw_search.gemspec
+# Specify your gem's dependencies in twsearch.gemspec
 gemspec
 
 gem "debug"

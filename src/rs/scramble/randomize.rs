@@ -47,6 +47,10 @@ pub(crate) struct OrbitRandomizationConstraints {
 /// Selects a random permutation and applies a random orientation to each piece,
 /// subject to the given constraints.
 ///
+/// Note that this function generates pieces and orientations "from scratch".
+/// The existing pattern is completely ignored, and the pieces will always be a
+/// full permutation. If you need distinguishable pieces, apply a mask to the result.
+///
 /// Returns the piece order of the (subset of) randomized pieces.
 pub(crate) fn randomize_orbit(
     pattern: &mut KPattern,

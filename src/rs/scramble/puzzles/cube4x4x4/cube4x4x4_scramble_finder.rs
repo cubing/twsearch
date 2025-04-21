@@ -3,6 +3,7 @@ use cubing::kpuzzle::{KPattern, KPuzzle};
 
 use crate::_internal::cli::args::VerbosityLevel;
 use crate::_internal::search::filter::filtering_decision::FilteringDecision;
+use crate::_internal::search::mask_pattern::apply_mask;
 use crate::_internal::search::move_count::MoveCount;
 use crate::_internal::search::search_logger::SearchLogger;
 use crate::experimental_lib_api::{
@@ -101,7 +102,8 @@ impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
         randomize_orbit(&mut scramble_pattern, 1, "WINGS", Default::default());
         randomize_orbit(&mut scramble_pattern, 2, "CENTERS", Default::default());
 
-        scramble_pattern
+        // TODO: implement a way to use pieces from the source pattern in `randomize_orbit`.
+        apply_mask(&scramble_pattern, &cube4x4x4_kpuzzle().default_pattern()).unwrap()
     }
 
     fn solve_pattern(

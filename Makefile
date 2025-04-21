@@ -47,7 +47,7 @@ publish: test-rust publish-rust
 
 .PHONY: setup-gitignore-dirs
 setup-gitignore-dirs:
-	bun run ./script/self-gitignore-dirs.ts ./.bin ./.temp ./build ./dist ./target
+	bun run ./script/self-gitignore-dirs.ts ./.bin ./.temp ./build ./dist ./target ./src/ruby-gem/lib ./src/ruby-gem/tmp
 
 .PHONY: describe-version
 describe-version:

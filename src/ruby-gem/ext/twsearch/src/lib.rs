@@ -1,8 +1,6 @@
 use magnus::{define_module, function, prelude::*, Error};
 
-use twsearch::scramble::{
-    random_scramble_for_event, Event,
-};
+use twsearch::scramble::{random_scramble_for_event, Event};
 
 #[no_mangle]
 fn rb_random_scramble_for_event(event_str: String) -> Result<String, Error> {
@@ -18,7 +16,10 @@ fn rb_random_scramble_for_event(event_str: String) -> Result<String, Error> {
 fn init() -> Result<(), Error> {
     let module = define_module("Twsearch")?;
 
-    module.define_singleton_method("random_scramble_for_event", function!(rb_random_scramble_for_event, 1))?;
+    module.define_singleton_method(
+        "random_scramble_for_event",
+        function!(rb_random_scramble_for_event, 1),
+    )?;
 
     Ok(())
 }

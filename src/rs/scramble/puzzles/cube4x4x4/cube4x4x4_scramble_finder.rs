@@ -207,6 +207,9 @@ mod tests {
                 .unwrap()
         };
         assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("")), &Default::default())
+            .is_reject());
+        assert!(scramble_finder
             .filter_pattern(&pattern(parse_alg!("z")), &Default::default())
             .is_reject());
         assert!(scramble_finder
@@ -234,7 +237,10 @@ mod tests {
             .filter_pattern(&pattern(parse_alg!("U F 3Rw 3Uw2")), &Default::default())
             .is_accept());
         assert!(scramble_finder
-            .filter_pattern(&pattern(parse_alg!("Rw Lw")), &Default::default())
+            .filter_pattern(&pattern(parse_alg!("(R' U' R U')4")), &Default::default())
+            .is_accept());
+        assert!(scramble_finder
+            .filter_pattern(&pattern(parse_alg!("(R' U' R U')5")), &Default::default())
             .is_reject());
         Ok(())
     }

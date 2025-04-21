@@ -1,4 +1,4 @@
-use cubing::alg::{parse_alg, Alg};
+use cubing::alg::Alg;
 use cubing::kpuzzle::{KPattern, KPuzzle};
 
 use crate::_internal::cli::args::VerbosityLevel;
@@ -100,7 +100,6 @@ impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
         );
         randomize_orbit(&mut scramble_pattern, 1, "WINGS", Default::default());
         randomize_orbit(&mut scramble_pattern, 2, "CENTERS", Default::default());
-        scramble_pattern = scramble_pattern.apply_alg(parse_alg!("R")).unwrap();
 
         scramble_pattern
     }

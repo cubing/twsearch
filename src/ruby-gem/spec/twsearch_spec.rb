@@ -6,7 +6,7 @@ RSpec.describe Twsearch do
   end
 
   describe ".random_scramble_for_event" do
-    subject(:tz_name) { described_class.random_scramble_for_event(event_id) }
+    subject(:random_scramble_for_event) { described_class.random_scramble_for_event(event_id) }
 
     context "with 333" do
       let(:event_id) { "333" }

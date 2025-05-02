@@ -427,6 +427,7 @@ impl Default for Cube4x4x4Phase3Search {
                     phase3_generator_moves,
                     vec![cube4x4x4_phase3_search_kpuzzle().default_pattern()],
                     IterativeDeepeningSearchConstructionOptions {
+                        max_prune_table_size: Some(1 << 28),
                         search_logger: Arc::new(SearchLogger {
                             verbosity: VerbosityLevel::Info,
                         }),

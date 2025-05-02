@@ -28,6 +28,7 @@ pub trait LegacyConstructablePruneTable<TPuzzle: SemiGroupActionPuzzle>:
         search_api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
         search_logger: Arc<SearchLogger>,
         min_size: Option<usize>,
+        max_size: Option<usize>,
         search_adaptations_without_prune_table: StoredSearchAdaptationsWithoutPruneTable<TPuzzle>,
     ) -> Self;
 }

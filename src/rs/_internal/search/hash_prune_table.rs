@@ -36,6 +36,7 @@ struct HashPruneTableImmutableData<TPuzzle: SemiGroupActionPuzzle> {
 struct HashPruneTableMutableData<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> {
     tpuzzle: TPuzzle,
     min_size: usize,               // power of 2
+    max_size: Option<usize>,       // power of 2
     prune_table_size: usize,       // power of 2
     prune_table_index_mask: usize, // prune_table_size - 1
     current_pruning_depth: PruneTableEntryType,
@@ -142,6 +143,15 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> HashPruneTable<TPuz
     }
 }
 
+fn previous_power_of_two(n: usize) -> usize {
+    if n.is_power_of_two() {
+        n
+    } else {
+        // `.prev_power_of_two()` doesn't exist yet: https://internals.rust-lang.org/t/add-prev-power-of-two/14281
+        (n / 2).next_power_of_two()
+    }
+}
+
 impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> LegacyConstructablePruneTable<TPuzzle>
     for HashPruneTable<TPuzzle>
 {
@@ -150,12 +160,15 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> LegacyConstructable
         search_api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
         search_logger: Arc<SearchLogger>,
         min_size: Option<usize>,
+        max_size: Option<usize>,
         search_adaptations_without_prune_table: StoredSearchAdaptationsWithoutPruneTable<TPuzzle>,
     ) -> Self {
         let min_size = match min_size {
             Some(min_size) => min_size.next_power_of_two(),
             None => DEFAULT_MIN_PRUNE_TABLE_SIZE,
         };
+        // Note: we could return a max size, but there are some issues with calculating this statically due to the variable width of `usize`.
+        let max_size = max_size.map(previous_power_of_two);
         let mut prune_table = Self {
             immutable: HashPruneTableImmutableData {
                 search_api_data,
@@ -164,6 +177,7 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> LegacyConstructable
             mutable: HashPruneTableMutableData {
                 tpuzzle,
                 min_size,
+                max_size,
                 prune_table_size: min_size,
                 prune_table_index_mask: min_size - 1,
                 current_pruning_depth: DepthU8(0),
@@ -207,6 +221,10 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> PruneTable<TPuzzle>
             usize::next_power_of_two(approximate_num_entries),
             self.mutable.min_size,
         );
+        let new_prune_table_size = match self.mutable.max_size {
+            Some(max_size) => usize::min(new_prune_table_size, max_size),
+            None => new_prune_table_size,
+        };
         match new_prune_table_size.cmp(&self.mutable.prune_table_size) {
             std::cmp::Ordering::Less => {
                 // Don't shrink the prune table.
@@ -219,7 +237,7 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> PruneTable<TPuzzle>
             }
             std::cmp::Ordering::Greater => {
                 self.mutable.recursive_work_tracker.print_message(&format!(
-                    "Increasing prune table size to {} entries…",
+                    "Increasing hash prune table size to {} entries…",
                     new_prune_table_size.separate_with_underscores()
                 ));
                 self.mutable.pattern_hash_to_depth = vec![DepthU8(0); new_prune_table_size];

@@ -86,6 +86,7 @@ impl RecursiveWorkTracker {
         if self.previous_depth_num_recursive_calls == 0 {
             return self.latest_depth_num_recursive_calls;
         }
+        // TODO: do more sophisticated tracking to estimate when the branching factor heavily slows down.
         self.latest_depth_num_recursive_calls * self.latest_depth_num_recursive_calls
             / self.previous_depth_num_recursive_calls
     }

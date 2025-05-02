@@ -199,6 +199,7 @@ pub struct IterativeDeepeningSearchConstructionOptions {
     pub metric: MetricEnum,
     pub random_start: bool,
     pub min_prune_table_size: Option<usize>,
+    pub max_prune_table_size: Option<usize>,
     pub canonical_fsm_construction_options: CanonicalFSMConstructionOptions,
 }
 
@@ -209,6 +210,7 @@ impl Default for IterativeDeepeningSearchConstructionOptions {
             metric: MetricEnum::Hand,
             random_start: Default::default(),
             min_prune_table_size: Default::default(),
+            max_prune_table_size: Default::default(),
             canonical_fsm_construction_options: Default::default(),
         }
     }
@@ -250,6 +252,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
     ) -> Result<Self, SearchError> {
         let search_logger = options.search_logger.clone();
         let min_prune_table_size = options.min_prune_table_size;
+        let max_prune_table_size = options.max_prune_table_size;
         let api_data = Self::legacy_construct_api_data(
             tpuzzle.clone(),
             generator_moves,
@@ -268,6 +271,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             api_data.clone(),
             search_logger,
             min_prune_table_size,
+            max_prune_table_size,
             search_adaptations_without_prune_table.clone(),
         ));
         let search_adaptations = StoredSearchAdaptations {

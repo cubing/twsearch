@@ -8,6 +8,7 @@ use cubing::{
 
 use crate::{
     _internal::{
+        cli::args::VerbosityLevel,
         errors::SearchError,
         search::{
             filter::filtering_decision::FilteringDecision,
@@ -17,6 +18,7 @@ use crate::{
             },
             mask_pattern::apply_mask,
             move_count::MoveCount,
+            search_logger::SearchLogger,
         },
     },
     scramble::{
@@ -271,7 +273,13 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
                 cube3x3x3_kpuzzle().clone(),
                 move_list_from_vec(vec!["Uw", "Fw", "Rw"]),
                 vec![cube3x3x3_orientation_canonicalization_kpattern().clone()],
-                Default::default(),
+                IterativeDeepeningSearchConstructionOptions {
+                    search_logger: SearchLogger {
+                        verbosity: VerbosityLevel::Info,
+                    }
+                    .into(),
+                    ..Default::default()
+                },
                 Default::default(),
             )
             .unwrap();
@@ -283,6 +291,10 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
                 generators.clone(),
                 vec![phase1_target_pattern.clone()],
                 IterativeDeepeningSearchConstructionOptions {
+                    search_logger: SearchLogger {
+                        verbosity: VerbosityLevel::Info,
+                    }
+                    .into(),
                     min_prune_table_size: Some(32),
                     ..Default::default()
                 },

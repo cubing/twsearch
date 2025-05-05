@@ -8,7 +8,7 @@ use std::{
 };
 
 use cubing::{
-    alg::{parse_alg, Alg, AlgNode, Move},
+    alg::{Alg, AlgNode, Move},
     kpuzzle::{KPattern, KPuzzle},
 };
 use serde::{Deserialize, Serialize};
@@ -174,12 +174,12 @@ impl ContinuationCondition {
     }
 }
 
-fn alg_from_moves(moves: &[Move]) -> Alg {
+pub(crate) fn alg_from_moves(moves: &[Move]) -> Alg {
     let nodes = moves.iter().map(|m| AlgNode::MoveNode(m.clone())).collect();
     Alg { nodes }
 }
 
-fn alg_to_moves(alg: &Alg) -> Option<Vec<Move>> {
+pub(crate) fn alg_to_moves(alg: &Alg) -> Option<Vec<Move>> {
     let mut moves: Vec<Move> = vec![];
     for alg_node in &alg.nodes {
         let AlgNode::MoveNode(r#move) = alg_node else {
@@ -223,6 +223,21 @@ pub struct IndividualSearchOptions {
     pub canonical_fsm_pre_moves: Option<Vec<Move>>,
     pub canonical_fsm_post_moves: Option<Vec<Move>>,
     // Recursive calls use modified continuation conditions derived from this.
+    // This is called the "root" continuation condition to distinguish it from
+    // the recursive ones.
+    //
+    // TODO: support (de)serialization.
+    /// Note that:
+    /// - If the depth of (i.e. number of moves in) the condition exceeds `min_depth_inclusive`:
+    ///     - The `root_continuation_condition` will be used to set the initial search depth.
+    ///     - `min_depth_inclusive` is overwritten (i.e. efffectively ignored).
+    /// - If the depth of (i.e. number of moves in) the condition is less than `min_depth_inclusive`.
+    ///     - `min_depth_inclusive` will be used to set the initial search depth.
+    ///     - The `root_continuation_condition` is overwritten (i.e. efffectively ignored).
+    ///
+    /// This allows resuming a search from a previous solution by just passing `ContinuationCondition::After(/* previous solution */)` without also passing a min depth.
+    /// However, if the continuation condition corresponds to an intermediate search call rather than the base case the min depth must be specified.
+    #[serde(skip_serializing, skip_deserializing)]
     pub root_continuation_condition: ContinuationCondition,
 }
 
@@ -455,25 +470,40 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
 
         let search_pattern = search_pattern.clone();
 
-        // let root_resumption_condition = individual_search_data
-        //     .individual_search_options
-        //     .root_resumption_condition
-        //     .clone();
-        // let root_resumption_condition = ContinuationCondition::None;
-        let root_continuation_condition = ContinuationCondition::After(
-            alg_to_moves(parse_alg!("R U' F' U2 R' U2 R2 F2 U R")).unwrap(),
-        );
+        let (initial_search_depth, initial_depth_continuation_condition) = {
+            let options_min_depth = individual_search_data
+                .individual_search_options
+                .get_min_depth();
+            let root_continuation_condition: ContinuationCondition = individual_search_data
+                .individual_search_options
+                .root_continuation_condition
+                .clone();
+            let root_continuation_depth = root_continuation_condition.min_depth();
 
-        let options_min_depth = individual_search_data
-            .individual_search_options
-            .get_min_depth();
-        let initial_search_depth = max(options_min_depth, root_continuation_condition.min_depth());
-        if options_min_depth != initial_search_depth {
-            self.api_data.search_logger.write_info(&format!(
-            "Increasing initial search depth from {} to {} based on the root continuation condition: {:?}",
-            *options_min_depth, *initial_search_depth, root_continuation_condition
-        ));
-        }
+            match options_min_depth.cmp(&root_continuation_depth) {
+                std::cmp::Ordering::Less => {
+                    self.api_data.search_logger.write_info(&format!(
+                        "Increasing initial search depth from {:?} to {:?} based on the root continuation condition: {:?}",
+                        options_min_depth, root_continuation_depth, root_continuation_condition
+                    ));
+                }
+                std::cmp::Ordering::Equal => {}
+                std::cmp::Ordering::Greater => {
+                    if root_continuation_condition != ContinuationCondition::None {
+                        self.api_data.search_logger.write_info(&format!(
+                            "Note: the root continuation condition corresponds to an intermediate call rather than the base case because the specified min depth {:?} is larger (this is not an issue if it is expected): {:?}",
+                            options_min_depth, root_continuation_condition
+                        ));
+                    }
+                }
+            }
+            (
+                max(options_min_depth, root_continuation_depth),
+                root_continuation_condition,
+            )
+        };
+        // Make `initial_depth_continuation_condition` mutable
+        let mut initial_depth_continuation_condition = initial_depth_continuation_condition;
 
         // TODO: combine `KPatternStack` with `SolutionMoves`?
         let mut pattern_stack = PatternStack::new(self.api_data.tpuzzle.clone(), search_pattern);
@@ -510,7 +540,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                 initial_state,
                 remaining_depth,
                 SolutionMoves(None),
-                root_continuation_condition.clone(), // TODO: is there a clean way to avoid a `.clone()` without causing issues down the stack?
+                initial_depth_continuation_condition,
             );
             individual_search_data
                 .recursive_work_tracker
@@ -518,6 +548,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             if let SearchRecursionResult::DoneSearching = recursion_result {
                 break;
             }
+            initial_depth_continuation_condition = ContinuationCondition::None;
         }
         search_solutions
     }
@@ -585,26 +616,26 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             };
 
             for move_transformation_info in move_transformation_multiples {
-                // We check the continuation condition here so that we can resume from a cursor even if it's not an accepted node.
-                // eprintln!("--------");
-                // dbg!(move_transformation_info.r#move.to_string());
-                // dbg!(&continuation_condition);
+                // We check the continuation condition here so that we can
+                // resume a search from a continuation condition even if the
+                // move is not an accepted by the move transformation filter.
+                // TDOO: does this check impact perf?
+                if continuation_condition != ContinuationCondition::None {
+                    self.api_data.search_logger.write_info(&format!(
+                        "{} → {} ? ({:?})",
+                        Alg {
+                            nodes: solution_moves.snapshot_alg_nodes()
+                        },
+                        &move_transformation_info.r#move.to_string(),
+                        &continuation_condition,
+                    ));
+                }
                 let Some(recursive_continuation_condition) = self.recursive_continuation_condition(
                     &continuation_condition,
                     &move_transformation_info.r#move,
                 ) else {
                     continue;
                 };
-                if recursive_continuation_condition != ContinuationCondition::None {
-                    eprintln!(
-                        "{} → {} ? ({:?})",
-                        Alg {
-                            nodes: solution_moves.snapshot_alg_nodes()
-                        },
-                        &move_transformation_info.r#move.to_string(),
-                        &recursive_continuation_condition,
-                    );
-                }
                 // If we made it here, we're off the starting blocks.
                 continuation_condition = ContinuationCondition::None;
 

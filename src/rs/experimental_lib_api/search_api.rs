@@ -2,16 +2,19 @@ use std::sync::Arc;
 
 use crate::_internal::{
     cli::args::{SearchCommandOptionalArgs, VerbosityLevel},
-    errors::CommandError,
+    errors::{ArgumentError, CommandError},
     search::{
         iterative_deepening::iterative_deepening_search::{
-            IndividualSearchOptions, IterativeDeepeningSearch,
+            alg_to_moves, ContinuationCondition, IndividualSearchOptions, IterativeDeepeningSearch,
             IterativeDeepeningSearchConstructionOptions, SearchSolutions,
         },
         search_logger::SearchLogger,
     },
 };
-use cubing::kpuzzle::{KPattern, KPuzzle};
+use cubing::{
+    alg::{Alg, Move},
+    kpuzzle::{KPattern, KPuzzle},
+};
 
 use super::common::PatternSource;
 
@@ -73,17 +76,49 @@ pub fn search(
             None,
         )?;
 
+    let root_continuation_condition = {
+        match (
+            search_command_optional_args.search_args.continue_after,
+            search_command_optional_args.search_args.continue_at,
+        ) {
+            (None, None) => ContinuationCondition::None,
+            (Some(after), None) => {
+                ContinuationCondition::After(parse_continuation_alg_arg(&after)?)
+            }
+            (None, Some(at)) => ContinuationCondition::At(parse_continuation_alg_arg(&at)?),
+            (Some(_), Some(_)) => {
+                // TODO: figure out how to make this unrepresentable using idiomatic `clap` config.
+                panic!("Specifying `--continue-after` and `--continue-at` simultaneously is supposed to be impossible.");
+            }
+        }
+    };
     let solutions = iterative_deepening_search.search_with_default_individual_search_adaptations(
         search_pattern,
         IndividualSearchOptions {
             min_num_solutions: search_command_optional_args.min_num_solutions,
             min_depth_inclusive: search_command_optional_args.search_args.min_depth,
             max_depth_exclusive: search_command_optional_args.search_args.max_depth,
+            root_continuation_condition,
             ..Default::default()
         },
     );
 
     Ok(solutions)
+}
+
+fn parse_continuation_alg_arg(s: &str) -> Result<Vec<Move>, CommandError> {
+    // TODO: unify code between branches to save code size?
+    let alg = s.parse::<Alg>().map_err(|e| -> _ {
+        CommandError::ArgumentError(ArgumentError {
+            description: e.description,
+        })
+    })?;
+    let Some(moves) = alg_to_moves(&alg) else {
+        return Err(CommandError::ArgumentError(ArgumentError {
+            description: "Non-moves used in the continuation alg.".to_owned(),
+        }));
+    };
+    Ok(moves)
 }
 
 #[cfg(test)]

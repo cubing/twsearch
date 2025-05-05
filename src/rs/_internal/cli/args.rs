@@ -31,6 +31,8 @@ pub struct TwsearchArgs {
     pub command: CliCommand,
 }
 
+// Clippy warns on only 200 bytes of difference between variants, but this enum is not memory usage sensitive. (TODO: can we have it warn us on a much larger difference?)
+#[allow(clippy::large_enum_variant)]
 #[derive(Subcommand, Debug)]
 pub enum CliCommand {
     /// Run a single search.
@@ -92,6 +94,16 @@ pub struct CommonSearchArgs {
     /// Stop solution search at this depth.
     #[clap(long/* , visible_alias = "maxdepth" */)]
     pub max_depth: Option<Depth>,
+
+    /// Continue (or start) search after this alg.
+    /// If the alg is a valid solution, it will be skipped.
+    #[clap(long, group = "continue_search")]
+    pub continue_after: Option<String>, // TODO: `FromStr` is implemented for `Alg` by `cubing.rs`, why doesn't `Option<Alg>` work?
+
+    /// Continue (or start) search at this alg.
+    /// If the alg is a valid solution, it will be the first one returned.
+    #[clap(long, group = "continue_search")]
+    pub continue_at: Option<String>, // TODO: `FromStr` is implemented for `Alg` by `cubing.rs`, why doesn't `Option<Alg>` work?
 
     #[command(flatten)]
     pub performance_args: PerformanceArgs,

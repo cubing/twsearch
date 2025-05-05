@@ -1,4 +1,5 @@
 use std::{
+    cmp::max,
     fmt::Debug,
     sync::{
         mpsc::{channel, Receiver, Sender},
@@ -62,16 +63,16 @@ pub struct SolutionMoves<'a>(Option<&'a SolutionPreviousMoves<'a>>);
 
 impl<'a> From<&SolutionMoves<'a>> for Alg {
     fn from(value: &SolutionMoves<'a>) -> Self {
-        let nodes = value.get_alg_nodes();
+        let nodes = value.snapshot_alg_nodes();
         Alg { nodes }
     }
 }
 
 impl SolutionMoves<'_> {
-    fn get_alg_nodes(&self) -> Vec<AlgNode> {
+    fn snapshot_alg_nodes(&self) -> Vec<AlgNode> {
         match self.0 {
             Some(solution_previous_moves) => {
-                let mut nodes = solution_previous_moves.previous_moves.get_alg_nodes();
+                let mut nodes = solution_previous_moves.previous_moves.snapshot_alg_nodes();
                 nodes.push(cubing::alg::AlgNode::MoveNode(
                     solution_previous_moves.latest_move.clone(),
                 ));
@@ -147,6 +148,70 @@ impl Iterator for SearchSolutions {
     }
 }
 
+// TODO: also handle "before" cases.
+#[derive(Clone, PartialEq, Serialize, Deserialize)]
+pub enum ContinuationCondition {
+    None,
+    // An empty `Vec` in the base case means a solution check shall be performed.
+    At(Vec<Move>),
+    // An empty `Vec` in the base case means a solution check shall not be performed.
+    After(Vec<Move>),
+}
+
+impl Default for ContinuationCondition {
+    fn default() -> Self {
+        Self::None
+    }
+}
+
+impl ContinuationCondition {
+    fn min_depth(&self) -> Depth {
+        match self {
+            ContinuationCondition::None => Depth(0),
+            ContinuationCondition::At(moves) => Depth(moves.len()),
+            ContinuationCondition::After(moves) => Depth(moves.len()),
+        }
+    }
+}
+
+pub(crate) fn alg_from_moves(moves: &[Move]) -> Alg {
+    let nodes = moves.iter().map(|m| AlgNode::MoveNode(m.clone())).collect();
+    Alg { nodes }
+}
+
+pub(crate) fn alg_to_moves(alg: &Alg) -> Option<Vec<Move>> {
+    let mut moves: Vec<Move> = vec![];
+    for alg_node in &alg.nodes {
+        let AlgNode::MoveNode(r#move) = alg_node else {
+            return None;
+        };
+        moves.push(r#move.clone());
+    }
+    Some(moves)
+}
+
+impl Debug for ContinuationCondition {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ContinuationCondition::None => write!(f, "ContinuationCondition::None"),
+            ContinuationCondition::At(moves) => {
+                write!(
+                    f,
+                    "ContinuationCondition::At(parse_alg!({:?}))",
+                    alg_from_moves(moves).to_string()
+                )
+            }
+            ContinuationCondition::After(moves) => {
+                write!(
+                    f,
+                    "ContinuationCondition::After(parse_alg!({:?}))",
+                    alg_from_moves(moves).to_string()
+                )
+            }
+        }
+    }
+}
+
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IndividualSearchOptions {
@@ -157,6 +222,23 @@ pub struct IndividualSearchOptions {
     pub max_depth_exclusive: Option<Depth>, // exclusive
     pub canonical_fsm_pre_moves: Option<Vec<Move>>,
     pub canonical_fsm_post_moves: Option<Vec<Move>>,
+    // Recursive calls use modified continuation conditions derived from this.
+    // This is called the "root" continuation condition to distinguish it from
+    // the recursive ones.
+    //
+    // TODO: support (de)serialization.
+    /// Note that:
+    /// - If the depth of (i.e. number of moves in) the condition exceeds `min_depth_inclusive`:
+    ///     - The `root_continuation_condition` will be used to set the initial search depth.
+    ///     - `min_depth_inclusive` is overwritten (i.e. efffectively ignored).
+    /// - If the depth of (i.e. number of moves in) the condition is less than `min_depth_inclusive`.
+    ///     - `min_depth_inclusive` will be used to set the initial search depth.
+    ///     - The `root_continuation_condition` is overwritten (i.e. efffectively ignored).
+    ///
+    /// This allows resuming a search from a previous solution by just passing `ContinuationCondition::After(/* previous solution */)` without also passing a min depth.
+    /// However, if the continuation condition corresponds to an intermediate search call rather than the base case the min depth must be specified.
+    #[serde(skip_serializing, skip_deserializing)]
+    pub root_continuation_condition: ContinuationCondition,
 }
 
 impl IndividualSearchOptions {
@@ -388,11 +470,44 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
 
         let search_pattern = search_pattern.clone();
 
+        let (initial_search_depth, initial_depth_continuation_condition) = {
+            let options_min_depth = individual_search_data
+                .individual_search_options
+                .get_min_depth();
+            let root_continuation_condition: ContinuationCondition = individual_search_data
+                .individual_search_options
+                .root_continuation_condition
+                .clone();
+            let root_continuation_depth = root_continuation_condition.min_depth();
+
+            match options_min_depth.cmp(&root_continuation_depth) {
+                std::cmp::Ordering::Less => {
+                    self.api_data.search_logger.write_info(&format!(
+                        "Increasing initial search depth from {:?} to {:?} based on the root continuation condition: {:?}",
+                        options_min_depth, root_continuation_depth, root_continuation_condition
+                    ));
+                }
+                std::cmp::Ordering::Equal => {}
+                std::cmp::Ordering::Greater => {
+                    if root_continuation_condition != ContinuationCondition::None {
+                        self.api_data.search_logger.write_info(&format!(
+                            "Note: the root continuation condition corresponds to an intermediate call rather than the base case because the specified min depth {:?} is larger (this is not an issue if it is expected): {:?}",
+                            options_min_depth, root_continuation_condition
+                        ));
+                    }
+                }
+            }
+            (
+                max(options_min_depth, root_continuation_depth),
+                root_continuation_condition,
+            )
+        };
+        // Make `initial_depth_continuation_condition` mutable
+        let mut initial_depth_continuation_condition = initial_depth_continuation_condition;
+
         // TODO: combine `KPatternStack` with `SolutionMoves`?
         let mut pattern_stack = PatternStack::new(self.api_data.tpuzzle.clone(), search_pattern);
-        for remaining_depth in *individual_search_data
-            .individual_search_options
-            .get_min_depth()
+        for remaining_depth in *initial_search_depth
             ..*individual_search_data
                 .individual_search_options
                 .get_max_depth()
@@ -425,6 +540,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                 initial_state,
                 remaining_depth,
                 SolutionMoves(None),
+                initial_depth_continuation_condition,
             );
             individual_search_data
                 .recursive_work_tracker
@@ -432,6 +548,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             if let SearchRecursionResult::DoneSearching = recursion_result {
                 break;
             }
+            initial_depth_continuation_condition = ContinuationCondition::None;
         }
         search_solutions
     }
@@ -443,7 +560,17 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         current_state: CanonicalFSMState,
         remaining_depth: Depth,
         solution_moves: SolutionMoves,
+        continuation_condition: ContinuationCondition,
     ) -> SearchRecursionResult {
+        // eprintln!("========");
+        // eprintln!(
+        //     "{}",
+        //     Alg {
+        //         nodes: solution_moves.snapshot_alg_nodes()
+        //     }
+        // );
+        // dbg!(&continuation_condition);
+        let mut continuation_condition = continuation_condition;
         let current_pattern = pattern_stack.current_pattern();
         // TODO: apply invalid checks only to intermediate state (i.e. exclude remaining_depth == 0)?
         if self
@@ -463,6 +590,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                 current_pattern,
                 current_state,
                 solution_moves,
+                continuation_condition,
             );
         }
         let prune_table_depth = self
@@ -488,6 +616,29 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             };
 
             for move_transformation_info in move_transformation_multiples {
+                // We check the continuation condition here so that we can
+                // resume a search from a continuation condition even if the
+                // move is not an accepted by the move transformation filter.
+                // TDOO: does this check impact perf?
+                if continuation_condition != ContinuationCondition::None {
+                    self.api_data.search_logger.write_info(&format!(
+                        "{} → {} ? ({:?})",
+                        Alg {
+                            nodes: solution_moves.snapshot_alg_nodes()
+                        },
+                        &move_transformation_info.r#move.to_string(),
+                        &continuation_condition,
+                    ));
+                }
+                let Some(recursive_continuation_condition) = self.recursive_continuation_condition(
+                    &continuation_condition,
+                    &move_transformation_info.r#move,
+                ) else {
+                    continue;
+                };
+                // If we made it here, we're off the starting blocks.
+                continuation_condition = ContinuationCondition::None;
+
                 if self
                     .stored_search_adaptations
                     .filter_move_transformation(move_transformation_info, remaining_depth)
@@ -509,7 +660,9 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                         latest_move: &move_transformation_info.r#move,
                         previous_moves: &solution_moves,
                     })),
+                    recursive_continuation_condition,
                 );
+                // eprintln!("←←←←←←←←");
                 pattern_stack.pop();
 
                 match recursive_result {
@@ -524,6 +677,45 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             }
         }
         SearchRecursionResult::ContinueSearchingDefault
+    }
+
+    /// A return value of `None`
+    fn recursive_continuation_condition(
+        &self,
+        current_continuation: &ContinuationCondition,
+        potential_move: &Move,
+    ) -> Option<ContinuationCondition> {
+        match current_continuation {
+            ContinuationCondition::None => Some(ContinuationCondition::None),
+            ContinuationCondition::At(moves) => {
+                if let Some((first, rest)) = moves.split_first() {
+                    if first == potential_move {
+                        // eprintln!("Move: {}", first);
+                        Some(ContinuationCondition::At(rest.to_vec()))
+                    } else {
+                        // eprintln!("skippin' {}", potential_move);
+                        None
+                    }
+                } else {
+                    // eprintln!("at empty {}", potential_move);
+                    Some(ContinuationCondition::None)
+                }
+            }
+            ContinuationCondition::After(moves) => {
+                if let Some((first, rest)) = moves.split_first() {
+                    if first == potential_move {
+                        // eprintln!("Move: {}", first);
+                        Some(ContinuationCondition::After(rest.to_vec()))
+                    } else {
+                        // eprintln!("skippin' {}", potential_move);
+                        None
+                    }
+                } else {
+                    // eprintln!("after empty {}", potential_move);
+                    Some(ContinuationCondition::None)
+                }
+            }
+        }
     }
 
     // Returns `None` if the moves cannot be applied, else returns the result of applying the moves.
@@ -557,7 +749,24 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         current_pattern: &TPuzzle::Pattern,
         current_state: CanonicalFSMState,
         solution_moves: SolutionMoves,
+        continuation_condition: ContinuationCondition,
     ) -> SearchRecursionResult {
+        match continuation_condition {
+            ContinuationCondition::None => {}
+            ContinuationCondition::At(vec) => {
+                if !vec.is_empty() {
+                    // TODO: this can change if we expand change the base case
+                    // code to run on intermediate nodes (which may be important
+                    // for search with non-uniform metrics).
+                    self.api_data.search_logger.write_warning("Encountered a non-empty `ContinuationCondition::At` during a base case. This could indicate a bug in the calling code.");
+                    return SearchRecursionResult::ContinueSearchingDefault;
+                }
+            }
+            ContinuationCondition::After(_) => {
+                return SearchRecursionResult::ContinueSearchingDefault
+            }
+        }
+
         if !self.is_target_pattern(current_pattern) {
             return SearchRecursionResult::ContinueSearchingDefault;
         }

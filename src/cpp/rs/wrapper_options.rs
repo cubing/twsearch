@@ -70,6 +70,12 @@ impl SetCppArgs for CommonSearchArgs {
         set_optional_arg("--mindepth", &self.min_depth.map(|o| o.0));
         set_optional_arg("-m", &self.max_depth.map(|o| o.0));
         set_optional_arg("--startprunedepth", &self.start_prune_depth.map(|o| o.0));
+        if self.continue_after.is_some() {
+            panic!("Continuation is unsupported.")
+        }
+        if self.continue_at.is_some() {
+            panic!("Continuation is unsupported.")
+        }
         self.performance_args.set_cpp_args();
     }
 }

@@ -1,0 +1,6 @@
+module Twsearch
+  VERSION: String
+  # See the writing guide of rbs: https://github.com/ruby/rbs#guides
+
+  def self.random_scramble_for_event: (String) -> String
+end

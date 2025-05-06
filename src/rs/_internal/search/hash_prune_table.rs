@@ -43,6 +43,7 @@ struct HashPruneTableMutableData<TPuzzle: SemiGroupActionPuzzle + HashablePatter
     pattern_hash_to_depth: Vec<PruneTableEntryType>,
     recursive_work_tracker: RecursiveWorkTracker,
     search_logger: Arc<SearchLogger>,
+    population: usize,
 }
 
 impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> HashPruneTableMutableData<TPuzzle> {
@@ -67,6 +68,7 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> HashPruneTableMutab
         if self.pattern_hash_to_depth[pattern_hash] == UNINITIALIZED_SENTINEL
             || self.pattern_hash_to_depth[pattern_hash] == INVALID_PATTERN_SENTINEL
         {
+            self.population += 1;
             self.pattern_hash_to_depth[pattern_hash] = DepthU8(depth.0 + 1) // TODO: arithmetic on `Depth`
         };
     }
@@ -187,6 +189,7 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> LegacyConstructable
                     search_logger.clone(),
                 ),
                 search_logger,
+                population: 0,
             },
         };
         prune_table.extend_for_search_depth(Depth(0), 1);
@@ -247,6 +250,8 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> PruneTable<TPuzzle>
             }
         }
 
+        self.mutable.population = 0;
+
         for depth_as_u8 in (*self.mutable.current_pruning_depth + 1)..(*new_pruning_depth + 1) {
             let depth = DepthU8(depth_as_u8);
             self.mutable
@@ -263,6 +268,14 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> PruneTable<TPuzzle>
             }
             self.mutable.recursive_work_tracker.finish_latest_depth();
         }
-        self.mutable.current_pruning_depth = new_pruning_depth
+        self.mutable.current_pruning_depth = new_pruning_depth;
+
+        self.mutable.search_logger.write_info(&format!(
+            "[Prune table] Population is {} entries ({}% of {} slots).",
+            self.mutable.population,
+            ((self.mutable.population as f32) / (self.mutable.prune_table_size as f32)).round()
+                as usize,
+            self.mutable.prune_table_size
+        ));
     }
 }

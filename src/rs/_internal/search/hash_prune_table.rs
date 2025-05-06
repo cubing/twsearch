@@ -271,11 +271,11 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> PruneTable<TPuzzle>
         self.mutable.current_pruning_depth = new_pruning_depth;
 
         self.mutable.search_logger.write_info(&format!(
-            "[Prune table] Population is {} entries ({}% of {} slots).",
-            self.mutable.population,
+            "[Prune table] Population is {} entries (≈{}% of {} slots).",
+            self.mutable.population.separate_with_underscores(),
             ((self.mutable.population as f32) / (self.mutable.prune_table_size as f32)).round()
                 as usize,
-            self.mutable.prune_table_size
+            self.mutable.prune_table_size.separate_with_underscores()
         ));
     }
 }

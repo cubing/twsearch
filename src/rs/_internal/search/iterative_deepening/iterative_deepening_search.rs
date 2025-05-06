@@ -679,13 +679,14 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         SearchRecursionResult::ContinueSearchingDefault
     }
 
-    /// A return value of `None`
+    /// A return value of `None` indicates to avoid recursing.
+    /// A return value of `Some(…)` indicates to recurse using the given (potential) move.
     fn recursive_continuation_condition(
         &self,
-        current_continuation: &ContinuationCondition,
+        continuation_condition: &ContinuationCondition,
         potential_move: &Move,
     ) -> Option<ContinuationCondition> {
-        match current_continuation {
+        match continuation_condition {
             ContinuationCondition::None => Some(ContinuationCondition::None),
             ContinuationCondition::At(moves) => {
                 if let Some((first, rest)) = moves.split_first() {

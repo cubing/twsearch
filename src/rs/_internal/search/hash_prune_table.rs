@@ -28,6 +28,8 @@ const MAX_PRUNE_TABLE_DEPTH: PruneTableEntryType = DepthU8(u8::MAX - 2); // TODO
 
 const DEFAULT_MIN_PRUNE_TABLE_SIZE: usize = 1 << 20;
 
+const POPULATION_HEADROOM_FACTOR: f64 = 30f64;
+
 struct HashPruneTableImmutableData<TPuzzle: SemiGroupActionPuzzle> {
     // TODO
     search_api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
@@ -43,6 +45,7 @@ struct HashPruneTableMutableData<TPuzzle: SemiGroupActionPuzzle + HashablePatter
     pattern_hash_to_depth: Vec<PruneTableEntryType>,
     recursive_work_tracker: RecursiveWorkTracker,
     search_logger: Arc<SearchLogger>,
+
     population: usize,
 }
 
@@ -196,7 +199,7 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> LegacyConstructable
                 population: 0,
             },
         };
-        prune_table.extend_for_search_depth(Depth(0), 1);
+        prune_table.extend_for_search_depth(Depth(0), 1f64);
         prune_table
     }
 }
@@ -211,7 +214,20 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> PruneTable<TPuzzle>
 
     // TODO: dedup with IterativeDeepeningSearch?
     // TODO: Store a reference to `search_api_data` so that you can't accidentally pass in the wrong `search_api_data`?
-    fn extend_for_search_depth(&mut self, search_depth: Depth, approximate_num_entries: usize) {
+    fn extend_for_search_depth(&mut self, search_depth: Depth, estimated_branching_factor: f64) {
+        // TODO: this should not use a constant headroom factor.
+        let number_of_slots = (self.mutable.population as f64
+            * estimated_branching_factor
+            * POPULATION_HEADROOM_FACTOR)
+            .floor();
+        // TODO: do a proper saturating conversion
+        // dbg!(number_of_slots);
+        let number_of_slots = if number_of_slots > (usize::MAX as f64) {
+            usize::MAX
+        } else {
+            number_of_slots as usize
+        };
+        // dbg!(number_of_slots);
         let mut new_pruning_depth = DepthU8(
             std::convert::TryInto::<u8>::try_into(search_depth.0 / 2)
                 .expect("Prune table depth exceeded available size"),
@@ -225,7 +241,7 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> PruneTable<TPuzzle>
         }
 
         let new_prune_table_size = usize::max(
-            usize::next_power_of_two(approximate_num_entries),
+            usize::next_power_of_two(number_of_slots),
             self.mutable.min_size,
         );
         let new_prune_table_size = match self.mutable.max_size {
@@ -251,10 +267,9 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> PruneTable<TPuzzle>
                 self.mutable.prune_table_size = new_prune_table_size;
                 self.mutable.prune_table_index_mask = new_prune_table_size - 1;
                 self.mutable.current_pruning_depth = DepthU8(0);
+                self.mutable.population = 0;
             }
         }
-
-        self.mutable.population = 0;
 
         for depth_as_u8 in (*self.mutable.current_pruning_depth + 1)..(*new_pruning_depth + 1) {
             let depth = DepthU8(depth_as_u8);

@@ -630,7 +630,7 @@ impl PruneTable<Square1Phase2Puzzle> for Square1Phase2PruneTable {
         max(shape_depth, max(edges_depth, corners_depth))
     }
 
-    fn extend_for_search_depth(&mut self, _search_depth: Depth, _approximate_num_entries: usize) {
+    fn extend_for_search_depth(&mut self, _search_depth: Depth, _estimated_branching_factor: f64) {
         // no-op
     }
 }

@@ -577,7 +577,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                     remaining_depth,
                     individual_search_data
                         .recursive_work_tracker
-                        .estimate_next_level_num_recursive_calls(),
+                        .estimate_branching_factor(),
                 );
             individual_search_data
                 .recursive_work_tracker

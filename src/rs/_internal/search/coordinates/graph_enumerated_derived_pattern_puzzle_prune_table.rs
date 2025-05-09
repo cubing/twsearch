@@ -49,7 +49,7 @@ where
         self.puzzle.data.exact_prune_table[*pattern]
     }
 
-    fn extend_for_search_depth(&mut self, _search_depth: Depth, _approximate_num_entries: usize) {
+    fn extend_for_search_depth(&mut self, _search_depth: Depth, _estimated_branching_factor: f64) {
         // no-op
     }
 }

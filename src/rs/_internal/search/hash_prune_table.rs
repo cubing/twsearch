@@ -124,6 +124,10 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> HashPruneTable<TPuz
                 ) else {
                     continue;
                 };
+                if next_pattern == *current_pattern {
+                    // TODO: increment a counter here.
+                    continue;
+                }
 
                 if immutable_data
                     .search_adaptations_without_prune_table
@@ -267,15 +271,17 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> PruneTable<TPuzzle>
                 );
             }
             self.mutable.recursive_work_tracker.finish_latest_depth();
+
+            self.mutable.search_logger.write_info(&format!(
+                "[Prune table] Population is {} entries (≈{}% of {} slots, ≈{}% of latest depth recursive calls).",
+                self.mutable.population.separate_with_underscores(),
+                (100f32 * (self.mutable.population as f32) / (self.mutable.prune_table_size as f32)).round()
+                    as usize,
+                self.mutable.prune_table_size.separate_with_underscores(),
+                (100f32 * (self.mutable.population as f32) / (self.mutable.recursive_work_tracker.latest_depth_num_recursive_calls as f32)).round()
+                    as usize,
+            ));
         }
         self.mutable.current_pruning_depth = new_pruning_depth;
-
-        self.mutable.search_logger.write_info(&format!(
-            "[Prune table] Population is {} entries (≈{}% of {} slots).",
-            self.mutable.population.separate_with_underscores(),
-            ((self.mutable.population as f32) / (self.mutable.prune_table_size as f32)).round()
-                as usize,
-            self.mutable.prune_table_size.separate_with_underscores()
-        ));
     }
 }

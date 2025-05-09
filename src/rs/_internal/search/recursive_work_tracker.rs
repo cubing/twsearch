@@ -8,7 +8,7 @@ pub(crate) struct RecursiveWorkTracker {
     work_name: String,
     // TODO: support custom writes intead of sending to stdout/stderr
     latest_depth: Depth,
-    latest_depth_num_recursive_calls: usize,
+    pub(crate) latest_depth_num_recursive_calls: usize,
     latest_depth_start_time: instant::Instant,
     latest_depth_duration: Duration,
     latest_depth_finished: bool,

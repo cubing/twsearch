@@ -6,7 +6,7 @@ use crate::_internal::{
     search::{
         iterative_deepening::iterative_deepening_search::{
             alg_to_moves, ContinuationCondition, IndividualSearchOptions, IterativeDeepeningSearch,
-            IterativeDeepeningSearchConstructionOptions, SearchSolutions,
+            IterativeDeepeningSearchConstructionOptions, OwnedIterativeSearchCursor,
         },
         search_logger::SearchLogger,
     },
@@ -33,7 +33,7 @@ use super::common::PatternSource;
 ///     .expect("Invalid alg for puzzle.");
 /// let solutions =
 ///     search(kpuzzle, &search_pattern, Default::default()).expect("Search failed.");
-/// for solution in solutions {
+/// for solution in solutions.take(5) {
 ///     println!("{}", solution);
 /// }
 /// ```
@@ -41,7 +41,7 @@ pub fn search(
     kpuzzle: &KPuzzle,
     search_pattern: &KPattern,
     search_command_optional_args: SearchCommandOptionalArgs,
-) -> Result<SearchSolutions, CommandError> {
+) -> Result<OwnedIterativeSearchCursor, CommandError> {
     if search_command_optional_args.search_args.all_optimal {
         eprintln!("⚠️ --all-optimal was specified, but is not currently implemented. Ignoring.");
     }
@@ -54,7 +54,7 @@ pub fn search(
         None => kpuzzle.default_pattern(),
     };
 
-    let mut iterative_deepening_search =
+    let iterative_deepening_search =
         <IterativeDeepeningSearch<KPuzzle>>::try_new_kpuzzle_with_hash_prune_table_shim(
             kpuzzle.clone(),
             search_command_optional_args
@@ -92,16 +92,17 @@ pub fn search(
             }
         }
     };
-    let solutions = iterative_deepening_search.search_with_default_individual_search_adaptations(
-        search_pattern,
-        IndividualSearchOptions {
-            min_num_solutions: search_command_optional_args.min_num_solutions,
-            min_depth_inclusive: search_command_optional_args.search_args.min_depth,
-            max_depth_exclusive: search_command_optional_args.search_args.max_depth,
-            root_continuation_condition,
-            ..Default::default()
-        },
-    );
+    let solutions = iterative_deepening_search
+        .owned_search_with_default_individual_search_adaptations(
+            search_pattern,
+            IndividualSearchOptions {
+                min_num_solutions: search_command_optional_args.min_num_solutions,
+                min_depth_inclusive: search_command_optional_args.search_args.min_depth,
+                max_depth_exclusive: search_command_optional_args.search_args.max_depth,
+                root_continuation_condition,
+                ..Default::default()
+            },
+        );
 
     Ok(solutions)
 }

@@ -321,11 +321,9 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
         // let start_time = Instant::now();
         // let mut phase1_start_time = Instant::now();
         for current_depth in 0..31 {
-            let num_solutions = 10000000;
             let phase1_search = self.phase1_iterative_deepening_search.search(
                 &phase1_start_pattern,
                 IndividualSearchOptions {
-                    min_num_solutions: Some(num_solutions),
                     min_depth_inclusive: Some(Depth(current_depth)),
                     max_depth_exclusive: Some(Depth(current_depth + 1)),
                     ..Default::default()

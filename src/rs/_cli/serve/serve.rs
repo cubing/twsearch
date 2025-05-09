@@ -80,7 +80,7 @@ fn solve_pattern(
         Ok(search_pattern) => search_pattern,
         Err(e) => return Response::text(e.to_string()).with_status_code(400),
     };
-    let mut search =
+    let search =
         match <IterativeDeepeningSearch<KPuzzle>>::try_new_kpuzzle_with_hash_prune_table_shim(
             kpuzzle.clone(),
             Generators::Custom(CustomGenerators {
@@ -103,7 +103,7 @@ fn solve_pattern(
             Err(e) => return Response::text(e.description).with_status_code(400),
         };
     if let Some(solution) = search
-        .search_with_default_individual_search_adaptations(
+        .owned_search_with_default_individual_search_adaptations(
             &search_pattern,
             IndividualSearchOptions {
                 min_num_solutions: None,

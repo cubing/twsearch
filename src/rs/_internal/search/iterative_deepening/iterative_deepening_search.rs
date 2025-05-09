@@ -1,11 +1,4 @@
-use std::{
-    cmp::max,
-    fmt::Debug,
-    sync::{
-        mpsc::{channel, Receiver, Sender},
-        Arc,
-    },
-};
+use std::{cmp::max, fmt::Debug, sync::Arc};
 
 use cubing::{
     alg::{Alg, AlgNode, Move},
@@ -48,9 +41,9 @@ const MAX_SUPPORTED_SEARCH_DEPTH: Depth = Depth(500); // TODO: increase
 // TODO: use https://doc.rust-lang.org/std/ops/enum.ControlFlow.html as a wrapper instead?
 #[allow(clippy::enum_variant_names)]
 enum SearchRecursionResult {
-    DoneSearching,
     ContinueSearchingDefault,
     ContinueSearchingExcludingCurrentMoveClass,
+    FoundSolution(Alg),
 }
 
 struct SolutionPreviousMoves<'a> {
@@ -103,48 +96,31 @@ impl<'a> Iterator for SolutionMovesReverseIterator<'a> {
     }
 }
 
-pub struct SearchSolutions {
-    receiver: Receiver<Option<Alg>>,
-    done: bool,
+pub struct IterativeSearchCursor<'a, TPuzzle: SemiGroupActionPuzzle = KPuzzle> {
+    search: &'a mut IterativeDeepeningSearch<TPuzzle>,
+    individual_search_data: IndividualSearchData<TPuzzle>,
 }
 
-impl SearchSolutions {
-    pub fn construct() -> (Sender<Option<Alg>>, Self) {
-        // TODO: use `sync_channel` to control resumption?
-        let (sender, receiver) = channel::<Option<Alg>>();
-        (
-            sender,
-            Self {
-                receiver,
-                done: false,
-            },
-        )
+impl<TPuzzle: SemiGroupActionPuzzle> Iterator for IterativeSearchCursor<'_, TPuzzle> {
+    type Item = Alg;
+
+    fn next(&mut self) -> Option<Alg> {
+        self.search
+            .search_internal(&mut self.individual_search_data)
     }
 }
 
-impl Iterator for SearchSolutions {
+pub struct OwnedIterativeSearchCursor<TPuzzle: SemiGroupActionPuzzle = KPuzzle> {
+    search: IterativeDeepeningSearch<TPuzzle>,
+    individual_search_data: IndividualSearchData<TPuzzle>,
+}
+
+impl<TPuzzle: SemiGroupActionPuzzle> Iterator for OwnedIterativeSearchCursor<TPuzzle> {
     type Item = Alg;
 
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.done {
-            None
-        } else {
-            let received = match self.receiver.recv() {
-                Ok(received) => received,
-                Err(_) => {
-                    // TODO: this could be either a channel failure or no solutions found. We should find a way for the latter to avoid hitting this code path.
-                    self.done = true;
-                    return None;
-                }
-            };
-            match received {
-                Some(alg) => Some(alg),
-                None => {
-                    self.done = true;
-                    None
-                }
-            }
-        }
+    fn next(&mut self) -> Option<Alg> {
+        self.search
+            .search_internal(&mut self.individual_search_data)
     }
 }
 
@@ -215,6 +191,7 @@ impl Debug for ContinuationCondition {
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IndividualSearchOptions {
+    // TODO: this doesn't do anything at the moment.
     pub min_num_solutions: Option<usize>,
     #[serde(rename = "minDepth")] // TODO
     pub min_depth_inclusive: Option<Depth>, // inclusive
@@ -255,11 +232,55 @@ impl IndividualSearchOptions {
 }
 
 struct IndividualSearchData<TPuzzle: SemiGroupActionPuzzle> {
+    search_pattern: TPuzzle::Pattern,
     individual_search_options: IndividualSearchOptions,
     recursive_work_tracker: RecursiveWorkTracker,
     num_solutions_sofar: usize,
-    solution_sender: Sender<Option<Alg>>,
     individual_search_adaptations: IndividualSearchAdaptations<TPuzzle>,
+}
+
+impl<TPuzzle: SemiGroupActionPuzzle> IndividualSearchData<TPuzzle> {
+    /// Note that search is pull-based. You must call `.next()` (or invoke
+    /// something that does) on the return value for the search to begine.
+    pub fn new(
+        search: &mut IterativeDeepeningSearch<TPuzzle>,
+        search_pattern: &TPuzzle::Pattern,
+        mut individual_search_options: IndividualSearchOptions,
+        individual_search_adaptations: IndividualSearchAdaptations<TPuzzle>,
+    ) -> Self {
+        // TODO: do validation more consisten   tly.
+        if let Some(min_depth) = individual_search_options.min_depth_inclusive {
+            if min_depth > MAX_SUPPORTED_SEARCH_DEPTH {
+                search
+                    .api_data
+                    .search_logger
+                    .write_error("Min depth too large, capping at maximum.");
+                individual_search_options.min_depth_inclusive = Some(MAX_SUPPORTED_SEARCH_DEPTH);
+            }
+        }
+        if let Some(max_depth) = individual_search_options.max_depth_exclusive {
+            if max_depth > MAX_SUPPORTED_SEARCH_DEPTH {
+                search
+                    .api_data
+                    .search_logger
+                    .write_error("Max depth too large, capping at maximum.");
+                individual_search_options.max_depth_exclusive = Some(MAX_SUPPORTED_SEARCH_DEPTH);
+            }
+        }
+
+        let search_pattern = search_pattern.clone();
+
+        Self {
+            search_pattern,
+            individual_search_options,
+            recursive_work_tracker: RecursiveWorkTracker::new(
+                "Search".to_owned(),
+                search.api_data.search_logger.clone(),
+            ),
+            num_solutions_sofar: 0,
+            individual_search_adaptations,
+        }
+    }
 }
 
 pub struct IterativeDeepeningSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
@@ -420,11 +441,13 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         })
     }
 
-    pub fn search_with_default_individual_search_adaptations(
-        &mut self,
+    /// Note that search is pull-based. You must call `.next()` (or invoke
+    /// something that does) on the return value for the search to begine.
+    pub fn search_with_default_individual_search_adaptations<'a>(
+        &'a mut self,
         search_pattern: &TPuzzle::Pattern,
         individual_search_options: IndividualSearchOptions,
-    ) -> SearchSolutions {
+    ) -> IterativeSearchCursor<'a, TPuzzle> {
         self.search(
             search_pattern,
             individual_search_options,
@@ -432,43 +455,73 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         )
     }
 
-    pub fn search(
-        &mut self,
+    /// Note that search is pull-based. You must call `.next()` (or invoke
+    /// something that does) on the return value for the search to begine.
+    pub fn owned_search_with_default_individual_search_adaptations(
+        self,
         search_pattern: &TPuzzle::Pattern,
-        mut individual_search_options: IndividualSearchOptions,
-        individual_search_adaptations: IndividualSearchAdaptations<TPuzzle>,
-    ) -> SearchSolutions {
-        // TODO: do validation more consistently.
-        if let Some(min_depth) = individual_search_options.min_depth_inclusive {
-            if min_depth > MAX_SUPPORTED_SEARCH_DEPTH {
-                self.api_data
-                    .search_logger
-                    .write_error("Min depth too large, capping at maximum.");
-                individual_search_options.min_depth_inclusive = Some(MAX_SUPPORTED_SEARCH_DEPTH);
-            }
-        }
-        if let Some(max_depth) = individual_search_options.max_depth_exclusive {
-            if max_depth > MAX_SUPPORTED_SEARCH_DEPTH {
-                self.api_data
-                    .search_logger
-                    .write_error("Max depth too large, capping at maximum.");
-                individual_search_options.max_depth_exclusive = Some(MAX_SUPPORTED_SEARCH_DEPTH);
-            }
-        }
-
-        let (solution_sender, search_solutions) = SearchSolutions::construct();
-        let mut individual_search_data = IndividualSearchData {
+        individual_search_options: IndividualSearchOptions,
+    ) -> OwnedIterativeSearchCursor<TPuzzle> {
+        self.owned_search(
+            search_pattern,
             individual_search_options,
-            recursive_work_tracker: RecursiveWorkTracker::new(
-                "Search".to_owned(),
-                self.api_data.search_logger.clone(),
-            ),
-            num_solutions_sofar: 0,
-            solution_sender,
-            individual_search_adaptations,
-        };
+            Default::default(),
+        )
+    }
 
-        let search_pattern = search_pattern.clone();
+    /// Note that search is pull-based. You must call `.next()` (or invoke
+    /// something that does) on the return value for the search to begine.
+    pub fn search<'a>(
+        &'a mut self,
+        search_pattern: &TPuzzle::Pattern,
+        individual_search_options: IndividualSearchOptions,
+        individual_search_adaptations: IndividualSearchAdaptations<TPuzzle>,
+    ) -> IterativeSearchCursor<'a, TPuzzle> {
+        let individual_search_data = IndividualSearchData::new(
+            self,
+            search_pattern,
+            individual_search_options,
+            individual_search_adaptations,
+        );
+        IterativeSearchCursor {
+            search: self,
+            individual_search_data,
+        }
+    }
+
+    /// Note that search is pull-based. You must call `.next()` (or invoke
+    /// something that does) on the return value for the search to begine.
+    pub fn owned_search(
+        mut self,
+        search_pattern: &TPuzzle::Pattern,
+        individual_search_options: IndividualSearchOptions,
+        individual_search_adaptations: IndividualSearchAdaptations<TPuzzle>,
+    ) -> OwnedIterativeSearchCursor<TPuzzle> {
+        let individual_search_data = IndividualSearchData::new(
+            &mut self,
+            search_pattern,
+            individual_search_options,
+            individual_search_adaptations,
+        );
+        OwnedIterativeSearchCursor {
+            search: self,
+            individual_search_data,
+        }
+    }
+
+    // TODO: ideally the return should be represented by a fallible iterator (since it can fail caller-provided input deep in the stack).
+    fn search_internal(
+        &mut self,
+        individual_search_data: &mut IndividualSearchData<TPuzzle>,
+    ) -> Option<Alg> {
+        // TODO: the `min_num_solutions` semantics need a redesign throughout all of `twsearch`.
+        // if individual_search_data.num_solutions_sofar
+        //     >= individual_search_data
+        //         .individual_search_options
+        //         .get_min_num_solutions()
+        // {
+        //     return None;
+        // }
 
         let (initial_search_depth, initial_depth_continuation_condition) = {
             let options_min_depth = individual_search_data
@@ -506,7 +559,10 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         let mut initial_depth_continuation_condition = initial_depth_continuation_condition;
 
         // TODO: combine `KPatternStack` with `SolutionMoves`?
-        let mut pattern_stack = PatternStack::new(self.api_data.tpuzzle.clone(), search_pattern);
+        let mut pattern_stack = PatternStack::new(
+            self.api_data.tpuzzle.clone(),
+            individual_search_data.search_pattern.clone(),
+        );
         for remaining_depth in *initial_search_depth
             ..*individual_search_data
                 .individual_search_options
@@ -535,7 +591,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                 )
                 .expect("TODO: invalid canonical FSM pre-moves.");
             let recursion_result = self.recurse(
-                &mut individual_search_data,
+                individual_search_data,
                 &mut pattern_stack,
                 initial_state,
                 remaining_depth,
@@ -545,12 +601,18 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             individual_search_data
                 .recursive_work_tracker
                 .finish_latest_depth();
-            if let SearchRecursionResult::DoneSearching = recursion_result {
-                break;
+            if let SearchRecursionResult::FoundSolution(alg) = recursion_result {
+                // TODO: should we avoid writing into `root_continuation_condition`?
+                individual_search_data
+                    .individual_search_options
+                    .root_continuation_condition =
+                    ContinuationCondition::After(alg_to_moves(&alg).unwrap());
+                return Some(alg);
             }
             initial_depth_continuation_condition = ContinuationCondition::None;
         }
-        search_solutions
+
+        None
     }
 
     fn recurse(
@@ -666,12 +728,12 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                 pattern_stack.pop();
 
                 match recursive_result {
-                    SearchRecursionResult::DoneSearching => {
-                        return SearchRecursionResult::DoneSearching;
-                    }
                     SearchRecursionResult::ContinueSearchingDefault => {}
                     SearchRecursionResult::ContinueSearchingExcludingCurrentMoveClass => {
                         break;
+                    }
+                    SearchRecursionResult::FoundSolution(alg) => {
+                        return SearchRecursionResult::FoundSolution(alg)
                     }
                 }
             }
@@ -798,23 +860,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
 
         let alg = Alg::from(&solution_moves);
         individual_search_data.num_solutions_sofar += 1;
-        individual_search_data
-            .solution_sender
-            .send(Some(alg))
-            .expect("Internal error: could not send solution");
-        if individual_search_data.num_solutions_sofar
-            >= individual_search_data
-                .individual_search_options
-                .get_min_num_solutions()
-        {
-            individual_search_data
-                .solution_sender
-                .send(None)
-                .expect("Internal error: could not send end of search");
-            SearchRecursionResult::DoneSearching
-        } else {
-            SearchRecursionResult::ContinueSearchingDefault
-        }
+        SearchRecursionResult::FoundSolution(alg)
     }
 
     fn is_target_pattern(&self, current_pattern: &TPuzzle::Pattern) -> bool {

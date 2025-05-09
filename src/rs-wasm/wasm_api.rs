@@ -74,10 +74,10 @@ pub fn wasmTwsearch(
             Default::default(),
             None,
         );
-    let mut iterative_deepening_search = iterative_deepening_search.map_err(|e| e.description)?;
+    let iterative_deepening_search = iterative_deepening_search.map_err(|e| e.description)?;
 
     match iterative_deepening_search
-        .search_with_default_individual_search_adaptations(
+        .owned_search_with_default_individual_search_adaptations(
             &search_pattern,
             options.inidividual_search_options,
         )

@@ -115,10 +115,10 @@ impl SearchPhase<KPuzzle> for KPuzzleSimpleMaskPhase {
         &self.phase_name
     }
 
-    fn first_solution(
+    fn solutions(
         &mut self,
         phase_search_pattern: &KPattern,
-    ) -> Result<Option<Alg>, SearchError> {
+    ) -> Result<Box<dyn Iterator<Item = Alg> + '_>, SearchError> {
         let Ok(masked_pattern) = apply_mask(phase_search_pattern, &self.mask) else {
             return Err(SearchError {
                 description: format!(
@@ -136,12 +136,12 @@ impl SearchPhase<KPuzzle> for KPuzzleSimpleMaskPhase {
                 .iter(),
         )?;
         // TODO: can we avoid a clone of `individual_search_options`?
-        Ok(self
-            .iterative_deepening_search
-            .search_with_default_individual_search_adaptations(
-                &masked_pattern,
-                self.individual_search_options.clone(),
-            )
-            .next())
+        Ok(Box::new(
+            self.iterative_deepening_search
+                .search_with_default_individual_search_adaptations(
+                    &masked_pattern,
+                    self.individual_search_options.clone(),
+                ),
+        ))
     }
 }

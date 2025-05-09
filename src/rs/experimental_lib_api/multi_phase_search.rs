@@ -73,7 +73,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> MultiPhaseSearch<TPuzzle> {
                 "phase_search_pattern: {:#?}",
                 phase_search_pattern
             ));
-            let Some(phase_solution) = phase.first_solution(&phase_search_pattern)? else {
+            let Some(phase_solution) = phase.solutions(&phase_search_pattern)?.next() else {
                 return Err(SearchError {
                     description: format!(
                         "Could not find a solution for phase: {}",

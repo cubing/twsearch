@@ -18,7 +18,8 @@ use crate::{
             },
             hash_prune_table::HashPruneTable,
             iterative_deepening::iterative_deepening_search::{
-                IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+                IndividualSearchOptions, IterativeDeepeningSearch,
+                IterativeDeepeningSearchConstructionOptions,
             },
             search_logger::SearchLogger,
         },
@@ -441,7 +442,11 @@ impl Default for Cube4x4x4Phase3Search {
                 "4×4×4 reduction with parity avoidance".to_owned(),
                 cube4x4x4_phase3_puzzle,
                 phase3_iterative_deepening_search,
-                Default::default(),
+                IndividualSearchOptions {
+                    // TODO: Use this max depth once `MultiPhaseSearch` can handle it.
+                    // max_depth_exclusive: Some(Depth(14)),
+                    ..Default::default()
+                },
             );
         Self {
             derived_puzzle_search_phase,
@@ -454,11 +459,11 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase3Search {
         self.derived_puzzle_search_phase.phase_name()
     }
 
-    fn first_solution(
+    fn solutions(
         &mut self,
         phase_search_pattern: &KPattern,
-    ) -> Result<Option<Alg>, SearchError> {
+    ) -> Result<Box<dyn Iterator<Item = Alg> + '_>, SearchError> {
         self.derived_puzzle_search_phase
-            .first_solution(phase_search_pattern)
+            .solutions(phase_search_pattern)
     }
 }

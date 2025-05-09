@@ -5,10 +5,7 @@ use cubing::{
 };
 
 use crate::{
-    _internal::{
-        errors::SearchError, puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
-        search::coordinates::pattern_deriver::PatternDeriver,
-    },
+    _internal::{errors::SearchError, search::coordinates::pattern_deriver::PatternDeriver},
     experimental_lib_api::SearchPhase,
     scramble::{
         puzzles::{
@@ -106,21 +103,25 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase4Search {
         "Reduced 3×3×3"
     }
 
-    fn first_solution(
+    fn solutions(
         &mut self,
-        phase_search_pattern: &<KPuzzle as SemiGroupActionPuzzle>::Pattern,
-    ) -> Result<Option<Alg>, SearchError> {
+        phase_search_pattern: &KPattern,
+    ) -> Result<Box<dyn Iterator<Item = Alg>>, SearchError> {
         let Some(pattern) = self
             .cube4x4x4_phase4_puzzle
             .derive_pattern(phase_search_pattern)
         else {
             return Err("Could not derive 3×3×3 pattern".into());
         };
-        Ok(Some(self.cube3x3x3_scramble_finder.solve_pattern(
+
+        // TODO: change `cube3x3x3_scramble_finder` to implement `SearchPhase`
+        let solution = self.cube3x3x3_scramble_finder.solve_pattern(
             &pattern,
             &TwoPhase3x3x3ScrambleOptions {
                 prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::None,
             },
-        )?))
+        )?;
+
+        Ok(Box::new(vec![solution].into_iter()))
     }
 }

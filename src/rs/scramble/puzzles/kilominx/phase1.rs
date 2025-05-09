@@ -40,10 +40,10 @@ impl SearchPhase<KPuzzle> for KilominxPhase1Search {
         "Move all back pieces out of the F face"
     }
 
-    fn first_solution(
+    fn solutions(
         &mut self,
         phase_search_pattern: &KPattern,
-    ) -> Result<Option<Alg>, SearchError> {
+    ) -> Result<Box<dyn Iterator<Item = Alg> + '_>, SearchError> {
         let back_pieces_owned = self.back_pieces.clone(); // TODO: avoid a clone
         let phase_search_pattern_owned = phase_search_pattern.clone();
         let filter_search_solution_fn =
@@ -64,16 +64,13 @@ impl SearchPhase<KPuzzle> for KilominxPhase1Search {
             };
         // Since the mask is bogus, we don't actually need to apply it to `phase_search_pattern`.
         let bogus_search_pattern = kilominx_phase1_bogus_mask_kpattern();
-        Ok(self
-            .search
-            .search(
-                bogus_search_pattern,
-                Default::default(),
-                IndividualSearchAdaptations {
-                    filter_search_solution_fn: Some(Arc::new(filter_search_solution_fn)),
-                },
-            )
-            .next())
+        Ok(Box::new(self.search.search(
+            bogus_search_pattern,
+            Default::default(),
+            IndividualSearchAdaptations {
+                filter_search_solution_fn: Some(Arc::new(filter_search_solution_fn)),
+            },
+        )))
     }
 }
 

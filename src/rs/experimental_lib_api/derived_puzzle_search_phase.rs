@@ -58,22 +58,22 @@ where
         &self.phase_name
     }
 
-    fn first_solution(
+    fn solutions(
         &mut self,
         phase_search_pattern: &TSourcePuzzle::Pattern,
-    ) -> Result<Option<Alg>, SearchError> {
+    ) -> Result<Box<dyn Iterator<Item = Alg> + '_>, SearchError> {
         let Some(search_pattern) = self.derived_puzzle.derive_pattern(phase_search_pattern) else {
             return Err(SearchError {
                 description: "Could not derive pattern for search.".to_owned(),
             });
         };
-        Ok(self
-            .iterative_deepening_search
-            .search_with_default_individual_search_adaptations(
-                &search_pattern,
-                self.individual_search_options.clone(),
-            )
-            .next())
+        Ok(Box::new(
+            self.iterative_deepening_search
+                .search_with_default_individual_search_adaptations(
+                    &search_pattern,
+                    self.individual_search_options.clone(),
+                ),
+        ))
     }
 }
 
@@ -85,23 +85,20 @@ where
     TDerivedPuzzle::Pattern: Send + Sync,
     TDerivedPuzzle::Transformation: Send + Sync,
 {
-    pub fn first_solution_with_individual_search_adaptations(
+    pub fn solutions_using_individual_search_adaptations(
         &mut self,
         phase_search_pattern: &TSourcePuzzle::Pattern,
         individual_search_adaptations: IndividualSearchAdaptations<TDerivedPuzzle>,
-    ) -> Result<Option<Alg>, SearchError> {
+    ) -> Result<Box<dyn Iterator<Item = Alg> + '_>, SearchError> {
         let Some(search_pattern) = self.derived_puzzle.derive_pattern(phase_search_pattern) else {
             return Err(SearchError {
                 description: "Could not derive pattern for search.".to_owned(),
             });
         };
-        Ok(self
-            .iterative_deepening_search
-            .search(
-                &search_pattern,
-                self.individual_search_options.clone(),
-                individual_search_adaptations,
-            )
-            .next())
+        Ok(Box::new(self.iterative_deepening_search.search(
+            &search_pattern,
+            self.individual_search_options.clone(),
+            individual_search_adaptations,
+        )))
     }
 }

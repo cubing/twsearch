@@ -200,10 +200,10 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase2Search {
         self.derived_puzzle_search_phase.phase_name()
     }
 
-    fn first_solution(
+    fn solutions(
         &mut self,
         phase_search_pattern: &KPattern,
-    ) -> Result<Option<Alg>, SearchError> {
+    ) -> Result<Box<dyn Iterator<Item = Alg> + '_>, SearchError> {
         let phase_search_pattern_owned = phase_search_pattern.clone();
         let filter_search_solution_fn =
             move |_pattern: &KPattern, solution_moves: &SolutionMoves| -> FilteringDecision {
@@ -219,7 +219,7 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase2Search {
                 }
             };
         self.derived_puzzle_search_phase
-            .first_solution_with_individual_search_adaptations(
+            .solutions_using_individual_search_adaptations(
                 phase_search_pattern,
                 IndividualSearchAdaptations {
                     filter_search_solution_fn: Some(Arc::new(filter_search_solution_fn)),

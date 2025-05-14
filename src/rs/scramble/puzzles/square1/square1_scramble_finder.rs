@@ -1,5 +1,8 @@
 use crate::{
-    _internal::search::filter::filtering_decision::FilteringDecision,
+    _internal::search::{
+        filter::filtering_decision::FilteringDecision,
+        iterative_deepening::individual_search::IndividualSearchOptions,
+    },
     scramble::{
         get_kpuzzle::GetKPuzzle,
         puzzles::square1::{
@@ -39,9 +42,7 @@ use crate::{
     },
     _internal::{
         errors::SearchError,
-        search::iterative_deepening::iterative_deepening_search::{
-            IndividualSearchOptions, IterativeDeepeningSearch,
-        },
+        search::iterative_deepening::iterative_deepening_search::IterativeDeepeningSearch,
     },
     scramble::{
         puzzles::square1::phase1::Square1Phase1Puzzle, scramble_search::move_list_from_vec,

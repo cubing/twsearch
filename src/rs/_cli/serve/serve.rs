@@ -8,11 +8,15 @@ use twsearch::_internal::{
         ServeCommandArgs,
     },
     errors::CommandError,
-    search::iterative_deepening::iterative_deepening_search::{
-        IndividualSearchOptions, IterativeDeepeningSearch,
-        IterativeDeepeningSearchConstructionOptions,
+    search::{
+        iterative_deepening::{
+            individual_search::IndividualSearchOptions,
+            iterative_deepening_search::{
+                IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+            },
+        },
+        search_logger::SearchLogger,
     },
-    search::search_logger::SearchLogger,
 };
 
 use std::sync::Arc;

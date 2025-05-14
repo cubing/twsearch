@@ -10,8 +10,9 @@ use crate::_internal::{
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
         filter::filtering_decision::FilteringDecision,
-        iterative_deepening::iterative_deepening_search::{
-            IndividualSearchOptions, IterativeDeepeningSearch,
+        iterative_deepening::{
+            individual_search::IndividualSearchOptions,
+            iterative_deepening_search::IterativeDeepeningSearch,
         },
         move_count::MoveCount,
         prune_table_trait::Depth,

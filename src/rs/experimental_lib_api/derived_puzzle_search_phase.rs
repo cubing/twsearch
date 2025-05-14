@@ -8,7 +8,8 @@ use crate::_internal::{
     search::{
         coordinates::pattern_deriver::DerivedPuzzle,
         iterative_deepening::{
-            iterative_deepening_search::{IndividualSearchOptions, IterativeDeepeningSearch},
+            individual_search::IndividualSearchOptions,
+            iterative_deepening_search::IterativeDeepeningSearch,
             search_adaptations::IndividualSearchAdaptations,
         },
     },

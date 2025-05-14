@@ -8,7 +8,8 @@ use crate::_internal::{
     search::{
         filter::filtering_decision::FilteringDecision,
         iterative_deepening::{
-            iterative_deepening_search::{IndividualSearchOptions, IterativeDeepeningSearch},
+            individual_search::IndividualSearchOptions,
+            iterative_deepening_search::IterativeDeepeningSearch,
             target_pattern_signature::check_target_pattern_basic_consistency,
         },
         mask_pattern::apply_mask,

@@ -7,9 +7,9 @@ use crate::_internal::{
     errors::SearchError,
     search::{
         iterative_deepening::{
+            individual_search::IndividualSearchOptions,
             iterative_deepening_search::{
-                IndividualSearchOptions, IterativeDeepeningSearch,
-                IterativeDeepeningSearchConstructionOptions,
+                IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
             },
             target_pattern_signature::check_target_pattern_basic_consistency,
         },

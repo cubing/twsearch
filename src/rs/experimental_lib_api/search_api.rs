@@ -6,9 +6,10 @@ use crate::_internal::{
     search::{
         iterative_deepening::{
             continuation_condition::ContinuationCondition,
+            individual_search::IndividualSearchOptions,
             iterative_deepening_search::{
-                IndividualSearchOptions, IterativeDeepeningSearch,
-                IterativeDeepeningSearchConstructionOptions, OwnedIterativeSearchCursor,
+                IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+                OwnedIterativeSearchCursor,
             },
             solution_moves::alg_to_moves,
         },

@@ -2,9 +2,8 @@ use cubing::alg::Move;
 use cubing::kpuzzle::{KPattern, KPatternData, KPuzzle};
 use serde::{Deserialize, Serialize};
 use twsearch::_internal::cli::args::{CustomGenerators, Generators};
-use twsearch::_internal::search::iterative_deepening::iterative_deepening_search::{
-    IndividualSearchOptions, IterativeDeepeningSearch,
-};
+use twsearch::_internal::search::iterative_deepening::individual_search::IndividualSearchOptions;
+use twsearch::_internal::search::iterative_deepening::iterative_deepening_search::IterativeDeepeningSearch;
 use twsearch::scramble::scramble_finder::free_memory_for_all_scramble_finders;
 use wasm_bindgen::prelude::*;
 

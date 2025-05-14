@@ -17,9 +17,11 @@ use crate::{
                 unenumerated_derived_pattern_puzzle::UnenumeratedDerivedPatternPuzzle,
             },
             hash_prune_table::HashPruneTable,
-            iterative_deepening::iterative_deepening_search::{
-                IndividualSearchOptions, IterativeDeepeningSearch,
-                IterativeDeepeningSearchConstructionOptions,
+            iterative_deepening::{
+                individual_search::IndividualSearchOptions,
+                iterative_deepening_search::{
+                    IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+                },
             },
             search_logger::SearchLogger,
         },

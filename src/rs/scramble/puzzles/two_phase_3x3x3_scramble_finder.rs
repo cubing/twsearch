@@ -12,9 +12,11 @@ use crate::{
         errors::SearchError,
         search::{
             filter::filtering_decision::FilteringDecision,
-            iterative_deepening::iterative_deepening_search::{
-                IndividualSearchOptions, IterativeDeepeningSearch,
-                IterativeDeepeningSearchConstructionOptions,
+            iterative_deepening::{
+                individual_search::IndividualSearchOptions,
+                iterative_deepening_search::{
+                    IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+                },
             },
             mask_pattern::apply_mask,
             move_count::MoveCount,

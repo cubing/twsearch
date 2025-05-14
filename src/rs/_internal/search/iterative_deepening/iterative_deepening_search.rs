@@ -32,6 +32,7 @@ use super::{
         IndividualSearchAdaptations, StoredSearchAdaptations,
         StoredSearchAdaptationsWithoutPruneTable,
     },
+    solution_moves::SolutionMoves,
 };
 
 // TODO: right now we return 0 solutions if we blow past this, should we return an explicit error,
@@ -44,56 +45,6 @@ enum SearchRecursionResult {
     ContinueSearchingDefault,
     ContinueSearchingExcludingCurrentMoveClass,
     FoundSolution(Alg),
-}
-
-struct SolutionPreviousMoves<'a> {
-    latest_move: &'a Move,
-    previous_moves: &'a SolutionMoves<'a>,
-}
-
-#[derive(Clone)]
-pub struct SolutionMoves<'a>(Option<&'a SolutionPreviousMoves<'a>>);
-
-impl<'a> From<&SolutionMoves<'a>> for Alg {
-    fn from(value: &SolutionMoves<'a>) -> Self {
-        let nodes = value.snapshot_alg_nodes();
-        Alg { nodes }
-    }
-}
-
-impl SolutionMoves<'_> {
-    fn snapshot_alg_nodes(&self) -> Vec<AlgNode> {
-        match self.0 {
-            Some(solution_previous_moves) => {
-                let mut nodes = solution_previous_moves.previous_moves.snapshot_alg_nodes();
-                nodes.push(cubing::alg::AlgNode::MoveNode(
-                    solution_previous_moves.latest_move.clone(),
-                ));
-                nodes
-            }
-            None => vec![],
-        }
-    }
-
-    pub fn reverse_move_iter(&self) -> SolutionMovesReverseIterator {
-        SolutionMovesReverseIterator {
-            solution_moves: self,
-        }
-    }
-}
-
-pub struct SolutionMovesReverseIterator<'a> {
-    solution_moves: &'a SolutionMoves<'a>,
-}
-
-impl<'a> Iterator for SolutionMovesReverseIterator<'a> {
-    type Item = &'a Move;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let solution_previous_moves = self.solution_moves.0?;
-        self.solution_moves = solution_previous_moves.previous_moves;
-        Some(solution_previous_moves.latest_move)
-    }
 }
 
 pub struct IterativeSearchCursor<'a, TPuzzle: SemiGroupActionPuzzle = KPuzzle> {
@@ -595,7 +546,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                 &mut pattern_stack,
                 initial_state,
                 remaining_depth,
-                SolutionMoves(None),
+                SolutionMoves::default(),
                 initial_depth_continuation_condition,
             );
             individual_search_data
@@ -718,10 +669,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                     pattern_stack,
                     next_state,
                     remaining_depth - Depth(1),
-                    SolutionMoves(Some(&SolutionPreviousMoves {
-                        latest_move: &move_transformation_info.r#move,
-                        previous_moves: &solution_moves,
-                    })),
+                    (&solution_moves.push(&move_transformation_info.r#move)).into(),
                     recursive_continuation_condition,
                 );
                 // eprintln!("←←←←←←←←");

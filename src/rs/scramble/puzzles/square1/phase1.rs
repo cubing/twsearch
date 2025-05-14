@@ -19,8 +19,8 @@ use crate::{
             },
             filter::filtering_decision::FilteringDecision,
             iterative_deepening::{
-                iterative_deepening_search::SolutionMoves,
                 search_adaptations::{IndividualSearchAdaptations, StoredSearchAdaptations},
+                solution_moves::SolutionMoves,
             },
             mask_pattern::apply_mask,
             prune_table_trait::Depth,

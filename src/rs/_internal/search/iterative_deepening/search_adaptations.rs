@@ -6,7 +6,7 @@ use crate::_internal::{
     search::{filter::filtering_decision::FilteringDecision, prune_table_trait::Depth},
 };
 
-use super::{super::prune_table_trait::PruneTable, iterative_deepening_search::SolutionMoves};
+use super::{super::prune_table_trait::PruneTable, solution_moves::SolutionMoves};
 
 // TODO: get rid of the need for this
 #[derive(Clone)]

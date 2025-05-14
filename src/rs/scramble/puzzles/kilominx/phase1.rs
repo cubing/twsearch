@@ -12,8 +12,9 @@ use crate::{
             blank_prune_table::BlankPruneTable,
             filter::filtering_decision::FilteringDecision,
             iterative_deepening::{
-                iterative_deepening_search::{IterativeDeepeningSearch, SolutionMoves},
+                iterative_deepening_search::IterativeDeepeningSearch,
                 search_adaptations::{IndividualSearchAdaptations, StoredSearchAdaptations},
+                solution_moves::SolutionMoves,
             },
         },
     },

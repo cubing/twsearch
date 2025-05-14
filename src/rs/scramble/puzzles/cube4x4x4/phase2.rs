@@ -19,9 +19,9 @@ use crate::{
             iterative_deepening::{
                 iterative_deepening_search::{
                     IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
-                    SolutionMoves,
                 },
                 search_adaptations::IndividualSearchAdaptations,
+                solution_moves::SolutionMoves,
                 target_pattern_signature::check_target_pattern_consistency_single_iter,
             },
             mask_pattern::apply_mask,

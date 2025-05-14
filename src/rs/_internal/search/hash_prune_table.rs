@@ -11,7 +11,7 @@ use crate::_internal::puzzle_traits::puzzle_traits::{
 use crate::whole_number_newtype;
 
 use super::iterative_deepening::iterative_deepening_search::ImmutableSearchData;
-use super::iterative_deepening::search_adaptations::StoredSearchAdaptationsWithoutPruneTable;
+use super::iterative_deepening::search_adaptations::StoredSearchAdaptations;
 use super::prune_table_trait::{Depth, LegacyConstructablePruneTable, PruneTable};
 use super::recursive_work_tracker::RecursiveWorkTracker;
 use super::search_logger::SearchLogger;
@@ -31,7 +31,7 @@ const DEFAULT_MIN_PRUNE_TABLE_SIZE: usize = 1 << 20;
 struct HashPruneTableImmutableData<TPuzzle: SemiGroupActionPuzzle> {
     // TODO
     immutable_search_data: Arc<ImmutableSearchData<TPuzzle>>,
-    search_adaptations_without_prune_table: StoredSearchAdaptationsWithoutPruneTable<TPuzzle>,
+    search_adaptations_without_prune_table: StoredSearchAdaptations<TPuzzle>,
 }
 struct HashPruneTableMutableData<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> {
     tpuzzle: TPuzzle,
@@ -167,7 +167,7 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> LegacyConstructable
         search_logger: Arc<SearchLogger>,
         min_size: Option<usize>,
         max_size: Option<usize>,
-        search_adaptations_without_prune_table: StoredSearchAdaptationsWithoutPruneTable<TPuzzle>,
+        search_adaptations_without_prune_table: StoredSearchAdaptations<TPuzzle>,
     ) -> Self {
         let min_size = match min_size {
             Some(min_size) => min_size.next_power_of_two(),

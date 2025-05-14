@@ -6,21 +6,11 @@ use crate::_internal::{
     search::{filter::filtering_decision::FilteringDecision, prune_table_trait::Depth},
 };
 
-use super::{super::prune_table_trait::PruneTable, solution_moves::SolutionMoves};
+use super::solution_moves::SolutionMoves;
 
-// TODO: get rid of the need for this
 #[derive(Clone)]
 #[allow(clippy::type_complexity)] // TODO
-pub struct StoredSearchAdaptationsWithoutPruneTable<TPuzzle: SemiGroupActionPuzzle> {
-    pub filter_move_transformation_fn:
-        Option<Arc<dyn Fn(&MoveTransformationInfo<TPuzzle>, Depth) -> FilteringDecision>>,
-    pub filter_pattern_fn: Option<Arc<dyn Fn(&TPuzzle::Pattern) -> FilteringDecision>>,
-}
-
-#[allow(clippy::type_complexity)] // TODO
 pub struct StoredSearchAdaptations<TPuzzle: SemiGroupActionPuzzle> {
-    // We require a prune table to avoid accidentally constructing a super slow search. The caller can explicitly pass in a useless prune table if they want.
-    pub prune_table: Box<dyn PruneTable<TPuzzle>>,
     // TODO: `HashPruneTable` doesn't call `filter_move_transformation_fn`.
     pub filter_move_transformation_fn:
         Option<Arc<dyn Fn(&MoveTransformationInfo<TPuzzle>, Depth) -> FilteringDecision>>,
@@ -59,17 +49,6 @@ impl<TPuzzle: SemiGroupActionPuzzle> StoredSearchAdaptations<TPuzzle> {
         }
     }
 
-    pub fn filter_pattern(&self, candidate_pattern: &TPuzzle::Pattern) -> FilteringDecision {
-        if let Some(filter_pattern_fn) = &self.filter_pattern_fn {
-            filter_pattern_fn(candidate_pattern)
-        } else {
-            FilteringDecision::Accept
-        }
-    }
-}
-
-impl<TPuzzle: SemiGroupActionPuzzle> StoredSearchAdaptationsWithoutPruneTable<TPuzzle> {
-    // TODO: Remove this implementation
     pub fn filter_pattern(&self, candidate_pattern: &TPuzzle::Pattern) -> FilteringDecision {
         if let Some(filter_pattern_fn) = &self.filter_pattern_fn {
             filter_pattern_fn(candidate_pattern)

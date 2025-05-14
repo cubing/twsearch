@@ -12,8 +12,9 @@ use crate::_internal::{
     errors::SearchError,
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
-        hash_prune_table::HashPruneTable, pattern_stack::PatternStack,
-        prune_table_trait::LegacyConstructablePruneTable,
+        hash_prune_table::HashPruneTable,
+        pattern_stack::PatternStack,
+        prune_table_trait::{LegacyConstructablePruneTable, PruneTable},
     },
 };
 use cubing::{
@@ -25,10 +26,7 @@ use super::{
     super::{prune_table_trait::Depth, search_logger::SearchLogger},
     continuation_condition::ContinuationCondition,
     individual_search::{IndividualSearchData, IndividualSearchOptions},
-    search_adaptations::{
-        IndividualSearchAdaptations, StoredSearchAdaptations,
-        StoredSearchAdaptationsWithoutPruneTable,
-    },
+    search_adaptations::{IndividualSearchAdaptations, StoredSearchAdaptations},
     solution_moves::{alg_to_moves, SolutionMoves},
 };
 
@@ -80,6 +78,8 @@ pub struct ImmutableSearchData<TPuzzle: SemiGroupActionPuzzle> {
 pub struct IterativeDeepeningSearch<TPuzzle: SemiGroupActionPuzzle = KPuzzle> {
     pub immutable_search_data: Arc<ImmutableSearchData<TPuzzle>>,
     pub stored_search_adaptations: StoredSearchAdaptations<TPuzzle>,
+    // We require a prune table to avoid accidentally constructing a super slow search. The caller can explicitly pass in a useless prune table if they want.
+    pub prune_table: Box<dyn PruneTable<TPuzzle>>,
 }
 
 pub struct IterativeDeepeningSearchConstructionOptions {
@@ -104,6 +104,11 @@ impl Default for IterativeDeepeningSearchConstructionOptions {
     }
 }
 
+// TODO: this is needed because the struct directly owns the prune table.
+unsafe impl<TPuzzle: SemiGroupActionPuzzle> Send for IterativeDeepeningSearch<TPuzzle> {}
+// TODO: this is needed because the struct directly owns the prune table.
+unsafe impl<TPuzzle: SemiGroupActionPuzzle> Sync for IterativeDeepeningSearch<TPuzzle> {}
+
 impl IterativeDeepeningSearch<KPuzzle> {
     // Shim for the old KPuzzle
     /// Constructs and populates `search_adaptations.prune_table` if it is not populated.
@@ -112,9 +117,7 @@ impl IterativeDeepeningSearch<KPuzzle> {
         generator_moves: Vec<Move>, // TODO: turn this back into `Generators`
         target_patterns: Vec<KPattern>,
         options: IterativeDeepeningSearchConstructionOptions,
-        search_adaptations_without_prune_table: Option<
-            StoredSearchAdaptationsWithoutPruneTable<KPuzzle>,
-        >,
+        search_adaptations_without_prune_table: Option<StoredSearchAdaptations<KPuzzle>>,
     ) -> Result<Self, SearchError> {
         Self::try_new_prune_table_construction_shim::<HashPruneTable<KPuzzle>>(
             tpuzzle,
@@ -134,9 +137,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         generator_moves: Vec<Move>, // TODO: turn this back into `Generators`
         target_patterns: Vec<TPuzzle::Pattern>,
         options: IterativeDeepeningSearchConstructionOptions,
-        search_adaptations_without_prune_table: Option<
-            StoredSearchAdaptationsWithoutPruneTable<TPuzzle>,
-        >,
+        stored_search_adaptations: Option<StoredSearchAdaptations<TPuzzle>>,
     ) -> Result<Self, SearchError> {
         let search_logger = options.search_logger.clone();
         let min_prune_table_size = options.min_prune_table_size;
@@ -147,9 +148,9 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             target_patterns,
             options,
         )?;
-        let search_adaptations_without_prune_table = match search_adaptations_without_prune_table {
+        let search_adaptations_without_prune_table = match stored_search_adaptations {
             Some(search_adaptations_without_prune_table) => search_adaptations_without_prune_table,
-            None => StoredSearchAdaptationsWithoutPruneTable {
+            None => StoredSearchAdaptations {
                 filter_move_transformation_fn: None,
                 filter_pattern_fn: None,
             },
@@ -163,13 +164,12 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             search_adaptations_without_prune_table.clone(),
         ));
         let search_adaptations = StoredSearchAdaptations {
-            prune_table,
             filter_move_transformation_fn: search_adaptations_without_prune_table
                 .filter_move_transformation_fn,
             filter_pattern_fn: search_adaptations_without_prune_table.filter_pattern_fn,
         };
 
-        Self::try_new_internal(immutable_search_data, search_adaptations)
+        Self::try_new_internal(immutable_search_data, search_adaptations, prune_table)
     }
 
     pub fn legacy_try_new(
@@ -178,6 +178,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         target_patterns: Vec<TPuzzle::Pattern>,
         options: IterativeDeepeningSearchConstructionOptions,
         search_adaptations: StoredSearchAdaptations<TPuzzle>,
+        prune_table: Box<dyn PruneTable<TPuzzle>>,
     ) -> Result<Self, SearchError> {
         let immutable_search_data = Self::legacy_construct_immutable_search_data(
             tpuzzle,
@@ -185,7 +186,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             target_patterns,
             options,
         )?;
-        Self::try_new_internal(immutable_search_data, search_adaptations)
+        Self::try_new_internal(immutable_search_data, search_adaptations, prune_table)
     }
 
     fn legacy_construct_immutable_search_data(
@@ -223,10 +224,12 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
     fn try_new_internal(
         immutable_search_data: Arc<ImmutableSearchData<TPuzzle>>,
         search_adaptations: StoredSearchAdaptations<TPuzzle>,
+        prune_table: Box<dyn PruneTable<TPuzzle>>,
     ) -> Result<Self, SearchError> {
         Ok(Self {
             immutable_search_data,
             stored_search_adaptations: search_adaptations,
+            prune_table,
         })
     }
 
@@ -341,14 +344,12 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                 .search_logger
                 .write_info("----------------");
 
-            self.stored_search_adaptations
-                .prune_table
-                .extend_for_search_depth(
-                    remaining_depth,
-                    individual_search_data
-                        .recursive_work_tracker
-                        .estimate_next_level_num_recursive_calls(),
-                );
+            self.prune_table.extend_for_search_depth(
+                remaining_depth,
+                individual_search_data
+                    .recursive_work_tracker
+                    .estimate_next_level_num_recursive_calls(),
+            );
             individual_search_data
                 .recursive_work_tracker
                 .start_depth(remaining_depth, Some("Starting search…"));
@@ -425,10 +426,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                 continuation_condition,
             );
         }
-        let prune_table_depth = self
-            .stored_search_adaptations
-            .prune_table
-            .lookup(current_pattern);
+        let prune_table_depth = self.prune_table.lookup(current_pattern);
         if prune_table_depth > remaining_depth + Depth(1) {
             return SearchRecursionResult::ContinueSearchingExcludingCurrentMoveClass;
         }

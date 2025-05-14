@@ -118,19 +118,26 @@ fn filter_search_solution(
 
 // TODO: we currently take `square1_phase1_puzzle` as an argument to keep construction DRY. There's probably a better way to do this.
 pub(crate) fn square1_phase1_stored_search_adaptations(
-    square1_phase1_puzzle: GraphEnumeratedDerivedPatternPuzzle<
-        KPuzzle,
-        Square1Phase1PatternDeriver,
-    >,
 ) -> StoredSearchAdaptations<Square1Phase1Puzzle> {
-    let prune_table = Box::new(GraphEnumeratedDerivedPatternPuzzlePruneTable::new(
-        square1_phase1_puzzle,
-    ));
     StoredSearchAdaptations {
-        prune_table,
         filter_move_transformation_fn: Some(Arc::new(Box::new(filter_move_transformation))),
         filter_pattern_fn: None,
     }
+}
+
+pub(crate) type Square1Phase2PruneTable =
+    GraphEnumeratedDerivedPatternPuzzlePruneTable<KPuzzle, Square1Phase1PatternDeriver>;
+
+// TODO: we currently take `square1_phase1_puzzle` as an argument to keep construction DRY. There's probably a better way to do this.
+pub(crate) fn square1_phase1_prune_table(
+    square1_phase1_puzzle: &GraphEnumeratedDerivedPatternPuzzle<
+        KPuzzle,
+        Square1Phase1PatternDeriver,
+    >,
+) -> Box<Square1Phase2PruneTable> {
+    Box::new(GraphEnumeratedDerivedPatternPuzzlePruneTable::new(
+        square1_phase1_puzzle.clone(),
+    ))
 }
 
 // TODO: we currently take `square1_phase1_puzzle` as an argument to keep construction DRY. There's probably a better way to do this.

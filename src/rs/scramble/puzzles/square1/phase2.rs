@@ -637,12 +637,16 @@ impl PruneTable<Square1Phase2Puzzle> for Square1Phase2PruneTable {
 
 // TODO: we currently take `square1_phase1_puzzle` as an argument to keep construction DRY. There's probably a better way to do this.
 pub(crate) fn square1_phase2_stored_search_adaptations(
-    square1_phase2_puzzle: Square1Phase2Puzzle,
 ) -> StoredSearchAdaptations<Square1Phase2Puzzle> {
-    let prune_table = Box::new(Square1Phase2PruneTable::new(square1_phase2_puzzle));
     StoredSearchAdaptations {
-        prune_table,
         filter_move_transformation_fn: None,
         filter_pattern_fn: None,
     }
+}
+
+// TODO: we currently take `square1_phase1_puzzle` as an argument to keep construction DRY. There's probably a better way to do this.
+pub(crate) fn square1_phase2_prune_table(
+    square1_phase2_puzzle: &Square1Phase2Puzzle,
+) -> Box<Square1Phase2PruneTable> {
+    Box::new(Square1Phase2PruneTable::new(square1_phase2_puzzle.clone()))
 }

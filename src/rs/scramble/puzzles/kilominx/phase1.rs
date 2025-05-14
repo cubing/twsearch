@@ -85,10 +85,10 @@ impl Default for KilominxPhase1Search {
             vec![kilominx_phase1_bogus_mask_kpattern().clone()],
             Default::default(),
             StoredSearchAdaptations {
-                prune_table: Box::new(BlankPruneTable {}),
                 filter_move_transformation_fn: None,
                 filter_pattern_fn: None,
             },
+            Box::new(BlankPruneTable {}),
         )
         .unwrap();
         Self {

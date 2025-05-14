@@ -27,8 +27,13 @@ use crate::{
 use super::{
     super::definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
     depth_filtering::square1_depth_filtering_search_adaptations_without_prune_table,
-    phase1::{square1_phase1_stored_search_adaptations, Square1Phase1PatternDeriver},
-    phase2::{square1_phase2_stored_search_adaptations, Square1Phase2Puzzle},
+    phase1::{
+        square1_phase1_prune_table, square1_phase1_stored_search_adaptations,
+        Square1Phase1PatternDeriver,
+    },
+    phase2::{
+        square1_phase2_prune_table, square1_phase2_stored_search_adaptations, Square1Phase2Puzzle,
+    },
 };
 use cubing::alg::{parse_move, AlgBuilder, AlgNode, Grouping, Move};
 use cubing::kpuzzle::KPuzzle;
@@ -92,7 +97,8 @@ impl Default for Square1ScrambleFinder {
                 IterativeDeepeningSearchConstructionOptions {
                     ..Default::default()
                 },
-                square1_phase1_stored_search_adaptations(square1_phase1_puzzle.clone()),
+                square1_phase1_stored_search_adaptations(),
+                square1_phase1_prune_table(&square1_phase1_puzzle),
             )
             .unwrap();
 
@@ -109,7 +115,8 @@ impl Default for Square1ScrambleFinder {
                 IterativeDeepeningSearchConstructionOptions {
                     ..Default::default()
                 },
-                square1_phase2_stored_search_adaptations(square1_phase2_puzzle.clone()),
+                square1_phase2_stored_search_adaptations(),
+                square1_phase2_prune_table(&square1_phase2_puzzle),
             )
             .unwrap();
 

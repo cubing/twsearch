@@ -62,3 +62,19 @@ impl<'a> Iterator for SolutionMovesReverseIterator<'a> {
         Some(solution_previous_moves.latest_move)
     }
 }
+
+pub(crate) fn alg_from_moves(moves: &[Move]) -> Alg {
+    let nodes = moves.iter().map(|m| AlgNode::MoveNode(m.clone())).collect();
+    Alg { nodes }
+}
+
+pub(crate) fn alg_to_moves(alg: &Alg) -> Option<Vec<Move>> {
+    let mut moves: Vec<Move> = vec![];
+    for alg_node in &alg.nodes {
+        let AlgNode::MoveNode(r#move) = alg_node else {
+            return None;
+        };
+        moves.push(r#move.clone());
+    }
+    Some(moves)
+}

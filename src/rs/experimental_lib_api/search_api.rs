@@ -4,9 +4,13 @@ use crate::_internal::{
     cli::args::{SearchCommandOptionalArgs, VerbosityLevel},
     errors::{ArgumentError, CommandError},
     search::{
-        iterative_deepening::iterative_deepening_search::{
-            alg_to_moves, ContinuationCondition, IndividualSearchOptions, IterativeDeepeningSearch,
-            IterativeDeepeningSearchConstructionOptions, OwnedIterativeSearchCursor,
+        iterative_deepening::{
+            continuation_condition::ContinuationCondition,
+            iterative_deepening_search::{
+                IndividualSearchOptions, IterativeDeepeningSearch,
+                IterativeDeepeningSearchConstructionOptions, OwnedIterativeSearchCursor,
+            },
+            solution_moves::alg_to_moves,
         },
         search_logger::SearchLogger,
     },

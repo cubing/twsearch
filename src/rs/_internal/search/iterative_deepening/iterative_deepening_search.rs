@@ -1,7 +1,7 @@
 use std::{cmp::max, fmt::Debug, sync::Arc};
 
 use cubing::{
-    alg::{Alg, AlgNode, Move},
+    alg::{Alg, Move},
     kpuzzle::{KPattern, KPuzzle},
 };
 use serde::{Deserialize, Serialize};
@@ -28,11 +28,12 @@ use super::{
         prune_table_trait::Depth, recursive_work_tracker::RecursiveWorkTracker,
         search_logger::SearchLogger,
     },
+    continuation_condition::ContinuationCondition,
     search_adaptations::{
         IndividualSearchAdaptations, StoredSearchAdaptations,
         StoredSearchAdaptationsWithoutPruneTable,
     },
-    solution_moves::SolutionMoves,
+    solution_moves::{alg_to_moves, SolutionMoves},
 };
 
 // TODO: right now we return 0 solutions if we blow past this, should we return an explicit error,
@@ -72,70 +73,6 @@ impl<TPuzzle: SemiGroupActionPuzzle> Iterator for OwnedIterativeSearchCursor<TPu
     fn next(&mut self) -> Option<Alg> {
         self.search
             .search_internal(&mut self.individual_search_data)
-    }
-}
-
-// TODO: also handle "before" cases.
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
-pub enum ContinuationCondition {
-    None,
-    // An empty `Vec` in the base case means a solution check shall be performed.
-    At(Vec<Move>),
-    // An empty `Vec` in the base case means a solution check shall not be performed.
-    After(Vec<Move>),
-}
-
-impl Default for ContinuationCondition {
-    fn default() -> Self {
-        Self::None
-    }
-}
-
-impl ContinuationCondition {
-    fn min_depth(&self) -> Depth {
-        match self {
-            ContinuationCondition::None => Depth(0),
-            ContinuationCondition::At(moves) => Depth(moves.len()),
-            ContinuationCondition::After(moves) => Depth(moves.len()),
-        }
-    }
-}
-
-pub(crate) fn alg_from_moves(moves: &[Move]) -> Alg {
-    let nodes = moves.iter().map(|m| AlgNode::MoveNode(m.clone())).collect();
-    Alg { nodes }
-}
-
-pub(crate) fn alg_to_moves(alg: &Alg) -> Option<Vec<Move>> {
-    let mut moves: Vec<Move> = vec![];
-    for alg_node in &alg.nodes {
-        let AlgNode::MoveNode(r#move) = alg_node else {
-            return None;
-        };
-        moves.push(r#move.clone());
-    }
-    Some(moves)
-}
-
-impl Debug for ContinuationCondition {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            ContinuationCondition::None => write!(f, "ContinuationCondition::None"),
-            ContinuationCondition::At(moves) => {
-                write!(
-                    f,
-                    "ContinuationCondition::At(parse_alg!({:?}))",
-                    alg_from_moves(moves).to_string()
-                )
-            }
-            ContinuationCondition::After(moves) => {
-                write!(
-                    f,
-                    "ContinuationCondition::After(parse_alg!({:?}))",
-                    alg_from_moves(moves).to_string()
-                )
-            }
-        }
     }
 }
 
@@ -643,10 +580,9 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                         &continuation_condition,
                     ));
                 }
-                let Some(recursive_continuation_condition) = self.recursive_continuation_condition(
-                    &continuation_condition,
-                    &move_transformation_info.r#move,
-                ) else {
+                let Some(recursive_continuation_condition) =
+                    continuation_condition.recurse(&move_transformation_info.r#move)
+                else {
                     continue;
                 };
                 // If we made it here, we're off the starting blocks.
@@ -687,46 +623,6 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             }
         }
         SearchRecursionResult::ContinueSearchingDefault
-    }
-
-    /// A return value of `None` indicates to avoid recursing.
-    /// A return value of `Some(…)` indicates to recurse using the given (potential) move.
-    fn recursive_continuation_condition(
-        &self,
-        continuation_condition: &ContinuationCondition,
-        potential_move: &Move,
-    ) -> Option<ContinuationCondition> {
-        match continuation_condition {
-            ContinuationCondition::None => Some(ContinuationCondition::None),
-            ContinuationCondition::At(moves) => {
-                if let Some((first, rest)) = moves.split_first() {
-                    if first == potential_move {
-                        // eprintln!("Move: {}", first);
-                        Some(ContinuationCondition::At(rest.to_vec()))
-                    } else {
-                        // eprintln!("skippin' {}", potential_move);
-                        None
-                    }
-                } else {
-                    // eprintln!("at empty {}", potential_move);
-                    Some(ContinuationCondition::None)
-                }
-            }
-            ContinuationCondition::After(moves) => {
-                if let Some((first, rest)) = moves.split_first() {
-                    if first == potential_move {
-                        // eprintln!("Move: {}", first);
-                        Some(ContinuationCondition::After(rest.to_vec()))
-                    } else {
-                        // eprintln!("skippin' {}", potential_move);
-                        None
-                    }
-                } else {
-                    // eprintln!("after empty {}", potential_move);
-                    Some(ContinuationCondition::None)
-                }
-            }
-        }
     }
 
     // Returns `None` if the moves cannot be applied, else returns the result of applying the moves.

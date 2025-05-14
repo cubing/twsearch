@@ -12,9 +12,9 @@ use crate::_internal::{
     errors::SearchError,
     puzzle_traits::puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
     search::{
-        hash_prune_table::HashPruneTable,
+        hash_prune_table::{HashPruneTable, HashPruneTableSizeBounds},
         pattern_stack::PatternStack,
-        prune_table_trait::{LegacyConstructablePruneTable, PruneTable, PruneTableSizeBounds},
+        prune_table_trait::PruneTable,
     },
 };
 use cubing::{
@@ -163,13 +163,13 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle + 'static>
     pub fn new_with_hash_prune_table<T: Into<Arc<ImmutableSearchData<TPuzzle>>>>(
         immutable_search_data: T,
         stored_search_adaptations: StoredSearchAdaptations<TPuzzle>,
-        prune_table_size_bounds: PruneTableSizeBounds,
+        hash_prune_table_size_bounds: HashPruneTableSizeBounds,
     ) -> IterativeDeepeningSearch<TPuzzle> {
         let immutable_search_data = immutable_search_data.into();
         let prune_table = Box::new(HashPruneTable::new(
             immutable_search_data.clone(),
             stored_search_adaptations.clone(),
-            prune_table_size_bounds,
+            hash_prune_table_size_bounds,
         ));
         Self::new(
             immutable_search_data,

@@ -15,6 +15,7 @@ use crate::{
                 unenumerated_derived_pattern_puzzle::UnenumeratedDerivedPatternPuzzle,
             },
             filter::filtering_decision::FilteringDecision,
+            hash_prune_table::HashPruneTableSizeBounds,
             iterative_deepening::{
                 iterative_deepening_search::{
                     ImmutableSearchData, ImmutableSearchDataConstructionOptions,
@@ -25,7 +26,6 @@ use crate::{
                 target_pattern_signature::check_target_pattern_consistency_single_iter,
             },
             mask_pattern::apply_mask,
-            prune_table_trait::PruneTableSizeBounds,
             search_logger::SearchLogger,
         },
     },
@@ -185,7 +185,7 @@ pub(crate) fn phase2_search(search_logger: Arc<SearchLogger>) -> Cube4x4x4Phase2
             )
             .unwrap(),
             StoredSearchAdaptations::default(),
-            PruneTableSizeBounds::default(),
+            HashPruneTableSizeBounds::default(),
         );
     Cube4x4x4Phase2Search {
         derived_puzzle_search_phase: DerivedPuzzleSearchPhase::new(

@@ -6,6 +6,7 @@ use cubing::{
 use crate::_internal::{
     errors::SearchError,
     search::{
+        hash_prune_table::HashPruneTableSizeBounds,
         iterative_deepening::{
             individual_search::IndividualSearchOptions,
             iterative_deepening_search::{
@@ -16,7 +17,6 @@ use crate::_internal::{
             target_pattern_signature::check_target_pattern_basic_consistency,
         },
         mask_pattern::apply_mask,
-        prune_table_trait::PruneTableSizeBounds,
         search_logger::SearchLogger,
     },
 };
@@ -88,7 +88,7 @@ impl KPuzzleSimpleMaskPhase {
             IterativeDeepeningSearch::<KPuzzle>::new_with_hash_prune_table(
                 immutable_search_data,
                 StoredSearchAdaptations::default(),
-                PruneTableSizeBounds::default(),
+                HashPruneTableSizeBounds::default(),
             );
         Ok(Self {
             phase_name,

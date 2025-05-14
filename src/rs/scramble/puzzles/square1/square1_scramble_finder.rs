@@ -1,11 +1,11 @@
 use crate::{
     _internal::search::{
         filter::filtering_decision::FilteringDecision,
+        hash_prune_table::HashPruneTableSizeBounds,
         iterative_deepening::{
             individual_search::IndividualSearchOptions,
             iterative_deepening_search::ImmutableSearchData,
         },
-        prune_table_trait::PruneTableSizeBounds,
     },
     scramble::{
         get_kpuzzle::GetKPuzzle,
@@ -137,7 +137,7 @@ impl Default for Square1ScrambleFinder {
                     )
                     .unwrap(),
                     square1_depth_filtering_search_adaptations(),
-                    PruneTableSizeBounds::default(),
+                    HashPruneTableSizeBounds::default(),
                 );
             FilteredSearch::<KPuzzle>::new(iterative_deepening_search)
         };

@@ -12,6 +12,7 @@ use crate::{
         errors::SearchError,
         search::{
             filter::filtering_decision::FilteringDecision,
+            hash_prune_table::HashPruneTableSizeBounds,
             iterative_deepening::{
                 individual_search::IndividualSearchOptions,
                 iterative_deepening_search::{
@@ -22,7 +23,6 @@ use crate::{
             },
             mask_pattern::apply_mask,
             move_count::MoveCount,
-            prune_table_trait::PruneTableSizeBounds,
             search_logger::SearchLogger,
         },
     },
@@ -290,7 +290,7 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
             )
             .unwrap(),
             StoredSearchAdaptations::default(),
-            PruneTableSizeBounds::default(),
+            HashPruneTableSizeBounds::default(),
         );
 
         let phase1_target_pattern = cube3x3x3_g1_target_kpattern().clone();
@@ -309,7 +309,7 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
             )
             .unwrap(),
             StoredSearchAdaptations::default(),
-            PruneTableSizeBounds {
+            HashPruneTableSizeBounds {
                 min_size: Some(32),
                 ..Default::default()
             },
@@ -325,7 +325,7 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
             )
             .unwrap(),
             StoredSearchAdaptations::default(),
-            PruneTableSizeBounds {
+            HashPruneTableSizeBounds {
                 min_size: Some(1 << 24),
                 ..Default::default()
             },

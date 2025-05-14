@@ -5,6 +5,7 @@ use crate::_internal::{
     cli::args::{SearchCommandOptionalArgs, VerbosityLevel},
     errors::{ArgumentError, CommandError},
     search::{
+        hash_prune_table::HashPruneTableSizeBounds,
         iterative_deepening::{
             continuation_condition::ContinuationCondition,
             individual_search::IndividualSearchOptions,
@@ -15,7 +16,6 @@ use crate::_internal::{
             search_adaptations::StoredSearchAdaptations,
             solution_moves::alg_to_moves,
         },
-        prune_table_trait::PruneTableSizeBounds,
         search_logger::SearchLogger,
     },
 };
@@ -88,7 +88,7 @@ pub fn search(
             },
         )?,
         StoredSearchAdaptations::default(),
-        PruneTableSizeBounds::default(),
+        HashPruneTableSizeBounds::default(),
     );
 
     let root_continuation_condition = {

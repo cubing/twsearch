@@ -7,6 +7,7 @@ use crate::{
     _internal::{
         canonical_fsm::canonical_fsm::CanonicalFSMConstructionOptions,
         search::{
+            hash_prune_table::HashPruneTableSizeBounds,
             iterative_deepening::{
                 individual_search::IndividualSearchOptions,
                 iterative_deepening_search::{
@@ -16,7 +17,7 @@ use crate::{
                 search_adaptations::StoredSearchAdaptations,
             },
             move_count::MoveCount,
-            prune_table_trait::{Depth, PruneTableSizeBounds},
+            prune_table_trait::Depth,
         },
     },
     scramble::{
@@ -43,7 +44,7 @@ pub fn scramble_baby_fto() -> Alg {
             )
             .unwrap(),
             StoredSearchAdaptations::default(),
-            PruneTableSizeBounds::default(),
+            HashPruneTableSizeBounds::default(),
         ));
 
     let generator_moves = move_list_from_vec(vec!["U", "L", "F", "R", "BR"]);
@@ -64,7 +65,7 @@ pub fn scramble_baby_fto() -> Alg {
         )
         .unwrap(),
         StoredSearchAdaptations::default(),
-        PruneTableSizeBounds::default(),
+        HashPruneTableSizeBounds::default(),
     ));
 
     loop {

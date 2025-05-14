@@ -8,13 +8,14 @@ use crate::{
         errors::SearchError,
         search::{
             filter::filtering_decision::FilteringDecision,
+            hash_prune_table::HashPruneTableSizeBounds,
             iterative_deepening::{
                 individual_search::IndividualSearchOptions,
                 iterative_deepening_search::{ImmutableSearchData, IterativeDeepeningSearch},
                 search_adaptations::StoredSearchAdaptations,
             },
             move_count::MoveCount,
-            prune_table_trait::{Depth, PruneTableSizeBounds},
+            prune_table_trait::Depth,
         },
     },
     scramble::{
@@ -57,7 +58,7 @@ impl Default for PyraminxScrambleFinder {
             )
             .unwrap(),
             StoredSearchAdaptations::default(),
-            PruneTableSizeBounds::default(),
+            HashPruneTableSizeBounds::default(),
         );
 
         Self {

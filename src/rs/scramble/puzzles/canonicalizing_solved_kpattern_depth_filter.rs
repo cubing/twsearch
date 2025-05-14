@@ -7,6 +7,7 @@ use crate::_internal::{
     errors::SearchError,
     search::{
         filter::filtering_decision::FilteringDecision,
+        hash_prune_table::HashPruneTableSizeBounds,
         iterative_deepening::{
             individual_search::IndividualSearchOptions,
             iterative_deepening_search::{ImmutableSearchData, IterativeDeepeningSearch},
@@ -15,7 +16,7 @@ use crate::_internal::{
         },
         mask_pattern::apply_mask,
         move_count::MoveCount,
-        prune_table_trait::{Depth, PruneTableSizeBounds},
+        prune_table_trait::Depth,
     },
 };
 
@@ -71,7 +72,7 @@ impl CanonicalizingSolvedKPatternDepthFilter {
                     Default::default(),
                 )?,
                 StoredSearchAdaptations::default(),
-                PruneTableSizeBounds::default(),
+                HashPruneTableSizeBounds::default(),
             );
         let depth_filtering_search = IterativeDeepeningSearch::<KPuzzle>::new_with_hash_prune_table(
             ImmutableSearchData::try_from_common_options_with_auto_search_generators(
@@ -81,7 +82,7 @@ impl CanonicalizingSolvedKPatternDepthFilter {
                 Default::default(),
             )?,
             StoredSearchAdaptations::default(),
-            PruneTableSizeBounds::default(),
+            HashPruneTableSizeBounds::default(),
         );
         Ok(Self {
             canonicalization_search,

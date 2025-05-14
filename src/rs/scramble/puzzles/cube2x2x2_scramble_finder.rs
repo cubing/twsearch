@@ -12,6 +12,7 @@ use crate::{
         errors::SearchError,
         search::{
             filter::filtering_decision::FilteringDecision,
+            hash_prune_table::HashPruneTableSizeBounds,
             iterative_deepening::{
                 iterative_deepening_search::{
                     ImmutableSearchData, ImmutableSearchDataConstructionOptions,
@@ -20,7 +21,6 @@ use crate::{
                 search_adaptations::StoredSearchAdaptations,
             },
             move_count::MoveCount,
-            prune_table_trait::PruneTableSizeBounds,
         },
     },
     scramble::{
@@ -85,7 +85,7 @@ impl Default for Cube2x2x2ScrambleFinder {
             )
             .unwrap(),
             StoredSearchAdaptations::default(),
-            PruneTableSizeBounds::default(),
+            HashPruneTableSizeBounds::default(),
         ));
         Self {
             kpuzzle: kpuzzle.clone(),

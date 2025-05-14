@@ -16,6 +16,7 @@ use crate::{
                 pattern_deriver::{DerivedPuzzle, PatternDeriver},
                 unenumerated_derived_pattern_puzzle::UnenumeratedDerivedPatternPuzzle,
             },
+            hash_prune_table::HashPruneTableSizeBounds,
             iterative_deepening::{
                 individual_search::IndividualSearchOptions,
                 iterative_deepening_search::{
@@ -23,7 +24,6 @@ use crate::{
                     IterativeDeepeningSearch,
                 },
             },
-            prune_table_trait::PruneTableSizeBounds,
             search_logger::SearchLogger,
         },
     },
@@ -438,7 +438,7 @@ impl Default for Cube4x4x4Phase3Search {
                 )
                 .unwrap(),
                 Default::default(),
-                PruneTableSizeBounds {
+                HashPruneTableSizeBounds {
                     max_size: Some(1 << 28),
                     ..Default::default()
                 },

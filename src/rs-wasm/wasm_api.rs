@@ -77,7 +77,7 @@ pub fn wasmTwsearch(
             )
             .map_err(|e| e.description)?,
             Default::default(), // StoredSearchAdaptations::default(),
-            Default::default(), // PruneTableSizeBounds::default(),
+            Default::default(), // HashPruneTableSizeBounds::default(),
         );
 
     match iterative_deepening_search

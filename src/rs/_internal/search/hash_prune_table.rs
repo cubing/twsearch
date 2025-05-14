@@ -12,9 +12,7 @@ use crate::whole_number_newtype;
 
 use super::iterative_deepening::iterative_deepening_search::ImmutableSearchData;
 use super::iterative_deepening::search_adaptations::StoredSearchAdaptations;
-use super::prune_table_trait::{
-    Depth, LegacyConstructablePruneTable, PruneTable, PruneTableSizeBounds,
-};
+use super::prune_table_trait::{Depth, PruneTable};
 use super::recursive_work_tracker::RecursiveWorkTracker;
 use super::search_logger::SearchLogger;
 
@@ -160,13 +158,17 @@ fn previous_power_of_two(n: usize) -> usize {
     }
 }
 
-impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> LegacyConstructablePruneTable<TPuzzle>
-    for HashPruneTable<TPuzzle>
-{
-    fn new(
+#[derive(Default)]
+pub struct HashPruneTableSizeBounds {
+    pub(crate) min_size: Option<usize>,
+    pub(crate) max_size: Option<usize>,
+}
+
+impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> HashPruneTable<TPuzzle> {
+    pub fn new(
         immutable_search_data: Arc<ImmutableSearchData<TPuzzle>>,
         stored_search_adaptations: StoredSearchAdaptations<TPuzzle>,
-        size_bounds: PruneTableSizeBounds,
+        size_bounds: HashPruneTableSizeBounds,
     ) -> Self {
         let min_size = match size_bounds.min_size {
             Some(min_size) => min_size.next_power_of_two(),

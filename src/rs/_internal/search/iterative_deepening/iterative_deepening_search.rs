@@ -10,16 +10,16 @@ use crate::_internal::{
     },
     cli::args::MetricEnum,
     errors::SearchError,
-    puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
+    puzzle_traits::puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
     search::{
         hash_prune_table::HashPruneTable,
         pattern_stack::PatternStack,
-        prune_table_trait::{LegacyConstructablePruneTable, PruneTable},
+        prune_table_trait::{LegacyConstructablePruneTable, PruneTable, PruneTableSizeBounds},
     },
 };
 use cubing::{
     alg::{Alg, Move},
-    kpuzzle::{KPattern, KPuzzle},
+    kpuzzle::KPuzzle,
 };
 
 use super::{
@@ -67,11 +67,57 @@ impl<TPuzzle: SemiGroupActionPuzzle> Iterator for OwnedIterativeDeepeningSearchC
 }
 
 pub struct ImmutableSearchData<TPuzzle: SemiGroupActionPuzzle> {
+    pub tpuzzle: TPuzzle,
     pub search_generators: SearchGenerators<TPuzzle>,
     pub canonical_fsm: CanonicalFSM<TPuzzle>, // TODO: move this into `SearchAdaptations`
-    pub tpuzzle: TPuzzle,
     pub target_patterns: Vec<TPuzzle::Pattern>,
     pub search_logger: Arc<SearchLogger>,
+}
+
+#[derive(Default)]
+pub struct ImmutableSearchDataConstructionOptions {
+    pub search_logger: Arc<SearchLogger>,
+    pub canonical_fsm_construction_options: CanonicalFSMConstructionOptions,
+}
+
+impl<TPuzzle: SemiGroupActionPuzzle> ImmutableSearchData<TPuzzle> {
+    pub fn try_from_common_options(
+        tpuzzle: TPuzzle,
+        search_generators: SearchGenerators<TPuzzle>, // TODO: turn this back into `Generators`
+        target_patterns: Vec<TPuzzle::Pattern>,
+        options: ImmutableSearchDataConstructionOptions,
+    ) -> Result<Self, SearchError> {
+        let canonical_fsm = CanonicalFSM::try_new(
+            // TODO: avoid clones
+            tpuzzle.clone(),
+            search_generators.clone(),
+            options.canonical_fsm_construction_options,
+        )
+        .map_err(|e| SearchError {
+            description: e.to_string(),
+        })?;
+
+        Ok(ImmutableSearchData {
+            search_generators,
+            canonical_fsm,
+            tpuzzle: tpuzzle.clone(),
+            target_patterns,
+            search_logger: options.search_logger.clone(),
+        })
+    }
+
+    // Figure out an ergonimic way to remove this.
+    pub fn try_from_common_options_with_auto_search_generators(
+        tpuzzle: TPuzzle,
+        generator_moves: Vec<Move>,
+        target_patterns: Vec<TPuzzle::Pattern>,
+        options: ImmutableSearchDataConstructionOptions,
+    ) -> Result<Self, SearchError> {
+        let search_generators =
+            SearchGenerators::try_new(&tpuzzle, generator_moves.clone(), &MetricEnum::Hand, false)
+                .unwrap();
+        Self::try_from_common_options(tpuzzle, search_generators, target_patterns, options)
+    }
 }
 
 /// For information on [`StoredSearchAdaptations`], see the documentation for that trait.
@@ -109,128 +155,41 @@ unsafe impl<TPuzzle: SemiGroupActionPuzzle> Send for IterativeDeepeningSearch<TP
 // TODO: this is needed because the struct directly owns the prune table.
 unsafe impl<TPuzzle: SemiGroupActionPuzzle> Sync for IterativeDeepeningSearch<TPuzzle> {}
 
-impl IterativeDeepeningSearch<KPuzzle> {
+impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle + 'static>
+    IterativeDeepeningSearch<TPuzzle>
+{
     // Shim for the old KPuzzle
     /// Constructs and populates `search_adaptations.prune_table` if it is not populated.
-    pub fn try_new_kpuzzle_with_hash_prune_table_shim(
-        tpuzzle: KPuzzle,
-        generator_moves: Vec<Move>, // TODO: turn this back into `Generators`
-        target_patterns: Vec<KPattern>,
-        options: IterativeDeepeningSearchConstructionOptions,
-        search_adaptations_without_prune_table: Option<StoredSearchAdaptations<KPuzzle>>,
-    ) -> Result<Self, SearchError> {
-        Self::try_new_prune_table_construction_shim::<HashPruneTable<KPuzzle>>(
-            tpuzzle,
-            generator_moves,
-            target_patterns,
-            options,
-            search_adaptations_without_prune_table,
+    pub fn new_with_hash_prune_table<T: Into<Arc<ImmutableSearchData<TPuzzle>>>>(
+        immutable_search_data: T,
+        stored_search_adaptations: StoredSearchAdaptations<TPuzzle>,
+        prune_table_size_bounds: PruneTableSizeBounds,
+    ) -> IterativeDeepeningSearch<TPuzzle> {
+        let immutable_search_data = immutable_search_data.into();
+        let prune_table = Box::new(HashPruneTable::new(
+            immutable_search_data.clone(),
+            stored_search_adaptations.clone(),
+            prune_table_size_bounds,
+        ));
+        Self::new(
+            immutable_search_data,
+            stored_search_adaptations,
+            prune_table,
         )
     }
 }
 
 impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
-    pub fn try_new_prune_table_construction_shim<
-        TPruneTable: LegacyConstructablePruneTable<TPuzzle> + 'static,
-    >(
-        tpuzzle: TPuzzle,
-        generator_moves: Vec<Move>, // TODO: turn this back into `Generators`
-        target_patterns: Vec<TPuzzle::Pattern>,
-        options: IterativeDeepeningSearchConstructionOptions,
-        stored_search_adaptations: Option<StoredSearchAdaptations<TPuzzle>>,
-    ) -> Result<Self, SearchError> {
-        let search_logger = options.search_logger.clone();
-        let min_prune_table_size = options.min_prune_table_size;
-        let max_prune_table_size = options.max_prune_table_size;
-        let immutable_search_data = Self::legacy_construct_immutable_search_data(
-            tpuzzle.clone(),
-            generator_moves,
-            target_patterns,
-            options,
-        )?;
-        let search_adaptations_without_prune_table = match stored_search_adaptations {
-            Some(search_adaptations_without_prune_table) => search_adaptations_without_prune_table,
-            None => StoredSearchAdaptations {
-                filter_move_transformation_fn: None,
-                filter_pattern_fn: None,
-            },
-        };
-        let prune_table = Box::new(TPruneTable::new(
-            tpuzzle,
-            immutable_search_data.clone(),
-            search_logger,
-            min_prune_table_size,
-            max_prune_table_size,
-            search_adaptations_without_prune_table.clone(),
-        ));
-        let search_adaptations = StoredSearchAdaptations {
-            filter_move_transformation_fn: search_adaptations_without_prune_table
-                .filter_move_transformation_fn,
-            filter_pattern_fn: search_adaptations_without_prune_table.filter_pattern_fn,
-        };
-
-        Self::try_new_internal(immutable_search_data, search_adaptations, prune_table)
-    }
-
-    pub fn legacy_try_new(
-        tpuzzle: TPuzzle,
-        generator_moves: Vec<Move>, // TODO: turn this back into `Generators`
-        target_patterns: Vec<TPuzzle::Pattern>,
-        options: IterativeDeepeningSearchConstructionOptions,
-        search_adaptations: StoredSearchAdaptations<TPuzzle>,
+    pub fn new<T: Into<Arc<ImmutableSearchData<TPuzzle>>>>(
+        immutable_search_data: T,
+        stored_search_adaptations: StoredSearchAdaptations<TPuzzle>,
         prune_table: Box<dyn PruneTable<TPuzzle>>,
-    ) -> Result<Self, SearchError> {
-        let immutable_search_data = Self::legacy_construct_immutable_search_data(
-            tpuzzle,
-            generator_moves,
-            target_patterns,
-            options,
-        )?;
-        Self::try_new_internal(immutable_search_data, search_adaptations, prune_table)
-    }
-
-    fn legacy_construct_immutable_search_data(
-        tpuzzle: TPuzzle,
-        generator_moves: Vec<Move>, // TODO: turn this back into `Generators`
-        target_patterns: Vec<TPuzzle::Pattern>,
-        options: IterativeDeepeningSearchConstructionOptions,
-    ) -> Result<Arc<ImmutableSearchData<TPuzzle>>, SearchError> {
-        let search_generators = SearchGenerators::try_new(
-            &tpuzzle,
-            generator_moves,
-            &options.metric,
-            options.random_start,
-        )?;
-
-        let canonical_fsm = CanonicalFSM::try_new(
-            // TODO: avoid clones
-            tpuzzle.clone(),
-            search_generators.clone(),
-            options.canonical_fsm_construction_options,
-        )
-        .map_err(|e| SearchError {
-            description: e.to_string(),
-        })?;
-
-        Ok(Arc::new(ImmutableSearchData {
-            search_generators,
-            canonical_fsm,
-            tpuzzle: tpuzzle.clone(),
-            target_patterns,
-            search_logger: options.search_logger.clone(),
-        }))
-    }
-
-    fn try_new_internal(
-        immutable_search_data: Arc<ImmutableSearchData<TPuzzle>>,
-        search_adaptations: StoredSearchAdaptations<TPuzzle>,
-        prune_table: Box<dyn PruneTable<TPuzzle>>,
-    ) -> Result<Self, SearchError> {
-        Ok(Self {
-            immutable_search_data,
-            stored_search_adaptations: search_adaptations,
+    ) -> Self {
+        Self {
+            immutable_search_data: immutable_search_data.into(),
+            stored_search_adaptations,
             prune_table,
-        })
+        }
     }
 
     /// Note that search is pull-based. You must call `.next()` (or invoke

@@ -8,8 +8,12 @@ use crate::{
         errors::SearchError,
         search::{
             filter::filtering_decision::FilteringDecision,
-            iterative_deepening::iterative_deepening_search::IterativeDeepeningSearch,
+            iterative_deepening::{
+                iterative_deepening_search::{ImmutableSearchData, IterativeDeepeningSearch},
+                search_adaptations::StoredSearchAdaptations,
+            },
             move_count::MoveCount,
+            prune_table_trait::PruneTableSizeBounds,
         },
     },
     scramble::{
@@ -37,16 +41,18 @@ impl Default for SkewbScrambleFinder {
     fn default() -> Self {
         let kpuzzle = skewb_fixed_corner_with_co_tweaks_kpuzzle();
         let generator_moves = move_list_from_vec(vec!["U", "L", "R", "B"]);
-        let filtered_search = FilteredSearch::new(
-            IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
-                kpuzzle.clone(),
-                generator_moves,
-                vec![kpuzzle.default_pattern()],
-                Default::default(),
-                None,
-            )
-            .unwrap(),
-        );
+        let filtered_search =
+            FilteredSearch::new(IterativeDeepeningSearch::new_with_hash_prune_table(
+                ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                    kpuzzle.clone(),
+                    generator_moves,
+                    vec![kpuzzle.default_pattern()],
+                    Default::default(),
+                )
+                .unwrap(),
+                StoredSearchAdaptations::default(),
+                PruneTableSizeBounds::default(),
+            ));
         Self {
             kpuzzle: kpuzzle.clone(),
             filtered_search,

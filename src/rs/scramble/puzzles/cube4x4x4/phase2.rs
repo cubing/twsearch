@@ -15,16 +15,17 @@ use crate::{
                 unenumerated_derived_pattern_puzzle::UnenumeratedDerivedPatternPuzzle,
             },
             filter::filtering_decision::FilteringDecision,
-            hash_prune_table::HashPruneTable,
             iterative_deepening::{
                 iterative_deepening_search::{
-                    IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+                    ImmutableSearchData, ImmutableSearchDataConstructionOptions,
+                    IterativeDeepeningSearch,
                 },
-                search_adaptations::IndividualSearchAdaptations,
+                search_adaptations::{IndividualSearchAdaptations, StoredSearchAdaptations},
                 solution_moves::SolutionMoves,
                 target_pattern_signature::check_target_pattern_consistency_single_iter,
             },
             mask_pattern::apply_mask,
+            prune_table_trait::PruneTableSizeBounds,
             search_logger::SearchLogger,
         },
     },
@@ -172,19 +173,20 @@ pub(crate) fn phase2_search(search_logger: Arc<SearchLogger>) -> Cube4x4x4Phase2
         .unwrap();
 
     let phase2_iterative_deepening_search =
-        IterativeDeepeningSearch::<Cube4x4x4Phase2Puzzle>::try_new_prune_table_construction_shim::<
-            HashPruneTable<Cube4x4x4Phase2Puzzle>,
-        >(
-            cube4x4x4_phase2_puzzle.clone(),
-            phase2_generator_moves,
-            phase2_target_patterns.to_vec(),
-            IterativeDeepeningSearchConstructionOptions {
-                search_logger,
-                ..Default::default()
-            },
-            None,
-        )
-        .unwrap();
+        IterativeDeepeningSearch::<Cube4x4x4Phase2Puzzle>::new_with_hash_prune_table(
+            ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                cube4x4x4_phase2_puzzle.clone(),
+                phase2_generator_moves,
+                phase2_target_patterns.to_vec(),
+                ImmutableSearchDataConstructionOptions {
+                    search_logger,
+                    ..Default::default()
+                },
+            )
+            .unwrap(),
+            StoredSearchAdaptations::default(),
+            PruneTableSizeBounds::default(),
+        );
     Cube4x4x4Phase2Search {
         derived_puzzle_search_phase: DerivedPuzzleSearchPhase::new(
             phase2_name,

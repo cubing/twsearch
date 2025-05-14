@@ -17,6 +17,15 @@ pub struct StoredSearchAdaptations<TPuzzle: SemiGroupActionPuzzle> {
     pub filter_pattern_fn: Option<Arc<dyn Fn(&TPuzzle::Pattern) -> FilteringDecision>>,
 }
 
+impl<TPuzzle: SemiGroupActionPuzzle> Default for StoredSearchAdaptations<TPuzzle> {
+    fn default() -> Self {
+        Self {
+            filter_move_transformation_fn: None,
+            filter_pattern_fn: None,
+        }
+    }
+}
+
 #[allow(clippy::type_complexity)] // TODO
 pub struct IndividualSearchAdaptations<TPuzzle: SemiGroupActionPuzzle> {
     pub filter_search_solution_fn:

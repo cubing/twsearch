@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use crate::_internal::{
+    canonical_fsm::search_generators::SearchGenerators,
     cli::args::{SearchCommandOptionalArgs, VerbosityLevel},
     errors::{ArgumentError, CommandError},
     search::{
@@ -8,11 +9,13 @@ use crate::_internal::{
             continuation_condition::ContinuationCondition,
             individual_search::IndividualSearchOptions,
             iterative_deepening_search::{
-                IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
-                OwnedIterativeDeepeningSearchCursor,
+                ImmutableSearchData, ImmutableSearchDataConstructionOptions,
+                IterativeDeepeningSearch, OwnedIterativeDeepeningSearchCursor,
             },
+            search_adaptations::StoredSearchAdaptations,
             solution_moves::alg_to_moves,
         },
+        prune_table_trait::PruneTableSizeBounds,
         search_logger::SearchLogger,
     },
 };
@@ -59,27 +62,34 @@ pub fn search(
         None => kpuzzle.default_pattern(),
     };
 
-    let iterative_deepening_search =
-        <IterativeDeepeningSearch<KPuzzle>>::try_new_kpuzzle_with_hash_prune_table_shim(
+    let generator_moves = search_command_optional_args
+        .generator_args
+        .parse()
+        .enumerate_moves_for_kpuzzle(kpuzzle);
+    let search_generators = SearchGenerators::try_new(
+        kpuzzle,
+        generator_moves,
+        &search_command_optional_args.metric_args.metric,
+        search_command_optional_args.search_args.random_start,
+    )?;
+    let iterative_deepening_search = <IterativeDeepeningSearch<KPuzzle>>::new_with_hash_prune_table(
+        ImmutableSearchData::try_from_common_options(
             kpuzzle.clone(),
-            search_command_optional_args
-                .generator_args
-                .parse()
-                .enumerate_moves_for_kpuzzle(kpuzzle),
+            search_generators,
             vec![target_pattern], // TODO: support multiple target patterns in API
-            IterativeDeepeningSearchConstructionOptions {
+            ImmutableSearchDataConstructionOptions {
                 search_logger: Arc::new(SearchLogger {
                     verbosity: search_command_optional_args
                         .verbosity_args
                         .verbosity
                         .unwrap_or(VerbosityLevel::Error),
                 }),
-                metric: search_command_optional_args.metric_args.metric,
-                random_start: search_command_optional_args.search_args.random_start,
                 ..Default::default()
             },
-            None,
-        )?;
+        )?,
+        StoredSearchAdaptations::default(),
+        PruneTableSizeBounds::default(),
+    );
 
     let root_continuation_condition = {
         match (

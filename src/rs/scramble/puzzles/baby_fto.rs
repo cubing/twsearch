@@ -10,11 +10,13 @@ use crate::{
             iterative_deepening::{
                 individual_search::IndividualSearchOptions,
                 iterative_deepening_search::{
-                    IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+                    ImmutableSearchData, ImmutableSearchDataConstructionOptions,
+                    IterativeDeepeningSearch,
                 },
+                search_adaptations::StoredSearchAdaptations,
             },
             move_count::MoveCount,
-            prune_table_trait::Depth,
+            prune_table_trait::{Depth, PruneTableSizeBounds},
         },
     },
     scramble::{
@@ -31,24 +33,26 @@ use super::{
 pub fn scramble_baby_fto() -> Alg {
     let kpuzzle = baby_fto_kpuzzle();
     let filter_generator_moves = move_list_from_vec(vec!["U", "L", "F", "R"]);
-    let mut filtered_search = <FilteredSearch>::new(
-        IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
-            kpuzzle.clone(),
-            filter_generator_moves,
-            vec![kpuzzle.default_pattern()],
-            Default::default(),
-            None,
-        )
-        .unwrap(),
-    );
+    let mut filtered_search =
+        <FilteredSearch>::new(IterativeDeepeningSearch::new_with_hash_prune_table(
+            ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                kpuzzle.clone(),
+                filter_generator_moves,
+                vec![kpuzzle.default_pattern()],
+                Default::default(),
+            )
+            .unwrap(),
+            StoredSearchAdaptations::default(),
+            PruneTableSizeBounds::default(),
+        ));
 
     let generator_moves = move_list_from_vec(vec!["U", "L", "F", "R", "BR"]);
-    let mut search = <FilteredSearch>::new(
-        IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
+    let mut search = <FilteredSearch>::new(IterativeDeepeningSearch::new_with_hash_prune_table(
+        ImmutableSearchData::try_from_common_options_with_auto_search_generators(
             kpuzzle.clone(),
             generator_moves,
             vec![kpuzzle.default_pattern()],
-            IterativeDeepeningSearchConstructionOptions {
+            ImmutableSearchDataConstructionOptions {
                 canonical_fsm_construction_options: CanonicalFSMConstructionOptions {
                     forbid_transitions_by_quantums_either_direction: HashSet::from([(
                         QuantumMove::new("L", None),
@@ -57,10 +61,11 @@ pub fn scramble_baby_fto() -> Alg {
                 },
                 ..Default::default()
             },
-            None,
         )
         .unwrap(),
-    );
+        StoredSearchAdaptations::default(),
+        PruneTableSizeBounds::default(),
+    ));
 
     loop {
         let mut scramble_pattern = kpuzzle.default_pattern();

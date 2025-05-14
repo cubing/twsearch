@@ -15,11 +15,14 @@ use crate::{
             iterative_deepening::{
                 individual_search::IndividualSearchOptions,
                 iterative_deepening_search::{
-                    IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+                    ImmutableSearchData, ImmutableSearchDataConstructionOptions,
+                    IterativeDeepeningSearch,
                 },
+                search_adaptations::StoredSearchAdaptations,
             },
             mask_pattern::apply_mask,
             move_count::MoveCount,
+            prune_table_trait::PruneTableSizeBounds,
             search_logger::SearchLogger,
         },
     },
@@ -272,53 +275,61 @@ impl Default for TwoPhase3x3x3ScrambleFinder {
         )
         .unwrap();
 
-        let bld_orientation_search =
-            IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
+        let bld_orientation_search = IterativeDeepeningSearch::new_with_hash_prune_table(
+            ImmutableSearchData::try_from_common_options_with_auto_search_generators(
                 cube3x3x3_kpuzzle().clone(),
                 move_list_from_vec(vec!["Uw", "Fw", "Rw"]),
                 vec![cube3x3x3_orientation_canonicalization_kpattern().clone()],
-                IterativeDeepeningSearchConstructionOptions {
+                ImmutableSearchDataConstructionOptions {
                     search_logger: SearchLogger {
                         verbosity: VerbosityLevel::Info,
                     }
                     .into(),
                     ..Default::default()
                 },
-                Default::default(),
             )
-            .unwrap();
+            .unwrap(),
+            StoredSearchAdaptations::default(),
+            PruneTableSizeBounds::default(),
+        );
 
         let phase1_target_pattern = cube3x3x3_g1_target_kpattern().clone();
-        let phase1_iterative_deepening_search =
-            IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
+        let phase1_iterative_deepening_search = IterativeDeepeningSearch::new_with_hash_prune_table(
+            ImmutableSearchData::try_from_common_options_with_auto_search_generators(
                 kpuzzle.clone(),
                 generators.clone(),
                 vec![phase1_target_pattern.clone()],
-                IterativeDeepeningSearchConstructionOptions {
+                ImmutableSearchDataConstructionOptions {
                     search_logger: SearchLogger {
                         verbosity: VerbosityLevel::Info,
                     }
                     .into(),
-                    min_prune_table_size: Some(32),
                     ..Default::default()
                 },
-                None,
             )
-            .unwrap();
+            .unwrap(),
+            StoredSearchAdaptations::default(),
+            PruneTableSizeBounds {
+                min_size: Some(32),
+                ..Default::default()
+            },
+        );
 
         let phase2_generators = move_list_from_vec(vec!["U", "L2", "F2", "R2", "B2", "D"]);
-        let phase2_iterative_deepening_search =
-            IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
+        let phase2_iterative_deepening_search = IterativeDeepeningSearch::new_with_hash_prune_table(
+            ImmutableSearchData::try_from_common_options_with_auto_search_generators(
                 kpuzzle.clone(),
                 phase2_generators.clone(),
                 vec![kpuzzle.default_pattern()],
-                IterativeDeepeningSearchConstructionOptions {
-                    min_prune_table_size: Some(1 << 24),
-                    ..Default::default()
-                },
-                None,
+                Default::default(),
             )
-            .unwrap();
+            .unwrap(),
+            StoredSearchAdaptations::default(),
+            PruneTableSizeBounds {
+                min_size: Some(1 << 24),
+                ..Default::default()
+            },
+        );
 
         Self {
             kpuzzle,

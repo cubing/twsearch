@@ -9,11 +9,14 @@ use crate::_internal::{
         iterative_deepening::{
             individual_search::IndividualSearchOptions,
             iterative_deepening_search::{
-                IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+                ImmutableSearchData, ImmutableSearchDataConstructionOptions,
+                IterativeDeepeningSearch,
             },
+            search_adaptations::StoredSearchAdaptations,
             target_pattern_signature::check_target_pattern_basic_consistency,
         },
         mask_pattern::apply_mask,
+        prune_table_trait::PruneTableSizeBounds,
         search_logger::SearchLogger,
     },
 };
@@ -63,16 +66,15 @@ impl KPuzzleSimpleMaskPhase {
                 vec![target_pattern]
             }
         };
-        let Ok(iterative_deepening_search) =
-            IterativeDeepeningSearch::<KPuzzle>::try_new_kpuzzle_with_hash_prune_table_shim(
+        let Ok(immutable_search_data) =
+            ImmutableSearchData::try_from_common_options_with_auto_search_generators(
                 kpuzzle.clone(),
                 generator_moves,
                 target_patterns,
-                IterativeDeepeningSearchConstructionOptions {
+                ImmutableSearchDataConstructionOptions {
                     search_logger: options.search_logger.unwrap_or_default().into(),
                     ..Default::default()
                 },
-                None,
             )
         else {
             return Err(SearchError {
@@ -82,6 +84,12 @@ impl KPuzzleSimpleMaskPhase {
                 ),
             });
         };
+        let iterative_deepening_search =
+            IterativeDeepeningSearch::<KPuzzle>::new_with_hash_prune_table(
+                immutable_search_data,
+                StoredSearchAdaptations::default(),
+                PruneTableSizeBounds::default(),
+            );
         Ok(Self {
             phase_name,
             mask,

@@ -1,7 +1,11 @@
 use crate::{
     _internal::search::{
         filter::filtering_decision::FilteringDecision,
-        iterative_deepening::individual_search::IndividualSearchOptions,
+        iterative_deepening::{
+            individual_search::IndividualSearchOptions,
+            iterative_deepening_search::ImmutableSearchData,
+        },
+        prune_table_trait::PruneTableSizeBounds,
     },
     scramble::{
         get_kpuzzle::GetKPuzzle,
@@ -26,7 +30,7 @@ use crate::{
 
 use super::{
     super::definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
-    depth_filtering::square1_depth_filtering_search_adaptations_without_prune_table,
+    depth_filtering::square1_depth_filtering_search_adaptations,
     phase1::{
         square1_phase1_prune_table, square1_phase1_stored_search_adaptations,
         Square1Phase1PatternDeriver,
@@ -42,7 +46,6 @@ use crate::scramble::scramble_search::FilteredSearch;
 use crate::{
     _internal::search::{
         coordinates::graph_enumerated_derived_pattern_puzzle::GraphEnumeratedDerivedPatternPuzzle,
-        iterative_deepening::iterative_deepening_search::IterativeDeepeningSearchConstructionOptions,
         prune_table_trait::Depth,
     },
     _internal::{
@@ -90,17 +93,17 @@ impl Default for Square1ScrambleFinder {
             .unwrap();
 
         let phase1_iterative_deepening_search =
-            IterativeDeepeningSearch::<Square1Phase1Puzzle>::legacy_try_new(
-                square1_phase1_puzzle.clone(),
-                generator_moves.clone(),
-                vec![phase1_target_pattern],
-                IterativeDeepeningSearchConstructionOptions {
-                    ..Default::default()
-                },
+            IterativeDeepeningSearch::<Square1Phase1Puzzle>::new(
+                ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                    square1_phase1_puzzle.clone(),
+                    generator_moves.clone(),
+                    vec![phase1_target_pattern],
+                    Default::default(),
+                )
+                .unwrap(),
                 square1_phase1_stored_search_adaptations(),
                 square1_phase1_prune_table(&square1_phase1_puzzle),
-            )
-            .unwrap();
+            );
 
         let square1_phase2_puzzle: Square1Phase2Puzzle = Square1Phase2Puzzle::new();
         let phase2_target_pattern = square1_phase2_puzzle
@@ -108,31 +111,34 @@ impl Default for Square1ScrambleFinder {
             .unwrap();
 
         let phase2_iterative_deepening_search =
-            IterativeDeepeningSearch::<Square1Phase2Puzzle>::legacy_try_new(
-                square1_phase2_puzzle.clone(),
-                generator_moves.clone(),
-                vec![phase2_target_pattern],
-                IterativeDeepeningSearchConstructionOptions {
-                    ..Default::default()
-                },
+            IterativeDeepeningSearch::<Square1Phase2Puzzle>::new(
+                ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                    square1_phase2_puzzle.clone(),
+                    generator_moves,
+                    vec![phase2_target_pattern],
+                    Default::default(),
+                )
+                .unwrap(),
                 square1_phase2_stored_search_adaptations(),
                 square1_phase2_prune_table(&square1_phase2_puzzle),
-            )
-            .unwrap();
+            );
 
         let depth_filtering_search = {
             let kpuzzle = square1_unbandaged_kpuzzle();
             let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
 
             let iterative_deepening_search =
-                IterativeDeepeningSearch::<KPuzzle>::try_new_kpuzzle_with_hash_prune_table_shim(
-                    kpuzzle.clone(),
-                    generator_moves,
-                    vec![kpuzzle.default_pattern()],
-                    Default::default(),
-                    Some(square1_depth_filtering_search_adaptations_without_prune_table()),
-                )
-                .unwrap();
+                IterativeDeepeningSearch::<KPuzzle>::new_with_hash_prune_table(
+                    ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                        kpuzzle.clone(),
+                        generator_moves,
+                        vec![kpuzzle.default_pattern()],
+                        Default::default(),
+                    )
+                    .unwrap(),
+                    square1_depth_filtering_search_adaptations(),
+                    PruneTableSizeBounds::default(),
+                );
             FilteredSearch::<KPuzzle>::new(iterative_deepening_search)
         };
 

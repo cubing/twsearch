@@ -3,8 +3,9 @@ use cubing::kpuzzle::{KPattern, KPatternData, KPuzzle, KPuzzleDefinition};
 use rouille::{router, try_or_400, Request, Response};
 use serde::{Deserialize, Serialize};
 use twsearch::_internal::{
+    canonical_fsm::search_generators::SearchGenerators,
     cli::args::{
-        CustomGenerators, Generators, ServeArgsForIndividualSearch, ServeClientArgs,
+        CustomGenerators, Generators, MetricEnum, ServeArgsForIndividualSearch, ServeClientArgs,
         ServeCommandArgs,
     },
     errors::CommandError,
@@ -12,8 +13,10 @@ use twsearch::_internal::{
         iterative_deepening::{
             individual_search::IndividualSearchOptions,
             iterative_deepening_search::{
-                IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+                ImmutableSearchData, ImmutableSearchDataConstructionOptions,
+                IterativeDeepeningSearch,
             },
+            search_adaptations::StoredSearchAdaptations,
         },
         search_logger::SearchLogger,
     },
@@ -84,28 +87,56 @@ fn solve_pattern(
         Ok(search_pattern) => search_pattern,
         Err(e) => return Response::text(e.to_string()).with_status_code(400),
     };
-    let mut search =
-        match <IterativeDeepeningSearch<KPuzzle>>::try_new_kpuzzle_with_hash_prune_table_shim(
-            kpuzzle.clone(),
-            Generators::Custom(CustomGenerators {
-                moves: move_list.clone(),
-                algs: vec![],
-            })
-            .enumerate_moves_for_kpuzzle(&kpuzzle),
-            vec![target_pattern], // TODO: modify api to support multiple target patterns
-            IterativeDeepeningSearchConstructionOptions {
-                search_logger,
-                random_start: match args_for_individual_search.client_args {
-                    Some(client_args) => client_args.random_start == Some(true),
-                    None => false,
-                },
-                ..Default::default()
-            },
-            None,
-        ) {
-            Ok(search) => search,
-            Err(e) => return Response::text(e.description).with_status_code(400),
-        };
+    let search_generators = match SearchGenerators::try_new(
+        &kpuzzle,
+        Generators::Custom(CustomGenerators {
+            moves: move_list.clone(),
+            algs: vec![],
+        })
+        .enumerate_moves_for_kpuzzle(&kpuzzle),
+        match args_for_individual_search.client_args {
+            Some(client_args) => {
+                if client_args.quantum_metric.unwrap_or_default() {
+                    &MetricEnum::Quantum
+                } else {
+                    &MetricEnum::Hand
+                }
+            }
+            None => &MetricEnum::Hand,
+        },
+        match args_for_individual_search.client_args {
+            Some(client_args) => client_args.random_start == Some(true),
+            None => false,
+        },
+    ) {
+        Ok(search_generators) => search_generators,
+        Err(e) => return Response::text(e.description).with_status_code(400),
+    };
+    let immutable_search_data = match ImmutableSearchData::try_from_common_options(
+        kpuzzle.clone(),
+        search_generators,
+        vec![target_pattern], // TODO: modify api to support multiple target patterns
+        ImmutableSearchDataConstructionOptions {
+            search_logger,
+            ..Default::default()
+        },
+    ) {
+        Ok(immutable_search_data) => immutable_search_data,
+        Err(e) => return Response::text(e.description).with_status_code(400),
+    };
+    let mut search = <IterativeDeepeningSearch<KPuzzle>>::new_with_hash_prune_table(
+        immutable_search_data,
+        StoredSearchAdaptations::default(),
+        Default::default(),
+        // IterativeDeepeningSearchConstructionOptions {
+        //     random_start: match args_for_individual_search.client_args {
+        //         Some(client_args) => client_args.random_start == Some(true),
+        //         None => false,
+        //     },
+        //     ..Default::default()
+        // },
+        // None,
+    );
     if let Some(solution) = search
         .search(
             &search_pattern,

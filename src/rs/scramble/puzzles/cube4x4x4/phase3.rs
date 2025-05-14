@@ -16,13 +16,14 @@ use crate::{
                 pattern_deriver::{DerivedPuzzle, PatternDeriver},
                 unenumerated_derived_pattern_puzzle::UnenumeratedDerivedPatternPuzzle,
             },
-            hash_prune_table::HashPruneTable,
             iterative_deepening::{
                 individual_search::IndividualSearchOptions,
                 iterative_deepening_search::{
-                    IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+                    ImmutableSearchData, ImmutableSearchDataConstructionOptions,
+                    IterativeDeepeningSearch,
                 },
             },
+            prune_table_trait::PruneTableSizeBounds,
             search_logger::SearchLogger,
         },
     },
@@ -423,22 +424,25 @@ impl Default for Cube4x4x4Phase3Search {
         let cube4x4x4_phase3_puzzle = Cube4x4x4Phase3Puzzle::default();
 
         let phase3_iterative_deepening_search =
-                IterativeDeepeningSearch::<Cube4x4x4Phase3Puzzle>::try_new_prune_table_construction_shim::<
-                    HashPruneTable<Cube4x4x4Phase3Puzzle>,
-                >(
+            IterativeDeepeningSearch::<Cube4x4x4Phase3Puzzle>::new_with_hash_prune_table(
+                ImmutableSearchData::try_from_common_options_with_auto_search_generators(
                     cube4x4x4_phase3_puzzle.clone(),
                     phase3_generator_moves,
                     vec![cube4x4x4_phase3_search_kpuzzle().default_pattern()],
-                    IterativeDeepeningSearchConstructionOptions {
-                        max_prune_table_size: Some(1 << 28),
+                    ImmutableSearchDataConstructionOptions {
                         search_logger: Arc::new(SearchLogger {
                             verbosity: VerbosityLevel::Info,
                         }),
                         ..Default::default()
                     },
-                    None,
                 )
-                .unwrap();
+                .unwrap(),
+                Default::default(),
+                PruneTableSizeBounds {
+                    max_size: Some(1 << 28),
+                    ..Default::default()
+                },
+            );
         let derived_puzzle_search_phase =
             DerivedPuzzleSearchPhase::<KPuzzle, Cube4x4x4Phase3Puzzle>::new(
                 "4×4×4 reduction with parity avoidance".to_owned(),

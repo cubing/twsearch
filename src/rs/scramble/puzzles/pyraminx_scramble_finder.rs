@@ -10,10 +10,11 @@ use crate::{
             filter::filtering_decision::FilteringDecision,
             iterative_deepening::{
                 individual_search::IndividualSearchOptions,
-                iterative_deepening_search::IterativeDeepeningSearch,
+                iterative_deepening_search::{ImmutableSearchData, IterativeDeepeningSearch},
+                search_adaptations::StoredSearchAdaptations,
             },
             move_count::MoveCount,
-            prune_table_trait::Depth,
+            prune_table_trait::{Depth, PruneTableSizeBounds},
         },
     },
     scramble::{
@@ -46,15 +47,18 @@ impl Default for PyraminxScrambleFinder {
     fn default() -> Self {
         let kpuzzle = pyraminx_kpuzzle();
 
-        let search = <IterativeDeepeningSearch>::try_new_kpuzzle_with_hash_prune_table_shim(
-            kpuzzle.clone(),
-            // TODO: the solution is sensitive to this order. We need a more robust API to specify that.
-            move_list_from_vec(vec!["u", "l", "r", "b", "U", "L", "R", "B"]),
-            vec![kpuzzle.default_pattern()],
-            Default::default(),
-            Default::default(),
-        )
-        .unwrap();
+        let search = <IterativeDeepeningSearch>::new_with_hash_prune_table(
+            ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                kpuzzle.clone(),
+                // TODO: the solution is sensitive to this order. We need a more robust API to specify that.
+                move_list_from_vec(vec!["u", "l", "r", "b", "U", "L", "R", "B"]),
+                vec![kpuzzle.default_pattern()],
+                Default::default(),
+            )
+            .unwrap(),
+            StoredSearchAdaptations::default(),
+            PruneTableSizeBounds::default(),
+        );
 
         Self {
             kpuzzle: kpuzzle.clone(),

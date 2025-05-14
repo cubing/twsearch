@@ -12,7 +12,9 @@ use crate::whole_number_newtype;
 
 use super::iterative_deepening::iterative_deepening_search::ImmutableSearchData;
 use super::iterative_deepening::search_adaptations::StoredSearchAdaptations;
-use super::prune_table_trait::{Depth, LegacyConstructablePruneTable, PruneTable};
+use super::prune_table_trait::{
+    Depth, LegacyConstructablePruneTable, PruneTable, PruneTableSizeBounds,
+};
 use super::recursive_work_tracker::RecursiveWorkTracker;
 use super::search_logger::SearchLogger;
 
@@ -31,7 +33,7 @@ const DEFAULT_MIN_PRUNE_TABLE_SIZE: usize = 1 << 20;
 struct HashPruneTableImmutableData<TPuzzle: SemiGroupActionPuzzle> {
     // TODO
     immutable_search_data: Arc<ImmutableSearchData<TPuzzle>>,
-    search_adaptations_without_prune_table: StoredSearchAdaptations<TPuzzle>,
+    stored_search_adaptations: StoredSearchAdaptations<TPuzzle>,
 }
 struct HashPruneTableMutableData<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> {
     tpuzzle: TPuzzle,
@@ -130,7 +132,7 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> HashPruneTable<TPuz
                 }
 
                 if immutable_data
-                    .search_adaptations_without_prune_table
+                    .stored_search_adaptations
                     .filter_pattern(&next_pattern)
                     .is_reject()
                 {
@@ -162,26 +164,19 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> LegacyConstructable
     for HashPruneTable<TPuzzle>
 {
     fn new(
-        tpuzzle: TPuzzle,
         immutable_search_data: Arc<ImmutableSearchData<TPuzzle>>,
-        search_logger: Arc<SearchLogger>,
-        min_size: Option<usize>,
-        max_size: Option<usize>,
-        search_adaptations_without_prune_table: StoredSearchAdaptations<TPuzzle>,
+        stored_search_adaptations: StoredSearchAdaptations<TPuzzle>,
+        size_bounds: PruneTableSizeBounds,
     ) -> Self {
-        let min_size = match min_size {
+        let min_size = match size_bounds.min_size {
             Some(min_size) => min_size.next_power_of_two(),
             None => DEFAULT_MIN_PRUNE_TABLE_SIZE,
         };
         // Note: we could return a max size, but there are some issues with calculating this statically due to the variable width of `usize`.
-        let max_size = max_size.map(previous_power_of_two);
+        let max_size = size_bounds.max_size.map(previous_power_of_two);
         let mut prune_table = Self {
-            immutable: HashPruneTableImmutableData {
-                immutable_search_data,
-                search_adaptations_without_prune_table,
-            },
             mutable: HashPruneTableMutableData {
-                tpuzzle,
+                tpuzzle: (immutable_search_data.tpuzzle).clone(),
                 min_size,
                 max_size,
                 prune_table_size: min_size,
@@ -190,10 +185,14 @@ impl<TPuzzle: SemiGroupActionPuzzle + HashablePatternPuzzle> LegacyConstructable
                 pattern_hash_to_depth: vec![DepthU8(0); min_size],
                 recursive_work_tracker: RecursiveWorkTracker::new(
                     "Prune table".to_owned(),
-                    search_logger.clone(),
+                    immutable_search_data.search_logger.clone(),
                 ),
-                search_logger,
+                search_logger: immutable_search_data.search_logger.clone(),
                 population: 0,
+            },
+            immutable: HashPruneTableImmutableData {
+                immutable_search_data,
+                stored_search_adaptations,
             },
         };
         prune_table.extend_for_search_depth(Depth(0), 1);

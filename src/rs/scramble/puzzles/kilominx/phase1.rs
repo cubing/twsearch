@@ -12,7 +12,7 @@ use crate::{
             blank_prune_table::BlankPruneTable,
             filter::filtering_decision::FilteringDecision,
             iterative_deepening::{
-                iterative_deepening_search::IterativeDeepeningSearch,
+                iterative_deepening_search::{ImmutableSearchData, IterativeDeepeningSearch},
                 search_adaptations::{IndividualSearchAdaptations, StoredSearchAdaptations},
                 solution_moves::SolutionMoves,
             },
@@ -79,18 +79,20 @@ impl Default for KilominxPhase1Search {
     fn default() -> Self {
         let kpuzzle = kilominx_kpuzzle();
         // TODO: support swapping out the full calculation of whether a pattern is solved?
-        let search = IterativeDeepeningSearch::legacy_try_new(
-            kpuzzle.clone(),
-            kilominx_front_moves(),
-            vec![kilominx_phase1_bogus_mask_kpattern().clone()],
-            Default::default(),
+        let search = IterativeDeepeningSearch::new(
+            ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                kpuzzle.clone(),
+                kilominx_front_moves(),
+                vec![kilominx_phase1_bogus_mask_kpattern().clone()],
+                Default::default(),
+            )
+            .unwrap(),
             StoredSearchAdaptations {
                 filter_move_transformation_fn: None,
                 filter_pattern_fn: None,
             },
             Box::new(BlankPruneTable {}),
-        )
-        .unwrap();
+        );
         Self {
             back_pieces: back_pieces(),
             search,

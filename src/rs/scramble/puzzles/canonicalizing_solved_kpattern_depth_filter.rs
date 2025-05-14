@@ -9,12 +9,13 @@ use crate::_internal::{
         filter::filtering_decision::FilteringDecision,
         iterative_deepening::{
             individual_search::IndividualSearchOptions,
-            iterative_deepening_search::IterativeDeepeningSearch,
+            iterative_deepening_search::{ImmutableSearchData, IterativeDeepeningSearch},
+            search_adaptations::StoredSearchAdaptations,
             target_pattern_signature::check_target_pattern_basic_consistency,
         },
         mask_pattern::apply_mask,
         move_count::MoveCount,
-        prune_table_trait::Depth,
+        prune_table_trait::{Depth, PruneTableSizeBounds},
     },
 };
 
@@ -62,22 +63,26 @@ impl CanonicalizingSolvedKPatternDepthFilter {
         .unwrap();
         // TODO: use exact prune table (`GraphEnumeratedDerivedPatternPuzzlePruneTable`).
         let canonicalization_search =
-            IterativeDeepeningSearch::<KPuzzle>::try_new_kpuzzle_with_hash_prune_table_shim(
-                kpuzzle.clone(),
-                parameters.canonicalization_generator_moves,
-                vec![canonical_masked_solved_pattern],
-                Default::default(),
-                Default::default(),
-            )?;
-        let depth_filtering_search =
-            IterativeDeepeningSearch::<KPuzzle>::try_new_kpuzzle_with_hash_prune_table_shim(
+            IterativeDeepeningSearch::<KPuzzle>::new_with_hash_prune_table(
+                ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                    kpuzzle.clone(),
+                    parameters.canonicalization_generator_moves,
+                    vec![canonical_masked_solved_pattern],
+                    Default::default(),
+                )?,
+                StoredSearchAdaptations::default(),
+                PruneTableSizeBounds::default(),
+            );
+        let depth_filtering_search = IterativeDeepeningSearch::<KPuzzle>::new_with_hash_prune_table(
+            ImmutableSearchData::try_from_common_options_with_auto_search_generators(
                 kpuzzle,
                 parameters.depth_filtering_generator_moves,
                 vec![parameters.solved_pattern.clone()],
                 Default::default(),
-                None,
-            )
-            .unwrap();
+            )?,
+            StoredSearchAdaptations::default(),
+            PruneTableSizeBounds::default(),
+        );
         Ok(Self {
             canonicalization_search,
             depth_filtering_search,

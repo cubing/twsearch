@@ -96,7 +96,11 @@ impl CanonicalizingSolvedKPatternDepthFilter {
 
         check_target_pattern_basic_consistency::<KPuzzle>(
             &masked_pattern,
-            &mut self.canonicalization_search.api_data.target_patterns.iter(),
+            &mut self
+                .canonicalization_search
+                .immutable_search_data
+                .target_patterns
+                .iter(),
         )?;
         let Some(canonicalizing_alg) = self
             .canonicalization_search
@@ -124,7 +128,11 @@ impl CanonicalizingSolvedKPatternDepthFilter {
 
         check_target_pattern_basic_consistency::<KPuzzle>(
             &pattern_with_canonicalizing_alg,
-            &mut self.depth_filtering_search.api_data.target_patterns.iter(),
+            &mut self
+                .depth_filtering_search
+                .immutable_search_data
+                .target_patterns
+                .iter(),
         )?;
         Ok(
             match self

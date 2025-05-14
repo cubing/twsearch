@@ -131,7 +131,7 @@ impl SearchPhase<KPuzzle> for KPuzzleSimpleMaskPhase {
             &masked_pattern,
             &mut self
                 .iterative_deepening_search
-                .api_data
+                .immutable_search_data
                 .target_patterns
                 .iter(),
         )?;

@@ -68,7 +68,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> Iterator for OwnedIterativeDeepeningSearchC
     }
 }
 
-pub struct IterativeDeepeningSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
+pub struct ImmutableSearchData<TPuzzle: SemiGroupActionPuzzle> {
     pub search_generators: SearchGenerators<TPuzzle>,
     pub canonical_fsm: CanonicalFSM<TPuzzle>, // TODO: move this into `SearchAdaptations`
     pub tpuzzle: TPuzzle,
@@ -78,7 +78,7 @@ pub struct IterativeDeepeningSearchAPIData<TPuzzle: SemiGroupActionPuzzle> {
 
 /// For information on [`StoredSearchAdaptations`], see the documentation for that trait.
 pub struct IterativeDeepeningSearch<TPuzzle: SemiGroupActionPuzzle = KPuzzle> {
-    pub api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
+    pub immutable_search_data: Arc<ImmutableSearchData<TPuzzle>>,
     pub stored_search_adaptations: StoredSearchAdaptations<TPuzzle>,
 }
 
@@ -141,7 +141,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         let search_logger = options.search_logger.clone();
         let min_prune_table_size = options.min_prune_table_size;
         let max_prune_table_size = options.max_prune_table_size;
-        let api_data = Self::legacy_construct_api_data(
+        let immutable_search_data = Self::legacy_construct_immutable_search_data(
             tpuzzle.clone(),
             generator_moves,
             target_patterns,
@@ -156,7 +156,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         };
         let prune_table = Box::new(TPruneTable::new(
             tpuzzle,
-            api_data.clone(),
+            immutable_search_data.clone(),
             search_logger,
             min_prune_table_size,
             max_prune_table_size,
@@ -169,7 +169,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             filter_pattern_fn: search_adaptations_without_prune_table.filter_pattern_fn,
         };
 
-        Self::try_new_internal(api_data, search_adaptations)
+        Self::try_new_internal(immutable_search_data, search_adaptations)
     }
 
     pub fn legacy_try_new(
@@ -179,17 +179,21 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         options: IterativeDeepeningSearchConstructionOptions,
         search_adaptations: StoredSearchAdaptations<TPuzzle>,
     ) -> Result<Self, SearchError> {
-        let api_data =
-            Self::legacy_construct_api_data(tpuzzle, generator_moves, target_patterns, options)?;
-        Self::try_new_internal(api_data, search_adaptations)
+        let immutable_search_data = Self::legacy_construct_immutable_search_data(
+            tpuzzle,
+            generator_moves,
+            target_patterns,
+            options,
+        )?;
+        Self::try_new_internal(immutable_search_data, search_adaptations)
     }
 
-    fn legacy_construct_api_data(
+    fn legacy_construct_immutable_search_data(
         tpuzzle: TPuzzle,
         generator_moves: Vec<Move>, // TODO: turn this back into `Generators`
         target_patterns: Vec<TPuzzle::Pattern>,
         options: IterativeDeepeningSearchConstructionOptions,
-    ) -> Result<Arc<IterativeDeepeningSearchAPIData<TPuzzle>>, SearchError> {
+    ) -> Result<Arc<ImmutableSearchData<TPuzzle>>, SearchError> {
         let search_generators = SearchGenerators::try_new(
             &tpuzzle,
             generator_moves,
@@ -207,7 +211,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             description: e.to_string(),
         })?;
 
-        Ok(Arc::new(IterativeDeepeningSearchAPIData {
+        Ok(Arc::new(ImmutableSearchData {
             search_generators,
             canonical_fsm,
             tpuzzle: tpuzzle.clone(),
@@ -217,11 +221,11 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
     }
 
     fn try_new_internal(
-        api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
+        immutable_search_data: Arc<ImmutableSearchData<TPuzzle>>,
         search_adaptations: StoredSearchAdaptations<TPuzzle>,
     ) -> Result<Self, SearchError> {
         Ok(Self {
-            api_data,
+            immutable_search_data,
             stored_search_adaptations: search_adaptations,
         })
     }
@@ -299,7 +303,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
 
             match options_min_depth.cmp(&root_continuation_depth) {
                 std::cmp::Ordering::Less => {
-                    self.api_data.search_logger.write_info(&format!(
+                    self.immutable_search_data.search_logger.write_info(&format!(
                         "Increasing initial search depth from {:?} to {:?} based on the root continuation condition: {:?}",
                         options_min_depth, root_continuation_depth, root_continuation_condition
                     ));
@@ -307,7 +311,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                 std::cmp::Ordering::Equal => {}
                 std::cmp::Ordering::Greater => {
                     if root_continuation_condition != ContinuationCondition::None {
-                        self.api_data.search_logger.write_info(&format!(
+                        self.immutable_search_data.search_logger.write_info(&format!(
                             "Note: the root continuation condition corresponds to an intermediate call rather than the base case because the specified min depth {:?} is larger (this is not an issue if it is expected): {:?}",
                             options_min_depth, root_continuation_condition
                         ));
@@ -324,7 +328,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
 
         // TODO: combine `KPatternStack` with `SolutionMoves`?
         let mut pattern_stack = PatternStack::new(
-            self.api_data.tpuzzle.clone(),
+            self.immutable_search_data.tpuzzle.clone(),
             individual_search_data.search_pattern.clone(),
         );
         for remaining_depth in *initial_search_depth
@@ -333,7 +337,9 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                 .get_max_depth()
         {
             let remaining_depth = Depth(remaining_depth);
-            self.api_data.search_logger.write_info("----------------");
+            self.immutable_search_data
+                .search_logger
+                .write_info("----------------");
 
             self.stored_search_adaptations
                 .prune_table
@@ -430,11 +436,14 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             return SearchRecursionResult::ContinueSearchingDefault;
         }
 
-        for (move_class_index, move_transformation_multiples) in
-            self.api_data.search_generators.by_move_class.iter()
+        for (move_class_index, move_transformation_multiples) in self
+            .immutable_search_data
+            .search_generators
+            .by_move_class
+            .iter()
         {
             let Some(next_state) = self
-                .api_data
+                .immutable_search_data
                 .canonical_fsm
                 .next_state(current_state, move_class_index)
             else {
@@ -447,14 +456,16 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                 // move is not an accepted by the move transformation filter.
                 // TDOO: does this check impact perf?
                 if continuation_condition != ContinuationCondition::None {
-                    self.api_data.search_logger.write_info(&format!(
-                        "{} → {} ? ({:?})",
-                        Alg {
-                            nodes: solution_moves.snapshot_alg_nodes()
-                        },
-                        &move_transformation_info.r#move.to_string(),
-                        &continuation_condition,
-                    ));
+                    self.immutable_search_data
+                        .search_logger
+                        .write_info(&format!(
+                            "{} → {} ? ({:?})",
+                            Alg {
+                                nodes: solution_moves.snapshot_alg_nodes()
+                            },
+                            &move_transformation_info.r#move.to_string(),
+                            &continuation_condition,
+                        ));
                 }
                 let Some(recursive_continuation_condition) =
                     continuation_condition.recurse(&move_transformation_info.r#move)
@@ -511,14 +522,14 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         if let Some(moves) = moves {
             for r#move in moves {
                 let move_class_index = self
-                    .api_data
+                    .immutable_search_data
                     .search_generators
                     .by_move
                     .get(r#move)
                     .expect("move!")
                     .move_class_index;
                 current_state = self
-                    .api_data
+                    .immutable_search_data
                     .canonical_fsm
                     .next_state(current_state, move_class_index)?
             }
@@ -541,7 +552,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                     // TODO: this can change if we expand change the base case
                     // code to run on intermediate nodes (which may be important
                     // for search with non-uniform metrics).
-                    self.api_data.search_logger.write_warning("Encountered a non-empty `ContinuationCondition::At` during a base case. This could indicate a bug in the calling code.");
+                    self.immutable_search_data.search_logger.write_warning("Encountered a non-empty `ContinuationCondition::At` during a base case. This could indicate a bug in the calling code.");
                     return SearchRecursionResult::ContinueSearchingDefault;
                 }
             }
@@ -571,10 +582,12 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             )
             .is_none()
         {
-            self.api_data.search_logger.write_info(&format!(
-                "Rejecting potential solution for invalid end moves: {}",
-                Alg::from(&solution_moves)
-            ));
+            self.immutable_search_data
+                .search_logger
+                .write_info(&format!(
+                    "Rejecting potential solution for invalid end moves: {}",
+                    Alg::from(&solution_moves)
+                ));
             return SearchRecursionResult::ContinueSearchingDefault;
         }
 
@@ -585,6 +598,8 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
 
     fn is_target_pattern(&self, current_pattern: &TPuzzle::Pattern) -> bool {
         // TODO: use a hash set instead (for when there is more than 1 target pattern)
-        self.api_data.target_patterns.contains(current_pattern)
+        self.immutable_search_data
+            .target_patterns
+            .contains(current_pattern)
     }
 }

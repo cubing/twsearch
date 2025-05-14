@@ -78,7 +78,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IndividualSearchData<TPuzzle> {
         if let Some(min_depth) = individual_search_options.min_depth_inclusive {
             if min_depth > MAX_SUPPORTED_SEARCH_DEPTH {
                 search
-                    .api_data
+                    .immutable_search_data
                     .search_logger
                     .write_error("Min depth too large, capping at maximum.");
                 individual_search_options.min_depth_inclusive = Some(MAX_SUPPORTED_SEARCH_DEPTH);
@@ -87,7 +87,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IndividualSearchData<TPuzzle> {
         if let Some(max_depth) = individual_search_options.max_depth_exclusive {
             if max_depth > MAX_SUPPORTED_SEARCH_DEPTH {
                 search
-                    .api_data
+                    .immutable_search_data
                     .search_logger
                     .write_error("Max depth too large, capping at maximum.");
                 individual_search_options.max_depth_exclusive = Some(MAX_SUPPORTED_SEARCH_DEPTH);
@@ -101,7 +101,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IndividualSearchData<TPuzzle> {
             individual_search_options,
             recursive_work_tracker: RecursiveWorkTracker::new(
                 "Search".to_owned(),
-                search.api_data.search_logger.clone(),
+                search.immutable_search_data.search_logger.clone(),
             ),
             num_solutions_sofar: 0,
             individual_search_adaptations,

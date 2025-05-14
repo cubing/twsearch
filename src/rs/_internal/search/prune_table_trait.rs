@@ -4,7 +4,7 @@ use crate::{_internal::puzzle_traits::puzzle_traits::SemiGroupActionPuzzle, whol
 
 use super::{
     iterative_deepening::{
-        iterative_deepening_search::IterativeDeepeningSearchAPIData,
+        iterative_deepening_search::ImmutableSearchData,
         search_adaptations::StoredSearchAdaptationsWithoutPruneTable,
     },
     search_logger::SearchLogger,
@@ -25,7 +25,7 @@ pub trait LegacyConstructablePruneTable<TPuzzle: SemiGroupActionPuzzle>:
     // TODO: design a proper API. The args here are currently inherited from `HashPruneTable`
     fn new(
         tpuzzle: TPuzzle,
-        search_api_data: Arc<IterativeDeepeningSearchAPIData<TPuzzle>>,
+        immutable_search_data: Arc<ImmutableSearchData<TPuzzle>>,
         search_logger: Arc<SearchLogger>,
         min_size: Option<usize>,
         max_size: Option<usize>,

@@ -136,12 +136,10 @@ impl SearchPhase<KPuzzle> for KPuzzleSimpleMaskPhase {
                 .iter(),
         )?;
         // TODO: can we avoid a clone of `individual_search_options`?
-        Ok(Box::new(
-            self.iterative_deepening_search
-                .search_with_default_individual_search_adaptations(
-                    &masked_pattern,
-                    self.individual_search_options.clone(),
-                ),
-        ))
+        Ok(Box::new(self.iterative_deepening_search.search(
+            &masked_pattern,
+            self.individual_search_options.clone(),
+            Default::default(),
+        )))
     }
 }

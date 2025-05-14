@@ -40,12 +40,12 @@ enum SearchRecursionResult {
     FoundSolution(Alg),
 }
 
-pub struct IterativeSearchCursor<'a, TPuzzle: SemiGroupActionPuzzle = KPuzzle> {
+pub struct IterativeDeepeningSearchCursor<'a, TPuzzle: SemiGroupActionPuzzle = KPuzzle> {
     search: &'a mut IterativeDeepeningSearch<TPuzzle>,
     individual_search_data: IndividualSearchData<TPuzzle>,
 }
 
-impl<TPuzzle: SemiGroupActionPuzzle> Iterator for IterativeSearchCursor<'_, TPuzzle> {
+impl<TPuzzle: SemiGroupActionPuzzle> Iterator for IterativeDeepeningSearchCursor<'_, TPuzzle> {
     type Item = Alg;
 
     fn next(&mut self) -> Option<Alg> {
@@ -54,12 +54,12 @@ impl<TPuzzle: SemiGroupActionPuzzle> Iterator for IterativeSearchCursor<'_, TPuz
     }
 }
 
-pub struct OwnedIterativeSearchCursor<TPuzzle: SemiGroupActionPuzzle = KPuzzle> {
+pub struct OwnedIterativeDeepeningSearchCursor<TPuzzle: SemiGroupActionPuzzle = KPuzzle> {
     search: IterativeDeepeningSearch<TPuzzle>,
     individual_search_data: IndividualSearchData<TPuzzle>,
 }
 
-impl<TPuzzle: SemiGroupActionPuzzle> Iterator for OwnedIterativeSearchCursor<TPuzzle> {
+impl<TPuzzle: SemiGroupActionPuzzle> Iterator for OwnedIterativeDeepeningSearchCursor<TPuzzle> {
     type Item = Alg;
 
     fn next(&mut self) -> Option<Alg> {
@@ -228,52 +228,31 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
 
     /// Note that search is pull-based. You must call `.next()` (or invoke
     /// something that does) on the return value for the search to begine.
-    pub fn search_with_default_individual_search_adaptations<'a>(
-        &'a mut self,
-        search_pattern: &TPuzzle::Pattern,
-        individual_search_options: IndividualSearchOptions,
-    ) -> IterativeSearchCursor<'a, TPuzzle> {
-        self.search(
-            search_pattern,
-            individual_search_options,
-            Default::default(),
-        )
-    }
-
-    /// Note that search is pull-based. You must call `.next()` (or invoke
-    /// something that does) on the return value for the search to begine.
-    pub fn owned_search_with_default_individual_search_adaptations(
-        self,
-        search_pattern: &TPuzzle::Pattern,
-        individual_search_options: IndividualSearchOptions,
-    ) -> OwnedIterativeSearchCursor<TPuzzle> {
-        self.owned_search(
-            search_pattern,
-            individual_search_options,
-            Default::default(),
-        )
-    }
-
-    /// Note that search is pull-based. You must call `.next()` (or invoke
-    /// something that does) on the return value for the search to begine.
     pub fn search<'a>(
         &'a mut self,
         search_pattern: &TPuzzle::Pattern,
         individual_search_options: IndividualSearchOptions,
         individual_search_adaptations: IndividualSearchAdaptations<TPuzzle>,
-    ) -> IterativeSearchCursor<'a, TPuzzle> {
+    ) -> IterativeDeepeningSearchCursor<'a, TPuzzle> {
         let individual_search_data = IndividualSearchData::new(
             self,
             search_pattern,
             individual_search_options,
             individual_search_adaptations,
         );
-        IterativeSearchCursor {
+        IterativeDeepeningSearchCursor {
             search: self,
             individual_search_data,
         }
     }
 
+    /// Returns an an iterator that takes ownership of this
+    /// `IterativeDeepeningSearch`.
+    ///
+    /// This allows creating an iterator that can be returned by itself instead
+    /// of being returned together with its `IterativeDeepeningSearch` (which
+    /// also involves careful lifetime annotations).
+    ///
     /// Note that search is pull-based. You must call `.next()` (or invoke
     /// something that does) on the return value for the search to begine.
     pub fn owned_search(
@@ -281,14 +260,14 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         search_pattern: &TPuzzle::Pattern,
         individual_search_options: IndividualSearchOptions,
         individual_search_adaptations: IndividualSearchAdaptations<TPuzzle>,
-    ) -> OwnedIterativeSearchCursor<TPuzzle> {
+    ) -> OwnedIterativeDeepeningSearchCursor<TPuzzle> {
         let individual_search_data = IndividualSearchData::new(
             &mut self,
             search_pattern,
             individual_search_options,
             individual_search_adaptations,
         );
-        OwnedIterativeSearchCursor {
+        OwnedIterativeDeepeningSearchCursor {
             search: self,
             individual_search_data,
         }

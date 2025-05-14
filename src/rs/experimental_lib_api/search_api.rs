@@ -9,7 +9,7 @@ use crate::_internal::{
             individual_search::IndividualSearchOptions,
             iterative_deepening_search::{
                 IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
-                OwnedIterativeSearchCursor,
+                OwnedIterativeDeepeningSearchCursor,
             },
             solution_moves::alg_to_moves,
         },
@@ -46,7 +46,7 @@ pub fn search(
     kpuzzle: &KPuzzle,
     search_pattern: &KPattern,
     search_command_optional_args: SearchCommandOptionalArgs,
-) -> Result<OwnedIterativeSearchCursor, CommandError> {
+) -> Result<OwnedIterativeDeepeningSearchCursor, CommandError> {
     if search_command_optional_args.search_args.all_optimal {
         eprintln!("⚠️ --all-optimal was specified, but is not currently implemented. Ignoring.");
     }
@@ -97,17 +97,17 @@ pub fn search(
             }
         }
     };
-    let solutions = iterative_deepening_search
-        .owned_search_with_default_individual_search_adaptations(
-            search_pattern,
-            IndividualSearchOptions {
-                min_num_solutions: search_command_optional_args.min_num_solutions,
-                min_depth_inclusive: search_command_optional_args.search_args.min_depth,
-                max_depth_exclusive: search_command_optional_args.search_args.max_depth,
-                root_continuation_condition,
-                ..Default::default()
-            },
-        );
+    let solutions = iterative_deepening_search.owned_search(
+        search_pattern,
+        IndividualSearchOptions {
+            min_num_solutions: search_command_optional_args.min_num_solutions,
+            min_depth_inclusive: search_command_optional_args.search_args.min_depth,
+            max_depth_exclusive: search_command_optional_args.search_args.max_depth,
+            root_continuation_condition,
+            ..Default::default()
+        },
+        Default::default(),
+    );
 
     Ok(solutions)
 }

@@ -68,13 +68,11 @@ where
                 description: "Could not derive pattern for search.".to_owned(),
             });
         };
-        Ok(Box::new(
-            self.iterative_deepening_search
-                .search_with_default_individual_search_adaptations(
-                    &search_pattern,
-                    self.individual_search_options.clone(),
-                ),
-        ))
+        Ok(Box::new(self.iterative_deepening_search.search(
+            &search_pattern,
+            self.individual_search_options.clone(),
+            Default::default(),
+        )))
     }
 }
 

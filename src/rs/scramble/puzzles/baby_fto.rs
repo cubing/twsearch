@@ -123,13 +123,14 @@ pub fn scramble_baby_fto() -> Alg {
             .unwrap();
         if let Some(solution) = search
             .iterative_deepening_search
-            .search_with_default_individual_search_adaptations(
+            .search(
                 &scramble_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
                     min_depth_inclusive: Some(Depth(10)),
                     ..Default::default()
                 },
+                Default::default(),
             )
             .next()
         {

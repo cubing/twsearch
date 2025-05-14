@@ -349,7 +349,7 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
             };
             let phase2_solution = self
                 .phase2_iterative_deepening_search
-                .search_with_default_individual_search_adaptations(
+                .search(
                     &phase2_start_pattern,
                     IndividualSearchOptions {
                         min_num_solutions: Some(1),
@@ -359,6 +359,7 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
                         max_depth_exclusive: Some(Depth(17)),
                         ..Default::default()
                     },
+                    Default::default(),
                 )
                 .next();
 

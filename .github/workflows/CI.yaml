@@ -54,6 +54,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 22.3.0
       - uses: Swatinem/rust-cache@v2
       - uses: oven-sh/setup-bun@v1
         with:

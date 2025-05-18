@@ -3,6 +3,7 @@
 // TOOD: remove this once https://github.com/oven-sh/bun/issues/5846 is implemented.
 // TODO: turn this into a package?
 
+import { exit } from "node:process";
 import { file, spawn } from "bun";
 import { satisfies } from "compare-versions";
 import { PrintableShellCommand } from "printable-shell-command";
@@ -65,3 +66,4 @@ export async function checkEngines(): Promise<void> {
 }
 
 await checkEngines();
+exit(exitCode);

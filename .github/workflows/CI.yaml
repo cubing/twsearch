@@ -67,10 +67,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Use `node` v19
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: 19
+          node-version: 22.3.0
       - uses: oven-sh/setup-bun@v1
         with:
           bun-version: latest
@@ -94,10 +93,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Use `node` v19
-        uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: 19
+          node-version: 22.3.0
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v1
       - run: make lint-js

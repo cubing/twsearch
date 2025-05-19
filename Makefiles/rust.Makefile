@@ -37,14 +37,14 @@ setup-rust: setup-gitignore-dirs
 # Rust testing
 
 .PHONY: test-rust
-test-rust: test-rust-help test-rust-version test-rust-lib test-rust-examples test-rust-wasm test-rust-ffi
+test-rust: test-rust-build-help test-rust-build-version test-rust-lib test-rust-examples test-rust-wasm test-rust-ffi
 
-.PHONY: test-rust-help
-test-rust-help: build-rust
+.PHONY: test-rust-build-help
+test-rust-build-help: build-rust
 	./target/release/twsearch --help
 
-.PHONY: test-rust-version
-test-rust-version: build-rust
+.PHONY: test-rust-build-version
+test-rust-build-version: build-rust
 	./target/release/twsearch --version
 
 .PHONY: test-rust-lib

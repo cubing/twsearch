@@ -42,8 +42,8 @@ jobs:
       - uses: ./.github/workflows/install-pinned-toolchains
       - uses: Swatinem/rust-cache@v2
       - run: make build-rust
-      - run: make test-rust-help
-      - run: make test-rust-version
+      - run: make test-rust-build-help
+      - run: make test-rust-build-version
       - run: make test-rust-lib
       - run: make test-rust-examples
       - run: make lint-rust

@@ -1,13 +1,17 @@
 #!/usr/bin/env bun
 
 import assert from "node:assert";
-import { mkdir } from "node:fs/promises";
+import { mkdir, rm } from "node:fs/promises";
 import { env } from "node:process";
 import { fileURLToPath } from "node:url";
+import { es2022Lib } from "@cubing/dev-config/esbuild/es2022";
 import { $, file, spawn } from "bun";
 import { build } from "esbuild";
 
 const distDir = fileURLToPath(new URL("../dist/wasm/", import.meta.url));
+
+await rm(distDir, { recursive: true, force: true });
+await mkdir(distDir, { recursive: true });
 
 const BITS_PER_BYTE = 8;
 
@@ -65,8 +69,6 @@ assert(wasmSize > 32 * KiB); // Make sure the file exists and has some contents.
  */
 assert(secondsToDownloadUsing3G(wasmSize) < 7);
 
-await mkdir(distDir, { recursive: true });
-
 const version = await (async () => {
   if (env.CI) {
     // Bun seems to segfault, so we need to avoid the `spawn` call completely.
@@ -90,15 +92,12 @@ const version = await (async () => {
 })();
 
 build({
+  ...es2022Lib(),
   entryPoints: [
     fileURLToPath(new URL("../src/wasm-package/index.ts", import.meta.url)),
   ],
-  format: "esm",
-  bundle: true,
-  splitting: true,
   loader: { ".wasm": "binary" },
   outdir: distDir,
-  external: ["cubing"],
   banner: {
     js: `// Generated from \`twsearch\` ${version}`,
   },

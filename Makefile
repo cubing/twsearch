@@ -54,9 +54,6 @@ print-current-commit-hash:
 setup-gitignore-dirs:
 	bun run ./script/self-gitignore-dirs.ts ./.bin ./.temp ./build ./dist ./target
 
-
-TWSEARCH_VERSION=$(shell git describe --tags)
-
 include ./Makefiles/cpp.Makefile
 include ./Makefiles/js.Makefile
 include ./Makefiles/rust-ffi.Makefile

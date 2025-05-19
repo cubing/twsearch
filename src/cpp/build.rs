@@ -1,3 +1,5 @@
+use std::process::Command;
+
 fn main() {
     let cpp_files = [
         "antipode.cpp",
@@ -28,10 +30,18 @@ fn main() {
     for cpp_file in cpp_files {
         build.file(cpp_file);
     }
+    let version = String::from_utf8(
+        Command::new("bun")
+            .args(["run", "script/print-current-version-description.ts"])
+            .output()
+            .unwrap()
+            .stdout,
+    )
+    .unwrap();
     build
         .flag("-std=c++17")
         .flag("-DASLIBRARY")
-        .flag("-DTWSEARCH_VERSION=v0.4.2-7-g4a9107fa")
+        .flag(format!("-DTWSEARCH_VERSION={}", version))
         // .flag("-lpthread") # Unneeded?
         .flag("-DUSE_PTHREADS")
         .compile("twsearch-cpp-wrapper");

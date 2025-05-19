@@ -52,11 +52,11 @@ pub enum CliCommand {
     GodsAlgorithm(GodsAlgorithmArgs),
     /// Run a timing test for given definition.
     TimingTest(TimingTestArgs),
-    // Enumerate canonical algs (move sequences) at iterative depths.
+    /// Enumerate canonical algs (move sequences) at iterative depths.
     CanonicalAlgs(CanonicalAlgsArgs),
-    // Generate a scramble
+    /// Generate a scramble
     Scramble(ScrambleArgs),
-    // Generate a scramble matching the same pattern as produced by the given test scramble alg.
+    /// Test the scramble finder implementations directly.
     ScrambleFinder(ScrambleFinderArgs),
 
     /// Run an internal benchmark suite.
@@ -420,7 +420,9 @@ pub struct ScrambleFinderArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum ScrambleFinderCommand {
+    /// Search for a solution to the given setup alg.
     Search(ScrambleFinderSearchArgs),
+    /// Run the filter on the given setup alg.
     Filter(ScrambleFinderFilterArgs),
 }
 
@@ -446,6 +448,7 @@ pub struct ScrambleFinderFilterArgs {
 
     /// Scramble setup alg
     // TODO: Make this an `Alg` (by implementing `ValueEnum`?)
+    // TODO: support pattern input via file.
     pub scramble_setup_alg: String,
 }
 

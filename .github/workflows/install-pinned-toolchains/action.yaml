@@ -1,0 +1,14 @@
+name: "Install pinned toolchains"
+description: "Install pinned toolchains"
+
+runs:
+  using: "composite"
+  steps:
+  # We don't install rust here becasue `cargo` is pre-installed and `rust-toolchain.toml` handles the rest.
+  # We don't install a specific C++ compiler here because the default in the GH Actions runner works for us.
+  - uses: actions/setup-node@v4
+    with:
+      node-version: 22.3.0
+  - uses: oven-sh/setup-bun@v2
+    with:
+      bun-version: 1.2.7

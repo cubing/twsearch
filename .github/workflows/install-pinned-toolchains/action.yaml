@@ -6,6 +6,9 @@ runs:
   steps:
   # We don't install rust here becasue `cargo` is pre-installed and `rust-toolchain.toml` handles the rest.
   # We don't install a specific C++ compiler here because the default in the GH Actions runner works for us.
+  - uses: actions/checkout@v4
+    with:
+        fetch-depth: 0 # needed for tags for `git describe --tags`
   - uses: actions/setup-node@v4
     with:
       node-version: 22.3.0

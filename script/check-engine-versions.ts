@@ -4,7 +4,7 @@
 // TODO: turn this into a package?
 
 import { exit } from "node:process";
-import { file, spawn } from "bun";
+import { type SystemError, file, spawn } from "bun";
 import { satisfies } from "compare-versions";
 import { PrintableShellCommand } from "printable-shell-command";
 
@@ -26,11 +26,11 @@ async function checkEngine(
     if ((await command.exited) !== 0) {
       console.error(
         `Command failed while getting version:
-  
+
   ${versionCommand.getPrintableCommand({ mainIndentation: "    " })}`,
       );
       exitCode = 1;
-      return true;
+      return;
     }
 
     const engineVersion = (await new Response(command.stdout).text()).trim();
@@ -45,7 +45,7 @@ async function checkEngine(
       return;
     }
   } catch (e) {
-    if (e.code === "ENOENT") {
+    if ((e as any as SystemError).code === "ENOENT") {
       const [binary, ..._] = versionCommand.forBun();
       console.error(
         `Binary is missing for engine version check: \`${binary}\``,
@@ -58,7 +58,7 @@ async function checkEngine(
   }
 }
 
-export async function checkEngines(): Promise<void> {
+async function checkEngines(): Promise<void> {
   await Promise.all([
     checkEngine("bun", new PrintableShellCommand("bun", ["--version"])),
     checkEngine("node", new PrintableShellCommand("node", ["--version"])),

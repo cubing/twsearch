@@ -2,11 +2,11 @@
 
 import assert from "node:assert";
 import { mkdir, rm } from "node:fs/promises";
-import { env } from "node:process";
 import { fileURLToPath } from "node:url";
 import { es2022Lib } from "@cubing/dev-config/esbuild/es2022";
-import { $, file, spawn } from "bun";
+import { file } from "bun";
 import { build } from "esbuild";
+import { getCurrentVersionDescription } from "./lib/getCurrentVersionDescription";
 
 const distDir = fileURLToPath(new URL("../dist/wasm/", import.meta.url));
 
@@ -69,27 +69,7 @@ assert(wasmSize > 32 * KiB); // Make sure the file exists and has some contents.
  */
 assert(secondsToDownloadUsing3G(wasmSize) < 7);
 
-const version = await (async () => {
-  if (env.CI) {
-    // Bun seems to segfault, so we need to avoid the `spawn` call completely.
-    console.warn(
-      "WARNING: We seem to be in CI, embedding unknown version number to avoid a segfault.",
-    );
-    return "vUNKNOWN";
-  }
-  const command = spawn(["git", "describe", "--tags"], {
-    stdout: "pipe",
-    stderr: "ignore",
-  });
-  if ((await command.exited) !== 0) {
-    console.log("Using version from `jj`");
-    // From https://github.com/jj-vcs/jj/discussions/2563#discussioncomment-11885001
-    return $`jj log -r 'latest(tags())::@- ~ empty()' --no-graph --reversed -T 'commit_id.short(8) ++ " " ++ tags ++ "\n"' \
-  | awk '{latest = $1; count++}; $2 != "" && tag == "" { tag = $2 } END {print tag "-" count "-g" latest}'`.text();
-  }
-  console.log("Using version from `git`");
-  await new Response(command.stdout).text();
-})();
+const version = await getCurrentVersionDescription();
 
 build({
   ...es2022Lib(),

@@ -1,11 +1,10 @@
 .PHONY: build
-build: build/bin/twsearch
-
-.PHONY: all
-all: \
+build: \
 	build/bin/twsearch \
+	twsearch-cpp-wrapper-cli \
 	build-rust \
-	build-rust-wasm
+	build-rust-wasm \
+	build-rust-ffi
 
 .PHONY: setup
 setup: setup-gitignore-dirs setup-js setup-rust
@@ -56,6 +55,6 @@ setup-gitignore-dirs:
 
 include ./Makefiles/cpp.Makefile
 include ./Makefiles/js.Makefile
-include ./Makefiles/rust-ffi.Makefile
-include ./Makefiles/rust-wasm.Makefile
 include ./Makefiles/rust.Makefile
+include ./Makefiles/rust-wasm.Makefile
+include ./Makefiles/rust-ffi.Makefile

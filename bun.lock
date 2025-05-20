@@ -8,7 +8,7 @@
       },
       "devDependencies": {
         "@biomejs/biome": "^v1.9.4",
-        "@cubing/dev-config": "^0.3.4",
+        "@cubing/dev-config": "v0.3.5",
         "@types/bun": "^1.1.0",
         "@types/node": "^22.3.0",
         "barely-a-dev-server": "^0.7.1",
@@ -38,7 +38,7 @@
 
     "@biomejs/cli-win32-x64": ["@biomejs/cli-win32-x64@1.9.4", "", { "os": "win32", "cpu": "x64" }, "sha512-8Y5wMhVIPaWe6jw2H+KlEm4wP/f7EW3810ZLmDlrEEy5KvBsb9ECEfu/kMWD484ijfQ8+nIi0giMgu9g1UAuuA=="],
 
-    "@cubing/dev-config": ["@cubing/dev-config@0.3.4", "", { "dependencies": { "esbuild": "^0.25.3" } }, "sha512-cTYW1PdCfiTF0n2qUmqc8Vcq0luejdmWNvJDELn3i2olELw+gjuFEfXJmmJbNfUol3RrjnijB3iT/vTFTne4Bw=="],
+    "@cubing/dev-config": ["@cubing/dev-config@0.3.5", "", { "dependencies": { "esbuild": "^0.25.3" } }, "sha512-qxtQ4M2bFFj/iVKhYRWnRp90be+hjYcLeFwvxFlS4EsoPdslF+3sN2DiC1j11qwOkOCFvoaHJL4QmrriQDPkjA=="],
 
     "@esbuild/aix-ppc64": ["@esbuild/aix-ppc64@0.25.0", "", { "os": "aix", "cpu": "ppc64" }, "sha512-O7vun9Sf8DFjH2UtqK8Ku3LkquL9SZL8OLY1T5NZkA34+wG3OQF7cl4Ql8vdNzM6fzBbYfLaiRLIOZ+2FOCgBQ=="],
 

@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^v1.9.4",
-    "@cubing/dev-config": "^0.3.4",
+    "@cubing/dev-config": "v0.3.5",
     "@types/bun": "^1.1.0",
     "@types/node": "^22.3.0",
     "barely-a-dev-server": "^0.7.1",

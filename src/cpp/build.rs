@@ -39,7 +39,7 @@ fn main() {
     )
     .unwrap();
     build
-        .flag("-std=c++17")
+        .flag("-std=c++20")
         .flag("-DASLIBRARY")
         .flag(format!("-DTWSEARCH_VERSION={}", version))
         // .flag("-lpthread") # Unneeded?

@@ -408,7 +408,7 @@ pub struct ScrambleArgs {
     pub event_id: String,
 
     /// Amount of scrambles
-    #[clap(long, default_value = "1")]
+    #[clap(long, default_value_t = 1)]
     pub amount: usize,
 }
 
@@ -430,10 +430,10 @@ pub enum ScrambleFinderCommand {
 // TODO: combine with `ScrambleFinderFilterArgs`?
 pub struct ScrambleFinderSearchArgs {
     /// Amount of scrambles
-    #[clap(long, default_value = "false")]
+    #[clap(long, default_value_t = false)]
     pub print_link: bool,
 
-    #[clap(long, default_value = "false")]
+    #[clap(long, default_value_t = false)]
     pub apply_filtering: bool,
 
     #[command(flatten)]

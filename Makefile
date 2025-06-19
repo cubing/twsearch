@@ -51,7 +51,7 @@ print-current-commit-hash:
 
 .PHONY: setup-gitignore-dirs
 setup-gitignore-dirs:
-	bun run ./script/self-gitignore-dirs.ts ./.bin ./.temp ./build ./dist ./target
+	bun run ./script/self-gitignore-dirs.ts ./.bin ./.temp ./build ./dist ./target ./src/ruby-gem/lib ./src/ruby-gem/tmp
 
 include ./Makefiles/cpp.Makefile
 include ./Makefiles/js.Makefile

@@ -145,6 +145,7 @@ pub enum VerbosityLevel {
     Error,
     Warning,
     Info,
+    Extra,
 }
 
 impl Default for VerbosityLevel {

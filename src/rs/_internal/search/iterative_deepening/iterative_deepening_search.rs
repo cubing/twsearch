@@ -408,14 +408,10 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
             };
 
             for move_transformation_info in move_transformation_multiples {
-                // We check the continuation condition here so that we can
-                // resume a search from a continuation condition even if the
-                // move is not an accepted by the move transformation filter.
-                // TDOO: does this check impact perf?
                 if continuation_condition != ContinuationCondition::None {
                     self.immutable_search_data
                         .search_logger
-                        .write_info(&format!(
+                        .write_extra(&format!(
                             "{} → {} ? ({:?})",
                             Alg {
                                 nodes: solution_moves.snapshot_alg_nodes()
@@ -424,6 +420,10 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                             &continuation_condition,
                         ));
                 }
+                // We check the continuation condition here so that we can
+                // resume a search from a continuation condition even if the
+                // move is not an accepted by the move transformation filter.
+                // TDOO: does this check impact perf?
                 let Some(recursive_continuation_condition) =
                     continuation_condition.recurse(&move_transformation_info.r#move)
                 else {

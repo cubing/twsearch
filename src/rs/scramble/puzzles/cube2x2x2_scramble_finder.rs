@@ -75,10 +75,10 @@ impl Default for Cube2x2x2ScrambleFinder {
                 vec![kpuzzle.default_pattern()],
                 ImmutableSearchDataConstructionOptions {
                     canonical_fsm_construction_options: CanonicalFSMConstructionOptions {
-                        forbid_transitions_by_quantums_either_direction: HashSet::from([(
+                        forbid_adjacent_moves_by_quantums: vec![HashSet::from([
                             QuantumMove::new("L", None),
                             QuantumMove::new("R", None),
-                        )]),
+                        ])],
                     },
                     ..Default::default()
                 },

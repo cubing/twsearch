@@ -162,7 +162,7 @@ mod tests {
             &search_pattern,
             SearchCommandOptionalArgs {
                 generator_args: GeneratorArgs {
-                    generator_moves_string: Some("R,U".to_owned()), // TODO: make this semantic
+                    generator_moves_string: Some(vec!["R".to_owned(), "U".to_owned()]), // TODO: make this semantic
                     ..Default::default()
                 },
                 ..Default::default()

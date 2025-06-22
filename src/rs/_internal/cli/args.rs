@@ -165,14 +165,14 @@ pub struct GeneratorArgs {
     /// A comma-separated list of moves to use. All multiples of these
     /// moves are considered. For example, `--moves U,F,R2` only permits
     /// half-turns on R, and all possible turns on U and F.
-    #[clap(long = "generator-moves")]
-    pub generator_moves_string: Option<String>,
+    #[clap(long = "generator-moves", value_delimiter = ',')]
+    pub generator_moves_string: Option<Vec<String>>,
 
     /// A comma-separated list of algs to use. All multiples of these
     /// algs are considered. For example, `--algs U,F,R2` only permits
     /// half-turns on R, and all possible turns on U and F.
-    #[clap(long)]
-    pub generator_algs: Option<String>,
+    #[clap(long, value_delimiter = ',')]
+    pub generator_algs: Option<Vec<String>>,
 }
 
 #[derive(Clone, Debug)]
@@ -204,8 +204,8 @@ pub struct CustomGenerators {
 
 impl GeneratorArgs {
     pub fn parse(&self) -> Generators {
-        let moves = parse_comma_separated(&self.generator_moves_string);
-        let algs = parse_comma_separated(&self.generator_algs);
+        let moves = parse_moves(&self.generator_moves_string);
+        let algs = parse_moves(&self.generator_algs);
         match (moves, algs) {
             (None, None) => Generators::Default,
             (moves, algs) => Generators::Custom(CustomGenerators {
@@ -216,13 +216,10 @@ impl GeneratorArgs {
     }
 }
 
-fn parse_comma_separated<T: FromStr<Err = E>, E: Display>(
-    input: &Option<String>,
-) -> Option<Vec<T>> {
+fn parse_moves<T: FromStr<Err = E>, E: Display>(input: &Option<Vec<String>>) -> Option<Vec<T>> {
     input.as_ref().map(|moves| {
         moves
-            .split(',')
-            .by_ref()
+            .iter()
             .map(|move_str| match move_str.parse::<T>() {
                 Ok(r#move) => r#move,
                 Err(err) => {

@@ -1,11 +1,13 @@
 use cubing::{alg::Alg, kpuzzle::KPuzzle};
 
-use crate::_internal::errors::{CommandError, SearchError};
+use crate::{
+    _internal::errors::{CommandError, SearchError},
+    scramble::puzzles::baby_fto::BabyFTOScrambleFinder,
+};
 
 use super::{
     get_kpuzzle::GetKPuzzle,
     puzzles::{
-        baby_fto::scramble_baby_fto,
         big_cubes::{
             BigCubeScrambleFinderScrambleOptions, BigCubeScrambleFinderSuffixConstraints,
             Cube5x5x5ScrambleFinder, Cube6x6x6ScrambleFinder, Cube7x7x7ScrambleFinder,
@@ -116,7 +118,9 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
             &Default::default(),
         )),
         Event::RediCubeSpeedsolving => err,
-        Event::BabyFTOSpeedsolving => Ok(scramble_baby_fto()),
+        Event::BabyFTOSpeedsolving => Ok(generate_fair_scramble::<BabyFTOScrambleFinder>(
+            &Default::default(),
+        )),
     }
 }
 

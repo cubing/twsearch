@@ -1,15 +1,18 @@
 use std::collections::HashSet;
 
-use cubing::alg::{parse_alg, Alg, QuantumMove};
-use rand::{seq::SliceRandom, thread_rng};
+use cubing::{
+    alg::{Alg, QuantumMove},
+    kpuzzle::{KPattern, KPuzzle},
+};
 
 use crate::{
     _internal::{
         canonical_fsm::canonical_fsm::CanonicalFSMConstructionOptions,
+        errors::SearchError,
         search::{
+            filter::filtering_decision::FilteringDecision,
             hash_prune_table::HashPruneTableSizeBounds,
             iterative_deepening::{
-                individual_search::IndividualSearchOptions,
                 iterative_deepening_search::{
                     ImmutableSearchData, ImmutableSearchDataConstructionOptions,
                     IterativeDeepeningSearch,
@@ -17,11 +20,14 @@ use crate::{
                 search_adaptations::StoredSearchAdaptations,
             },
             move_count::MoveCount,
-            prune_table_trait::Depth,
         },
     },
     scramble::{
         randomize::OrbitRandomizationConstraints,
+        scramble_finder::{
+            scramble_finder::ScrambleFinder,
+            solving_based_scramble_finder::{NoScrambleOptions, SolvingBasedScrambleFinder},
+        },
         scramble_search::{move_list_from_vec, FilteredSearch},
     },
 };
@@ -31,45 +37,110 @@ use super::{
     definitions::baby_fto_kpuzzle,
 };
 
-pub fn scramble_baby_fto() -> Alg {
-    let kpuzzle = baby_fto_kpuzzle();
-    let filter_generator_moves = move_list_from_vec(vec!["U", "L", "F", "R"]);
-    let mut filtered_search =
-        <FilteredSearch>::new(IterativeDeepeningSearch::new_with_hash_prune_table(
+// pub fn scramble_baby_fto() -> Alg {
+//     loop {
+//         let mut rng = thread_rng();
+//         // TODO: Have a consistent way to handle orientation (de)normalization.
+//         let scramble_pattern = scramble_pattern
+//             .apply_alg(
+//                 [parse_alg!(""), parse_alg!("Rv Uv")]
+//                     .choose(&mut rng)
+//                     .unwrap(),
+//             )
+//             .unwrap();
+//         let scramble_pattern = scramble_pattern
+//             .apply_alg(
+//                 [parse_alg!(""), parse_alg!("Rv'")]
+//                     .choose(&mut rng)
+//                     .unwrap(),
+//             )
+//             .unwrap();
+//         let scramble_pattern = scramble_pattern
+//             .apply_alg(
+//                 [parse_alg!(""), parse_alg!("Uv"), parse_alg!("Uv'")]
+//                     .choose(&mut rng)
+//                     .unwrap(),
+//             )
+//             .unwrap();
+//         if let Some(solution) =
+//         {
+//             return solution.invert();
+//         }
+//     }
+// }
+
+pub(crate) struct BabyFTOScrambleFinder {
+    kpuzzle: KPuzzle,
+    filtered_search: FilteredSearch<KPuzzle>,
+    search: FilteredSearch<KPuzzle>,
+}
+
+impl Default for BabyFTOScrambleFinder {
+    fn default() -> Self {
+        let kpuzzle = baby_fto_kpuzzle();
+        let filter_generator_moves = move_list_from_vec(vec!["U", "L", "F", "R"]);
+        let filtered_search =
+            <FilteredSearch>::new(IterativeDeepeningSearch::new_with_hash_prune_table(
+                ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                    kpuzzle.clone(),
+                    filter_generator_moves,
+                    vec![kpuzzle.default_pattern()],
+                    Default::default(),
+                )
+                .unwrap(),
+                StoredSearchAdaptations::default(),
+                HashPruneTableSizeBounds::default(),
+            ));
+
+        let generator_moves = move_list_from_vec(vec!["U", "L", "F", "R", "BR"]);
+        let search = <FilteredSearch>::new(IterativeDeepeningSearch::new_with_hash_prune_table(
             ImmutableSearchData::try_from_common_options_with_auto_search_generators(
                 kpuzzle.clone(),
-                filter_generator_moves,
+                generator_moves,
                 vec![kpuzzle.default_pattern()],
-                Default::default(),
+                ImmutableSearchDataConstructionOptions {
+                    canonical_fsm_construction_options: CanonicalFSMConstructionOptions {
+                        forbid_adjacent_moves_by_quantums: vec![HashSet::from([
+                            QuantumMove::new("L", None),
+                            QuantumMove::new("BR", None),
+                        ])],
+                    },
+                    ..Default::default()
+                },
             )
             .unwrap(),
             StoredSearchAdaptations::default(),
             HashPruneTableSizeBounds::default(),
         ));
 
-    let generator_moves = move_list_from_vec(vec!["U", "L", "F", "R", "BR"]);
-    let mut search = <FilteredSearch>::new(IterativeDeepeningSearch::new_with_hash_prune_table(
-        ImmutableSearchData::try_from_common_options_with_auto_search_generators(
-            kpuzzle.clone(),
-            generator_moves,
-            vec![kpuzzle.default_pattern()],
-            ImmutableSearchDataConstructionOptions {
-                canonical_fsm_construction_options: CanonicalFSMConstructionOptions {
-                    forbid_adjacent_moves_by_quantums: vec![HashSet::from([
-                        QuantumMove::new("L", None),
-                        QuantumMove::new("BR", None),
-                    ])],
-                },
-                ..Default::default()
-            },
-        )
-        .unwrap(),
-        StoredSearchAdaptations::default(),
-        HashPruneTableSizeBounds::default(),
-    ));
+        Self {
+            kpuzzle: kpuzzle.clone(),
+            filtered_search,
+            search,
+        }
+    }
+}
 
-    loop {
-        let mut scramble_pattern = kpuzzle.default_pattern();
+impl ScrambleFinder for BabyFTOScrambleFinder {
+    type TPuzzle = KPuzzle;
+    type ScrambleOptions = NoScrambleOptions;
+
+    fn filter_pattern(
+        &mut self,
+        pattern: &KPattern,
+        _scramble_options: &NoScrambleOptions,
+    ) -> FilteringDecision {
+        self.filtered_search
+            .filtering_decision(pattern, MoveCount(5))
+    }
+}
+
+impl SolvingBasedScrambleFinder for BabyFTOScrambleFinder {
+    fn generate_fair_unfiltered_random_pattern(
+        &mut self,
+        _scramble_options: &NoScrambleOptions,
+    ) -> KPattern {
+        let mut scramble_pattern = self.kpuzzle.default_pattern();
 
         randomize_orbit(
             &mut scramble_pattern,
@@ -80,7 +151,6 @@ pub fn scramble_baby_fto() -> Alg {
                 orientation: Some(OrbitOrientationConstraint::EvenOddHackSumToZero(vec![
                     1, 3, 4,
                 ])),
-                subset: Some((0..5).collect()), // TODO: reorder to allow the first piece to be fixed
                 ..Default::default()
             },
         );
@@ -99,48 +169,18 @@ pub fn scramble_baby_fto() -> Alg {
             );
         }
 
-        if let Some(alg) = filtered_search.filter(&scramble_pattern, MoveCount(5)) {
-            eprintln!("Skipping due to short solution: {}", alg);
-            continue;
-        }
+        scramble_pattern
+    }
 
-        let mut rng = thread_rng();
-        // TODO: Have a consistent way to handle orientation (de)normalization.
-        let scramble_pattern = scramble_pattern
-            .apply_alg(
-                [parse_alg!(""), parse_alg!("Rv Uv")]
-                    .choose(&mut rng)
-                    .unwrap(),
-            )
-            .unwrap();
-        let scramble_pattern = scramble_pattern
-            .apply_alg(
-                [parse_alg!(""), parse_alg!("Rv'")]
-                    .choose(&mut rng)
-                    .unwrap(),
-            )
-            .unwrap();
-        let scramble_pattern = scramble_pattern
-            .apply_alg(
-                [parse_alg!(""), parse_alg!("Uv"), parse_alg!("Uv'")]
-                    .choose(&mut rng)
-                    .unwrap(),
-            )
-            .unwrap();
-        if let Some(solution) = search
-            .iterative_deepening_search
-            .search(
-                &scramble_pattern,
-                IndividualSearchOptions {
-                    min_num_solutions: Some(1),
-                    min_depth_inclusive: Some(Depth(10)),
-                    ..Default::default()
-                },
-                Default::default(),
-            )
-            .next()
-        {
-            return solution.invert();
-        }
+    fn solve_pattern(
+        &mut self,
+        pattern: &KPattern,
+        _scramble_options: &NoScrambleOptions,
+    ) -> Result<Alg, SearchError> {
+        Ok(self.search.generate_scramble(pattern, Some(MoveCount(10))))
+    }
+
+    fn collapse_inverted_alg(&mut self, alg: Alg) -> Alg {
+        alg
     }
 }

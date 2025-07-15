@@ -6,14 +6,12 @@ members = [
   "src/rs",
   "src/rs-ffi",
   "src/rs-wasm",
-  "script/cargo-run-bin"
+  "script/cargo-run-bin",
 ]
-default-members = [
-  "src/rs"
-]
+default-members = ["src/rs"]
 
 [workspace.package]
-version = "0.7.2-dev"
+version = "0.7.2"
 license = "MPL-2.0"
 edition = "2021"
 

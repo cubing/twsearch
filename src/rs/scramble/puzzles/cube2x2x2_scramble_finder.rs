@@ -12,8 +12,13 @@ use crate::{
         errors::SearchError,
         search::{
             filter::filtering_decision::FilteringDecision,
-            iterative_deepening::iterative_deepening_search::{
-                IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+            hash_prune_table::HashPruneTableSizeBounds,
+            iterative_deepening::{
+                iterative_deepening_search::{
+                    ImmutableSearchData, ImmutableSearchDataConstructionOptions,
+                    IterativeDeepeningSearch,
+                },
+                search_adaptations::StoredSearchAdaptations,
             },
             move_count::MoveCount,
         },
@@ -63,24 +68,25 @@ impl Default for Cube2x2x2ScrambleFinder {
         .unwrap();
 
         #[allow(non_snake_case)] // Move meanings are case sensitive.
-        let search = <FilteredSearch>::new(
-            IterativeDeepeningSearch::try_new_kpuzzle_with_hash_prune_table_shim(
+        let search = <FilteredSearch>::new(IterativeDeepeningSearch::new_with_hash_prune_table(
+            ImmutableSearchData::try_from_common_options_with_auto_search_generators(
                 kpuzzle.clone(),
                 move_list_from_vec(vec!["U", "L", "F", "R"]),
                 vec![kpuzzle.default_pattern()],
-                IterativeDeepeningSearchConstructionOptions {
+                ImmutableSearchDataConstructionOptions {
                     canonical_fsm_construction_options: CanonicalFSMConstructionOptions {
-                        forbid_transitions_by_quantums_either_direction: HashSet::from([(
+                        forbid_adjacent_moves_by_quantums: vec![HashSet::from([
                             QuantumMove::new("L", None),
                             QuantumMove::new("R", None),
-                        )]),
+                        ])],
                     },
                     ..Default::default()
                 },
-                None,
             )
             .unwrap(),
-        );
+            StoredSearchAdaptations::default(),
+            HashPruneTableSizeBounds::default(),
+        ));
         Self {
             kpuzzle: kpuzzle.clone(),
             depth_filtering_search,

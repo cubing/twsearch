@@ -14,10 +14,10 @@ impl<TPuzzle: SemiGroupActionPuzzle> SearchPhase<TPuzzle> for ConstantAlgSearchP
         &self.phase_name
     }
 
-    fn first_solution(
+    fn solutions(
         &mut self,
         _phase_search_pattern: &<TPuzzle as SemiGroupActionPuzzle>::Pattern,
-    ) -> Result<Option<Alg>, SearchError> {
-        Ok(Some(self.alg.clone()))
+    ) -> Result<Box<dyn Iterator<Item = Alg>>, SearchError> {
+        Ok(Box::new(vec![self.alg.clone()].into_iter()))
     }
 }

@@ -9,12 +9,26 @@ pub struct SearchLogger {
 
 impl SearchLogger {
     // TODO: support using the `write!` macro to avoid unnecessary string formatting in the caller when nothing is actually logged.
+    pub fn write_extra(&self, s: &str) {
+        if match self.verbosity {
+            VerbosityLevel::Silent => false,
+            VerbosityLevel::Error => false,
+            VerbosityLevel::Warning => false,
+            VerbosityLevel::Info => false,
+            VerbosityLevel::Extra => true,
+        } {
+            eprintln!("{}", s)
+        }
+    }
+
+    // TODO: support using the `write!` macro to avoid unnecessary string formatting in the caller when nothing is actually logged.
     pub fn write_info(&self, s: &str) {
         if match self.verbosity {
             VerbosityLevel::Silent => false,
             VerbosityLevel::Error => false,
             VerbosityLevel::Warning => false,
             VerbosityLevel::Info => true,
+            VerbosityLevel::Extra => true,
         } {
             eprintln!("{}", s)
         }
@@ -26,6 +40,7 @@ impl SearchLogger {
             VerbosityLevel::Error => false,
             VerbosityLevel::Warning => true,
             VerbosityLevel::Info => true,
+            VerbosityLevel::Extra => true,
         } {
             eprintln!("{}", s);
         }
@@ -37,6 +52,7 @@ impl SearchLogger {
             VerbosityLevel::Error => true,
             VerbosityLevel::Warning => true,
             VerbosityLevel::Info => true,
+            VerbosityLevel::Extra => true,
         } {
             eprintln!("{}", s);
         }

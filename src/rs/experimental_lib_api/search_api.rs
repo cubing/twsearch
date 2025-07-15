@@ -1,17 +1,28 @@
 use std::sync::Arc;
 
 use crate::_internal::{
+    canonical_fsm::search_generators::SearchGenerators,
     cli::args::{SearchCommandOptionalArgs, VerbosityLevel},
-    errors::CommandError,
+    errors::{ArgumentError, CommandError},
     search::{
-        iterative_deepening::iterative_deepening_search::{
-            IndividualSearchOptions, IterativeDeepeningSearch,
-            IterativeDeepeningSearchConstructionOptions, SearchSolutions,
+        hash_prune_table::HashPruneTableSizeBounds,
+        iterative_deepening::{
+            continuation_condition::ContinuationCondition,
+            individual_search::IndividualSearchOptions,
+            iterative_deepening_search::{
+                ImmutableSearchData, ImmutableSearchDataConstructionOptions,
+                IterativeDeepeningSearch, OwnedIterativeDeepeningSearchCursor,
+            },
+            search_adaptations::StoredSearchAdaptations,
+            solution_moves::alg_to_moves,
         },
         search_logger::SearchLogger,
     },
 };
-use cubing::kpuzzle::{KPattern, KPuzzle};
+use cubing::{
+    alg::{Alg, Move},
+    kpuzzle::{KPattern, KPuzzle},
+};
 
 use super::common::PatternSource;
 
@@ -30,7 +41,7 @@ use super::common::PatternSource;
 ///     .expect("Invalid alg for puzzle.");
 /// let solutions =
 ///     search(kpuzzle, &search_pattern, Default::default()).expect("Search failed.");
-/// for solution in solutions {
+/// for solution in solutions.take(5) {
 ///     println!("{}", solution);
 /// }
 /// ```
@@ -38,7 +49,7 @@ pub fn search(
     kpuzzle: &KPuzzle,
     search_pattern: &KPattern,
     search_command_optional_args: SearchCommandOptionalArgs,
-) -> Result<SearchSolutions, CommandError> {
+) -> Result<OwnedIterativeDeepeningSearchCursor, CommandError> {
     if search_command_optional_args.search_args.all_optimal {
         eprintln!("⚠️ --all-optimal was specified, but is not currently implemented. Ignoring.");
     }
@@ -51,39 +62,79 @@ pub fn search(
         None => kpuzzle.default_pattern(),
     };
 
-    let mut iterative_deepening_search =
-        <IterativeDeepeningSearch<KPuzzle>>::try_new_kpuzzle_with_hash_prune_table_shim(
+    let generator_moves = search_command_optional_args
+        .generator_args
+        .parse()
+        .enumerate_moves_for_kpuzzle(kpuzzle);
+    let search_generators = SearchGenerators::try_new(
+        kpuzzle,
+        generator_moves,
+        &search_command_optional_args.metric_args.metric,
+        search_command_optional_args.search_args.random_start,
+    )?;
+    let iterative_deepening_search = <IterativeDeepeningSearch<KPuzzle>>::new_with_hash_prune_table(
+        ImmutableSearchData::try_from_common_options(
             kpuzzle.clone(),
-            search_command_optional_args
-                .generator_args
-                .parse()
-                .enumerate_moves_for_kpuzzle(kpuzzle),
+            search_generators,
             vec![target_pattern], // TODO: support multiple target patterns in API
-            IterativeDeepeningSearchConstructionOptions {
+            ImmutableSearchDataConstructionOptions {
                 search_logger: Arc::new(SearchLogger {
                     verbosity: search_command_optional_args
                         .verbosity_args
                         .verbosity
                         .unwrap_or(VerbosityLevel::Error),
                 }),
-                metric: search_command_optional_args.metric_args.metric,
-                random_start: search_command_optional_args.search_args.random_start,
                 ..Default::default()
             },
-            None,
-        )?;
+        )?,
+        StoredSearchAdaptations::default(),
+        HashPruneTableSizeBounds::default(),
+    );
 
-    let solutions = iterative_deepening_search.search_with_default_individual_search_adaptations(
+    let root_continuation_condition = {
+        match (
+            search_command_optional_args.search_args.continue_after,
+            search_command_optional_args.search_args.continue_at,
+        ) {
+            (None, None) => ContinuationCondition::None,
+            (Some(after), None) => {
+                ContinuationCondition::After(parse_continuation_alg_arg(&after)?)
+            }
+            (None, Some(at)) => ContinuationCondition::At(parse_continuation_alg_arg(&at)?),
+            (Some(_), Some(_)) => {
+                // TODO: figure out how to make this unrepresentable using idiomatic `clap` config.
+                panic!("Specifying `--continue-after` and `--continue-at` simultaneously is supposed to be impossible.");
+            }
+        }
+    };
+    let solutions = iterative_deepening_search.owned_search(
         search_pattern,
         IndividualSearchOptions {
             min_num_solutions: search_command_optional_args.min_num_solutions,
             min_depth_inclusive: search_command_optional_args.search_args.min_depth,
             max_depth_exclusive: search_command_optional_args.search_args.max_depth,
+            root_continuation_condition,
             ..Default::default()
         },
+        Default::default(),
     );
 
     Ok(solutions)
+}
+
+fn parse_continuation_alg_arg(s: &str) -> Result<Vec<Move>, CommandError> {
+    // TODO: unify code between branches to save code size?
+    let alg = s.parse::<Alg>().map_err(|e| -> _ {
+        CommandError::ArgumentError(ArgumentError {
+            description: e.description,
+        })
+    })?;
+    let Some(moves) = alg_to_moves(&alg) else {
+        return Err(CommandError::ArgumentError(ArgumentError {
+            description: "Non-moves used in the continuation alg.".to_owned(),
+        }));
+    };
+    Ok(moves)
 }
 
 #[cfg(test)]
@@ -111,7 +162,7 @@ mod tests {
             &search_pattern,
             SearchCommandOptionalArgs {
                 generator_args: GeneratorArgs {
-                    generator_moves_string: Some("R,U".to_owned()), // TODO: make this semantic
+                    generator_moves_string: Some(vec!["R".to_owned(), "U".to_owned()]), // TODO: make this semantic
                     ..Default::default()
                 },
                 ..Default::default()

@@ -8,7 +8,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - run: make
+      - uses: ./.github/workflows/install-pinned-toolchains
+      - run: make build/bin/twsearch
       - run: ./build/bin/twsearch -g samples/main/2x2x2.tws
       - run: make test-cpp-cli
 
@@ -17,7 +18,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - run: make
+      - uses: ./.github/workflows/install-pinned-toolchains
+      - run: make build/bin/twsearch
       - uses: actions/upload-artifact@v4
         with:
           name: twsearch-cpp-windows
@@ -28,10 +30,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/workflows/install-pinned-toolchains
       - uses: Swatinem/rust-cache@v2
-      - uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
       - run: make test-twsearch-cpp-wrapper-cli
 
   rust:
@@ -39,11 +39,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/workflows/install-pinned-toolchains
       - uses: Swatinem/rust-cache@v2
-      - uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
       - run: make build-rust
+      - run: make test-rust-build-help
+      - run: make test-rust-build-version
       - run: make test-rust-lib
       - run: make test-rust-examples
       - run: make lint-rust
@@ -54,11 +54,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/workflows/install-pinned-toolchains
       - uses: Swatinem/rust-cache@v2
-      - uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
-      - uses: cargo-bins/cargo-binstall@v1.4.9
       - run: make build-rust-ffi
       - run: make test-rust-ffi
 
@@ -67,16 +64,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Use `node` v19
-        uses: actions/setup-node@v3
-        with:
-          node-version: 19
-      - uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: latest
+      - uses: ./.github/workflows/install-pinned-toolchains
       - uses: Swatinem/rust-cache@v2
-      - uses: cargo-bins/cargo-binstall@v1.4.9
-      - run: bun install
+      - run: make setup
       - run: make build-rust-wasm
       - run: make test-rust-wasm
 
@@ -85,8 +75,9 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - uses: ./.github/workflows/install-pinned-toolchains
       - uses: Swatinem/rust-cache@v2
-      - uses: oven-sh/setup-bun@v1
+      - run: make setup
       - run: make build-rust
       - run: make benchmark-rust
 
@@ -94,10 +85,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Use `node` v19
-        uses: actions/setup-node@v3
-        with:
-          node-version: 19
       - uses: actions/checkout@v4
-      - uses: oven-sh/setup-bun@v1
+      - uses: ./.github/workflows/install-pinned-toolchains
+      - run: make setup
       - run: make lint-js
+
+  ruby:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@v2
+      - run: make ruby-simple-test

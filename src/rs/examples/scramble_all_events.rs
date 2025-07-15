@@ -24,7 +24,7 @@ pub fn main() {
         Event::Cube3x3x3MultiBlind,
         //Event::FTOSpeedsolving
         //Event::MasterTetraminxSpeedsolving
-        //Event::KilominxSpeedsolving
+        Event::KilominxSpeedsolving,
         //Event::RediCubeSpeedsolving
         Event::BabyFTOSpeedsolving,
     ] {

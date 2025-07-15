@@ -1,11 +1,9 @@
 use cubing::alg::Alg;
 use cubing::kpuzzle::{KPattern, KPuzzle};
 
+use crate::_internal::search::iterative_deepening::individual_search::IndividualSearchOptions;
 use crate::{
-    _internal::search::{
-        filter::filtering_decision::FilteringDecision,
-        iterative_deepening::iterative_deepening_search::IndividualSearchOptions,
-    },
+    _internal::search::filter::filtering_decision::FilteringDecision,
     experimental_lib_api::{
         KPuzzleSimpleMaskPhase, KPuzzleSimpleMaskPhaseConstructionOptions, MultiPhaseSearch,
     },

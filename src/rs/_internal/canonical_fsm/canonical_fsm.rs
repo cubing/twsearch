@@ -45,7 +45,8 @@ pub struct CanonicalFSM<TPuzzle: SemiGroupActionPuzzle> {
 
 #[derive(Debug, Default)]
 pub struct CanonicalFSMConstructionOptions {
-    pub forbid_transitions_by_quantums_either_direction: HashSet<(QuantumMove, QuantumMove)>,
+    // Transitioning from one move to another (either direction) is forbidden if they appear together in any of the sets.
+    pub forbid_adjacent_moves_by_quantums: Vec<HashSet<QuantumMove>>,
 }
 
 impl CanonicalFSMConstructionOptions {
@@ -54,17 +55,14 @@ impl CanonicalFSMConstructionOptions {
         move1_info: &MoveTransformationInfo<TPuzzle>,
         move2_info: &MoveTransformationInfo<TPuzzle>,
     ) -> bool {
-        self.forbid_transitions_by_quantums_either_direction
-            .contains(&(
-                move1_info.r#move.quantum.as_ref().clone(),
-                move2_info.r#move.quantum.as_ref().clone(),
-            ))
-            || self
-                .forbid_transitions_by_quantums_either_direction
-                .contains(&(
-                    move2_info.r#move.quantum.as_ref().clone(),
-                    move1_info.r#move.quantum.as_ref().clone(),
-                ))
+        for set in &self.forbid_adjacent_moves_by_quantums {
+            if set.contains(move1_info.r#move.quantum.as_ref())
+                && set.contains(move2_info.r#move.quantum.as_ref())
+            {
+                return true;
+            }
+        }
+        false
     }
 }
 

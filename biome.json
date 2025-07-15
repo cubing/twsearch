@@ -1,5 +1,6 @@
 {
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": ["./node_modules/@cubing/dev-config/biome/biome.json"],
   "files": {
     "ignore": [
       "./.bin",
@@ -11,14 +12,8 @@
       "./target"
     ]
   },
-  "formatter": {
-    "indentStyle": "space",
-    "indentWidth": 2
-  },
   "linter": {
-    "enabled": true,
     "rules": {
-      "recommended": true,
       "style": {
         "noShoutyConstants": "off"
       },

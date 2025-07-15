@@ -52,7 +52,7 @@ pub struct SearchGenerators<
 impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
     pub fn try_new(
         tpuzzle: &TPuzzle,
-        moves: Vec<Move>,
+        generator_moves: Vec<Move>,
         metric: &MetricEnum,
         random_start: bool,
     ) -> Result<SearchGenerators<TPuzzle>, SearchError> {
@@ -63,7 +63,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
             IndexedVec::<MoveClassIndex, MoveTransformationMultiples<TPuzzle>>::default();
         let mut flat = IndexedVec::<FlatMoveIndex, MoveTransformationInfo<TPuzzle>>::default();
         let mut by_move = HashMap::<Move, MoveTransformationInfo<TPuzzle>>::default();
-        for (move_class_index, r#move) in moves.into_iter().enumerate() {
+        for (move_class_index, r#move) in generator_moves.into_iter().enumerate() {
             let move_class_index = MoveClassIndex(move_class_index);
             if let Some(existing) = seen_moves.get(&r#move.quantum) {
                 // TODO: deduplicate by quantum move.

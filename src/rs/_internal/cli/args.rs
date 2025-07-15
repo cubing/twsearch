@@ -31,6 +31,8 @@ pub struct TwsearchArgs {
     pub command: CliCommand,
 }
 
+// Clippy warns on only 200 bytes of difference between variants, but this enum is not memory usage sensitive. (TODO: can we have it warn us on a much larger difference?)
+#[allow(clippy::large_enum_variant)]
 #[derive(Subcommand, Debug)]
 pub enum CliCommand {
     /// Run a single search.
@@ -50,11 +52,11 @@ pub enum CliCommand {
     GodsAlgorithm(GodsAlgorithmArgs),
     /// Run a timing test for given definition.
     TimingTest(TimingTestArgs),
-    // Enumerate canonical algs (move sequences) at iterative depths.
+    /// Enumerate canonical algs (move sequences) at iterative depths.
     CanonicalAlgs(CanonicalAlgsArgs),
-    // Generate a scramble
+    /// Generate a scramble
     Scramble(ScrambleArgs),
-    // Generate a scramble matching the same pattern as produced by the given test scramble alg.
+    /// Test the scramble finder implementations directly.
     ScrambleFinder(ScrambleFinderArgs),
 
     /// Run an internal benchmark suite.
@@ -92,6 +94,16 @@ pub struct CommonSearchArgs {
     /// Stop solution search at this depth.
     #[clap(long/* , visible_alias = "maxdepth" */)]
     pub max_depth: Option<Depth>,
+
+    /// Continue (or start) search after this alg.
+    /// If the alg is a valid solution, it will be skipped.
+    #[clap(long, group = "continue_search")]
+    pub continue_after: Option<String>, // TODO: `FromStr` is implemented for `Alg` by `cubing.rs`, why doesn't `Option<Alg>` work?
+
+    /// Continue (or start) search at this alg.
+    /// If the alg is a valid solution, it will be the first one returned.
+    #[clap(long, group = "continue_search")]
+    pub continue_at: Option<String>, // TODO: `FromStr` is implemented for `Alg` by `cubing.rs`, why doesn't `Option<Alg>` work?
 
     #[command(flatten)]
     pub performance_args: PerformanceArgs,
@@ -133,6 +145,7 @@ pub enum VerbosityLevel {
     Error,
     Warning,
     Info,
+    Extra,
 }
 
 impl Default for VerbosityLevel {
@@ -152,14 +165,14 @@ pub struct GeneratorArgs {
     /// A comma-separated list of moves to use. All multiples of these
     /// moves are considered. For example, `--moves U,F,R2` only permits
     /// half-turns on R, and all possible turns on U and F.
-    #[clap(long = "generator-moves")]
-    pub generator_moves_string: Option<String>,
+    #[clap(long = "generator-moves", value_delimiter = ',')]
+    pub generator_moves_string: Option<Vec<String>>,
 
     /// A comma-separated list of algs to use. All multiples of these
     /// algs are considered. For example, `--algs U,F,R2` only permits
     /// half-turns on R, and all possible turns on U and F.
-    #[clap(long)]
-    pub generator_algs: Option<String>,
+    #[clap(long, value_delimiter = ',')]
+    pub generator_algs: Option<Vec<String>>,
 }
 
 #[derive(Clone, Debug)]
@@ -191,8 +204,8 @@ pub struct CustomGenerators {
 
 impl GeneratorArgs {
     pub fn parse(&self) -> Generators {
-        let moves = parse_comma_separated(&self.generator_moves_string);
-        let algs = parse_comma_separated(&self.generator_algs);
+        let moves = parse_moves(&self.generator_moves_string);
+        let algs = parse_moves(&self.generator_algs);
         match (moves, algs) {
             (None, None) => Generators::Default,
             (moves, algs) => Generators::Custom(CustomGenerators {
@@ -203,13 +216,10 @@ impl GeneratorArgs {
     }
 }
 
-fn parse_comma_separated<T: FromStr<Err = E>, E: Display>(
-    input: &Option<String>,
-) -> Option<Vec<T>> {
+fn parse_moves<T: FromStr<Err = E>, E: Display>(input: &Option<Vec<String>>) -> Option<Vec<T>> {
     input.as_ref().map(|moves| {
         moves
-            .split(',')
-            .by_ref()
+            .iter()
             .map(|move_str| match move_str.parse::<T>() {
                 Ok(r#move) => r#move,
                 Err(err) => {
@@ -396,7 +406,7 @@ pub struct ScrambleArgs {
     pub event_id: String,
 
     /// Amount of scrambles
-    #[clap(long, default_value = "1")]
+    #[clap(long, default_value_t = 1)]
     pub amount: usize,
 }
 
@@ -408,7 +418,9 @@ pub struct ScrambleFinderArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum ScrambleFinderCommand {
+    /// Search for a solution to the given setup alg.
     Search(ScrambleFinderSearchArgs),
+    /// Run the filter on the given setup alg.
     Filter(ScrambleFinderFilterArgs),
 }
 
@@ -416,10 +428,10 @@ pub enum ScrambleFinderCommand {
 // TODO: combine with `ScrambleFinderFilterArgs`?
 pub struct ScrambleFinderSearchArgs {
     /// Amount of scrambles
-    #[clap(long, default_value = "false")]
+    #[clap(long, default_value_t = false)]
     pub print_link: bool,
 
-    #[clap(long, default_value = "false")]
+    #[clap(long, default_value_t = false)]
     pub apply_filtering: bool,
 
     #[command(flatten)]
@@ -434,6 +446,7 @@ pub struct ScrambleFinderFilterArgs {
 
     /// Scramble setup alg
     // TODO: Make this an `Alg` (by implementing `ValueEnum`?)
+    // TODO: support pattern input via file.
     pub scramble_setup_alg: String,
 }
 

@@ -15,13 +15,14 @@ use crate::{
                 unenumerated_derived_pattern_puzzle::UnenumeratedDerivedPatternPuzzle,
             },
             filter::filtering_decision::FilteringDecision,
-            hash_prune_table::HashPruneTable,
+            hash_prune_table::HashPruneTableSizeBounds,
             iterative_deepening::{
                 iterative_deepening_search::{
-                    IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
-                    SolutionMoves,
+                    ImmutableSearchData, ImmutableSearchDataConstructionOptions,
+                    IterativeDeepeningSearch,
                 },
-                search_adaptations::IndividualSearchAdaptations,
+                search_adaptations::{IndividualSearchAdaptations, StoredSearchAdaptations},
+                solution_moves::SolutionMoves,
                 target_pattern_signature::check_target_pattern_consistency_single_iter,
             },
             mask_pattern::apply_mask,
@@ -172,19 +173,20 @@ pub(crate) fn phase2_search(search_logger: Arc<SearchLogger>) -> Cube4x4x4Phase2
         .unwrap();
 
     let phase2_iterative_deepening_search =
-        IterativeDeepeningSearch::<Cube4x4x4Phase2Puzzle>::try_new_prune_table_construction_shim::<
-            HashPruneTable<Cube4x4x4Phase2Puzzle>,
-        >(
-            cube4x4x4_phase2_puzzle.clone(),
-            phase2_generator_moves,
-            phase2_target_patterns.to_vec(),
-            IterativeDeepeningSearchConstructionOptions {
-                search_logger,
-                ..Default::default()
-            },
-            None,
-        )
-        .unwrap();
+        IterativeDeepeningSearch::<Cube4x4x4Phase2Puzzle>::new_with_hash_prune_table(
+            ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                cube4x4x4_phase2_puzzle.clone(),
+                phase2_generator_moves,
+                phase2_target_patterns.to_vec(),
+                ImmutableSearchDataConstructionOptions {
+                    search_logger,
+                    ..Default::default()
+                },
+            )
+            .unwrap(),
+            StoredSearchAdaptations::default(),
+            HashPruneTableSizeBounds::default(),
+        );
     Cube4x4x4Phase2Search {
         derived_puzzle_search_phase: DerivedPuzzleSearchPhase::new(
             phase2_name,
@@ -200,10 +202,10 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase2Search {
         self.derived_puzzle_search_phase.phase_name()
     }
 
-    fn first_solution(
+    fn solutions(
         &mut self,
         phase_search_pattern: &KPattern,
-    ) -> Result<Option<Alg>, SearchError> {
+    ) -> Result<Box<dyn Iterator<Item = Alg> + '_>, SearchError> {
         let phase_search_pattern_owned = phase_search_pattern.clone();
         let filter_search_solution_fn =
             move |_pattern: &KPattern, solution_moves: &SolutionMoves| -> FilteringDecision {
@@ -219,7 +221,7 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase2Search {
                 }
             };
         self.derived_puzzle_search_phase
-            .first_solution_with_individual_search_adaptations(
+            .solutions_using_individual_search_adaptations(
                 phase_search_pattern,
                 IndividualSearchAdaptations {
                     filter_search_solution_fn: Some(Arc::new(filter_search_solution_fn)),

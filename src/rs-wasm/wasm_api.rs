@@ -2,8 +2,9 @@ use cubing::alg::Move;
 use cubing::kpuzzle::{KPattern, KPatternData, KPuzzle};
 use serde::{Deserialize, Serialize};
 use twsearch::_internal::cli::args::{CustomGenerators, Generators};
+use twsearch::_internal::search::iterative_deepening::individual_search::IndividualSearchOptions;
 use twsearch::_internal::search::iterative_deepening::iterative_deepening_search::{
-    IndividualSearchOptions, IterativeDeepeningSearch,
+    ImmutableSearchData, IterativeDeepeningSearch,
 };
 use twsearch::scramble::scramble_finder::free_memory_for_all_scramble_finders;
 use wasm_bindgen::prelude::*;
@@ -66,20 +67,24 @@ pub fn wasmTwsearch(
         None => Generators::Default,
     };
 
-    let iterative_deepening_search =
-        <IterativeDeepeningSearch<KPuzzle>>::try_new_kpuzzle_with_hash_prune_table_shim(
-            kpuzzle.clone(),
-            generators.enumerate_moves_for_kpuzzle(&kpuzzle),
-            vec![target_pattern], // TODO: support multiple target patterns.
-            Default::default(),
-            None,
+    let mut iterative_deepening_search =
+        <IterativeDeepeningSearch<KPuzzle>>::new_with_hash_prune_table(
+            ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                kpuzzle.clone(),
+                generators.enumerate_moves_for_kpuzzle(&kpuzzle),
+                vec![target_pattern], // TODO: support multiple target patterns.
+                Default::default(),
+            )
+            .map_err(|e| e.description)?,
+            Default::default(), // StoredSearchAdaptations::default(),
+            Default::default(), // HashPruneTableSizeBounds::default(),
         );
-    let mut iterative_deepening_search = iterative_deepening_search.map_err(|e| e.description)?;
 
     match iterative_deepening_search
-        .search_with_default_individual_search_adaptations(
+        .search(
             &search_pattern,
             options.inidividual_search_options,
+            Default::default(),
         )
         .next()
     {

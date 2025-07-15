@@ -16,9 +16,13 @@ use crate::{
                 pattern_deriver::{DerivedPuzzle, PatternDeriver},
                 unenumerated_derived_pattern_puzzle::UnenumeratedDerivedPatternPuzzle,
             },
-            hash_prune_table::HashPruneTable,
-            iterative_deepening::iterative_deepening_search::{
-                IterativeDeepeningSearch, IterativeDeepeningSearchConstructionOptions,
+            hash_prune_table::HashPruneTableSizeBounds,
+            iterative_deepening::{
+                individual_search::IndividualSearchOptions,
+                iterative_deepening_search::{
+                    ImmutableSearchData, ImmutableSearchDataConstructionOptions,
+                    IterativeDeepeningSearch,
+                },
             },
             search_logger::SearchLogger,
         },
@@ -420,27 +424,35 @@ impl Default for Cube4x4x4Phase3Search {
         let cube4x4x4_phase3_puzzle = Cube4x4x4Phase3Puzzle::default();
 
         let phase3_iterative_deepening_search =
-                IterativeDeepeningSearch::<Cube4x4x4Phase3Puzzle>::try_new_prune_table_construction_shim::<
-                    HashPruneTable<Cube4x4x4Phase3Puzzle>,
-                >(
+            IterativeDeepeningSearch::<Cube4x4x4Phase3Puzzle>::new_with_hash_prune_table(
+                ImmutableSearchData::try_from_common_options_with_auto_search_generators(
                     cube4x4x4_phase3_puzzle.clone(),
                     phase3_generator_moves,
                     vec![cube4x4x4_phase3_search_kpuzzle().default_pattern()],
-                    IterativeDeepeningSearchConstructionOptions {
+                    ImmutableSearchDataConstructionOptions {
                         search_logger: Arc::new(SearchLogger {
                             verbosity: VerbosityLevel::Info,
                         }),
                         ..Default::default()
                     },
-                    None,
                 )
-                .unwrap();
+                .unwrap(),
+                Default::default(),
+                HashPruneTableSizeBounds {
+                    max_size: Some(1 << 28),
+                    ..Default::default()
+                },
+            );
         let derived_puzzle_search_phase =
             DerivedPuzzleSearchPhase::<KPuzzle, Cube4x4x4Phase3Puzzle>::new(
                 "4×4×4 reduction with parity avoidance".to_owned(),
                 cube4x4x4_phase3_puzzle,
                 phase3_iterative_deepening_search,
-                Default::default(),
+                IndividualSearchOptions {
+                    // TODO: Use this max depth once `MultiPhaseSearch` can handle it.
+                    // max_depth_exclusive: Some(Depth(14)),
+                    ..Default::default()
+                },
             );
         Self {
             derived_puzzle_search_phase,
@@ -453,11 +465,11 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase3Search {
         self.derived_puzzle_search_phase.phase_name()
     }
 
-    fn first_solution(
+    fn solutions(
         &mut self,
         phase_search_pattern: &KPattern,
-    ) -> Result<Option<Alg>, SearchError> {
+    ) -> Result<Box<dyn Iterator<Item = Alg> + '_>, SearchError> {
         self.derived_puzzle_search_phase
-            .first_solution(phase_search_pattern)
+            .solutions(phase_search_pattern)
     }
 }

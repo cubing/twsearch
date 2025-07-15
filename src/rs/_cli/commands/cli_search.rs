@@ -24,7 +24,7 @@ pub fn cli_search(search_command_args: SearchCommandArgs) -> Result<(), CommandE
             solution.nodes.len()
         )
     }
-    println!(
+    eprintln!(
         "// Entire search duration: {:?}",
         instant::Instant::now() - search_start_time
     );

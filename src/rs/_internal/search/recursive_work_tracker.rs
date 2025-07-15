@@ -8,7 +8,7 @@ pub(crate) struct RecursiveWorkTracker {
     work_name: String,
     // TODO: support custom writes intead of sending to stdout/stderr
     latest_depth: Depth,
-    latest_depth_num_recursive_calls: usize,
+    pub(crate) latest_depth_num_recursive_calls: usize,
     latest_depth_start_time: instant::Instant,
     latest_depth_duration: Duration,
     latest_depth_finished: bool,
@@ -86,6 +86,7 @@ impl RecursiveWorkTracker {
         if self.previous_depth_num_recursive_calls == 0 {
             return self.latest_depth_num_recursive_calls;
         }
+        // TODO: do more sophisticated tracking to estimate when the branching factor heavily slows down.
         self.latest_depth_num_recursive_calls * self.latest_depth_num_recursive_calls
             / self.previous_depth_num_recursive_calls
     }

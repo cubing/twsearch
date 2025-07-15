@@ -1,5 +1,12 @@
 use crate::{
-    _internal::search::filter::filtering_decision::FilteringDecision,
+    _internal::search::{
+        filter::filtering_decision::FilteringDecision,
+        hash_prune_table::HashPruneTableSizeBounds,
+        iterative_deepening::{
+            individual_search::IndividualSearchOptions,
+            iterative_deepening_search::ImmutableSearchData,
+        },
+    },
     scramble::{
         get_kpuzzle::GetKPuzzle,
         puzzles::square1::{
@@ -23,9 +30,14 @@ use crate::{
 
 use super::{
     super::definitions::{square1_square_square_shape_kpattern, square1_unbandaged_kpuzzle},
-    depth_filtering::square1_depth_filtering_search_adaptations_without_prune_table,
-    phase1::{square1_phase1_stored_search_adaptations, Square1Phase1PatternDeriver},
-    phase2::{square1_phase2_stored_search_adaptations, Square1Phase2Puzzle},
+    depth_filtering::square1_depth_filtering_search_adaptations,
+    phase1::{
+        square1_phase1_prune_table, square1_phase1_stored_search_adaptations,
+        Square1Phase1PatternDeriver,
+    },
+    phase2::{
+        square1_phase2_prune_table, square1_phase2_stored_search_adaptations, Square1Phase2Puzzle,
+    },
 };
 use cubing::alg::{parse_move, AlgBuilder, AlgNode, Grouping, Move};
 use cubing::kpuzzle::KPuzzle;
@@ -34,14 +46,11 @@ use crate::scramble::scramble_search::FilteredSearch;
 use crate::{
     _internal::search::{
         coordinates::graph_enumerated_derived_pattern_puzzle::GraphEnumeratedDerivedPatternPuzzle,
-        iterative_deepening::iterative_deepening_search::IterativeDeepeningSearchConstructionOptions,
         prune_table_trait::Depth,
     },
     _internal::{
         errors::SearchError,
-        search::iterative_deepening::iterative_deepening_search::{
-            IndividualSearchOptions, IterativeDeepeningSearch,
-        },
+        search::iterative_deepening::iterative_deepening_search::IterativeDeepeningSearch,
     },
     scramble::{
         puzzles::square1::phase1::Square1Phase1Puzzle, scramble_search::move_list_from_vec,
@@ -84,16 +93,17 @@ impl Default for Square1ScrambleFinder {
             .unwrap();
 
         let phase1_iterative_deepening_search =
-            IterativeDeepeningSearch::<Square1Phase1Puzzle>::legacy_try_new(
-                square1_phase1_puzzle.clone(),
-                generator_moves.clone(),
-                vec![phase1_target_pattern],
-                IterativeDeepeningSearchConstructionOptions {
-                    ..Default::default()
-                },
-                square1_phase1_stored_search_adaptations(square1_phase1_puzzle.clone()),
-            )
-            .unwrap();
+            IterativeDeepeningSearch::<Square1Phase1Puzzle>::new(
+                ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                    square1_phase1_puzzle.clone(),
+                    generator_moves.clone(),
+                    vec![phase1_target_pattern],
+                    Default::default(),
+                )
+                .unwrap(),
+                square1_phase1_stored_search_adaptations(),
+                square1_phase1_prune_table(&square1_phase1_puzzle),
+            );
 
         let square1_phase2_puzzle: Square1Phase2Puzzle = Square1Phase2Puzzle::new();
         let phase2_target_pattern = square1_phase2_puzzle
@@ -101,30 +111,34 @@ impl Default for Square1ScrambleFinder {
             .unwrap();
 
         let phase2_iterative_deepening_search =
-            IterativeDeepeningSearch::<Square1Phase2Puzzle>::legacy_try_new(
-                square1_phase2_puzzle.clone(),
-                generator_moves.clone(),
-                vec![phase2_target_pattern],
-                IterativeDeepeningSearchConstructionOptions {
-                    ..Default::default()
-                },
-                square1_phase2_stored_search_adaptations(square1_phase2_puzzle.clone()),
-            )
-            .unwrap();
+            IterativeDeepeningSearch::<Square1Phase2Puzzle>::new(
+                ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                    square1_phase2_puzzle.clone(),
+                    generator_moves,
+                    vec![phase2_target_pattern],
+                    Default::default(),
+                )
+                .unwrap(),
+                square1_phase2_stored_search_adaptations(),
+                square1_phase2_prune_table(&square1_phase2_puzzle),
+            );
 
         let depth_filtering_search = {
             let kpuzzle = square1_unbandaged_kpuzzle();
             let generator_moves = move_list_from_vec(vec!["U_SQ_", "D_SQ_", "/"]);
 
             let iterative_deepening_search =
-                IterativeDeepeningSearch::<KPuzzle>::try_new_kpuzzle_with_hash_prune_table_shim(
-                    kpuzzle.clone(),
-                    generator_moves,
-                    vec![kpuzzle.default_pattern()],
-                    Default::default(),
-                    Some(square1_depth_filtering_search_adaptations_without_prune_table()),
-                )
-                .unwrap();
+                IterativeDeepeningSearch::<KPuzzle>::new_with_hash_prune_table(
+                    ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                        kpuzzle.clone(),
+                        generator_moves,
+                        vec![kpuzzle.default_pattern()],
+                        Default::default(),
+                    )
+                    .unwrap(),
+                    square1_depth_filtering_search_adaptations(),
+                    HashPruneTableSizeBounds::default(),
+                );
             FilteredSearch::<KPuzzle>::new(iterative_deepening_search)
         };
 
@@ -217,13 +231,12 @@ fn group_square_1_tuples(alg: Alg) -> Alg {
     alg_builder.to_alg()
 }
 
-pub fn debug_print_phase1_solutions_searched(found_phase1_solutions: usize, current_depth: usize) {
+pub fn debug_print_phase1_solutions_searched(found_phase1_solutions: usize) {
     if DEV_DEBUG_SQUARE1 {
         println!(
-            "Searched {} phase 1 solution{} at depth {}.",
+            "Searched {} phase 1 solution{}.",
             found_phase1_solutions,
             if found_phase1_solutions == 1 { "" } else { "s" },
-            current_depth
         );
     }
 }
@@ -320,77 +333,70 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
 
         // let start_time = Instant::now();
         // let mut phase1_start_time = Instant::now();
-        for current_depth in 0..31 {
-            let num_solutions = 10000000;
-            let phase1_search = self.phase1_iterative_deepening_search.search(
-                &phase1_start_pattern,
-                IndividualSearchOptions {
-                    min_num_solutions: Some(num_solutions),
-                    min_depth_inclusive: Some(Depth(current_depth)),
-                    max_depth_exclusive: Some(Depth(current_depth + 1)),
-                    ..Default::default()
-                },
-                square1_phase1_individual_search_adaptations(),
-            );
-            // let mut num_phase2_starts = 0;
-            // let mut phase1_cumulative_time = Duration::default();
-            // let mut phase2_cumulative_time = Duration::default();
-            #[allow(non_snake_case)]
-            let _SLASH_ = parse_move!("/");
-            let mut found_phase1_solutions = 0;
-            for phase1_solution in phase1_search {
-                found_phase1_solutions += 1;
-                // num_phase2_starts += 1;
-                // let phase2_start_time = Instant::now();
-                let Ok(phase2_start_pattern) =
-                    self.square1_phase2_puzzle.full_pattern_to_phase_coordinate(
-                        &pattern.apply_alg(&phase1_solution).unwrap(),
-                    )
-                else {
-                    return Err(SearchError {
-                        description: "Could not convert pattern into phase 2 coordinate".to_owned(),
-                    });
-                };
-                let phase2_solution = self
-                    .phase2_iterative_deepening_search
-                    .search_with_default_individual_search_adaptations(
-                        &phase2_start_pattern,
-                        IndividualSearchOptions {
-                            min_num_solutions: Some(1),
-                            // TODO: we need to solve phase transition for 4x4x4, that will cause
-                            // us to revisit this code.
-                            // max_depth: Some(Depth(min(31 - phase1_solution.nodes.len(), 17))),
-                            max_depth_exclusive: Some(Depth(17)),
-                            ..Default::default()
-                        },
-                    )
-                    .next();
+        let phase1_search = self.phase1_iterative_deepening_search.search(
+            &phase1_start_pattern,
+            IndividualSearchOptions {
+                // TODO: does this need to to be 32?
+                max_depth_exclusive: Some(Depth(31)),
+                ..Default::default()
+            },
+            square1_phase1_individual_search_adaptations(),
+        );
+        // let mut num_phase2_starts = 0;
+        // let mut phase1_cumulative_time = Duration::default();
+        // let mut phase2_cumulative_time = Duration::default();
+        #[allow(non_snake_case)]
+        let _SLASH_ = parse_move!("/");
+        let mut found_phase1_solutions = 0;
+        for phase1_solution in phase1_search {
+            found_phase1_solutions += 1;
+            // num_phase2_starts += 1;
+            // let phase2_start_time = Instant::now();
+            let Ok(phase2_start_pattern) = self
+                .square1_phase2_puzzle
+                .full_pattern_to_phase_coordinate(&pattern.apply_alg(&phase1_solution).unwrap())
+            else {
+                return Err(SearchError {
+                    description: "Could not convert pattern into phase 2 coordinate".to_owned(),
+                });
+            };
+            let phase2_solution = self
+                .phase2_iterative_deepening_search
+                .search(
+                    &phase2_start_pattern,
+                    IndividualSearchOptions {
+                        min_num_solutions: Some(1),
+                        // TODO: we need to solve phase transition for 4x4x4, that will cause
+                        // us to revisit this code.
+                        // max_depth: Some(Depth(min(31 - phase1_solution.nodes.len(), 17))),
+                        max_depth_exclusive: Some(Depth(17)),
+                        ..Default::default()
+                    },
+                    Default::default(),
+                )
+                .next();
 
-                // phase2_cumulative_time += Instant::now() - phase2_start_time;
-                // let cumulative_time = Instant::now() - start_time;
+            // phase2_cumulative_time += Instant::now() - phase2_start_time;
+            // let cumulative_time = Instant::now() - start_time;
 
-                if let Some(mut phase2_solution) = phase2_solution {
-                    let mut nodes = phase1_solution.nodes;
-                    nodes.append(&mut phase2_solution.nodes);
-                    debug_print_phase1_solutions_searched(found_phase1_solutions, current_depth);
-                    return Ok(Alg { nodes });
-                }
-
-                // if num_phase2_starts % 100 == 0 {
-                //     eprintln!(
-                //         "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2, {:?} in phase transition\n",
-                //         num_phase2_starts,
-                //         phase1_cumulative_time,
-                //         phase2_cumulative_time,
-                //         cumulative_time - phase1_cumulative_time - phase2_cumulative_time,
-                //     )
-                // }
+            if let Some(mut phase2_solution) = phase2_solution {
+                let mut nodes = phase1_solution.nodes;
+                nodes.append(&mut phase2_solution.nodes);
+                debug_print_phase1_solutions_searched(found_phase1_solutions);
+                return Ok(Alg { nodes });
             }
-            // phase1_start_time = Instant::now();
-            if found_phase1_solutions > 0 {
-                debug_print_phase1_solutions_searched(found_phase1_solutions, current_depth);
-            }
+
+            // if num_phase2_starts % 100 == 0 {
+            //     eprintln!(
+            //         "\n{} phase 2 starts so far, {:?} in phase 1, {:?} in phase 2, {:?} in phase transition\n",
+            //         num_phase2_starts,
+            //         phase1_cumulative_time,
+            //         phase2_cumulative_time,
+            //         cumulative_time - phase1_cumulative_time - phase2_cumulative_time,
+            //     )
+            // }
         }
+
         panic!("at the (lack of) disco(very)")
     }
 

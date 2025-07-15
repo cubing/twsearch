@@ -12,8 +12,9 @@ use crate::{
             blank_prune_table::BlankPruneTable,
             filter::filtering_decision::FilteringDecision,
             iterative_deepening::{
-                iterative_deepening_search::{IterativeDeepeningSearch, SolutionMoves},
+                iterative_deepening_search::{ImmutableSearchData, IterativeDeepeningSearch},
                 search_adaptations::{IndividualSearchAdaptations, StoredSearchAdaptations},
+                solution_moves::SolutionMoves,
             },
         },
     },
@@ -40,10 +41,10 @@ impl SearchPhase<KPuzzle> for KilominxPhase1Search {
         "Move all back pieces out of the F face"
     }
 
-    fn first_solution(
+    fn solutions(
         &mut self,
         phase_search_pattern: &KPattern,
-    ) -> Result<Option<Alg>, SearchError> {
+    ) -> Result<Box<dyn Iterator<Item = Alg> + '_>, SearchError> {
         let back_pieces_owned = self.back_pieces.clone(); // TODO: avoid a clone
         let phase_search_pattern_owned = phase_search_pattern.clone();
         let filter_search_solution_fn =
@@ -64,16 +65,13 @@ impl SearchPhase<KPuzzle> for KilominxPhase1Search {
             };
         // Since the mask is bogus, we don't actually need to apply it to `phase_search_pattern`.
         let bogus_search_pattern = kilominx_phase1_bogus_mask_kpattern();
-        Ok(self
-            .search
-            .search(
-                bogus_search_pattern,
-                Default::default(),
-                IndividualSearchAdaptations {
-                    filter_search_solution_fn: Some(Arc::new(filter_search_solution_fn)),
-                },
-            )
-            .next())
+        Ok(Box::new(self.search.search(
+            bogus_search_pattern,
+            Default::default(),
+            IndividualSearchAdaptations {
+                filter_search_solution_fn: Some(Arc::new(filter_search_solution_fn)),
+            },
+        )))
     }
 }
 
@@ -81,18 +79,20 @@ impl Default for KilominxPhase1Search {
     fn default() -> Self {
         let kpuzzle = kilominx_kpuzzle();
         // TODO: support swapping out the full calculation of whether a pattern is solved?
-        let search = IterativeDeepeningSearch::legacy_try_new(
-            kpuzzle.clone(),
-            kilominx_front_moves(),
-            vec![kilominx_phase1_bogus_mask_kpattern().clone()],
-            Default::default(),
+        let search = IterativeDeepeningSearch::new(
+            ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                kpuzzle.clone(),
+                kilominx_front_moves(),
+                vec![kilominx_phase1_bogus_mask_kpattern().clone()],
+                Default::default(),
+            )
+            .unwrap(),
             StoredSearchAdaptations {
-                prune_table: Box::new(BlankPruneTable {}),
                 filter_move_transformation_fn: None,
                 filter_pattern_fn: None,
             },
-        )
-        .unwrap();
+            Box::new(BlankPruneTable {}),
+        );
         Self {
             back_pieces: back_pieces(),
             search,

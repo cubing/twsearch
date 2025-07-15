@@ -6,11 +6,14 @@ use cubing::{
 use crate::_internal::{
     errors::SearchError,
     search::{
+        hash_prune_table::HashPruneTableSizeBounds,
         iterative_deepening::{
+            individual_search::IndividualSearchOptions,
             iterative_deepening_search::{
-                IndividualSearchOptions, IterativeDeepeningSearch,
-                IterativeDeepeningSearchConstructionOptions,
+                ImmutableSearchData, ImmutableSearchDataConstructionOptions,
+                IterativeDeepeningSearch,
             },
+            search_adaptations::StoredSearchAdaptations,
             target_pattern_signature::check_target_pattern_basic_consistency,
         },
         mask_pattern::apply_mask,
@@ -63,16 +66,15 @@ impl KPuzzleSimpleMaskPhase {
                 vec![target_pattern]
             }
         };
-        let Ok(iterative_deepening_search) =
-            IterativeDeepeningSearch::<KPuzzle>::try_new_kpuzzle_with_hash_prune_table_shim(
+        let Ok(immutable_search_data) =
+            ImmutableSearchData::try_from_common_options_with_auto_search_generators(
                 kpuzzle.clone(),
                 generator_moves,
                 target_patterns,
-                IterativeDeepeningSearchConstructionOptions {
+                ImmutableSearchDataConstructionOptions {
                     search_logger: options.search_logger.unwrap_or_default().into(),
                     ..Default::default()
                 },
-                None,
             )
         else {
             return Err(SearchError {
@@ -82,6 +84,12 @@ impl KPuzzleSimpleMaskPhase {
                 ),
             });
         };
+        let iterative_deepening_search =
+            IterativeDeepeningSearch::<KPuzzle>::new_with_hash_prune_table(
+                immutable_search_data,
+                StoredSearchAdaptations::default(),
+                HashPruneTableSizeBounds::default(),
+            );
         Ok(Self {
             phase_name,
             mask,
@@ -115,10 +123,10 @@ impl SearchPhase<KPuzzle> for KPuzzleSimpleMaskPhase {
         &self.phase_name
     }
 
-    fn first_solution(
+    fn solutions(
         &mut self,
         phase_search_pattern: &KPattern,
-    ) -> Result<Option<Alg>, SearchError> {
+    ) -> Result<Box<dyn Iterator<Item = Alg> + '_>, SearchError> {
         let Ok(masked_pattern) = apply_mask(phase_search_pattern, &self.mask) else {
             return Err(SearchError {
                 description: format!(
@@ -131,17 +139,15 @@ impl SearchPhase<KPuzzle> for KPuzzleSimpleMaskPhase {
             &masked_pattern,
             &mut self
                 .iterative_deepening_search
-                .api_data
+                .immutable_search_data
                 .target_patterns
                 .iter(),
         )?;
         // TODO: can we avoid a clone of `individual_search_options`?
-        Ok(self
-            .iterative_deepening_search
-            .search_with_default_individual_search_adaptations(
-                &masked_pattern,
-                self.individual_search_options.clone(),
-            )
-            .next())
+        Ok(Box::new(self.iterative_deepening_search.search(
+            &masked_pattern,
+            self.individual_search_options.clone(),
+            Default::default(),
+        )))
     }
 }

@@ -1,0 +1,21 @@
+[tools]
+bun = "1.2.17"
+ruby = "3.4.0"
+
+[tasks.irb]
+dir = "{{ config_root }}/src/ruby-gem"
+run = 'irb'
+
+[tasks.setup]
+dir = "{{ config_root }}/src/ruby-gem"
+run = "bundle install"
+
+[tasks.compile]
+depends = ["setup"]
+dir = "{{ config_root }}/src/ruby-gem"
+run = "rake compile"
+
+[tasks.simple-test]
+depends = ["compile"]
+dir = "{{ config_root }}/src/ruby-gem"
+run = "ruby -e 'require \"bundler/setup\"; require \"twsearch\"; puts(Twsearch::random_scramble_for_event(\"222\"))'"

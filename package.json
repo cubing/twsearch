@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "make dev"
   },
+  "engines-comment": "`node` 22.3.0 and `bun` 1.2.7 are needed for `globalThis.process.getBuiltinModule(…)`, which helps bundlers avoid thinking our `node` shims require packages from a package manager.",
   "engines": {
     "node": ">=22.3.0",
     "bun": ">=1.2.7"
@@ -13,12 +14,13 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^v1.9.4",
+    "@cubing/dev-config": "v0.3.5",
     "@types/bun": "^1.1.0",
     "@types/node": "^22.3.0",
     "barely-a-dev-server": "^0.7.1",
     "cmd-ts-too": "^0.15.3",
     "compare-versions": "^6.1.1",
     "esbuild": "^0.25.0",
-    "printable-shell-command": "v0.1.2"
+    "printable-shell-command": "v1.0.0"
   }
 }

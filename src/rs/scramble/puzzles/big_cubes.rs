@@ -111,7 +111,7 @@ impl BigCubeScrambleInfo {
 
     fn no_inspection_suffixes_from(&self) -> [Vec<Option<Move>>; 2] {
         assert!(self.size.is_odd());
-        let layer = (self.size + 1) / 2;
+        let layer = self.size.div_ceil(2);
         let s1 = vec![
             None,
             Some(face_or_wide_move(layer, "R", 1)),

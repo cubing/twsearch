@@ -7,8 +7,11 @@ use crate::_internal::{
     errors::SearchError,
     search::{
         filter::filtering_decision::FilteringDecision,
+        hash_prune_table::HashPruneTableSizeBounds,
         iterative_deepening::{
-            iterative_deepening_search::{IndividualSearchOptions, IterativeDeepeningSearch},
+            individual_search::IndividualSearchOptions,
+            iterative_deepening_search::{ImmutableSearchData, IterativeDeepeningSearch},
+            search_adaptations::StoredSearchAdaptations,
             target_pattern_signature::check_target_pattern_basic_consistency,
         },
         mask_pattern::apply_mask,
@@ -61,22 +64,26 @@ impl CanonicalizingSolvedKPatternDepthFilter {
         .unwrap();
         // TODO: use exact prune table (`GraphEnumeratedDerivedPatternPuzzlePruneTable`).
         let canonicalization_search =
-            IterativeDeepeningSearch::<KPuzzle>::try_new_kpuzzle_with_hash_prune_table_shim(
-                kpuzzle.clone(),
-                parameters.canonicalization_generator_moves,
-                vec![canonical_masked_solved_pattern],
-                Default::default(),
-                Default::default(),
-            )?;
-        let depth_filtering_search =
-            IterativeDeepeningSearch::<KPuzzle>::try_new_kpuzzle_with_hash_prune_table_shim(
+            IterativeDeepeningSearch::<KPuzzle>::new_with_hash_prune_table(
+                ImmutableSearchData::try_from_common_options_with_auto_search_generators(
+                    kpuzzle.clone(),
+                    parameters.canonicalization_generator_moves,
+                    vec![canonical_masked_solved_pattern],
+                    Default::default(),
+                )?,
+                StoredSearchAdaptations::default(),
+                HashPruneTableSizeBounds::default(),
+            );
+        let depth_filtering_search = IterativeDeepeningSearch::<KPuzzle>::new_with_hash_prune_table(
+            ImmutableSearchData::try_from_common_options_with_auto_search_generators(
                 kpuzzle,
                 parameters.depth_filtering_generator_moves,
                 vec![parameters.solved_pattern.clone()],
                 Default::default(),
-                None,
-            )
-            .unwrap();
+            )?,
+            StoredSearchAdaptations::default(),
+            HashPruneTableSizeBounds::default(),
+        );
         Ok(Self {
             canonicalization_search,
             depth_filtering_search,
@@ -95,7 +102,11 @@ impl CanonicalizingSolvedKPatternDepthFilter {
 
         check_target_pattern_basic_consistency::<KPuzzle>(
             &masked_pattern,
-            &mut self.canonicalization_search.api_data.target_patterns.iter(),
+            &mut self
+                .canonicalization_search
+                .immutable_search_data
+                .target_patterns
+                .iter(),
         )?;
         let Some(canonicalizing_alg) = self
             .canonicalization_search
@@ -123,7 +134,11 @@ impl CanonicalizingSolvedKPatternDepthFilter {
 
         check_target_pattern_basic_consistency::<KPuzzle>(
             &pattern_with_canonicalizing_alg,
-            &mut self.depth_filtering_search.api_data.target_patterns.iter(),
+            &mut self
+                .depth_filtering_search
+                .immutable_search_data
+                .target_patterns
+                .iter(),
         )?;
         Ok(
             match self

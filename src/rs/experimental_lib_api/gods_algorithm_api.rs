@@ -24,7 +24,7 @@ use super::common::PatternSource;
 ///     kpuzzle,
 ///     GodsAlgorithmOptionalArgs {
 ///         generator_args: GeneratorArgs {
-///             generator_moves_string: Some("U,R".to_owned()), // TODO: make this semantic
+///             generator_moves_string: Some(vec!["U".to_owned(), "R".to_owned()]), // TODO: make this semantic
 ///             ..Default::default()
 ///         },
 ///         ..Default::default()
@@ -77,7 +77,7 @@ mod tests {
             cube3x3x3_kpuzzle(),
             GodsAlgorithmOptionalArgs {
                 generator_args: GeneratorArgs {
-                    generator_moves_string: Some("R2,U2".to_owned()), // TODO: make this semantic
+                    generator_moves_string: Some(vec!["R2".to_owned(), "U2".to_owned()]), // TODO: make this semantic
                     ..Default::default()
                 },
                 ..Default::default()

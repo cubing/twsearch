@@ -10,8 +10,9 @@ use crate::_internal::{
     puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
     search::{
         filter::filtering_decision::FilteringDecision,
-        iterative_deepening::iterative_deepening_search::{
-            IndividualSearchOptions, IterativeDeepeningSearch,
+        iterative_deepening::{
+            individual_search::IndividualSearchOptions,
+            iterative_deepening_search::IterativeDeepeningSearch,
         },
         move_count::MoveCount,
         prune_table_trait::Depth,
@@ -48,7 +49,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> FilteredSearch<TPuzzle> {
             return None;
         }
         self.iterative_deepening_search
-            .search_with_default_individual_search_adaptations(
+            .search(
                 scramble_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
@@ -56,6 +57,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> FilteredSearch<TPuzzle> {
                     max_depth_exclusive: Some(Depth(min_optimal_moves.0)),
                     ..Default::default()
                 },
+                Default::default(),
             )
             .next()
     }
@@ -78,13 +80,14 @@ impl<TPuzzle: SemiGroupActionPuzzle> FilteredSearch<TPuzzle> {
         min_scramble_moves: Option<MoveCount>,
     ) -> Option<Alg> {
         self.iterative_deepening_search
-            .search_with_default_individual_search_adaptations(
+            .search(
                 scramble_pattern,
                 IndividualSearchOptions {
                     min_num_solutions: Some(1),
                     min_depth_inclusive: min_scramble_moves.map(|move_count| Depth(move_count.0)),
                     ..Default::default()
                 },
+                Default::default(),
             )
             .next()
     }

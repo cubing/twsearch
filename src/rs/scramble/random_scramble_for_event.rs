@@ -321,6 +321,9 @@ pub fn experimental_scramble_finder_filter_and_or_search(
         Event::KilominxSpeedsolving => solving_based_filter_and_search_with_no_scramble_options::<
             KilominxScrambleFinder,
         >(options, false),
+        Event::BabyFTOSpeedsolving => solving_based_filter_and_search_with_no_scramble_options::<
+            BabyFTOScrambleFinder,
+        >(options, false),
         _ => err,
     }
 }

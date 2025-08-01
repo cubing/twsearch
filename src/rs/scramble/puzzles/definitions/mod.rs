@@ -90,3 +90,4 @@ kpattern_from_json_file!(pub(crate), kilominx_phase3_target, "./kilominx/kilomin
 /******************************** Other puzzles ********************************/
 
 kpuzzle_from_json_file!(pub(crate), baby_fto, "./other/baby_fto.kpuzzle.json");
+kpattern_from_json_file!(pub(crate), baby_fto_orientation_canonicalization, "./other/baby_fto.orientation-canonicalization-pattern.json", baby_fto_kpuzzle());

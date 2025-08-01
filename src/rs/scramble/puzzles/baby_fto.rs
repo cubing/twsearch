@@ -23,6 +23,14 @@ use crate::{
         },
     },
     scramble::{
+        get_kpuzzle::GetKPuzzle,
+        puzzles::{
+            canonicalizing_solved_kpattern_depth_filter::{
+                CanonicalizingSolvedKPatternDepthFilter,
+                CanonicalizingSolvedKPatternDepthFilterConstructionParameters,
+            },
+            definitions::baby_fto_orientation_canonicalization_kpattern,
+        },
         randomize::OrbitRandomizationConstraints,
         scramble_finder::{
             scramble_finder::ScrambleFinder,
@@ -37,60 +45,29 @@ use super::{
     definitions::baby_fto_kpuzzle,
 };
 
-// pub fn scramble_baby_fto() -> Alg {
-//     loop {
-//         let mut rng = thread_rng();
-//         // TODO: Have a consistent way to handle orientation (de)normalization.
-//         let scramble_pattern = scramble_pattern
-//             .apply_alg(
-//                 [parse_alg!(""), parse_alg!("Rv Uv")]
-//                     .choose(&mut rng)
-//                     .unwrap(),
-//             )
-//             .unwrap();
-//         let scramble_pattern = scramble_pattern
-//             .apply_alg(
-//                 [parse_alg!(""), parse_alg!("Rv'")]
-//                     .choose(&mut rng)
-//                     .unwrap(),
-//             )
-//             .unwrap();
-//         let scramble_pattern = scramble_pattern
-//             .apply_alg(
-//                 [parse_alg!(""), parse_alg!("Uv"), parse_alg!("Uv'")]
-//                     .choose(&mut rng)
-//                     .unwrap(),
-//             )
-//             .unwrap();
-//         if let Some(solution) =
-//         {
-//             return solution.invert();
-//         }
-//     }
-// }
+const BABY_FTO_MINIMUM_OPTIMAL_SOLUTION_MOVE_COUNT: MoveCount = MoveCount(5);
 
 pub(crate) struct BabyFTOScrambleFinder {
     kpuzzle: KPuzzle,
-    filtered_search: FilteredSearch<KPuzzle>,
+    canonicalizing_solved_kpattern_depth_filter: CanonicalizingSolvedKPatternDepthFilter,
     search: FilteredSearch<KPuzzle>,
 }
 
 impl Default for BabyFTOScrambleFinder {
     fn default() -> Self {
         let kpuzzle = baby_fto_kpuzzle();
-        let filter_generator_moves = move_list_from_vec(vec!["U", "L", "F", "R"]);
-        let filtered_search =
-            <FilteredSearch>::new(IterativeDeepeningSearch::new_with_hash_prune_table(
-                ImmutableSearchData::try_from_common_options_with_auto_search_generators(
-                    kpuzzle.clone(),
-                    filter_generator_moves,
-                    vec![kpuzzle.default_pattern()],
-                    Default::default(),
-                )
-                .unwrap(),
-                StoredSearchAdaptations::default(),
-                HashPruneTableSizeBounds::default(),
-            ));
+        let canonicalizing_solved_kpattern_depth_filter =
+            CanonicalizingSolvedKPatternDepthFilter::try_new(
+                CanonicalizingSolvedKPatternDepthFilterConstructionParameters {
+                    canonicalization_mask: baby_fto_orientation_canonicalization_kpattern().clone(),
+                    canonicalization_generator_moves: move_list_from_vec(vec!["Rv", "Uv"]),
+                    max_canonicalizing_move_count_below: MoveCount(5),
+                    solved_pattern: kpuzzle.default_pattern().clone(),
+                    depth_filtering_generator_moves: move_list_from_vec(vec!["U", "L", "F", "R"]),
+                    min_optimal_solution_move_count: BABY_FTO_MINIMUM_OPTIMAL_SOLUTION_MOVE_COUNT,
+                },
+            )
+            .unwrap();
 
         let generator_moves = move_list_from_vec(vec!["U", "L", "F", "R", "BR"]);
         let search = <FilteredSearch>::new(IterativeDeepeningSearch::new_with_hash_prune_table(
@@ -115,7 +92,7 @@ impl Default for BabyFTOScrambleFinder {
 
         Self {
             kpuzzle: kpuzzle.clone(),
-            filtered_search,
+            canonicalizing_solved_kpattern_depth_filter,
             search,
         }
     }
@@ -130,8 +107,9 @@ impl ScrambleFinder for BabyFTOScrambleFinder {
         pattern: &KPattern,
         _scramble_options: &NoScrambleOptions,
     ) -> FilteringDecision {
-        self.filtered_search
-            .filtering_decision(pattern, MoveCount(5))
+        self.canonicalizing_solved_kpattern_depth_filter
+            .depth_filter(pattern)
+            .unwrap()
     }
 }
 
@@ -182,5 +160,37 @@ impl SolvingBasedScrambleFinder for BabyFTOScrambleFinder {
 
     fn collapse_inverted_alg(&mut self, alg: Alg) -> Alg {
         alg
+    }
+}
+
+impl GetKPuzzle for BabyFTOScrambleFinder {
+    fn get_kpuzzle(&self) -> &KPuzzle {
+        baby_fto_kpuzzle()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use cubing::alg::parse_alg;
+
+    use crate::scramble::{
+        puzzles::{baby_fto::BabyFTOScrambleFinder, definitions::baby_fto_kpuzzle},
+        scramble_finder::{
+            scramble_finder::ScrambleFinder, solving_based_scramble_finder::NoScrambleOptions,
+        },
+    };
+
+    #[test]
+    fn filter_3_mover() -> Result<(), String> {
+        // Regression test for a 3-mover that requires reorientation to work.
+        let alg = parse_alg!("F U F L R BR' R' F' L' U'");
+        let pattern = baby_fto_kpuzzle().default_pattern().apply_alg(alg).unwrap();
+
+        let mut baby_fto_scramble_finder = BabyFTOScrambleFinder::default();
+        assert!(baby_fto_scramble_finder
+            .filter_pattern(&pattern, &NoScrambleOptions {})
+            .is_reject());
+
+        Ok(())
     }
 }

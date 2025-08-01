@@ -11,7 +11,7 @@ members = [
 default-members = ["src/rs"]
 
 [workspace.package]
-version = "0.7.3-dev"
+version = "0.7.3"
 license = "MPL-2.0"
 edition = "2021"
 

@@ -41,7 +41,7 @@ impl Default for MegaminxScrambleFinder {
                     max_canonicalizing_move_count_below: MoveCount(5),
                     solved_pattern: megaminx_kpuzzle().default_pattern().clone(),
                     depth_filtering_generator_moves: move_list_from_vec(vec![
-                        "U", "L", "F", "R", "BR", "BL", "FL", "FR", "DL", "DR", "B",
+                        "U", "L", "F", "R", "BR", "BL", "FL", "FR", "DL", "DR", "B", "D",
                     ]),
                     min_optimal_solution_move_count: MEGAMINX_MINIMUM_OPTIMAL_SOLUTION_MOVE_COUNT,
                 },

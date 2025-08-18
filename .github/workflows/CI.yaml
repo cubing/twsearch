@@ -14,7 +14,7 @@ jobs:
       - run: make test-cpp-cli
 
   cpp-windows:
-    runs-on: windows-latest
+    runs-on: windows-2025
 
     steps:
       - uses: actions/checkout@v4
@@ -71,7 +71,7 @@ jobs:
       - run: make test-rust-wasm
 
   rust-windows:
-    runs-on: windows-latest
+    runs-on: windows-2025
 
     steps:
       - uses: actions/checkout@v4

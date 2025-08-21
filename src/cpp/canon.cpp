@@ -9,7 +9,9 @@ vector<ull> canonmask;
 vector<vector<int>> canonnext;
 static vector<allocsetval> posns;
 static vector<int> movehist;
+vector<double> invsubtreesizes;
 void makecanonstates(puzdef &pd) {
+  invsubtreesizes.clear();
   int nbase = pd.basemoves.size();
   if (quarter) { // rewrite base
     int at = 1;
@@ -227,6 +229,7 @@ int recurcanonstates2(const puzdef &pd, int togo, ull moveset, int sp) {
  *   don't reduce by canonical.
  */
 void makecanonstates2(puzdef &pd) {
+  invsubtreesizes.clear();
   int at = 1;
   for (int i = 0; i < (int)pd.moves.size(); i++) {
     moove &mv = pd.moves[i];
@@ -405,4 +408,37 @@ void showcanon(const puzdef &pd, int show) {
         showseqs(pd, d, 0) ;
      }
    */
+}
+/*
+ *   Calculate the relative sizes of subtrees starting from this state.
+ *   This is used to order the subtrees to search using a heuristic
+ *   based on the previous level's results.
+ */
+void calculatesubtreesizes(const puzdef &pd) {
+  if (invsubtreesizes.size()) // only do it once
+    return;
+  ll nstates = canonmask.size();
+  invsubtreesizes.resize(nstates, 1);
+  vector<double> w(nstates);
+  // this 10 is somewhat arbitrary, but we don't want to spend too much time
+  for (int i=0; i<10; i++) {
+    double sum = 0;
+    for (ll st = 0; st < nstates; st++) {
+      ull mask = canonmask[st];
+      double thissum = 0;
+      for (int m = 0; m < (int)pd.moves.size(); m++) {
+        if ((mask >> pd.moves[m].cs) & 1)
+          continue;
+        thissum += invsubtreesizes[canonnext[st][pd.moves[m].cs]];
+      }
+      sum += thissum;
+      w[st] = thissum;
+    }
+    sum = nstates/sum;
+    for (ll j=0; j<nstates; j++)
+      w[j] *= sum;
+    swap(w, invsubtreesizes);
+  }
+  for (auto &v: invsubtreesizes)
+    v = 1/v;
 }

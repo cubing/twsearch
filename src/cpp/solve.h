@@ -29,9 +29,9 @@ struct microthread {
   vector<solvestate> solvestates;
   vector<int> movehist;
   setval *looktmp, *invtmp;
-  int sp, st, d, togo, finished, tid, invflag;
+  int initst, sp, st, d, togo, finished, tid, invflag, wid;
   ull h;
-  long long extraprobes, lookups;
+  long long extraprobes, lookups, startlookups;
   void init(const puzdef &pd, int d_, int tid_, const setval p);
   void innersetup(prunetable &pt);
   int innerfetch(const puzdef &pd, prunetable &pt);

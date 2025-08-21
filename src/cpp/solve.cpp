@@ -1,5 +1,6 @@
 #include "solve.h"
 #include "cmdlineops.h"
+#include <algorithm>
 #include <iostream>
 ll solutionsfound = 0;
 ll solutionsneeded = 1;
@@ -22,6 +23,7 @@ static vector<vector<int>> randomized;
 // multi-phase solver).
 static vector<ull> workchunks;
 vector<workerparam> workerparams;
+vector<pair<double, ull>> topnsort;
 static int workat;
 void setsolvecallback(int (*f)(setval &pos, const vector<int> &moves, int d,
                                int id),
@@ -127,6 +129,9 @@ int solveworker::solveiter(const puzdef &pd, prunetable &pt, const setval p) {
       continue;
     int v = uthr[uid].innerfetch(pd, pt);
     if (v <= 0) {
+      // this will false share . . . just a bit
+      topnsort[uthr[uid].wid].first = - invsubtreesizes[uthr[uid].initst] *
+                                  (uthr[uid].lookups-uthr[uid].startlookups);
       if (uthr[uid].getwork(pd, pt)) {
         uthr[uid].lookups++;
         uthr[uid].extraprobes += uthr[uid].invflag;
@@ -237,6 +242,7 @@ downstack:
   return 3;
 }
 int microthread::solvestart(const puzdef &pd, prunetable &pt, int w) {
+  wid = w;
   ull initmoves = workchunks[w];
   int nmoves = pd.moves.size();
   sp = 0;
@@ -255,6 +261,8 @@ int microthread::solvestart(const puzdef &pd, prunetable &pt, int w) {
     togo--;
     initmoves /= nmoves;
   }
+  initst = st;
+  startlookups = lookups;
   solvestates.clear();
   innersetup(pt);
   return 1;
@@ -267,6 +275,8 @@ int solve(const puzdef &pd, prunetable &pt, const setval p, generatingset *gs) {
       cout << "Ignoring unsolvable position." << endl;
     return -1;
   }
+  calculatesubtreesizes(pd); // make sure subtreesizes is up to date
+  topnsort.clear(); // new solve, new topn
   stacksetval looktmp(pd);
   double starttime = walltime();
   ull totlookups = 0;
@@ -304,6 +314,15 @@ int solve(const puzdef &pd, prunetable &pt, const setval p, generatingset *gs) {
     else
       workchunks = makeworkchunks(pd, 0, p, requesteduthreading);
     workat = 0;
+    if (workchunks.size() == topnsort.size()) {
+      sort(topnsort.begin(), topnsort.end());
+      for (int i=0; i<(int)topnsort.size(); i++)
+        workchunks[i]=topnsort[i].second;
+    } else {
+       topnsort.resize(workchunks.size());
+    }
+    for (int i=0; i<(int)topnsort.size(); i++)
+       topnsort[i] = {-1.0, workchunks[i]};
     int wthreads = setupthreads(pd, pt, workchunks, workerparams);
     workinguthreading =
         min(requesteduthreading,

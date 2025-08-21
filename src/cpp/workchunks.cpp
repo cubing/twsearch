@@ -27,7 +27,7 @@ vector<ull> makeworkchunks(const puzdef &pd, int d, setval symmreduce,
     vector<int> hashfront(hashmod, -1);
     vector<int> hashprev;
     int seensize = 0;
-    while (chunkmoves + 3 < d && (int)workchunks.size() < 40 * mythreads) {
+    while (chunkmoves + 3 < d && (int)workchunks.size() < 400 * mythreads) {
       vector<ull> wc2;
       vector<int> ws2;
       if (pd.rotgroup.size() > 1) {

@@ -18,7 +18,9 @@ extern vector<vector<int>> canonnext;
 extern vector<int> cancelmoves(const puzdef &pd, vector<int> mvseq);
 extern vector<int> canonicalize(const puzdef &pd, vector<int> mvseq);
 extern int ccount, canonlim;
+extern vector<double> invsubtreesizes;
 void makecanonstates2(puzdef &pd);
 void showcanon(const puzdef &pd, int show);
+void calculatesubtreesizes(const puzdef &pd);
 #define CANON_H
 #endif

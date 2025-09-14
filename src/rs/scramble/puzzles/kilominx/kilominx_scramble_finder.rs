@@ -114,7 +114,7 @@ impl Default for KilominxScrambleFinder {
                 Box::new(
                     // TODO: we're not masking, there should probably be something simpler than `KPuzzleSimpleMaskPhase` for us to use.
                     KPuzzleSimpleMaskPhase::try_new(
-                        "solve DL and D".to_owned(),
+                        "solve <U, F, R>".to_owned(),
                         kpuzzle.default_pattern().clone(),
                         move_list_from_vec(vec!["U", "F", "R"]),
                         KPuzzleSimpleMaskPhaseConstructionOptions {

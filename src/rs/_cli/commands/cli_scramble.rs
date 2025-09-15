@@ -1,8 +1,7 @@
 use std::time::Instant;
 
-use cubing::alg::{
-    experimental_twizzle_link::{experimental_twizzle_link, ExperimentalTwizzleLinkParameters},
-    Alg,
+use cubing::alg::experimental_twizzle_link::{
+    experimental_twizzle_link, ExperimentalTwizzleLinkParameters,
 };
 use twsearch::{
     _internal::{
@@ -58,16 +57,13 @@ pub fn cli_scramble_finder_solve(args: &ScrambleFinderArgs) -> Result<(), Comman
     let event_id = filter_args.event_id.as_str();
     let event = Event::try_from(event_id)?;
 
-    let scramble_setup_alg = filter_args
-        .scramble_setup_alg
-        .parse::<Alg>()
-        .expect("Invalid alg");
+    let scramble_setup_alg = &filter_args.scramble_setup_alg;
 
     let current_scramble_start_time = Instant::now();
     let scramble = experimental_scramble_finder_filter_and_or_search(
         event,
         &ExperimentalFilterAndOrSearchOptions {
-            scramble_setup_alg: scramble_setup_alg.clone(),
+            scramble_setup_alg: filter_args.scramble_setup_alg.clone(),
             apply_filtering,
             perform_search,
         },
@@ -83,7 +79,7 @@ pub fn cli_scramble_finder_solve(args: &ScrambleFinderArgs) -> Result<(), Comman
             println!("{}", scramble);
             if scramble_finder_solve_args.print_link {
                 let link = experimental_twizzle_link(ExperimentalTwizzleLinkParameters {
-                    setup: Some(&scramble_setup_alg),
+                    setup: Some(scramble_setup_alg),
                     alg: Some(&scramble),
                     puzzle: Some(event.puzzle().id()),
                     ..Default::default()

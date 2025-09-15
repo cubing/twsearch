@@ -213,12 +213,8 @@ impl SetCppArgs for RequiredDefArgs {
 impl SetCppArgs for ScrambleAndTargetPatternOptionalArgs {
     fn set_cpp_args(&self) {
         if let Some(scramble_alg) = &self.scramble_alg {
-            let parsed_alg = match scramble_alg.parse::<Alg>() {
-                Ok(alg) => alg,
-                Err(_) => panic!("Invalid scramble alg."),
-            };
             // TODO: Use `cubing::kpuzzle` to handle nested input syntax
-            set_arg("--scramblealg", &parsed_alg.to_string())
+            set_arg("--scramblealg", &scramble_alg.to_string())
         };
         set_boolean_arg("-s", self.stdin_scrambles)
     }

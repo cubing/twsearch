@@ -8,7 +8,6 @@ use std::fmt::Display;
 use std::io::stdout;
 use std::path::PathBuf;
 use std::process::exit;
-use std::str::FromStr;
 
 use crate::_internal::puzzle_traits::puzzle_traits::GroupActionPuzzle;
 use crate::_internal::search::prune_table_trait::Depth;
@@ -98,12 +97,12 @@ pub struct CommonSearchArgs {
     /// Continue (or start) search after this alg.
     /// If the alg is a valid solution, it will be skipped.
     #[clap(long, group = "continue_search")]
-    pub continue_after: Option<String>, // TODO: `FromStr` is implemented for `Alg` by `cubing.rs`, why doesn't `Option<Alg>` work?
+    pub continue_after: Option<Alg>,
 
     /// Continue (or start) search at this alg.
     /// If the alg is a valid solution, it will be the first one returned.
     #[clap(long, group = "continue_search")]
-    pub continue_at: Option<String>, // TODO: `FromStr` is implemented for `Alg` by `cubing.rs`, why doesn't `Option<Alg>` work?
+    pub continue_at: Option<Alg>,
 
     #[command(flatten)]
     pub performance_args: PerformanceArgs,
@@ -166,13 +165,13 @@ pub struct GeneratorArgs {
     /// moves are considered. For example, `--moves U,F,R2` only permits
     /// half-turns on R, and all possible turns on U and F.
     #[clap(long = "generator-moves", value_delimiter = ',')]
-    pub generator_moves_string: Option<Vec<String>>,
+    pub generator_moves_string: Option<Vec<Move>>,
 
     /// A comma-separated list of algs to use. All multiples of these
     /// algs are considered. For example, `--algs U,F,R2` only permits
     /// half-turns on R, and all possible turns on U and F.
     #[clap(long, value_delimiter = ',')]
-    pub generator_algs: Option<Vec<String>>,
+    pub generator_algs: Option<Vec<Alg>>,
 }
 
 #[derive(Clone, Debug)]
@@ -204,31 +203,14 @@ pub struct CustomGenerators {
 
 impl GeneratorArgs {
     pub fn parse(&self) -> Generators {
-        let moves = parse_moves(&self.generator_moves_string);
-        let algs = parse_moves(&self.generator_algs);
-        match (moves, algs) {
+        match (&self.generator_moves_string, &self.generator_algs) {
             (None, None) => Generators::Default,
             (moves, algs) => Generators::Custom(CustomGenerators {
-                moves: moves.unwrap_or_default(),
-                algs: algs.unwrap_or_default(),
+                moves: moves.clone().unwrap_or_default(),
+                algs: algs.clone().unwrap_or_default(),
             }),
         }
     }
-}
-
-fn parse_moves<T: FromStr<Err = E>, E: Display>(input: &Option<Vec<String>>) -> Option<Vec<T>> {
-    input.as_ref().map(|moves| {
-        moves
-            .iter()
-            .map(|move_str| match move_str.parse::<T>() {
-                Ok(r#move) => r#move,
-                Err(err) => {
-                    eprintln!("Invalid move ({}): {}", err, move_str);
-                    panic!("Exiting due to invalid move.")
-                }
-            })
-            .collect()
-    })
 }
 
 #[derive(Args, Debug, Default)]
@@ -445,9 +427,8 @@ pub struct ScrambleFinderFilterArgs {
     pub event_id: String,
 
     /// Scramble setup alg
-    // TODO: Make this an `Alg` (by implementing `ValueEnum`?)
     // TODO: support pattern input via file.
-    pub scramble_setup_alg: String,
+    pub scramble_setup_alg: Alg,
 }
 
 #[derive(Args, Debug)]
@@ -472,7 +453,7 @@ pub struct ScrambleAndTargetPatternOptionalArgs {
     pub scramble_file: Option<PathBuf>,
     /// Solve a single scramble specified directly as an argument.
     #[clap(long/*, visible_alias = "scramblealg" */, help_heading = "Scramble input", group = "scramble_input")]
-    pub scramble_alg: Option<String>, // TODO: Make `Alg` implement `Send` (e.g. by using `Arc`, possibly through an optional feature or a separate thread-safe `Alg` struct)
+    pub scramble_alg: Option<Alg>,
     /// Solve a list of scrambles passed to standard in (separated by newlines).
     #[clap(long, help_heading = "Scramble input", group = "scramble_input"/* , visible_short_alias = 's' */)]
     pub stdin_scrambles: bool,

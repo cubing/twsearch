@@ -95,14 +95,7 @@ impl PatternSource {
             }
             (None, Some(scramble_file)) => Ok(Self::FilePath(scramble_file.clone())),
             (Some(scramble_alg), None) => {
-                let alg = match scramble_alg.parse::<Alg>() {
-                    Ok(alg) => alg,
-                    Err(e) => {
-                        eprintln!("Could not parse alg: {:?}", e);
-                        exit(1)
-                    }
-                };
-                Ok(Self::AlgAppliedToDefaultPattern(alg))
+                Ok(Self::AlgAppliedToDefaultPattern(scramble_alg.clone()))
             }
             (Some(_), Some(_)) => {
                 eprintln!("Error: specified both a scramble alg and a scramble file, exiting.");

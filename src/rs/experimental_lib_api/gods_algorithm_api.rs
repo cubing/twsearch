@@ -13,7 +13,7 @@ use super::common::PatternSource;
 /// Usage example:
 ///
 /// ```
-/// use cubing::{alg::parse_alg, puzzles::cube2x2x2_kpuzzle};
+/// use cubing::{alg::{parse_alg, parse_move}, puzzles::cube2x2x2_kpuzzle};
 /// use twsearch::{
 ///     _internal::cli::args::{GeneratorArgs, GodsAlgorithmOptionalArgs}, // TODO
 ///     experimental_lib_api::gods_algorithm,
@@ -24,7 +24,7 @@ use super::common::PatternSource;
 ///     kpuzzle,
 ///     GodsAlgorithmOptionalArgs {
 ///         generator_args: GeneratorArgs {
-///             generator_moves_string: Some(vec!["U".to_owned(), "R".to_owned()]), // TODO: make this semantic
+///             generator_moves_string: Some(vec![parse_move!("U").clone(), parse_move!("R").clone()]),
 ///             ..Default::default()
 ///         },
 ///         ..Default::default()
@@ -64,7 +64,7 @@ pub fn gods_algorithm(
 
 #[cfg(test)]
 mod tests {
-    use cubing::puzzles::cube3x3x3_kpuzzle;
+    use cubing::{alg::parse_move, puzzles::cube3x3x3_kpuzzle};
 
     use crate::{
         _internal::cli::args::{GeneratorArgs, GodsAlgorithmOptionalArgs},
@@ -77,7 +77,10 @@ mod tests {
             cube3x3x3_kpuzzle(),
             GodsAlgorithmOptionalArgs {
                 generator_args: GeneratorArgs {
-                    generator_moves_string: Some(vec!["R2".to_owned(), "U2".to_owned()]), // TODO: make this semantic
+                    generator_moves_string: Some(vec![
+                        parse_move!("R2").clone(),
+                        parse_move!("U2").clone(),
+                    ]),
                     ..Default::default()
                 },
                 ..Default::default()

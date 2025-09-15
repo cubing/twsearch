@@ -98,9 +98,9 @@ pub fn search(
         ) {
             (None, None) => ContinuationCondition::None,
             (Some(after), None) => {
-                ContinuationCondition::After(parse_continuation_alg_arg(&after)?)
+                ContinuationCondition::After(process_continuation_alg_arg(&after)?)
             }
-            (None, Some(at)) => ContinuationCondition::At(parse_continuation_alg_arg(&at)?),
+            (None, Some(at)) => ContinuationCondition::At(process_continuation_alg_arg(&at)?),
             (Some(_), Some(_)) => {
                 // TODO: figure out how to make this unrepresentable using idiomatic `clap` config.
                 panic!("Specifying `--continue-after` and `--continue-at` simultaneously is supposed to be impossible.");
@@ -122,14 +122,8 @@ pub fn search(
     Ok(solutions)
 }
 
-fn parse_continuation_alg_arg(s: &str) -> Result<Vec<Move>, CommandError> {
-    // TODO: unify code between branches to save code size?
-    let alg = s.parse::<Alg>().map_err(|e| -> _ {
-        CommandError::ArgumentError(ArgumentError {
-            description: e.description,
-        })
-    })?;
-    let Some(moves) = alg_to_moves(&alg) else {
+fn process_continuation_alg_arg(alg: &Alg) -> Result<Vec<Move>, CommandError> {
+    let Some(moves) = alg_to_moves(alg) else {
         return Err(CommandError::ArgumentError(ArgumentError {
             description: "Non-moves used in the continuation alg.".to_owned(),
         }));
@@ -139,7 +133,10 @@ fn parse_continuation_alg_arg(s: &str) -> Result<Vec<Move>, CommandError> {
 
 #[cfg(test)]
 mod tests {
-    use cubing::{alg::parse_alg, puzzles::cube3x3x3_kpuzzle};
+    use cubing::{
+        alg::{parse_alg, parse_move},
+        puzzles::cube3x3x3_kpuzzle,
+    };
 
     use crate::{
         _internal::cli::args::{GeneratorArgs, SearchCommandOptionalArgs},
@@ -162,7 +159,10 @@ mod tests {
             &search_pattern,
             SearchCommandOptionalArgs {
                 generator_args: GeneratorArgs {
-                    generator_moves_string: Some(vec!["R".to_owned(), "U".to_owned()]), // TODO: make this semantic
+                    generator_moves_string: Some(vec![
+                        parse_move!("R").clone(),
+                        parse_move!("U").clone(),
+                    ]),
                     ..Default::default()
                 },
                 ..Default::default()

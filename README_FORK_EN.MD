@@ -1,7 +1,7 @@
 ---
-[English](https://github.com/b10101101/twsearch/blob/main/README_FORK_EN.md) 
+[English](https://github.com/b10101101/twsearch/blob/win_compile/README_FORK_EN.MD) 
 
-[Русский](https://github.com/b10101101/twsearch/blob/main/README_FORK_RU.md) 
+[Русский](https://github.com/b10101101/twsearch/blob/win_compile/README_FORK_RU.MD) 
 
 ---
 

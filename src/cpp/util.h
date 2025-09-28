@@ -2,6 +2,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <string>
+#include <vector>
+#include <utility>
 
 #ifdef _WIN64
 #include <intrin.h>
@@ -60,3 +62,7 @@ extern const char *user_option_cache_dir;
 const char *prune_table_dir(bool create_dirs);
 #define UTIL_H
 #endif
+
+extern vector<pair<string, string>> global_replacemoves;
+void add_replace_move(const string& from, const string& to);
+string replace_out_moves(const string& moveName);

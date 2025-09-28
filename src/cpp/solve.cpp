@@ -1,6 +1,7 @@
 #include "solve.h"
 #include "cmdlineops.h"
 #include <iostream>
+extern bool useGPformat;
 ll solutionsfound = 0;
 ll solutionsneeded = 1;
 int noearlysolutions;
@@ -76,13 +77,15 @@ int microthread::possibsolution(const puzdef &pd) {
     solutionsfound++;
     lastsolution.clear();
     if (d == 0) // allow null solution to trigger
-      cout << " ";
-    for (int i = 0; i < d; i++) {
-      cout << " " << pd.moves[movehist[i]].name;
-      if (i > 0)
-        lastsolution += " ";
-      lastsolution += pd.moves[movehist[i]].name;
-    }
+      cout << (useGPformat ? "??? " : " ");
+	for (int i = 0; i < d; i++) {
+    string moveName = pd.moves[movehist[i]].name;
+    string displayName = replace_out_moves(moveName);
+    cout << ((useGPformat && i > 0) ? ", " : " ") << displayName;
+    if (i > 0)
+        lastsolution += (useGPformat ? "??? " : " ");
+    lastsolution += displayName;
+	}
     cout << endl << flush;
     if (!satisfiedsolutioncount())
       r = 0;

@@ -9,6 +9,7 @@ map<ll, ll> bestsofar;
 const int HIWR = 4;
 const int KEYM = 2 * HIWR + 2;
 static int algostrict;
+extern bool useGPformat;
 ll extendkey(ll k, int nwr, int npwr) {
   return k * KEYM + nwr * 2 + (npwr == 0 ? 0 : 1);
 }
@@ -63,7 +64,7 @@ struct algo1worker {
         cout << keydesc(pd, key) << " " << mvs << " (";
         for (int i = 0; i < sp; i++) {
           if (i)
-            cout << " ";
+            cout << ((useGPformat) ? ", " : " ");
           cout << pd.moves[movehist[i]].name;
         }
         cout << ")" << endl << flush;
@@ -130,10 +131,10 @@ struct algo2worker {
             cout << keydesc(pd, key) << " " << mvs << " (";
             for (int i = 0; i < sp; i++) {
               if (i)
-                cout << " ";
+                cout << ((useGPformat) ? ", " : " ");
               cout << pd.moves[movehist[i]].name;
             }
-            cout << ")" << (mvs / sp) << " (";
+            cout << ((useGPformat) ? ")," : ")") << (mvs / sp) << " (";
             const char *spacer = "";
             for (int i = 1; i < (int)cc.size(); i++) {
               if (cc[i]) {

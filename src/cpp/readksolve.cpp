@@ -568,7 +568,21 @@ puzdef readdef(istream *f) {
         inerror("! MoveAlias in wrong place");
       expect(toks, 3);
       pz.moveseqs.push_back({toks[1], toks[2], 1});
-    } else if (toks[0] == "MoveSequence") {
+	} else if (toks[0] == "ReplaceMoves") {
+      if (state != 2)
+			inerror("! ReplaceMoves in wrong place");
+      if (toks.size() < 3) {
+			inerror("! ReplaceMoves requires at least 2 parameters");
+      }
+      string fromMove = toks[1];
+      string toMove;
+      for (int i = 2; i < (int)toks.size(); i++) {
+			if (i > 2) toMove += " ";
+			toMove += toks[i];
+      }
+      add_replace_move(fromMove, toMove);
+      continue;
+	} else if (toks[0] == "MoveSequence") {
       if (state != 2)
         inerror("! MoveSequence in wrong place");
       if (toks.size() < 3)

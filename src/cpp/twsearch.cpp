@@ -25,6 +25,11 @@
 #include <sstream>
 #include <thread>
 #include <vector>
+int useGPformat;
+static boolopt
+    commaSeparator("--gp",
+          "Use comma as separator in output sequences (as in Geraniums Pot simulator format).",
+          &useGPformat);
 using namespace std;
 int checkbeforesolve;
 generatingset *gs;

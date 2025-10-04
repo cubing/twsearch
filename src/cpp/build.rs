@@ -32,7 +32,7 @@ fn main() {
     }
     let version = String::from_utf8(
         Command::new("bun")
-            .args(["run", "script/print-current-version-description.ts"])
+            .args(["x", "--", "@lgarron-bin/repo", "version", "describe"])
             .output()
             .unwrap()
             .stdout,

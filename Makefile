@@ -45,10 +45,6 @@ format: format-cpp format-js format-rust
 .PHONY: publish
 publish: test-rust publish-rust
 
-.PHONY: print-current-commit-hash
-print-current-commit-hash:
-	@bun run ./script/print-current-commit-hash.ts
-
 .PHONY: setup-gitignore-dirs
 setup-gitignore-dirs:
 	bun run ./script/self-gitignore-dirs.ts ./.bin ./.temp ./build ./dist ./target

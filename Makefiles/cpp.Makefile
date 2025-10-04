@@ -1,5 +1,5 @@
 # This uses a pattern to cache a lazy evaluation: https://make.mad-scientist.net/deferred-simple-variable-expansion/
-TWSEARCH_VERSION = $(eval TWSEARCH_VERSION := $$(shell bun x -- @lgarron-bin/repo version describe))$(TWSEARCH_VERSION)
+TWSEARCH_VERSION = $(eval TWSEARCH_VERSION := $$(shell make describe-version))$(TWSEARCH_VERSION)
 
 .PHONY: build-cpp
 build-cpp: build/bin/twsearch

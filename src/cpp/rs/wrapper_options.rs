@@ -8,7 +8,7 @@ use twsearch::_internal::cli::args::{
 
 use std::{fmt::Display, process::exit};
 
-use cubing::alg::{Alg, Move};
+use cubing::alg::Move;
 
 use crate::rust_api;
 

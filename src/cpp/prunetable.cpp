@@ -9,6 +9,7 @@
 #else
 #define SIGNATURE UNCOMPSIGNATURE
 #endif
+static string current_prune_filename;
 const int UNPACKBITS = 12; // must be at least 8
 fillworker fillworkers[MAXTHREADS];
 struct ioqueue ioqueue;
@@ -575,6 +576,7 @@ void prunetable::readblock(ull *mem, ull explongcnt, istream *inf) {
   uchar *buf = (uchar *)malloc(bytecnt + 8); // for unaligned reads
   inf->read((char *)buf, bytecnt);
   if (inf->fail())
+	cout << "File "  << current_prune_filename << " is corrupted! Please remove this file and restart" << endl << flush;
     error("! I/O error while reading block");
   ioqueue.queueunpackwork(mem, longcnt, buf, bytecnt);
 }
@@ -759,12 +761,13 @@ int prunetable::readpt(const puzdef &pd) {
   }
 #endif
   string filename = makefilename(pd, false /* create_dirs */);
+  current_prune_filename = filename;
   ifstream r;
   r.open(filename, ifstream::in);
   if (r.fail())
     return 0;
   if (quiet == 0)
-    cout << "Reading " << filename << " " << flush;
+    cout << "Reading " << filename << " " << endl << flush;
   if (r.get() != SIGNATURE) {
     warn("! first byte not signature");
     return 0;

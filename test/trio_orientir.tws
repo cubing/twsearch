@@ -1,0 +1,109 @@
+# https://twistypuzzles.com/app/museum/museum_showitem.php?pkey=10440
+# A test puzzle for finding algorithms. Unlike the original, in this
+# implementation, each piece is unique and non-interchangeable, 
+# and each piece has its own orientation.
+
+Name trio_orientir
+Set Triangles 13 6
+Set Edges 15 6
+Set Center 3 6
+#-----------------------------------------------------------
+Solved
+Triangles
+#01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 
+ 1  2  3  4  5  6  7  8  9  10 11 12 13
+ 0  0  0  0  0  0  0  0  0  0  0  0  0
+Edges
+#01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20
+ 1  2  3  4  5  6  7  8  9  10 11 12 13 14 15
+ 0  0  0  0  0  0  0  0  0  0  0  0  0  0  0
+Center
+#01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20
+ 1  2  3
+ 0  0  0
+End
+#-----------------------------------------------------------
+
+MoveAlias 1L 1R'
+MoveAlias 2L 2R'
+MoveAlias 3L 3R'
+
+MoveSequence PP 2L 1R 2R 1L 2L 1R 2R 1L 2L 1R 2R 1L 
+ReplaceMoves PP  (2L,1R,2R,1L),3
+ReplaceMoves PP' (1R,2L,1L,2R),3
+
+ReplaceMoves 1R' 1L
+ReplaceMoves 1R2' 1L2
+ReplaceMoves 1R3' 1L3
+ReplaceMoves 1L' 1R
+ReplaceMoves 1L2' 1R2
+ReplaceMoves 1L3' 1R3
+
+ReplaceMoves 2R' 2L
+ReplaceMoves 2R2' 2L2
+ReplaceMoves 2R3' 2L3
+ReplaceMoves 2L' 2R
+ReplaceMoves 2L2' 2R2
+ReplaceMoves 2L3' 2R3
+
+ReplaceMoves 3R' 3L
+ReplaceMoves 3R2' 3L2
+ReplaceMoves 3R3' 3L3
+ReplaceMoves 3L' 3R
+ReplaceMoves 3L2' 3R2
+ReplaceMoves 3L3' 3R3
+
+
+
+
+#-----------------------------------------------------------1R2 2R 3R' 1R' 2R3 PP 2R3 1R 3R 2R3 PP 2R2 1R2'
+Move 1R
+Triangles
+#01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 
+ 1  2  3  8  5  4  6  9  10 7  11 12 13
+ 0  0  0  1  0  1  1  1  1  1  0  0  0
+Edges
+#01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20
+ 1  2  3  4  8  6  5  9  10 11 7  12 13 14 15
+ 0  0  0  0  1  0  1  1  1  1  1  0  0  0  0
+Center
+#01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20
+ 1  2  3
+ 1  0  0
+End
+#-----------------------------------------------------------
+
+#-----------------------------------------------------------
+Move 2R
+Triangles
+#01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 
+ 1  2  3  4  6  7  13 8  9  10 5  11 12
+ 0  0  0  0  1  1  1  0  0  0  1  1  1
+Edges
+#01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20
+ 1  2  3  4  5  7  15 8  9  10 11 6  12 13 14
+ 0  0  0  0  0  1  1  0  0  0  0  1  1  1  1
+Center
+#01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20
+ 1  2  3
+ 0  1  0
+End
+#-----------------------------------------------------------
+
+#-----------------------------------------------------------
+Move 3R
+Triangles
+#01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20 
+ 4  1  2  6  3  5  7  8  9  10 11 12 13
+ 1  1  1  1  1  1  0  0  0  0  0  0  0
+Edges
+#01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20
+ 3  1  5  2  6  4  7  8  9  10 11 12 13 14 15
+ 1  1  1  1  1  1  0  0  0  0  0  0  0  0  0
+Center
+#01 02 03 04 05 06 07 08 09 10 11 12 13 14 15 16 17 18 19 20
+ 1  2  3
+ 0  0  1
+End
+#-----------------------------------------------------------
+

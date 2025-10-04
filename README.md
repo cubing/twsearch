@@ -133,6 +133,8 @@ Options:
 
 `-g`  Calculate the number of positions at each depth, as far as memory
    allows.  Print antipodal positions.
+   
+`--gp`  Use comma as separator in output sequences (as in Geraniums Pot simulator format) See file README_FORK_EN.MD.
 
 `-H`  Use 128-bit hash instead of full state for God's number searches.
 

@@ -211,3 +211,26 @@ see
   return actual_cache_dir.c_str();
 }
 #endif
+
+
+// Move replacement function ReplaceMoves (for the GeraniumsPot simulator)
+vector<pair<string, string>> global_replacemoves;
+
+void add_replace_move(const string& from, const string& to) {
+    global_replacemoves.push_back({from, to});
+}
+
+string replace_out_moves(const string& moveName) {
+    string result = moveName;
+    
+    if (global_replacemoves.empty()) {
+        return result;
+    }
+    for (const auto& replacement : global_replacemoves) {
+        if (result == replacement.first) {
+            result = replacement.second;
+            break;
+        }
+    }
+    return result;
+}

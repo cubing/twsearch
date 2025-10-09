@@ -52,7 +52,6 @@ use super::{
     static_move_list::{add_random_suffixes_from, static_parsed_opt_list},
 };
 
-// static FMC_AFFIX: [&str; 3] = ["R'", "U'", "F"];
 static FMC_AFFIX_ALG: LazyLock<Alg> = LazyLock::new(|| parse_alg!("R' U' F").clone());
 
 pub(crate) struct TwoPhase3x3x3ScrambleFinder {

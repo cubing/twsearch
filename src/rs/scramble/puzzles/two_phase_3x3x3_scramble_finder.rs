@@ -52,6 +52,11 @@ use super::{
     static_move_list::{add_random_suffixes_from, static_parsed_opt_list},
 };
 
+// TODO: this turns into two nested `LazyLock`s because of `parse_alg!(…)`'s
+// implementation. How can we get `cubing.rs` to make the `LazyLock` available
+// directly?
+//
+// (We *could* inline this alg in the code, but having constants at the top is good for maintability.)
 static FMC_AFFIX_ALG: LazyLock<Alg> = LazyLock::new(|| parse_alg!("R' U' F").clone());
 
 pub(crate) struct TwoPhase3x3x3ScrambleFinder {

@@ -42,7 +42,7 @@ impl SolutionMoves<'_> {
         }
     }
 
-    pub fn reverse_move_iter(&self) -> SolutionMovesReverseIterator {
+    pub fn reverse_move_iter(&self) -> SolutionMovesReverseIterator<'_> {
         SolutionMovesReverseIterator {
             solution_moves: self,
         }

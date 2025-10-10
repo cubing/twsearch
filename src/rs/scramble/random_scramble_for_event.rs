@@ -1,8 +1,11 @@
 use cubing::{alg::Alg, kpuzzle::KPuzzle};
 
 use crate::{
-    _internal::errors::{CommandError, SearchError},
-    scramble::puzzles::baby_fto::BabyFTOScrambleFinder,
+    _internal::errors::{ArgumentError, CommandError, SearchError},
+    scramble::{
+        puzzles::{baby_fto::BabyFTOScrambleFinder, megaminx::megaminx_solver::MegaminxSolver},
+        Puzzle,
+    },
 };
 
 use super::{
@@ -326,4 +329,42 @@ pub fn experimental_scramble_finder_filter_and_or_search(
         >(options, false),
         _ => err,
     }
+}
+
+pub fn solve_known_puzzle(
+    puzzle: Puzzle,
+    scramble_setup_alg: Alg, // Other input.
+) -> Result<Option<Alg>, CommandError> {
+    let mut solver = match puzzle {
+        // Puzzle::Cube3x3x3 => todo!(),
+        // Puzzle::Cube2x2x2 => todo!(),
+        // Puzzle::Cube4x4x4 => todo!(),
+        // Puzzle::Cube5x5x5 => todo!(),
+        // Puzzle::Cube6x6x6 => todo!(),
+        // Puzzle::Cube7x7x7 => todo!(),
+        // Puzzle::Clock => todo!(),
+        Puzzle::Megaminx => MegaminxSolver::default(),
+        // Puzzle::Pyraminx => todo!(),
+        // Puzzle::Skewb => todo!(),
+        // Puzzle::Square1 => todo!(),
+        // Puzzle::FTO => todo!(),
+        // Puzzle::MasterTetraminx => todo!(),
+        // Puzzle::Kilominx => todo!(),
+        // Puzzle::RediCube => todo!(),
+        _ => {
+            return Err(PuzzleError {
+                description: "This operation is not implemented for the puzzle yet.".to_owned(),
+            }
+            .into())
+        }
+    };
+
+    let pattern = solver
+        .get_kpuzzle()
+        .default_pattern()
+        .apply_alg(&scramble_setup_alg)
+        .map_err(|e| ArgumentError {
+            description: e.to_string(),
+        })?;
+    Ok(Some(solver.solve_pattern(&pattern, &NoScrambleOptions {})?))
 }

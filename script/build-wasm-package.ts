@@ -4,9 +4,8 @@ import assert from "node:assert";
 import { mkdir, rm } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { es2022Lib } from "@cubing/dev-config/esbuild/es2022";
-import { file } from "bun";
+import { $, file } from "bun";
 import { build } from "esbuild";
-import { getCurrentVersionDescription } from "./lib/getCurrentVersionDescription";
 
 const distDir = fileURLToPath(new URL("../dist/wasm/", import.meta.url));
 
@@ -69,7 +68,7 @@ assert(wasmSize > 32 * KiB); // Make sure the file exists and has some contents.
  */
 assert(secondsToDownloadUsing3G(wasmSize) < 7);
 
-const version = await getCurrentVersionDescription();
+const version = await $`bun x -- @lgarron-bin/repo version describe`;
 
 build({
   ...es2022Lib(),

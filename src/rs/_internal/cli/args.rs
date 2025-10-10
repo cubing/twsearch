@@ -11,6 +11,7 @@ use std::process::exit;
 
 use crate::_internal::puzzle_traits::puzzle_traits::GroupActionPuzzle;
 use crate::_internal::search::prune_table_trait::Depth;
+use crate::scramble::Puzzle;
 
 /// twsearch-cpp-wrapper — a native Rust wrapper for `twsearch` functionality.
 #[derive(Parser, Debug)]
@@ -41,6 +42,9 @@ pub enum CliCommand {
     /// Run a search server.
     /// Use with: https://experiments.cubing.net/cubing.js/twsearch/text-ui.html
     Serve(ServeCommandArgs),
+
+    /// Solve a known puzzle.
+    SolveKnownPuzzle(SolveKnownPuzzleCommandArgs),
 
     // TOOD: Detect identical pieces and warn/error (and give advice on how to run the "same" search with fully-distinguishable pieces).
     /// Run the Schreier-Sims algorithm to calculate the number of reachable patterns.
@@ -138,19 +142,28 @@ pub struct SearchCommandOptionalArgs {
     pub scramble_and_target_pattern_optional_args: ScrambleAndTargetPatternOptionalArgs,
 }
 
-#[derive(Debug, Clone, Copy, ValueEnum, Serialize, Deserialize)]
+#[derive(Args, Debug)]
+pub struct SolveKnownPuzzleCommandArgs {
+    #[clap(value_parser = puzzle_from_id)]
+    pub puzzle: Puzzle,
+
+    /// Scramble setup alg
+    // TODO: support pattern input via file.
+    pub scramble_setup_alg: Alg,
+}
+
+fn puzzle_from_id(s: &str) -> Result<Puzzle, String> {
+    Puzzle::try_from_id(s).map_err(|e| e.description)
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum, Serialize, Deserialize, Default)]
 pub enum VerbosityLevel {
     Silent,
     Error,
+    #[default]
     Warning,
     Info,
     Extra,
-}
-
-impl Default for VerbosityLevel {
-    fn default() -> Self {
-        Self::Warning
-    }
 }
 
 #[derive(Args, Debug, Default)]

@@ -25,3 +25,12 @@ crate-type = ["cdylib"]
 
 [package.metadata.wasm-pack.profile.release.wasm-bindgen]
 dwarf-debug-info = false
+# TODO
+# wasm-opt = false
+wasm-opt = ["--enable-bulk-memory"]
+
+# TODO
+[package.metadata.wasm-pack.profile.release]
+# TODO
+# wasm-opt = false
+wasm-opt = ["--enable-bulk-memory"]

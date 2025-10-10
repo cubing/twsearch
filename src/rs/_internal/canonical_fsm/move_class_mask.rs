@@ -54,7 +54,7 @@ impl IndexMut<MoveClassIndex> for MoveClassMask {
 }
 
 impl MoveClassMask {
-    fn iter(&self) -> Iter<bool> {
+    fn iter(&self) -> Iter<'_, bool> {
         self.0 .0.iter()
     }
 

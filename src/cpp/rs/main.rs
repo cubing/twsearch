@@ -47,6 +47,10 @@ fn main() {
                 .scramble_and_target_pattern_optional_args
                 .experimental_target_pattern,
         ),
+        CliCommand::SolveKnownPuzzle(_args) => {
+            println!("This command is not supported for the wrapper CLI");
+            exit(1);
+        }
         CliCommand::Serve(serve_command_args) => serve(serve_command_args, true),
         // TODO: consolidate def-only arg implementations.
         CliCommand::SchreierSims(schreier_sims_command_args) => {

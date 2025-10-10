@@ -32,13 +32,6 @@ struct ResponseAlg {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-struct ScrambleSolve {
-    definition: KPuzzleDefinition,
-    scramble_alg: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
 struct KPatternSolve {
     definition: KPuzzleDefinition,
     pattern: KPatternData,

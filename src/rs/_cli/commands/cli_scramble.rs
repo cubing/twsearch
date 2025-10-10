@@ -5,12 +5,14 @@ use cubing::alg::experimental_twizzle_link::{
 };
 use twsearch::{
     _internal::{
-        cli::args::{ScrambleArgs, ScrambleFinderArgs, ScrambleFinderCommand},
+        cli::args::{
+            ScrambleArgs, ScrambleFinderArgs, ScrambleFinderCommand, SolveKnownPuzzleCommandArgs,
+        },
         errors::CommandError,
     },
     scramble::{
-        experimental_scramble_finder_filter_and_or_search, random_scramble_for_event, Event,
-        ExperimentalFilterAndOrSearchOptions,
+        experimental_scramble_finder_filter_and_or_search, random_scramble_for_event,
+        solve_known_puzzle, Event, ExperimentalFilterAndOrSearchOptions,
     },
 };
 
@@ -89,6 +91,21 @@ pub fn cli_scramble_finder(args: &ScrambleFinderArgs) -> Result<(), CommandError
         }
         ScrambleFinderCommand::Filter(_scramble_finder_filter_args) => {}
     };
+
+    Ok(())
+}
+
+pub fn cli_solve_known_puzzle(
+    search_command_args: SolveKnownPuzzleCommandArgs,
+) -> Result<(), CommandError> {
+    let solution = solve_known_puzzle(
+        search_command_args.puzzle,
+        search_command_args.scramble_setup_alg,
+    )
+    .unwrap()
+    .unwrap();
+
+    println!("{}", solution);
 
     Ok(())
 }

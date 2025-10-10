@@ -25,6 +25,7 @@ pub enum Puzzle {
     BabyFTO,
 }
 
+// Note that we don't implement traits to convert to/from strings, because there are multiple strings associated with a given puzzle.
 impl Puzzle {
     pub fn id(&self) -> &str {
         match self {
@@ -71,6 +72,27 @@ impl Puzzle {
                 })
             }
         })
+    }
+
+    pub fn common_name(&self) -> &str {
+        match self {
+            Self::Cube3x3x3 => "3×3×3",
+            Self::Cube2x2x2 => "2×2×2",
+            Self::Cube4x4x4 => "4×4×4",
+            Self::Cube5x5x5 => "5×5×5",
+            Self::Cube6x6x6 => "6×6×6",
+            Self::Cube7x7x7 => "7×7×7",
+            Self::Clock => "Clock",
+            Self::Megaminx => "Megaminx",
+            Self::Pyraminx => "Pyraminx",
+            Self::Skewb => "Skewb",
+            Self::Square1 => "Square-1",
+            Self::FTO => "FTO",
+            Self::MasterTetraminx => "Master Tetraminx",
+            Self::Kilominx => "Kilominx",
+            Self::RediCube => "Redi Cube",
+            Self::BabyFTO => "Baby FTO",
+        }
     }
 
     pub fn speedsolving_event(&self) -> Event {

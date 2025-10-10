@@ -42,7 +42,7 @@ impl Display for Factorization {
 // TODO: this is a super naïve algorithm, but it should be good enough for most puzzles.
 fn factor_number_from(n: u64, from: u64) -> Factorization {
     for i in (from..).take_while(|i| i * i <= n) {
-        if (n % i) == 0 {
+        if n.is_multiple_of(i) {
             let mut recursive_factorization = factor_number_from(n / i, i);
             if recursive_factorization.prime_powers[0].prime == i {
                 recursive_factorization.prime_powers[0].power += 1;

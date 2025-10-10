@@ -8,19 +8,14 @@ use crate::_internal::search::{
 };
 
 // TODO: also handle "before" cases.
-#[derive(Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, PartialEq, Serialize, Deserialize, Default)]
 pub enum ContinuationCondition {
+    #[default]
     None,
     // An empty `Vec` in the base case means a solution check shall be performed.
     At(Vec<Move>),
     // An empty `Vec` in the base case means a solution check shall not be performed.
     After(Vec<Move>),
-}
-
-impl Default for ContinuationCondition {
-    fn default() -> Self {
-        Self::None
-    }
 }
 
 impl ContinuationCondition {

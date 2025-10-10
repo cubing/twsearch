@@ -4,7 +4,7 @@ mod serve;
 use commands::{
     benchmark::benchmark,
     canonical_algs::canonical_algs,
-    cli_scramble::{cli_scramble, cli_scramble_finder},
+    cli_scramble::{cli_scramble, cli_scramble_finder, cli_solve_known_puzzle},
     cli_search::cli_search,
     gods_algorithm::cli_gods_algorithm,
 };
@@ -21,6 +21,9 @@ fn main() -> Result<(), CommandError> {
             panic!("Completions should have been printed during options parsing, followed by program exit.");
         }
         CliCommand::Search(search_command_args) => cli_search(search_command_args),
+        CliCommand::SolveKnownPuzzle(search_command_args) => {
+            cli_solve_known_puzzle(search_command_args)
+        }
         CliCommand::Serve(serve_command_args) => serve::serve::serve(serve_command_args),
         // TODO: consolidate def-only arg implementations.
         CliCommand::SchreierSims(_schreier_sims_command_args) => todo!(),

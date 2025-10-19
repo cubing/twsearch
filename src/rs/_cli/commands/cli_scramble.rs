@@ -42,7 +42,7 @@ pub fn cli_scramble(args: &ScrambleArgs) -> Result<(), CommandError> {
 }
 
 // TODO: refactor this once `experimental_scramble_finder_filter_and_or_search` can support a less gnarly API.
-pub fn cli_scramble_finder_solve(args: &ScrambleFinderArgs) -> Result<(), CommandError> {
+pub fn cli_scramble_finder(args: &ScrambleFinderArgs) -> Result<(), CommandError> {
     let (filter_args, apply_filtering, perform_search) = match &args.command {
         ScrambleFinderCommand::Search(scramble_finder_solve_args) => (
             &scramble_finder_solve_args.filter_args,

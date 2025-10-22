@@ -89,3 +89,51 @@ jobs:
       - uses: ./.github/workflows/install-pinned-toolchains
       - run: make setup
       - run: make lint-js
+
+  build-x86_64-apple-darwin:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup target add x86_64-apple-darwin
+      - run: cargo build --target x86_64-apple-darwin --release
+
+  build-aarch64-apple-darwin:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup toolchain list
+      - run: make build-rust
+
+  build-x86_64-pc-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup toolchain list
+      - run: make build-rust
+
+  build-aarch64-pc-windows:
+    runs-on: windows-11-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup toolchain list
+      - run: make build-rust
+
+  build-x86_64-unknown-linux-gnu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup toolchain list
+      - run: make build-rust
+
+  build-aarch64-unknown-linux-gnu:
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup toolchain list
+      - run: make build-rust

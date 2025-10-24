@@ -1,0 +1,115 @@
+name: Build release binaries
+
+on:
+  push:
+    tags:
+      - v*
+
+jobs:
+  build-x86_64-apple-darwin:
+    permissions:
+      contents: write
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup target add x86_64-apple-darwin
+      - run: cargo build --target x86_64-apple-darwin --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: twsearch.x86_64-apple-darwin
+          path: ./target/x86_64-apple-darwin/release/twsearch
+      - run: mv ./target/x86_64-apple-darwin/release/twsearch twsearch.${{ github.ref_name }}.x86_64-apple-darwin
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: twsearch.${{ github.ref_name }}.x86_64-apple-darwin
+
+  build-aarch64-apple-darwin:
+    permissions:
+      contents: write
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup toolchain list
+      - run: make build-rust
+      - uses: actions/upload-artifact@v4
+        with:
+          name: twsearch.aarch64-apple-darwin
+          path: ./target/release/twsearch
+      - run: mv ./target/release/twsearch twsearch.${{ github.ref_name }}.aarch64-apple-darwin
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: twsearch.${{ github.ref_name }}.aarch64-apple-darwin
+
+  build-x86_64-pc-windows:
+    permissions:
+      contents: write
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup toolchain list
+      - run: make build-rust
+      - uses: actions/upload-artifact@v4
+        with:
+          name: twsearch.x86_64-pc-windows
+          path: ./target/release/twsearch.exe
+      - run: mv ./target/release/twsearch.exe twsearch.${{ github.ref_name }}.x86_64-pc-windows
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: twsearch.${{ github.ref_name }}.x86_64-pc-windows
+
+  build-aarch64-pc-windows:
+    permissions:
+      contents: write
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup toolchain list
+      - run: make build-rust
+      - uses: actions/upload-artifact@v4
+        with:
+          name: twsearch.aarch64-pc-windows
+          path: ./target/release/twsearch.exe
+      - run: mv ./target/release/twsearch.exe twsearch.${{ github.ref_name }}.aarch64-pc-windows
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: twsearch.${{ github.ref_name }}.aarch64-pc-windows
+
+  build-x86_64-unknown-linux-gnu:
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup toolchain list
+      - run: make build-rust
+      - uses: actions/upload-artifact@v4
+        with:
+          name: twsearch.x86_64-unknown-linux-gnu
+          path: ./target/release/twsearch
+      - run: mv ./target/release/twsearch twsearch.${{ github.ref_name }}.x86_64-unknown-linux-gnu
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: twsearch.${{ github.ref_name }}.x86_64-unknown-linux-gnu
+
+  build-aarch64-unknown-linux-gnu:
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04-arm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: Swatinem/rust-cache@v2
+      - run: rustup toolchain list
+      - run: make build-rust
+      - uses: actions/upload-artifact@v4
+        with:
+          name: twsearch.aarch64-unknown-linux-gnu
+          path: ./target/release/twsearch
+      - run: mv ./target/release/twsearch twsearch.${{ github.ref_name }}.aarch64-unknown-linux-gnu
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: twsearch.${{ github.ref_name }}.aarch64-unknown-linux-gnu

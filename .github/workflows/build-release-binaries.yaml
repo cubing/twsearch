@@ -15,7 +15,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
       - run: rustup target add x86_64-apple-darwin
       - run: cargo build --target x86_64-apple-darwin --release
-      - run: ./target/release/twsearch --help
+      - run: ./target/x86_64-apple-darwin/release/twsearch --help
       - uses: actions/upload-artifact@v4
         with:
           name: twsearch.x86_64-apple-darwin

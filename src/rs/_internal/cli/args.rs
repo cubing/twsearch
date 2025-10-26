@@ -426,9 +426,8 @@ pub enum ScrambleFinderCommand {
 #[derive(Args, Debug)]
 // TODO: combine with `ScrambleFinderFilterArgs`?
 pub struct ScrambleFinderSearchArgs {
-    /// Amount of scrambles
-    #[clap(long, default_value_t = false)]
-    pub print_link: bool,
+    #[clap(long, default_value = "true")]
+    pub print_link: Option<bool>,
 
     #[clap(long, default_value_t = false)]
     pub apply_filtering: bool,

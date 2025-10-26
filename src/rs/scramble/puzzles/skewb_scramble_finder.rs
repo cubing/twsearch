@@ -18,6 +18,7 @@ use crate::{
     },
     scramble::{
         collapse::collapse_adjacent_moves,
+        get_kpuzzle::GetKPuzzle,
         randomize::{ConstraintForPiece0, OrbitRandomizationConstraints},
         scramble_finder::{
             scramble_finder::ScrambleFinder,
@@ -175,5 +176,11 @@ impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
 
     fn collapse_inverted_alg(&mut self, alg: Alg) -> Alg {
         collapse_adjacent_moves(alg, 3, -1)
+    }
+}
+
+impl GetKPuzzle for SkewbScrambleFinder {
+    fn get_kpuzzle(&self) -> &KPuzzle {
+        &self.kpuzzle
     }
 }

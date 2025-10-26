@@ -79,7 +79,7 @@ pub fn cli_scramble_finder(args: &ScrambleFinderArgs) -> Result<(), CommandError
             );
             let scramble = scramble.unwrap();
             println!("{}", scramble);
-            if scramble_finder_solve_args.print_link {
+            if matches!(scramble_finder_solve_args.print_link, Some(true)) {
                 let link = experimental_twizzle_link(ExperimentalTwizzleLinkParameters {
                     setup: Some(scramble_setup_alg),
                     alg: Some(&scramble),

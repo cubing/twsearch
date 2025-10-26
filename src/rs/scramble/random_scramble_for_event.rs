@@ -309,6 +309,9 @@ pub fn experimental_scramble_finder_filter_and_or_search(
         Event::PyraminxSpeedsolving => solving_based_filter_and_search_with_no_scramble_options::<
             PyraminxScrambleFinder,
         >(options, false),
+        Event::SkewbSpeedsolving => solving_based_filter_and_search_with_no_scramble_options::<
+            SkewbScrambleFinder,
+        >(options, false),
         Event::Square1Speedsolving => solving_based_filter_and_search_with_no_scramble_options::<
             Square1ScrambleFinder,
         >(options, true),

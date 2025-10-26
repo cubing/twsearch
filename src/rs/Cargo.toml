@@ -35,3 +35,6 @@ path = "./_cli/main.rs"
 [lib]
 path = "./mod.rs"
 crate-type = ["cdylib", "rlib"]
+
+[package.metadata.binstall]
+pkg-url = "{ repo }/releases/download/v{ version }/{ name }.v{ version }.{ target }"

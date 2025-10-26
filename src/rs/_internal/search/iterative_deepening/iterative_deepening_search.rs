@@ -192,8 +192,8 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         }
     }
 
-    /// Note that search is pull-based. You must call `.next()` (or invoke
-    /// something that does) on the return value for the search to begine.
+    /// Note that search is pull-based. You must call `.next()` on the return
+    /// value (or invoke something that does) for the search to begin/continue.
     pub fn search<'a>(
         &'a mut self,
         search_pattern: &TPuzzle::Pattern,

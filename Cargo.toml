@@ -10,7 +10,7 @@ members = [
 default-members = ["src/rs"]
 
 [workspace.package]
-version = "0.8.2-dev"
+version = "0.8.2"
 license = "MPL-2.0"
 edition = "2021"
 repository = "https://github.com/cubing/twsearch"

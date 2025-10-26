@@ -331,19 +331,47 @@ pub fn experimental_scramble_finder_filter_and_or_search(
     }
 }
 
+fn solve_using_scramble_finder<T: SolvingBasedScrambleFinder<TPuzzle = KPuzzle> + GetKPuzzle>(
+    scramble_setup_alg: &Alg,
+    mut scramble_finder: T,
+    scramble_options: &T::ScrambleOptions,
+) -> Result<Option<Alg>, CommandError> {
+    let pattern = scramble_finder
+        .get_kpuzzle()
+        .default_pattern()
+        .apply_alg(scramble_setup_alg)
+        .map_err(|e| ArgumentError {
+            description: e.to_string(),
+        })?;
+    Ok(Some(
+        scramble_finder.solve_pattern(&pattern, scramble_options)?,
+    ))
+}
+
 pub fn solve_known_puzzle(
     puzzle: Puzzle,
-    scramble_setup_alg: &Alg, // Other input.
+    scramble_setup_alg: &Alg,
 ) -> Result<Option<Alg>, CommandError> {
-    let mut solver = match puzzle {
-        // Puzzle::Cube3x3x3 => todo!(),
+    let alg = match puzzle {
+        Puzzle::Cube3x3x3 => solve_using_scramble_finder(
+            scramble_setup_alg,
+            TwoPhase3x3x3ScrambleFinder::default(),
+            &TwoPhase3x3x3ScrambleOptions {
+                // BLD allows us to support arbitrary orientations
+                prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::ForBLD,
+            },
+        )?,
         // Puzzle::Cube2x2x2 => todo!(),
         // Puzzle::Cube4x4x4 => todo!(),
         // Puzzle::Cube5x5x5 => todo!(),
         // Puzzle::Cube6x6x6 => todo!(),
         // Puzzle::Cube7x7x7 => todo!(),
         // Puzzle::Clock => todo!(),
-        Puzzle::Megaminx => MegaminxSolver::default(),
+        Puzzle::Megaminx => solve_using_scramble_finder(
+            scramble_setup_alg,
+            MegaminxSolver::default(),
+            &NoScrambleOptions::default(),
+        )?,
         // Puzzle::Pyraminx => todo!(),
         // Puzzle::Skewb => todo!(),
         // Puzzle::Square1 => todo!(),
@@ -358,13 +386,5 @@ pub fn solve_known_puzzle(
             .into())
         }
     };
-
-    let pattern = solver
-        .get_kpuzzle()
-        .default_pattern()
-        .apply_alg(scramble_setup_alg)
-        .map_err(|e| ArgumentError {
-            description: e.to_string(),
-        })?;
-    Ok(Some(solver.solve_pattern(&pattern, &NoScrambleOptions {})?))
+    Ok(alg)
 }

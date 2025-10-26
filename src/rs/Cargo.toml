@@ -38,3 +38,4 @@ crate-type = ["cdylib", "rlib"]
 
 [package.metadata.binstall]
 pkg-url = "{ repo }/releases/download/v{ version }/{ name }.v{ version }.{ target }"
+pkg-fmt = "bin"

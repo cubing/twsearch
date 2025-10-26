@@ -150,6 +150,10 @@ pub struct SolveKnownPuzzleCommandArgs {
     /// Scramble setup alg
     // TODO: support pattern input via file.
     pub scramble_setup_alg: Alg,
+
+    /// By default, the command prints a URL for the solution to `stderr`. Pass this to disable the URL printing functionality.
+    #[clap(long, default_value = "true")]
+    pub print_link: Option<bool>,
 }
 
 fn puzzle_from_id(s: &str) -> Result<Puzzle, String> {

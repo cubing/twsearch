@@ -59,13 +59,13 @@ pub fn cli_scramble_finder(args: &ScrambleFinderArgs) -> Result<(), CommandError
     let event_id = filter_args.event_id.as_str();
     let event = Event::try_from(event_id)?;
 
-    let scramble_setup_alg = &filter_args.scramble_setup_alg;
+    let scramble_setup_alg = &filter_args.scramble_setup_alg.clone();
 
     let current_scramble_start_time = Instant::now();
     let scramble = experimental_scramble_finder_filter_and_or_search(
         event,
         &ExperimentalFilterAndOrSearchOptions {
-            scramble_setup_alg: filter_args.scramble_setup_alg.clone(),
+            scramble_setup_alg: &filter_args.scramble_setup_alg,
             apply_filtering,
             perform_search,
         },
@@ -100,12 +100,23 @@ pub fn cli_solve_known_puzzle(
 ) -> Result<(), CommandError> {
     let solution = solve_known_puzzle(
         search_command_args.puzzle,
-        search_command_args.scramble_setup_alg,
+        &search_command_args.scramble_setup_alg,
     )
     .unwrap()
     .unwrap();
 
     println!("{}", solution);
+    if matches!(search_command_args.print_link, Some(true)) {
+        eprintln!(
+            "{}",
+            experimental_twizzle_link(ExperimentalTwizzleLinkParameters {
+                setup: Some(&search_command_args.scramble_setup_alg),
+                alg: Some(&solution),
+                puzzle: Some(search_command_args.puzzle.id()),
+                ..Default::default()
+            })
+        );
+    }
 
     Ok(())
 }

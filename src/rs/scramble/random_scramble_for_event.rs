@@ -139,7 +139,7 @@ fn solving_based_filter_and_search<
             let pattern = scramble_finder
                 .get_kpuzzle()
                 .default_pattern()
-                .apply_alg(&options.scramble_setup_alg)
+                .apply_alg(options.scramble_setup_alg)
                 .expect("Invalid alg for puzzle.");
 
             if options.apply_filtering {
@@ -200,7 +200,7 @@ fn random_move_filter<
             let pattern = scramble_finder
                 .get_kpuzzle()
                 .default_pattern()
-                .apply_alg(&options.scramble_setup_alg)
+                .apply_alg(options.scramble_setup_alg)
                 .expect("Invalid alg for puzzle.");
 
             if options.apply_filtering {
@@ -239,9 +239,9 @@ fn random_move_filter_with_no_scramble_options<
 }
 
 // TODO: this is kind of gnarly, but it avoids some severe limitations with dynamic dispatch in Rust due to the associated type for `ScrambleFinder`.
-pub struct ExperimentalFilterAndOrSearchOptions {
+pub struct ExperimentalFilterAndOrSearchOptions<'a> {
     // pattern: &<ScrambleFinder::TPuzzle as SemiGroupActionPuzzle>::Pattern,
-    pub scramble_setup_alg: Alg,
+    pub scramble_setup_alg: &'a Alg,
     pub apply_filtering: bool,
     pub perform_search: bool,
 }
@@ -333,7 +333,7 @@ pub fn experimental_scramble_finder_filter_and_or_search(
 
 pub fn solve_known_puzzle(
     puzzle: Puzzle,
-    scramble_setup_alg: Alg, // Other input.
+    scramble_setup_alg: &Alg, // Other input.
 ) -> Result<Option<Alg>, CommandError> {
     let mut solver = match puzzle {
         // Puzzle::Cube3x3x3 => todo!(),
@@ -362,7 +362,7 @@ pub fn solve_known_puzzle(
     let pattern = solver
         .get_kpuzzle()
         .default_pattern()
-        .apply_alg(&scramble_setup_alg)
+        .apply_alg(scramble_setup_alg)
         .map_err(|e| ArgumentError {
             description: e.to_string(),
         })?;

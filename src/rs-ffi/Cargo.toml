@@ -11,7 +11,7 @@ default = []
 
 [dependencies]
 cbindgen = "0.27.0"
-twsearch = { path = "../rs", version = "0.8.4-dev" }
+twsearch = { path = "../rs", version = "0.8.5-dev" }
 
 [lib]
 path = "./lib.rs"

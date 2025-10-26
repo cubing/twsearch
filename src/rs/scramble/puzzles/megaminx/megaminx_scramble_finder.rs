@@ -1,6 +1,6 @@
 use cubing::alg::{parse_move, Alg, AlgNode, Move, Newline};
 use cubing::kpuzzle::{KPattern, KPuzzle};
-use rand::{thread_rng, Rng};
+use rand::{rng, Rng};
 
 use crate::_internal::search::move_count::MoveCount;
 use crate::scramble::puzzles::canonicalizing_solved_kpattern_depth_filter::{
@@ -74,7 +74,7 @@ impl RandomMoveScrambleFinder for MegaminxScrambleFinder {
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
     ) -> Alg {
-        let mut rng = thread_rng();
+        let mut rng = rng();
         let mut alg_nodes = Vec::<AlgNode>::new();
 
         let r_array: [&Move; 2] = [parse_move!("R++"), parse_move!("R--")];
@@ -85,7 +85,7 @@ impl RandomMoveScrambleFinder for MegaminxScrambleFinder {
             let mut random_choice: usize = 0;
             for _ in 0..RANDOM_MOVE_SCRAMBLE_NUM_MOVE_PAIRS_PER_LINE {
                 for arr in [&r_array, &d_array] {
-                    random_choice = rng.gen_range(0..=1);
+                    random_choice = rng.random_range(0..=1);
                     alg_nodes.push(arr[random_choice].clone().into());
                 }
             }

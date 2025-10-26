@@ -1,6 +1,6 @@
 use cubing::kpuzzle::{KPatternBuffer, KPuzzle, KPuzzleDefinition, KTransformation};
 use instant::Instant;
-use rand::seq::SliceRandom;
+use rand::{rng, seq::IndexedRandom};
 use twsearch::_internal::{
     canonical_fsm::search_generators::SearchGenerators,
     cli::{args::BenchmarkArgs, io::read_to_json},
@@ -27,7 +27,7 @@ pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
     )
     .expect("Could not get search move cache"); // TODO: automatic error conversion.
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rng();
     let random_move_list: Vec<&KTransformation> = (0..NUM_RANDOM_MOVES)
         .map(|_| {
             &search_generators

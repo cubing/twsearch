@@ -2,6 +2,7 @@ use cubing::{
     alg::{parse_alg, Alg, Move},
     kpuzzle::{KPattern, KPuzzle},
 };
+use rand::Rng;
 
 use crate::{
     _internal::{
@@ -155,9 +156,10 @@ impl ScrambleFinder for KilominxScrambleFinder {
 }
 
 impl SolvingBasedScrambleFinder for KilominxScrambleFinder {
-    fn generate_fair_unfiltered_random_pattern(
+    fn derive_fair_unfiltered_pattern<R: Rng>(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
+        mut rng: R,
     ) -> KPattern {
         let mut scramble_pattern = self.kpuzzle.default_pattern();
         randomize_orbit(
@@ -169,6 +171,7 @@ impl SolvingBasedScrambleFinder for KilominxScrambleFinder {
                 permutation: Some(OrbitPermutationConstraint::EvenParity),
                 ..Default::default()
             },
+            &mut rng,
         );
         scramble_pattern
     }

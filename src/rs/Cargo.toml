@@ -11,21 +11,25 @@ default = ["simd"]
 simd = ["cubing/simd"]
 
 [dependencies]
+ascii = "1.1.0"
 cityhasher = "0.1.0"
 clap = { version = "4.3.24", features = ["derive"] }
 clap_complete = "4.3.2"
 cubing = { version = "0.15.0-pre.1" }
 derive_more = "0.99.17"
 erased_set = "0.8.0"
+hex = "0.4.3"
 indicatif = "0.17.6"
 instant = { version = "0.1.12", features = ["wasm-bindgen"] }
 lazy_static = "1.4.0"
 multiset = "0.0.5"
 num-integer = "0.1.46"
-rand = "0.8.5"
+rand = "0.9.2"
+rand_core = "0.9.3"
 rouille = "3.6.2"
 serde = { version = "1.0.186", features = ["derive", "rc"] }
 serde_json = "1.0.105"
+sha2 = "0.10.9"
 thousands = "0.2.0"
 
 [[bin]]

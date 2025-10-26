@@ -13,6 +13,8 @@ use twsearch::_internal::{
     errors::CommandError,
 };
 
+use crate::commands::cli_derive::cli_derive;
+
 fn main() -> Result<(), CommandError> {
     let args = get_options();
 
@@ -34,6 +36,7 @@ fn main() -> Result<(), CommandError> {
         CliCommand::ScrambleFinder(scramble_finder_solve_args) => {
             cli_scramble_finder(&scramble_finder_solve_args)
         }
+        CliCommand::Derive(derive_args) => cli_derive(&derive_args),
         CliCommand::Benchmark(benchmark_args) => benchmark(&benchmark_args),
     }
 }

@@ -5,6 +5,7 @@ use cubing::{
     kpuzzle::{KPattern, KPuzzle},
     puzzles::cube3x3x3_kpuzzle,
 };
+use rand::Rng;
 
 use crate::{
     _internal::{
@@ -99,9 +100,10 @@ impl ScrambleFinder for TwoPhase3x3x3ScrambleFinder {
 }
 
 impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
-    fn generate_fair_unfiltered_random_pattern(
+    fn derive_fair_unfiltered_pattern<R: Rng>(
         &mut self,
         scramble_options: &TwoPhase3x3x3ScrambleOptions,
+        mut rng: R,
     ) -> KPattern {
         let kpuzzle = cube3x3x3_kpuzzle();
         let mut scramble_pattern = kpuzzle.default_pattern();
@@ -113,6 +115,7 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
                 orientation: Some(OrbitOrientationConstraint::SumToZero),
                 ..Default::default()
             },
+            &mut rng,
         );
         let each_orbit_parity = basic_parity(&edge_order);
         randomize_orbit(
@@ -127,6 +130,7 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
                 orientation: Some(OrbitOrientationConstraint::SumToZero),
                 ..Default::default()
             },
+            &mut rng,
         );
 
         match scramble_options.prefix_or_suffix_constraints {

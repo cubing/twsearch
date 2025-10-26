@@ -11,7 +11,7 @@ use std::process::exit;
 
 use crate::_internal::puzzle_traits::puzzle_traits::GroupActionPuzzle;
 use crate::_internal::search::prune_table_trait::Depth;
-use crate::scramble::Puzzle;
+use crate::scramble::{DerivationSalt, DerivationSeed, Puzzle};
 
 /// twsearch-cpp-wrapper — a native Rust wrapper for `twsearch` functionality.
 #[derive(Parser, Debug)]
@@ -61,6 +61,8 @@ pub enum CliCommand {
     Scramble(ScrambleArgs),
     /// Test the scramble finder implementations directly.
     ScrambleFinder(ScrambleFinderArgs),
+    /// Derive scrambles
+    Derive(DeriveArgs),
 
     /// Run an internal benchmark suite.
     Benchmark(BenchmarkArgs),
@@ -476,6 +478,23 @@ pub struct ScrambleAndTargetPatternOptionalArgs {
     /// Use the target pattern from the specified file instead of the default start pattern from the defintion.
     #[clap(long, help_heading = "Scramble input")]
     pub experimental_target_pattern: Option<PathBuf>,
+}
+
+#[derive(Args, Debug)]
+pub struct DeriveArgs {
+    /// Event ID (WCA or unofficial)
+    pub event_id: String,
+
+    /// Derivation seed. This is a 64-char hex value (representing a 32-byte
+    /// value), where:
+    ///
+    /// - the first byte is a fixed protocol sentinel value (0x67), and
+    /// - the second byte encodes the derivation level (which must be 0 for this
+    ///   subcommand).
+    pub root_derivation_seed: DerivationSeed,
+
+    #[clap(required = true, value_delimiter = '/')]
+    pub derivation_salts: Vec<DerivationSalt>,
 }
 
 #[derive(Args, Debug, Default)]

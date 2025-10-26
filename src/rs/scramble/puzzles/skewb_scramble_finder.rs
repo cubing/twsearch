@@ -2,6 +2,7 @@ use cubing::{
     alg::Alg,
     kpuzzle::{KPattern, KPuzzle},
 };
+use rand::Rng;
 
 use crate::{
     _internal::{
@@ -76,9 +77,10 @@ impl ScrambleFinder for SkewbScrambleFinder {
 }
 
 impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
-    fn generate_fair_unfiltered_random_pattern(
+    fn derive_fair_unfiltered_pattern<R: Rng>(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
+        mut rng: R,
     ) -> KPattern {
         let mut scramble_pattern = self.kpuzzle.default_pattern();
 
@@ -138,6 +140,7 @@ impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
                 piece_0: Some(ConstraintForPiece0::IgnoredOrientation),
                 ..Default::default()
             },
+            &mut rng,
         );
 
         randomize_orbit(
@@ -149,6 +152,7 @@ impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
                 piece_0: Some(ConstraintForPiece0::IgnoredOrientation),
                 ..Default::default()
             },
+            &mut rng,
         );
 
         randomize_orbit(
@@ -160,6 +164,7 @@ impl SolvingBasedScrambleFinder for SkewbScrambleFinder {
                 orientation: Some(OrbitOrientationConstraint::SumToZero),
                 ..Default::default()
             },
+            &mut rng,
         );
         scramble_pattern
     }

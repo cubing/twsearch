@@ -1,5 +1,6 @@
 use cubing::alg::Alg;
 use cubing::kpuzzle::{KPattern, KPuzzle};
+use rand::Rng;
 
 use crate::_internal::search::iterative_deepening::individual_search::IndividualSearchOptions;
 use crate::{
@@ -125,9 +126,10 @@ impl ScrambleFinder for MegaminxSolver {
 }
 
 impl SolvingBasedScrambleFinder for MegaminxSolver {
-    fn generate_fair_unfiltered_random_pattern(
+    fn derive_fair_unfiltered_pattern<R: Rng>(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
+        mut rng: R,
     ) -> KPattern {
         // TODO: centers?
         let mut pattern = megaminx_kpuzzle().default_pattern();
@@ -140,6 +142,7 @@ impl SolvingBasedScrambleFinder for MegaminxSolver {
                 permutation: Some(OrbitPermutationConstraint::EvenParity),
                 ..Default::default()
             },
+            &mut rng,
         );
         randomize_orbit(
             &mut pattern,
@@ -150,6 +153,7 @@ impl SolvingBasedScrambleFinder for MegaminxSolver {
                 permutation: Some(OrbitPermutationConstraint::EvenParity),
                 ..Default::default()
             },
+            &mut rng,
         );
         pattern
     }

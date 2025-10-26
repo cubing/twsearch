@@ -21,7 +21,7 @@ use crate::{
 };
 
 use cubing::{alg::Alg, kpuzzle::KPattern};
-use rand::{seq::SliceRandom, thread_rng};
+use rand::{seq::SliceRandom, Rng};
 
 use crate::{
     _internal::search::{mask_pattern::apply_mask, move_count::MoveCount},
@@ -256,12 +256,11 @@ impl ScrambleFinder for Square1ScrambleFinder {
 }
 
 impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
-    fn generate_fair_unfiltered_random_pattern(
+    fn derive_fair_unfiltered_pattern<R: Rng>(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
+        mut rng: R,
     ) -> KPattern {
-        let mut rng = thread_rng();
-
         loop {
             let mut scramble_pattern = square1_unbandaged_kpuzzle().default_pattern();
 
@@ -302,6 +301,7 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
                     piece_0: Some(ConstraintForPiece0::KeepSolved),
                     ..Default::default()
                 },
+                &mut rng,
             );
 
             // TODO: do this check without masking.

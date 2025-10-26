@@ -1,5 +1,6 @@
 use cubing::alg::Alg;
 use cubing::kpuzzle::{KPattern, KPuzzle};
+use rand::Rng;
 
 use crate::_internal::cli::args::VerbosityLevel;
 use crate::_internal::search::filter::filtering_decision::FilteringDecision;
@@ -84,9 +85,10 @@ impl ScrambleFinder for Cube4x4x4ScrambleFinder {
 }
 
 impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
-    fn generate_fair_unfiltered_random_pattern(
+    fn derive_fair_unfiltered_pattern<R: Rng>(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
+        mut rng: R,
     ) -> KPattern {
         let mut scramble_pattern = cube4x4x4_kpuzzle().default_pattern();
 
@@ -98,9 +100,22 @@ impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
                 orientation: Some(OrbitOrientationConstraint::SumToZero),
                 ..Default::default()
             },
+            &mut rng,
         );
-        randomize_orbit(&mut scramble_pattern, 1, "WINGS", Default::default());
-        randomize_orbit(&mut scramble_pattern, 2, "CENTERS", Default::default());
+        randomize_orbit(
+            &mut scramble_pattern,
+            1,
+            "WINGS",
+            Default::default(),
+            &mut rng,
+        );
+        randomize_orbit(
+            &mut scramble_pattern,
+            2,
+            "CENTERS",
+            Default::default(),
+            &mut rng,
+        );
 
         // TODO: implement a way to use pieces from the source pattern in `randomize_orbit`.
         apply_mask(&scramble_pattern, &cube4x4x4_kpuzzle().default_pattern()).unwrap()

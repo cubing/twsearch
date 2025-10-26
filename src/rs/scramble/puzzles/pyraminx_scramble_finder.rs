@@ -2,6 +2,7 @@ use cubing::{
     alg::Alg,
     kpuzzle::{KPattern, KPuzzle},
 };
+use rand::Rng;
 
 use crate::{
     _internal::{
@@ -98,9 +99,10 @@ impl ScrambleFinder for PyraminxScrambleFinder {
 }
 
 impl SolvingBasedScrambleFinder for PyraminxScrambleFinder {
-    fn generate_fair_unfiltered_random_pattern(
+    fn derive_fair_unfiltered_pattern<R: Rng>(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
+        mut rng: R,
     ) -> KPattern {
         let mut scramble_pattern = self.kpuzzle.default_pattern();
         randomize_orbit(
@@ -112,6 +114,7 @@ impl SolvingBasedScrambleFinder for PyraminxScrambleFinder {
                 orientation: Some(OrbitOrientationConstraint::SumToZero),
                 ..Default::default()
             },
+            &mut rng,
         );
         randomize_orbit(
             &mut scramble_pattern,
@@ -121,6 +124,7 @@ impl SolvingBasedScrambleFinder for PyraminxScrambleFinder {
                 permutation: Some(OrbitPermutationConstraint::IdentityPermutation),
                 ..Default::default()
             },
+            &mut rng,
         );
         randomize_orbit(
             &mut scramble_pattern,
@@ -130,6 +134,7 @@ impl SolvingBasedScrambleFinder for PyraminxScrambleFinder {
                 permutation: Some(OrbitPermutationConstraint::IdentityPermutation),
                 ..Default::default()
             },
+            &mut rng,
         );
         scramble_pattern
     }

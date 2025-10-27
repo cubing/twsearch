@@ -14,7 +14,7 @@ simd = ["cubing/simd"]
 cityhasher = "0.1.0"
 clap = { version = "4.3.24", features = ["derive"] }
 clap_complete = "4.3.2"
-cubing = { features = ["simd"], version = "0.15.0-pre.1" }
+cubing = { version = "0.15.0-pre.1" }
 derive_more = "0.99.17"
 erased_set = "0.8.0"
 indicatif = "0.17.6"

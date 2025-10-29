@@ -15,6 +15,7 @@ fn main() {
         "index.cpp",
         "parsemoves.cpp",
         "prunetable.cpp",
+        "pruneio.cpp",
         "puzdef.cpp",
         "readksolve.cpp",
         "rotations.cpp",

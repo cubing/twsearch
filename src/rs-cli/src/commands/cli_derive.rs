@@ -1,11 +1,9 @@
-use std::str::FromStr;
-
 use twsearch::{
     _internal::{
         cli::args::DeriveArgs,
         errors::{ArgumentError, CommandError},
     },
-    scramble::{derive_scramble_for_event_seeded, DerivationSalt, Event},
+    scramble::{derive_scramble_for_event_seeded, Event},
 };
 
 pub fn cli_derive(args: &DeriveArgs) -> Result<(), CommandError> {
@@ -16,18 +14,14 @@ pub fn cli_derive(args: &DeriveArgs) -> Result<(), CommandError> {
         .into());
     }
 
+    let event = Event::try_from(args.event_id.as_str())?;
     let derivation_seed = args
         .root_derivation_seed
-        .derive_hierarchy(&args.derivation_salts)
-        .derive(&DerivationSalt::from_str(args.event_id.as_str()).unwrap());
+        .derive_hierarchy(&args.derivation_salts);
 
     println!(
         "{}",
-        derive_scramble_for_event_seeded(
-            &derivation_seed,
-            Event::try_from(args.event_id.as_str()).unwrap()
-        )
-        .unwrap()
+        derive_scramble_for_event_seeded(&derivation_seed, event).unwrap()
     );
     Ok(())
 }

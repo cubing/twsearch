@@ -2,6 +2,7 @@ import { Alg } from "cubing/alg";
 import type { KPattern, KPuzzleDefinition } from "cubing/kpuzzle";
 import {
   default as init,
+  wasmDeriveScrambleForEvent as rawWasmDeriveScrambleForEvent,
   wasmFreeMemoryForAllScrambleFinders as rawWasmFreeMemoryForAllScrambleFinders,
   wasmRandomScrambleForEvent as rawWasmRandomScrambleForEvent,
   wasmTwsearch as rawWasmTwsearch,
@@ -22,10 +23,30 @@ async function initWrapper(): Promise<void> {
 }
 
 export async function wasmRandomScrambleForEvent(
-  eventId: string,
+  eventID: string,
 ): Promise<Alg> {
   await initWrapper();
-  return new Alg(rawWasmRandomScrambleForEvent(eventId));
+  return new Alg(rawWasmRandomScrambleForEvent(eventID));
+}
+
+export async function wasmDeriveScrambleForEvent(
+  hexDerivationSeed: string,
+  derivationSaltHierarchy: string[],
+  eventId: string,
+): Promise<Alg> {
+  for (const derivationSalt of derivationSaltHierarchy) {
+    if (derivationSalt.includes("/")) {
+      throw new Error("Derivation salts cannot contain slashes.");
+    }
+  }
+  await initWrapper();
+  return new Alg(
+    rawWasmDeriveScrambleForEvent(
+      hexDerivationSeed,
+      derivationSaltHierarchy.join("/"),
+      eventId,
+    ),
+  );
 }
 
 export async function wasmTwsearch(

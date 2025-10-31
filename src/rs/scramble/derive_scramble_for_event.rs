@@ -139,6 +139,9 @@ impl FromStr for DerivationSalt {
     type Err = String;
 
     fn from_str(salt: &str) -> Result<Self, Self::Err> {
+        if salt.is_empty() {
+            return Err("Empty salt values are not currently allowed.".to_owned());
+        }
         if salt.contains('/') {
             return Err("Salt values must not contain slashes.".to_owned());
         }
@@ -155,18 +158,26 @@ impl FromStr for DerivationSalt {
     }
 }
 
-const SCRAMBLE_DERIVATION_LEVEL: u8 = 6;
+impl From<Event> for DerivationSalt {
+    fn from(event: Event) -> Self {
+        Self::from_str(event.id()).unwrap()
+    }
+}
+
+const SCRAMBLE_DERIVATION_LEVEL: u8 = 5;
 pub fn derive_scramble_for_event_seeded(
     derivation_seed: &DerivationSeed,
     event: Event,
 ) -> Result<Alg, String> {
     if derivation_seed.level() != SCRAMBLE_DERIVATION_LEVEL {
         return Err(format!(
-            "Expected derivation level {}",
-            SCRAMBLE_DERIVATION_LEVEL
+            "Expected derivation level {}, saw: {}",
+            SCRAMBLE_DERIVATION_LEVEL,
+            derivation_seed.level()
         ));
     }
-    derive_scramble_for_event(event, *derivation_seed).map_err(|e| e.description)
+    let derivation_seed = derivation_seed.derive(&event.into());
+    derive_scramble_for_event(event, derivation_seed).map_err(|e| e.description)
 }
 
 pub struct DerivationSeedRng {

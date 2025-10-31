@@ -68,7 +68,7 @@ assert(wasmSize > 32 * KiB); // Make sure the file exists and has some contents.
  */
 assert(secondsToDownloadUsing3G(wasmSize) < 7);
 
-const version = await $`bun x -- @lgarron-bin/repo version describe`;
+const version = await $`bun x -- @lgarron-bin/repo version describe`.text();
 
 build({
   ...es2022Lib(),

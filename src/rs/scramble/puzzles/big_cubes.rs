@@ -5,7 +5,7 @@ use cubing::{
     kpuzzle::{KPattern, KPuzzle, OrientationWithMod},
 };
 use num_integer::Integer;
-use rand::{seq::SliceRandom, thread_rng, Rng};
+use rand::{rng, seq::IndexedRandom, Rng};
 
 use crate::{
     _internal::{
@@ -208,13 +208,13 @@ impl<TBigCube: BigCube> RandomMoveScrambleFinder for BigCubeScrambleFinder<TBigC
     ) -> Alg {
         // TODO: globally cache generators and `canonical_fsm` for each puzzle.
         let mut current_fsm_state = CANONICAL_FSM_START_STATE;
-        let mut rng = thread_rng();
+        let mut rng = rng();
         let mut nodes = Vec::<AlgNode>::default();
         for _ in 0..self.info.num_random_moves().0 {
             // TODO: we can forward-cache the valid move classes for each state instead of rejection sampling.
             loop {
                 let move_class_index =
-                    MoveClassIndex(rng.gen_range(0..self.generators.by_move_class.len()));
+                    MoveClassIndex(rng.random_range(0..self.generators.by_move_class.len()));
                 let next = self
                     .canonical_fsm
                     .next_state(current_fsm_state, move_class_index);

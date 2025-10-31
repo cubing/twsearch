@@ -1,6 +1,7 @@
 import assert from "node:assert";
 import { cube2x2x2 } from "cubing/puzzles";
 import {
+  wasmDeriveScrambleForEvent,
   wasmFreeMemoryForAllScrambleFinders,
   wasmRandomScrambleForEvent,
   wasmTwsearch,
@@ -42,4 +43,28 @@ for (const eventID of [
   assert(pattern.applyAlg(solution).isIdentical(kpuzzle.defaultPattern()));
 }
 
+{
+  console.log("----------------");
+  console.log("Deriving scrambles.");
+  const scramble1 = await wasmDeriveScrambleForEvent(
+    "67002dfc95e6d4288f418fbaa9150aa65b239fd5581f2d067d0293b9321a8b67",
+    ["222", "222-r4", "set1", "attempt3-extra2", "scramble1"],
+    "222",
+  );
+  const scramble2 = await wasmDeriveScrambleForEvent(
+    "67002dfc95e6d4288f418fbaa9150aa65b239fd5581f2d067d0293b9321a8b67",
+    ["222", "222-r4", "set1", "attempt3-extra2", "scramble1"],
+    "222",
+  );
+  const scramble3 = await wasmDeriveScrambleForEvent(
+    "6700abcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef",
+    ["222", "222-r4", "set1", "attempt3-extra2", "scramble1"],
+    "222",
+  );
+
+  assert(scramble1.isIdentical(scramble2));
+  assert(!scramble1.isIdentical(scramble3));
+}
+
+console.log("----------------");
 console.log(`Freed ${wasmFreeMemoryForAllScrambleFinders()} scramble finders.`);

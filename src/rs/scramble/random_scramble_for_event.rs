@@ -4,7 +4,7 @@ use crate::{
     _internal::errors::{ArgumentError, CommandError, SearchError},
     scramble::{
         puzzles::{baby_fto::BabyFTOScrambleFinder, megaminx::megaminx_solver::MegaminxSolver},
-        Puzzle,
+        DerivationSeed, Puzzle,
     },
 };
 
@@ -42,6 +42,15 @@ use super::{
 };
 
 pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
+    let derivation_seed = DerivationSeed::from_thread_rng();
+    eprintln!("Derivation seed from thread RNG: {}", derivation_seed);
+    derive_scramble_for_event(event, derivation_seed)
+}
+
+pub fn derive_scramble_for_event(
+    event: Event,
+    derivation_seed: DerivationSeed,
+) -> Result<Alg, PuzzleError> {
     let err = Err(PuzzleError {
         description: format!("Scrambles are not implement for this event yet: {}", event),
     });
@@ -50,12 +59,15 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
             &TwoPhase3x3x3ScrambleOptions {
                 prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::None,
             },
+            derivation_seed,
         )),
         Event::Cube2x2x2Speedsolving => Ok(generate_fair_scramble::<Cube2x2x2ScrambleFinder>(
             &NoScrambleOptions {},
+            derivation_seed,
         )),
         Event::Cube4x4x4Speedsolving => Ok(generate_fair_scramble::<Cube4x4x4ScrambleFinder>(
             &NoScrambleOptions {},
+            derivation_seed,
         )),
         Event::Cube5x5x5Speedsolving => Ok(generate_filtered_random_move_scramble::<
             Cube5x5x5ScrambleFinder,
@@ -76,16 +88,19 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
             &TwoPhase3x3x3ScrambleOptions {
                 prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::ForBLD,
             },
+            derivation_seed,
         )),
         Event::Cube3x3x3FewestMoves => Ok(generate_fair_scramble::<TwoPhase3x3x3ScrambleFinder>(
             &TwoPhase3x3x3ScrambleOptions {
                 prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::ForFMC,
             },
+            derivation_seed,
         )),
         Event::Cube3x3x3OneHanded => Ok(generate_fair_scramble::<TwoPhase3x3x3ScrambleFinder>(
             &TwoPhase3x3x3ScrambleOptions {
                 prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::None,
             },
+            derivation_seed,
         )),
         Event::ClockSpeedsolving => Ok(
             generate_filtered_random_move_scramble::<ClockScrambleFinder>(&NoScrambleOptions {}),
@@ -95,15 +110,19 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
         >(&NoScrambleOptions {})),
         Event::PyraminxSpeedsolving => Ok(generate_fair_scramble::<PyraminxScrambleFinder>(
             &NoScrambleOptions {},
+            derivation_seed,
         )),
         Event::SkewbSpeedsolving => Ok(generate_fair_scramble::<SkewbScrambleFinder>(
             &Default::default(),
+            derivation_seed,
         )),
         Event::Square1Speedsolving => Ok(generate_fair_scramble::<Square1ScrambleFinder>(
             &NoScrambleOptions {},
+            derivation_seed,
         )),
         Event::Cube4x4x4Blindfolded => Ok(generate_fair_scramble::<Cube4x4x4ScrambleFinder>(
             &NoScrambleOptions {},
+            derivation_seed,
         )),
         Event::Cube5x5x5Blindfolded => Ok(generate_filtered_random_move_scramble::<
             Cube5x5x5ScrambleFinder,
@@ -114,15 +133,18 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
             &TwoPhase3x3x3ScrambleOptions {
                 prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::ForBLD,
             },
+            derivation_seed,
         )), // TODO: represent multiple returned scrambles without affecting ergonomics for other events.
         Event::FTOSpeedsolving => err,
         Event::MasterTetraminxSpeedsolving => err,
         Event::KilominxSpeedsolving => Ok(generate_fair_scramble::<KilominxScrambleFinder>(
             &Default::default(),
+            derivation_seed,
         )),
         Event::RediCubeSpeedsolving => err,
         Event::BabyFTOSpeedsolving => Ok(generate_fair_scramble::<BabyFTOScrambleFinder>(
             &Default::default(),
+            derivation_seed,
         )),
     }
 }

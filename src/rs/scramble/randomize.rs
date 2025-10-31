@@ -1,5 +1,5 @@
 use cubing::kpuzzle::{KPattern, OrientationWithMod};
-use rand::{seq::SliceRandom, thread_rng, Rng};
+use rand::{seq::SliceRandom, Rng};
 
 use crate::scramble::parity::{set_parity, BasicParity};
 
@@ -52,17 +52,17 @@ pub(crate) struct OrbitRandomizationConstraints {
 /// full permutation. If you need distinguishable pieces, apply a mask to the result.
 ///
 /// Returns the piece order of the (subset of) randomized pieces.
-pub(crate) fn randomize_orbit(
+pub(crate) fn randomize_orbit<R: Rng>(
     pattern: &mut KPattern,
     orbit_idx: usize,
     orbit_name: &str,
     constraints: OrbitRandomizationConstraints,
+    mut rng: R,
 ) -> Vec<u8> {
     // TODO: make it easier to reuse `OrbitInfo` references from a higher level.
     let orbit_info = &pattern.kpuzzle().clone().data.ordered_orbit_info[orbit_idx];
     assert_eq!(orbit_info.name.0, orbit_name);
 
-    let mut rng = thread_rng();
     let piece_order_original = constraints
         .subset
         .unwrap_or_else(|| (0..orbit_info.num_pieces).collect());
@@ -140,7 +140,7 @@ pub(crate) fn randomize_orbit(
                     } else {
                         1
                     };
-                    rng.gen_range(
+                    rng.random_range(
                         0..(orbit_info.num_orientations + 1 - even_orientation_offset) / 2,
                     ) * 2
                         + even_orientation_offset
@@ -156,7 +156,7 @@ pub(crate) fn randomize_orbit(
                 }
             }
             (_, _, _, _) => {
-                let random_orientation = rng.gen_range(0..orbit_info.num_orientations);
+                let random_orientation = rng.random_range(0..orbit_info.num_orientations);
                 total_orientation = add_u8_mod(
                     total_orientation,
                     random_orientation,

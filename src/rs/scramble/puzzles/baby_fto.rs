@@ -4,6 +4,7 @@ use cubing::{
     alg::{Alg, QuantumMove},
     kpuzzle::{KPattern, KPuzzle},
 };
+use rand::Rng;
 
 use crate::{
     _internal::{
@@ -114,9 +115,10 @@ impl ScrambleFinder for BabyFTOScrambleFinder {
 }
 
 impl SolvingBasedScrambleFinder for BabyFTOScrambleFinder {
-    fn generate_fair_unfiltered_random_pattern(
+    fn derive_fair_unfiltered_pattern<R: Rng>(
         &mut self,
         _scramble_options: &NoScrambleOptions,
+        mut rng: R,
     ) -> KPattern {
         let mut scramble_pattern = self.kpuzzle.default_pattern();
 
@@ -131,6 +133,7 @@ impl SolvingBasedScrambleFinder for BabyFTOScrambleFinder {
                 ])),
                 ..Default::default()
             },
+            &mut rng,
         );
 
         for subset in [vec![0, 1, 2, 7], vec![3, 4, 5, 6]] {
@@ -144,6 +147,7 @@ impl SolvingBasedScrambleFinder for BabyFTOScrambleFinder {
                     subset: Some(subset),
                     ..Default::default()
                 },
+                &mut rng,
             );
         }
 

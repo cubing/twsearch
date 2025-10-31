@@ -19,3 +19,8 @@ pub use random_scramble_for_event::{
     experimental_scramble_finder_filter_and_or_search, random_scramble_for_event,
     solve_known_puzzle, ExperimentalFilterAndOrSearchOptions,
 };
+
+mod derive_scramble_for_event;
+pub use derive_scramble_for_event::{
+    derive_scramble_for_event_seeded, DerivationSalt, DerivationSeed, DERIVATION_SEED_BYTE_LENGTH,
+};

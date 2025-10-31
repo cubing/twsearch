@@ -5,6 +5,7 @@ use cubing::{
     kpuzzle::{KPattern, KPuzzle},
     puzzles::cube2x2x2_kpuzzle,
 };
+use rand::Rng;
 
 use crate::{
     _internal::{
@@ -109,9 +110,10 @@ impl ScrambleFinder for Cube2x2x2ScrambleFinder {
 }
 
 impl SolvingBasedScrambleFinder for Cube2x2x2ScrambleFinder {
-    fn generate_fair_unfiltered_random_pattern(
+    fn derive_fair_unfiltered_pattern<R: Rng>(
         &mut self,
         _scramble_options: &Self::ScrambleOptions,
+        mut rng: R,
     ) -> KPattern {
         let mut scramble_pattern = self.kpuzzle.default_pattern();
         randomize_orbit(
@@ -122,6 +124,7 @@ impl SolvingBasedScrambleFinder for Cube2x2x2ScrambleFinder {
                 orientation: Some(OrbitOrientationConstraint::SumToZero),
                 ..Default::default()
             },
+            &mut rng,
         );
         scramble_pattern
     }

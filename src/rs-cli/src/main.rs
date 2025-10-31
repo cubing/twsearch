@@ -13,7 +13,10 @@ use twsearch::_internal::{
     errors::CommandError,
 };
 
-fn main() -> Result<(), CommandError> {
+use crate::commands::cli_derive::cli_derive;
+
+#[tokio::main]
+async fn main() -> Result<(), CommandError> {
     let args = get_options();
 
     match args.command {
@@ -24,7 +27,7 @@ fn main() -> Result<(), CommandError> {
         CliCommand::SolveKnownPuzzle(search_command_args) => {
             cli_solve_known_puzzle(search_command_args)
         }
-        CliCommand::Serve(serve_command_args) => serve::serve::serve(serve_command_args),
+        CliCommand::Serve(serve_command_args) => serve::serve::serve(serve_command_args).await,
         // TODO: consolidate def-only arg implementations.
         CliCommand::SchreierSims(_schreier_sims_command_args) => todo!(),
         CliCommand::GodsAlgorithm(gods_algorithm_args) => cli_gods_algorithm(gods_algorithm_args),
@@ -34,6 +37,7 @@ fn main() -> Result<(), CommandError> {
         CliCommand::ScrambleFinder(scramble_finder_solve_args) => {
             cli_scramble_finder(&scramble_finder_solve_args)
         }
+        CliCommand::Derive(derive_args) => cli_derive(&derive_args),
         CliCommand::Benchmark(benchmark_args) => benchmark(&benchmark_args),
     }
 }

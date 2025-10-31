@@ -3,11 +3,12 @@ resolver = "2"
 members = [
   "src/cpp",
   "src/rs",
+  "src/rs-cli",
   "src/rs-ffi",
   "src/rs-wasm",
   "script/cargo-run-bin",
 ]
-default-members = ["src/rs"]
+default-members = ["src/rs-cli"]
 
 [workspace.package]
 version = "0.8.5-dev"

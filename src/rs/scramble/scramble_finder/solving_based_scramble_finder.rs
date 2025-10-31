@@ -1,9 +1,16 @@
-use std::sync::{LazyLock, Mutex, RwLock};
+use std::{
+    str::FromStr,
+    sync::{LazyLock, Mutex, RwLock},
+};
 
 use cubing::alg::Alg;
 use erased_set::ErasedSyncSet;
+use rand::Rng;
 
-use crate::_internal::{errors::SearchError, puzzle_traits::puzzle_traits::SemiGroupActionPuzzle};
+use crate::{
+    _internal::{errors::SearchError, puzzle_traits::puzzle_traits::SemiGroupActionPuzzle},
+    scramble::{derive_scramble_for_event::DerivationSeedRng, DerivationSalt, DerivationSeed},
+};
 
 use super::scramble_finder::ScrambleFinder;
 
@@ -11,9 +18,10 @@ use super::scramble_finder::ScrambleFinder;
 pub struct NoScrambleOptions {}
 
 pub trait SolvingBasedScrambleFinder: ScrambleFinder {
-    fn generate_fair_unfiltered_random_pattern(
+    fn derive_fair_unfiltered_pattern<R: Rng>(
         &mut self,
         scramble_options: &Self::ScrambleOptions,
+        rng: R,
     ) -> <<Self as ScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern;
 
     fn solve_pattern(
@@ -24,10 +32,22 @@ pub trait SolvingBasedScrambleFinder: ScrambleFinder {
 
     fn collapse_inverted_alg(&mut self, alg: Alg) -> Alg;
 
-    fn generate_fair_scramble(&mut self, scramble_options: &Self::ScrambleOptions) -> Alg {
+    fn generate_fair_scramble(
+        &mut self,
+        scramble_options: &Self::ScrambleOptions,
+        derivation_seed: DerivationSeed,
+    ) -> Alg {
+        let mut i = 1;
         loop {
-            let pattern = self.generate_fair_unfiltered_random_pattern(scramble_options);
+            let salt = format!("candidate{}", i);
+            let salt = salt.as_str();
+            dbg!(salt);
+            let mut rng = DerivationSeedRng::new(
+                derivation_seed.derive(&DerivationSalt::from_str(salt).unwrap()),
+            );
+            let pattern = self.derive_fair_unfiltered_pattern(scramble_options, &mut rng);
             if self.filter_pattern(&pattern, scramble_options).is_reject() {
+                i += 1;
                 continue;
             }
             // Since we got the pattern from the trait implementation, it should be safe to `.unwrap()` — else, the trait implementation is broken.
@@ -52,8 +72,12 @@ pub fn generate_fair_scramble<
     ScrambleFinder: SolvingBasedScrambleFinder + 'static + Sync + Send,
 >(
     scramble_options: &ScrambleFinder::ScrambleOptions,
+    derivation_seed: DerivationSeed,
 ) -> Alg {
-    SolvingBasedScrambleFinderCacher::generate_fair_scramble::<ScrambleFinder>(scramble_options)
+    SolvingBasedScrambleFinderCacher::generate_fair_scramble::<ScrambleFinder>(
+        scramble_options,
+        derivation_seed,
+    )
 }
 
 pub(crate) fn free_memory_for_all_solving_based_scramble_finders() -> usize {
@@ -74,9 +98,9 @@ impl SolvingBasedScrambleFinderCacher {
     pub fn map<
         ScrambleFinder: SolvingBasedScrambleFinder + 'static + Sync + Send,
         ReturnValue,
-        F: Fn(&mut ScrambleFinder) -> ReturnValue,
+        F: FnMut(&mut ScrambleFinder) -> ReturnValue,
     >(
-        f: F,
+        mut f: F,
     ) -> ReturnValue {
         // TODO: figure out how to share a concrete implementation instead of template code.
         // This is trickier than it sounds: https://stackoverflow.com/questions/40095383/how-to-return-a-reference-to-a-sub-value-of-a-value-that-is-under-a-mutex/40103840#40103840
@@ -105,9 +129,10 @@ impl SolvingBasedScrambleFinderCacher {
         ScrambleFinder: SolvingBasedScrambleFinder + 'static + Sync + Send,
     >(
         scramble_options: &ScrambleFinder::ScrambleOptions,
+        rng: DerivationSeed,
     ) -> Alg {
         SolvingBasedScrambleFinderCacher::map(|scramble_finder: &mut ScrambleFinder| {
-            scramble_finder.generate_fair_scramble(scramble_options)
+            scramble_finder.generate_fair_scramble(scramble_options, rng)
         })
     }
 

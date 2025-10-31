@@ -2,14 +2,12 @@ mod benchmark;
 mod rewrite;
 mod search;
 mod serialize;
-mod serve;
 mod wrapper_options;
 
 use std::process::exit;
 
 use benchmark::benchmark;
 use search::main_search;
-use serve::serve;
 use twsearch::_internal::cli::args::{get_options_cpp_wrapper, CliCommand};
 
 // TODO: Figure out how to move this out of the main entry file.
@@ -51,7 +49,10 @@ fn main() {
             println!("This command is not supported for the wrapper CLI");
             exit(1);
         }
-        CliCommand::Serve(serve_command_args) => serve(serve_command_args, true),
+        CliCommand::Serve(_serve_command_args) => {
+            println!("This command is not supported for the wrapper CLI");
+            exit(1);
+        }
         // TODO: consolidate def-only arg implementations.
         CliCommand::SchreierSims(schreier_sims_command_args) => {
             println!("Warning: `schreier-sims` does not support searching with identical pieces. If there are any identical pieces, they will be treated as distinguishable.");
@@ -86,6 +87,10 @@ fn main() {
             exit(1);
         }
         CliCommand::ScrambleFinder(_args) => {
+            println!("This command is not supported for the wrapper CLI");
+            exit(1);
+        }
+        CliCommand::Derive(_args) => {
             println!("This command is not supported for the wrapper CLI");
             exit(1);
         }

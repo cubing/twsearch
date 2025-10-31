@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use cubing::alg::Move;
 use cubing::kpuzzle::{KPattern, KPatternData, KPuzzle};
 use serde::{Deserialize, Serialize};
@@ -9,7 +11,10 @@ use twsearch::_internal::search::iterative_deepening::iterative_deepening_search
 use twsearch::scramble::scramble_finder::free_memory_for_all_scramble_finders;
 use wasm_bindgen::prelude::*;
 
-use twsearch::scramble::{random_scramble_for_event, Event};
+use twsearch::scramble::{
+    derive_scramble_for_event_seeded, random_scramble_for_event, DerivationSalt, DerivationSeed,
+    Event,
+};
 
 pub fn internal_init() {
     console_error_panic_hook::set_once();
@@ -102,6 +107,33 @@ pub fn wasmRandomScrambleForEvent(event_str: String) -> Result<String, String> {
     match random_scramble_for_event(event) {
         Ok(scramble) => Ok(scramble.to_string()),
         Err(e) => Err(e.description),
+    }
+}
+
+#[wasm_bindgen]
+#[allow(non_snake_case)]
+pub fn wasmDeriveScrambleForEvent(
+    hex_derivation_seed_str: String,
+    // Blank string or a slash-separated hierarchy
+    derivation_salt_hierarchy_str: String,
+    event_str: String,
+) -> Result<String, String> {
+    internal_init();
+
+    let derivation_seed = DerivationSeed::from_str(&hex_derivation_seed_str)?;
+    let derivation_seed = if derivation_salt_hierarchy_str.is_empty() {
+        derivation_seed
+    } else {
+        let hierarchy: Vec<DerivationSalt> = derivation_salt_hierarchy_str
+            .split("/")
+            .map(DerivationSalt::from_str)
+            .collect::<Result<Vec<DerivationSalt>, String>>()?;
+        derivation_seed.derive_hierarchy(&hierarchy)
+    };
+    let event = Event::try_from(event_str.as_str()).map_err(|e| e.description)?;
+    match derive_scramble_for_event_seeded(&derivation_seed, event) {
+        Ok(scramble) => Ok(scramble.to_string()),
+        Err(e) => Err(e),
     }
 }
 

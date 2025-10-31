@@ -2,7 +2,7 @@ use cubing::{
     alg::{parse_move, Alg, AlgNode, Move},
     kpuzzle::KPuzzle,
 };
-use rand::{thread_rng, Rng};
+use rand::{rng, Rng};
 
 use crate::{
     _internal::search::move_count::MoveCount,
@@ -102,7 +102,7 @@ impl RandomMoveScrambleFinder for ClockScrambleFinder {
         &mut self,
         _scramble_options: &NoScrambleOptions,
     ) -> Alg {
-        let mut rng = thread_rng();
+        let mut rng = rng();
         let mut alg_nodes = Vec::<AlgNode>::new();
 
         // TODO: implement `parse_quantum_move!(…)`?
@@ -129,7 +129,7 @@ impl RandomMoveScrambleFinder for ClockScrambleFinder {
             alg_nodes.push(
                 Move {
                     quantum: front_move,
-                    amount: rng.gen_range(-5..7),
+                    amount: rng.random_range(-5..7),
                 }
                 .into(),
             );
@@ -139,7 +139,7 @@ impl RandomMoveScrambleFinder for ClockScrambleFinder {
             alg_nodes.push(
                 Move {
                     quantum: back_move,
-                    amount: rng.gen_range(-5..7),
+                    amount: rng.random_range(-5..7),
                 }
                 .into(),
             );

@@ -1,7 +1,13 @@
+use axum::{
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    routing::{get, post},
+    Json, Router,
+};
 use cubing::kpuzzle::{KPattern, KPatternData, KPuzzle, KPuzzleDefinition};
 
-use rouille::{router, try_or_400, Request, Response};
 use serde::{Deserialize, Serialize};
+use tower_http::cors::CorsLayer;
 use twsearch::_internal::{
     canonical_fsm::search_generators::SearchGenerators,
     cli::args::{
@@ -39,27 +45,36 @@ struct KPatternSolve {
     search_args: Option<ServeClientArgs>,
 }
 
-fn solve_pattern(
-    request: &Request,
-    serve_command_args: &ServeCommandArgs,
+async fn solve_pattern(
+    Json(kpattern_solve): Json<KPatternSolve>,
+    serve_command_args: Arc<ServeCommandArgs>,
     request_counter: usize,
 ) -> Response {
     println!("[Search request #{}] Starting search…", request_counter);
     let start_time = instant::Instant::now();
-    let kpattern_solve: KPatternSolve = try_or_400!(rouille::input::json_input(request));
     // TODO: use the client args
     let args_for_individual_search = ServeArgsForIndividualSearch {
-        commandline_args: serve_command_args,
+        commandline_args: &serve_command_args,
         client_args: &kpattern_solve.search_args,
     };
     let kpuzzle = match KPuzzle::try_new(kpattern_solve.definition) {
         Ok(kpuzzle) => kpuzzle.clone(),
-        Err(e) => return Response::text(e.description).with_status_code(400),
+        Err(e) => {
+            return Response::builder()
+                .status(StatusCode::BAD_REQUEST)
+                .body(e.description.into())
+                .unwrap();
+        }
     };
     let target_pattern = match kpattern_solve.start_pattern {
         Some(kpattern_data) => match KPattern::try_from_data(&kpuzzle, &kpattern_data) {
             Ok(target_pattern) => target_pattern,
-            Err(e) => return Response::text(e.to_string()).with_status_code(400),
+            Err(e) => {
+                return Response::builder()
+                    .status(StatusCode::BAD_REQUEST)
+                    .body(e.to_string().into())
+                    .unwrap()
+            }
         },
         None => kpuzzle.default_pattern(),
     };
@@ -78,7 +93,12 @@ fn solve_pattern(
         move_subset.unwrap_or_else(|| kpuzzle.definition().moves.keys().cloned().collect());
     let search_pattern = match KPattern::try_from_data(&kpuzzle, &kpattern_solve.pattern) {
         Ok(search_pattern) => search_pattern,
-        Err(e) => return Response::text(e.to_string()).with_status_code(400),
+        Err(e) => {
+            return Response::builder()
+                .status(StatusCode::BAD_REQUEST)
+                .body(e.to_string().into())
+                .unwrap()
+        }
     };
     let search_generators = match SearchGenerators::try_new(
         &kpuzzle,
@@ -103,7 +123,12 @@ fn solve_pattern(
         },
     ) {
         Ok(search_generators) => search_generators,
-        Err(e) => return Response::text(e.description).with_status_code(400),
+        Err(e) => {
+            return Response::builder()
+                .status(StatusCode::BAD_REQUEST)
+                .body(e.description.into())
+                .unwrap()
+        }
     };
     let immutable_search_data = match ImmutableSearchData::try_from_common_options(
         kpuzzle.clone(),
@@ -115,7 +140,12 @@ fn solve_pattern(
         },
     ) {
         Ok(immutable_search_data) => immutable_search_data,
-        Err(e) => return Response::text(e.description).with_status_code(400),
+        Err(e) => {
+            return Response::builder()
+                .status(StatusCode::BAD_REQUEST)
+                .body(e.description.into())
+                .unwrap()
+        }
     };
     let mut search = <IterativeDeepeningSearch<KPuzzle>>::new_with_hash_prune_table(
         immutable_search_data,
@@ -156,21 +186,25 @@ fn solve_pattern(
             instant::Instant::now() - start_time,
             solution
         );
-        return Response::json(&ResponseAlg {
+        // TODO: send multiple solutions via socket
+        return Json(ResponseAlg {
             alg: solution.to_string(),
-        }); // TODO: send multiple solutions via socket
+        })
+        .into_response();
+
+        //  Response::json(&ResponseAlg {
+        //     alg: solution.to_string(),
+        // });
     }
     println!("[Search request #{}] No solution found.", request_counter);
-    Response::text("No solution found").with_status_code(404)
+    Response::builder()
+        .status(StatusCode::NOT_FOUND)
+        .body("No solution found".to_owned().into())
+        .unwrap()
 }
 
-fn cors(response: Response) -> Response {
-    response
-        .with_additional_header("Access-Control-Allow-Origin", "*")
-        .with_additional_header("Access-Control-Allow-Headers", "Content-Type")
-}
-
-pub fn serve(serve_command_args: ServeCommandArgs) -> Result<(), CommandError> {
+pub async fn serve(serve_command_args: ServeCommandArgs) -> Result<(), CommandError> {
+    let serve_command_args = Arc::new(serve_command_args);
     let search_request_counter = Arc::new(Mutex::<usize>::new(0));
     println!(
         "Starting `twsearch serve` on port 2023.
@@ -180,30 +214,30 @@ Use with one of the following:
 - http://localhost:3333/experiments.cubing.net/cubing.js/twsearch/text-ui.html
 "
     );
-    rouille::start_server("0.0.0.0:2023", move |request: &Request| {
-        println!("Request: {} {}", request.method(), request.url()); // TODO: debug flag
-                                                                     // TODO: more fine-grained CORS?
-        if request.method() == "OPTIONS" {
-            // pre-flight!
-            return cors(Response::empty_204());
-        }
-        cors(router!(request,
-            (GET) (/) => {
-                Response::text("twsearch-cpp-wrapper (https://github.com/cubing/twsearch)")
-            },
-            (POST) (/v0/solve/pattern) => { // TODO: `…/pattern`?
-                let mut counter = search_request_counter
-                    .lock()
-                    .expect("Internal error: could not access request counter");
-                *counter += 1;
-                let local_counter = *counter;
-                drop(counter);
-                solve_pattern(request, &serve_command_args, local_counter)
-            },
-            _ => {
-                println!("Invalid request: {} {}", request.method(), request.url());
-                rouille::Response::empty_404()
-            }
-        ))
-    });
+
+    let app = Router::new()
+        .route(
+            "/",
+            get(|| async { "twsearch (https://github.com/cubing/twsearch)" }),
+        )
+        .route(
+            "/v0/solve/pattern",
+            post({
+                move |body| {
+                    let mut counter = search_request_counter
+                        .lock()
+                        .expect("Internal error: could not access request counter");
+                    *counter += 1;
+                    let local_counter = *counter;
+                    drop(counter);
+                    solve_pattern(body, serve_command_args.clone(), local_counter)
+                }
+            }),
+        )
+        .layer(CorsLayer::permissive());
+
+    let listener = tokio::net::TcpListener::bind("0.0.0.0:2023").await.unwrap();
+    axum::serve(listener, app).await.unwrap();
+
+    todo!()
 }

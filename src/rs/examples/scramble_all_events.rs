@@ -1,4 +1,4 @@
-// Run using: cargo run --release --example scramble_all_events
+// Run using: cargo run --package twsearch --release --example scramble_all_events
 
 use instant::Instant;
 use twsearch::scramble::{random_scramble_for_event, Event};

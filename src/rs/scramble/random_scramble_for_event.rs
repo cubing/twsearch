@@ -250,13 +250,6 @@ pub fn experimental_scramble_finder_filter_and_or_search(
     event: Event,
     options: &ExperimentalFilterAndOrSearchOptions,
 ) -> Result<Option<Alg>, CommandError> {
-    let err = Err(PuzzleError {
-        description: format!(
-            "Scramble finder testing is not implemented for this event yet: {}",
-            event
-        ),
-    }
-    .into());
     match event {
         Event::Cube3x3x3Speedsolving => {
             solving_based_filter_and_search::<TwoPhase3x3x3ScrambleFinder>(
@@ -273,6 +266,24 @@ pub fn experimental_scramble_finder_filter_and_or_search(
                 false,
                 &TwoPhase3x3x3ScrambleOptions {
                     prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::ForBLD,
+                },
+            )
+        }
+        Event::Cube3x3x3FewestMoves => {
+            solving_based_filter_and_search::<TwoPhase3x3x3ScrambleFinder>(
+                options,
+                false,
+                &TwoPhase3x3x3ScrambleOptions {
+                    prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::ForFMC,
+                },
+            )
+        }
+        Event::Cube3x3x3OneHanded => {
+            solving_based_filter_and_search::<TwoPhase3x3x3ScrambleFinder>(
+                options,
+                false,
+                &TwoPhase3x3x3ScrambleOptions {
+                    prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::None,
                 },
             )
         }
@@ -330,7 +341,16 @@ pub fn experimental_scramble_finder_filter_and_or_search(
         Event::BabyFTOSpeedsolving => solving_based_filter_and_search_with_no_scramble_options::<
             BabyFTOScrambleFinder,
         >(options, false),
-        _ => err,
+        Event::Cube3x3x3MultiBlind
+        | Event::FTOSpeedsolving
+        | Event::MasterTetraminxSpeedsolving
+        | Event::RediCubeSpeedsolving => Err(PuzzleError {
+            description: format!(
+                "Scramble finder testing is not implemented for this event yet: {}",
+                event
+            ),
+        }
+        .into()),
     }
 }
 
@@ -351,42 +371,38 @@ fn solve_using_scramble_finder<T: SolvingBasedScrambleFinder<TPuzzle = KPuzzle> 
     ))
 }
 
+fn solve_using_scramble_finder_with_no_scramble_options<
+    T: SolvingBasedScrambleFinder<TPuzzle = KPuzzle, ScrambleOptions = NoScrambleOptions> + GetKPuzzle,
+>(
+    scramble_setup_alg: &Alg,
+    scramble_finder: T,
+) -> Result<Option<Alg>, CommandError> {
+    solve_using_scramble_finder(scramble_setup_alg, scramble_finder, &NoScrambleOptions {})
+}
 pub fn solve_known_puzzle(
     puzzle: Puzzle,
     scramble_setup_alg: &Alg,
 ) -> Result<Option<Alg>, CommandError> {
     let alg = match puzzle {
-        Puzzle::Cube3x3x3 => solve_using_scramble_finder(
-            scramble_setup_alg,
-            TwoPhase3x3x3ScrambleFinder::default(),
-            &TwoPhase3x3x3ScrambleOptions {
-                // BLD allows us to support arbitrary orientations
-                prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::ForBLD,
-            },
-        )?,
-        // Puzzle::Cube2x2x2 => todo!(),
-        // Puzzle::Cube4x4x4 => todo!(),
-        // Puzzle::Cube5x5x5 => todo!(),
-        // Puzzle::Cube6x6x6 => todo!(),
-        // Puzzle::Cube7x7x7 => todo!(),
-        // Puzzle::Clock => todo!(),
-        Puzzle::Megaminx => solve_using_scramble_finder(
+        Puzzle::Megaminx => solve_using_scramble_finder_with_no_scramble_options(
             scramble_setup_alg,
             MegaminxSolver::default(),
-            &NoScrambleOptions::default(),
         )?,
-        // Puzzle::Pyraminx => todo!(),
-        // Puzzle::Skewb => todo!(),
-        // Puzzle::Square1 => todo!(),
-        // Puzzle::FTO => todo!(),
-        // Puzzle::MasterTetraminx => todo!(),
-        // Puzzle::Kilominx => todo!(),
-        // Puzzle::RediCube => todo!(),
-        _ => {
-            return Err(PuzzleError {
-                description: "This operation is not implemented for the puzzle yet.".to_owned(),
-            }
-            .into())
+        puzzle => {
+            let event = if puzzle == Puzzle::Cube3x3x3 {
+                // Use the solver that can handle all orientations.
+                Event::Cube3x3x3Blindfolded
+            } else {
+                puzzle.speedsolving_event()
+            };
+            experimental_scramble_finder_filter_and_or_search(
+                event,
+                &ExperimentalFilterAndOrSearchOptions {
+                    scramble_setup_alg,
+                    apply_filtering: false,
+                    perform_search: true,
+                },
+            )?
         }
     };
     Ok(alg)

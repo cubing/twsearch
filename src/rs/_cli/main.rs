@@ -15,7 +15,8 @@ use twsearch::_internal::{
 
 use crate::commands::cli_derive::cli_derive;
 
-fn main() -> Result<(), CommandError> {
+#[tokio::main]
+async fn main() -> Result<(), CommandError> {
     let args = get_options();
 
     match args.command {
@@ -26,7 +27,7 @@ fn main() -> Result<(), CommandError> {
         CliCommand::SolveKnownPuzzle(search_command_args) => {
             cli_solve_known_puzzle(search_command_args)
         }
-        CliCommand::Serve(serve_command_args) => serve::serve::serve(serve_command_args),
+        CliCommand::Serve(serve_command_args) => serve::serve::serve(serve_command_args).await,
         // TODO: consolidate def-only arg implementations.
         CliCommand::SchreierSims(_schreier_sims_command_args) => todo!(),
         CliCommand::GodsAlgorithm(gods_algorithm_args) => cli_gods_algorithm(gods_algorithm_args),

@@ -1,6 +1,6 @@
 /* Run using:
 
-    cargo run --release --example kociemba_multiphase
+    cargo run --package twsearch --release --example kociemba_multiphase
 
 */
 use cubing::{

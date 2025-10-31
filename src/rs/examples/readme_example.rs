@@ -1,3 +1,5 @@
+// Run using: cargo run --package twsearch --release --example readme_example
+
 use twsearch::scramble::{random_scramble_for_event, Event};
 
 pub fn main() {

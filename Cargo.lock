@@ -233,7 +233,7 @@ checksum = "d71b6127be86fdcfddb610f7182ac57211d4b18a3e9c82eb2d17662f2227ad6a"
 
 [[package]]
 name = "cargo-bin"
-version = "0.9.0"
+version = "0.9.1-dev"
 dependencies = [
  "cargo-run-bin",
 ]
@@ -1981,7 +1981,7 @@ dependencies = [
 
 [[package]]
 name = "twsearch"
-version = "0.9.0"
+version = "0.9.1-dev"
 dependencies = [
  "ascii",
  "cityhasher",
@@ -2006,7 +2006,7 @@ dependencies = [
 
 [[package]]
 name = "twsearch-cli"
-version = "0.9.0"
+version = "0.9.1-dev"
 dependencies = [
  "axum",
  "cubing",
@@ -2020,7 +2020,7 @@ dependencies = [
 
 [[package]]
 name = "twsearch-cpp-wrapper"
-version = "0.9.0"
+version = "0.9.1-dev"
 dependencies = [
  "clap",
  "clap_complete",
@@ -2040,7 +2040,7 @@ dependencies = [
 
 [[package]]
 name = "twsearch-ffi"
-version = "0.9.0"
+version = "0.9.1-dev"
 dependencies = [
  "cbindgen",
  "cubing",
@@ -2051,7 +2051,7 @@ dependencies = [
 
 [[package]]
 name = "twsearch-wasm"
-version = "0.9.0"
+version = "0.9.1-dev"
 dependencies = [
  "console_error_panic_hook",
  "cubing",

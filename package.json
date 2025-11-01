@@ -10,18 +10,18 @@
     "bun": ">=1.2.7"
   },
   "dependencies": {
-    "cubing": "v0.54.4"
+    "cubing": "v0.59.0"
   },
   "devDependencies": {
-    "@biomejs/biome": "^v1.9.4",
-    "@cubing/dev-config": "v0.3.5",
-    "@lgarron-bin/repo": "^0.9.6",
-    "@types/bun": "^1.1.0",
-    "@types/node": "^22.3.0",
-    "barely-a-dev-server": "^0.7.1",
+    "@biomejs/biome": "^v2.3.2",
+    "@cubing/dev-config": "v0.3.6",
+    "@lgarron-bin/repo": "^0.13.8",
+    "@types/bun": "^1.3.1",
+    "@types/node": "^24.9.2",
+    "barely-a-dev-server": "^0.8.1",
     "cmd-ts-too": "^0.15.3",
     "compare-versions": "^6.1.1",
-    "esbuild": "^0.25.0",
-    "printable-shell-command": "v1.0.0"
+    "esbuild": "^0.25.11",
+    "printable-shell-command": "v2.1.2"
   }
 }

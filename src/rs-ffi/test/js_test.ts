@@ -1,9 +1,7 @@
 #!/usr/bin/env bun
 
-// @ts-ignore
-import { FFIType, dlopen, suffix } from "bun:ffi";
+import { dlopen, FFIType, suffix } from "bun:ffi";
 
-// @ts-ignore
 const {
   symbols: {
     ffi_random_scramble_for_event,

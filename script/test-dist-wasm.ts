@@ -5,6 +5,7 @@ import {
   wasmFreeMemoryForAllScrambleFinders,
   wasmRandomScrambleForEvent,
   wasmTwsearch,
+  // @ts-expect-error TS0716: Untyped
 } from "../dist/wasm/index";
 
 for (const eventID of [

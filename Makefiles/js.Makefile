@@ -12,7 +12,7 @@ lint-js-biome: setup-js
 
 .PHONY: lint-js-tsc
 lint-js-tsc: setup-js build-rust-wasm
-	bun x tsc --project .
+	bun x tsc --noEmit --project .
 
 .PHONY: format-js
 format-js: setup-js

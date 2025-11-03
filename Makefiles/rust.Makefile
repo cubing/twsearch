@@ -49,7 +49,8 @@ test-rust-build-version: build-rust
 
 .PHONY: test-rust-lib
 test-rust-lib: setup-rust test-cargo-doc
-	cargo test
+	# `twsearch-ffi` is covered by `make test-rust-ffi-rs`
+	cargo test --workspace --exclude twsearch-ffi
 
 .PHONY: test-cargo-doc
 test-cargo-doc: setup-rust

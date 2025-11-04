@@ -1749,7 +1749,6 @@ name = "twsearch-rb"
 version = "0.9.1-dev"
 dependencies = [
  "magnus",
- "rb-sys",
  "twsearch",
 ]
 

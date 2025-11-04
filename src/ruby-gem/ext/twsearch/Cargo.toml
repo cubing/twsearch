@@ -10,6 +10,3 @@ crate-type = ["cdylib"]
 [dependencies]
 magnus = { version = "0.8.2" }
 twsearch = { version = "0.9.1-dev" }
-rb-sys = { version = "0.9.117", default-features = false, features = [
-    "stable-api-compiled-fallback",
-] }

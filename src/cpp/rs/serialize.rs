@@ -1,5 +1,3 @@
-extern crate cubing;
-
 use std::fmt::Display;
 
 use cubing::{

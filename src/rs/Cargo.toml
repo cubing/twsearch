@@ -33,4 +33,4 @@ rand_core = "0.9.3"
 
 [lib]
 path = "./mod.rs"
-crate-type = ["cdylib", "rlib"]
+crate-type = ["rlib"]

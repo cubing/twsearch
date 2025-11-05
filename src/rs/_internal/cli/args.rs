@@ -578,3 +578,17 @@ pub struct ServeClientArgs {
     pub quantum_metric: Option<bool>, // TODO: enum
     pub generator_moves: Option<Vec<Move>>,
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::_internal::cli::args::{TwsearchArgs, TwsearchCppWrapperArgs};
+
+    // https://docs.rs/clap/latest/clap/_derive/_tutorial/index.html#testing
+    #[test]
+    fn test_clap_args() {
+        use clap::CommandFactory;
+
+        TwsearchArgs::command().debug_assert();
+        TwsearchCppWrapperArgs::command().debug_assert();
+    }
+}

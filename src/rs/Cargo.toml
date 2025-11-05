@@ -15,7 +15,7 @@ ascii = "1.1.0"
 cityhasher = "0.1.0"
 clap = { version = "4.5.51", features = ["derive"] }
 clap_complete = "4.5.60"
-cubing = { version = "0.15.0-pre.1" }
+cubing = { workspace = true }
 derive_more = { version = "2.0.1", features = ["from"] }
 erased_set = "0.8.0"
 hex = "0.4.3"

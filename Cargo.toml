@@ -9,9 +9,6 @@ members = [
   "script/cargo-run-bin",
 ]
 default-members = ["src/rs-cli"]
-exclude = [
-  "src/ruby-gem/ext/twsearch_rb"
-]
 
 [workspace.package]
 version = "0.9.1-dev"
@@ -28,7 +25,3 @@ cargo-binstall = { version = "1.4.4" }
 wasm-pack = { version = "0.13.1" }
 # Doesn't work: https://github.com/bnjbvr/cargo-machete/issues/62
 # cargo-machete = { version = "0.9.1" }
-
-# This is only needed for the Ruby package, but it has to be specified at the workspace root. So it's here.
-[patch.crates-io]
-twsearch = { path = "./src/rs" }

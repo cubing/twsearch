@@ -9,12 +9,10 @@ require "rubocop/rake_task"
 
 RuboCop::RakeTask.new
 
-require "rake/extensiontask"
+require "rb_sys/extensiontask"
 
 desc "Build extension"
 task build: :compile
-
-require "rb_sys/extensiontask"
 
 GEMSPEC = Gem::Specification.load("twsearch.gemspec")
 

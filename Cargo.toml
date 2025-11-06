@@ -6,10 +6,12 @@ members = [
   "src/rs-cli",
   "src/rs-ffi",
   "src/rs-wasm",
-  "src/ruby-gem/ext/twsearch",
   "script/cargo-run-bin",
 ]
 default-members = ["src/rs-cli"]
+exclude = [
+  "src/ruby-gem/ext/twsearch_rb"
+]
 
 [workspace.package]
 version = "0.9.1-dev"

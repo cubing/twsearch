@@ -3,10 +3,11 @@ name = "twsearch-rb"
 version.workspace = true
 license.workspace = true
 edition.workspace = true
+publish = false
 
 [lib]
 crate-type = ["cdylib"]
 
 [dependencies]
 magnus = { version = "0.8.2" }
-twsearch = { version = "0.9.1-dev" }
+twsearch = { path = "../../../rs" }

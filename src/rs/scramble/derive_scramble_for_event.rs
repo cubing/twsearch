@@ -71,11 +71,11 @@ impl DerivationSeed {
 
     pub fn derive_hierarchy<'a>(
         &self,
-        unpadded_salts: impl IntoIterator<Item = &'a DerivationSalt>,
+        derivation_salts: impl IntoIterator<Item = &'a DerivationSalt>,
     ) -> Self {
         let mut derivation_seed = *self;
-        for unpadded_salt in unpadded_salts {
-            derivation_seed = derivation_seed.derive(unpadded_salt);
+        for derivation_salt in derivation_salts {
+            derivation_seed = derivation_seed.derive(derivation_salt);
         }
 
         derivation_seed

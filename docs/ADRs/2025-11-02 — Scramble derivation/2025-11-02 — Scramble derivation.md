@@ -29,19 +29,13 @@ Derivation will involve *32-byte derivation seed* values as follows:
 | 1          | Derivation level (`0x00` for root seeds) |
 | 2-31       | Pseudo-random bytes                      |
 
-Fo example, a typical root derivation seed for a competition would look like this:
+Fo example, a typical root derivation seed would look like this:
 
 ```
 67002dfc95e6d4288f418fbaa9150aa65b239fd5581f2d067d0293b9321a8b67
 ```
 
-This seed should be generated using a commitment scheme that:
-
-- ensures confidentiality until the scrambles are used
-- creates a way to verify the root seed against the scrambles used at the competition, and
-- allows a way for the WST to perform a multi-party ceremony to recover the seed in case of an emergency.
-
-TODO: specify this commitment scheme either here or in a separate spec.
+The protocol to generate a competition derivation seed is described in a section below.
 
 Given a `parentDerivationSeed` and an ASCII byte string `salt` (of any length), a new derivation seed is calculated per the following algorithm, expressed as a JavaScript reference implementation:
 
@@ -72,13 +66,15 @@ A given scramble pattern is derived from a *salt hierarchy*, which is a list of 
 
 | Level | Meaning | Example values |
 |-|-|-|
-| 1 | Event ID | `"333"`, `"333mbf"`, `"unofficial"-guildford` |
-| 2 | Round ID (per [WCIF](https://github.com/thewca/wcif/blob/d8321491178738a62c62f7c4f9ae7cd3f340a4ea/specification.md#round)) | `"r1"` |
-| 3 | Group ID (part of a [WCIF activity code](https://github.com/thewca/wcif/blob/d8321491178738a62c62f7c4f9ae7cd3f340a4ea/specification.md#ActivityCode)) | `"g1"` |
-| 4 | Attempt ID (generalization of part of a [WCIF activity code](https://github.com/thewca/wcif/blob/d8321491178738a62c62f7c4f9ae7cd3f340a4ea/specification.md#ActivityCode)) | `"a1"`, `"e1"`, `"a1e1"` |
-| 5 | Subevent ID | `"333"` |
-| 6 | Subevent scramble salt | `"sub1"`, `"sub1e1"` |
-| 7 | Scramble filtering candidate salt | `"candidate1"` |
+| 1 | Auditor salt (see below) | `"X]LJ…@VKK"` (64 ASCII characters) |
+| 2 | Purpose | `"scrambles"` |
+| 3 | Event ID | `"333"`, `"333mbf"`, `"unofficial-guildford"` |
+| 4 | Round ID (per [WCIF](https://github.com/thewca/wcif/blob/d8321491178738a62c62f7c4f9ae7cd3f340a4ea/specification.md#round)) | `"r1"`, `"r2"` |
+| 5 | Group ID (part of a [WCIF activity code](https://github.com/thewca/wcif/blob/d8321491178738a62c62f7c4f9ae7cd3f340a4ea/specification.md#ActivityCode)) | `"g1"`, `"g2"` |
+| 6 | Attempt ID (generalization of part of a [WCIF activity code](https://github.com/thewca/wcif/blob/d8321491178738a62c62f7c4f9ae7cd3f340a4ea/specification.md#ActivityCode)) | `"a1"`, `"e1"`, `"a1e1"` |
+| 7 | Subevent ID | `"333"`, `"222"` |
+| 8 | Subevent scramble salt | `"sub1"`, `"sub1e1"` |
+| 9 | Scramble filtering candidate salt | `"candidate1"`, `"candidate2"` |
 
 Note that:
 
@@ -86,13 +82,13 @@ Note that:
 - It is possible to generate an extra scramble for a round that is not bound to a specific scramble (`"e1"`), or one that is for a specific attempt (`"a1e1"`). The former allows scrambles to be generated and used (e.g. printed) the same way as they were with TNoodle, and the latter allows for innovation in scramble accountability and recording mechanisms.
   - It is additionally possible to generate extra scrambles within an attempt, e.g. `"sub1e1"` for 3×3×3 Multi-Blind.
 - Some events (`"333"`, `"pyram"`, `"unofficial-tetraminx"`) produce a single scramble alg. We will call these "monoscramble" events. (Note that such a scramble will usually correspond to a single "physical" puzzle, but this may not be true in general.) For these events:
-  - The subevent ID (level 5) is the event ID.
-  - The subevent scramble salt (level 6) is always `"sub1"`. (Note that **this level of the hierarchy is not skipped**, even though it is a fixed salt for the event. To makes it easier to implement correctly.)
+  - The subevent ID (level 7) is the event ID.
+  - The subevent scramble salt (level 8) is always `"sub1"`. (Note that **this level of the hierarchy is not skipped**, even though it is a fixed salt for the event. To makes it easier to implement correctly.)
 - Some events (3×3×3 Multi-Blind, Mini Guildford) contains multiple subevents or multiple subscrambles for a single subevent. In this case:
   - The scramble specification for each such event must define a list of subevents.
-  - Each subevent ID (level 5) must be a monoscramble event ID.
+  - Each subevent ID (level 7) must be a monoscramble event ID.
   - The number of scrambles for each subevent may be fixed for the event or unspecified. (If it is unspecified, it is expected to be part of the result.)
-- To generate a scramble, level-7 "candidate seeds" are derived from the level-6 seed until one is accepted:
+- To generate a scramble, level-9 "candidate seeds" are derived from the level-8 seed until one is accepted:
   - For `candidateSalt` taking the values `candidate1`, `candidate2`, `candidate3` etc. :
     - Compute `candidateSeed = derive(level6Seed, candidateSalt)`.
     - Use `candidateSeed` to deterministically generate a pseudorandom scramble pattern (e.g. 3×3×3) or scramble alg (e.g. Megaminx). This will be an event-tailored implementation whose selection is based on fairness and practicality (TODO: link to a separate specification for this).
@@ -101,7 +97,7 @@ Note that:
 
 See [`scrambleSpecifications.ts`](scrambleSpecifications.ts) for a rough example of how event information can be stored in an implementation-agnostic way.
 
-The seed at a given hierarchy path is calculated by performing a derivation with the salt in each hierarchy recursively. For example, here is a calculation of the derivation seed for the first round of 3×3×3 Speed Solving using the example root seed from above:
+The seed at a given hierarchy path is calculated by performing a derivation with each salt in the hierarchy recursively. For example, here is a calculation of the derivation seed for the first round of 3×3×3 Speed Solving using the example root seed from above:
 
 ```ts
 import { derive } from "./derive";
@@ -117,11 +113,43 @@ export async function deriveHierarchy(parentDerivationSeed, saltHierarchy) {
 
 const competitonSeed = fromHex("67002dfc95e6d4288f418fbaa9150aa65b239fd5581f2d067d0293b9321a8b67");
 const roundSeed = await deriveHierarchy(competitonSeed, [
+  fromASCII("EBNLEND@MABLNHJFHGFEKFIA@DNBKABHHNANA@FD@KKADJAKNFCIJNJGIFCBLEDF"), // server salt
   fromASCII("333"),
   fromASCII("r1"),
 ]);
 
-expectEqual(roundSeed, fromHex("6702bc57ffee6c047ce99e9d8daf63eebee585eb385403d9ce17ccb864abf84b"));
+expectEqual(roundSeed, fromHex("6703dd25e0e1e2c67d90cc6e769e5bdff40e75f856ff2070ca710521be6d5591"));
 ```
 
 Associated file: [`deriveHierarchy.ts`](./deriveHierarchy.ts)
+
+### Generating a competition derivation seed
+
+This is a protocol between two parties:
+
+- The generator (e.g. code on a Delegate's computer)
+- The auditor (e.g. a WCA server)
+
+Steps:
+
+1. The generator generates a random `rootSeed` by concatenating `0x6700` and 30 (cryptographically strong) random bytes.
+2. The generator computes `generatorCommitmentHash = derive(rootCompetitionSeed, "commitment")`
+3. The generator sends `generatorCommitmentHash` to the auditor.
+4. The auditor generates a 64-byte `auditorSalt`, where each byte is independently generated by concatenating `0x0100`  with a (cryptographically strong) random [nybble](https://en.wikipedia.org/wiki/Nibble#History).
+  - Note: this allows the auditor salt to be safely treated as an ASCII string that contains only printable characters (which is easily serialized), while keeping 256 bits of entropy.
+5. The auditor sends `auditorSalt` to the generator.
+6. The generator computes `competitionSeed = derive(rootSeed, auditorSalt)`
+
+This has the following properties:
+
+- Assuming the auditor generates a random auditor salt:
+  - The generator has [negligible advantage](https://en.wikipedia.org/wiki/Advantage_(cryptography)) in predicting or influencing the competition seed, and therefore any of the generated scrambles.
+- Assuming the generator has generated `rootSeed` properly:
+  - Given just the `generatorCommitmentHash`, even an adversarial auditor cannot get information about the `rootSeed`, `competitionSeed`, or any seeds/scrambles derived from these.
+    - The only control the auditor has is to try to give a "bad" `auditorSalt` value instead of a random one. But this is not enough to influence or predict scrambles with any advantage.
+- The generator can reveal the `rootSeed` in the future, at which point the auditor can verify that the computation of the commitment hash and the competition seed (and any derived scrambles) are correct.
+
+Note that it would be possible for the auditor to compute `auditorSalt` earlier and send a commitment of it to the generator before receiving `generatorCommitmentHash`, but this is not necessary for
+the threat model.
+
+TODO: document `rootSeed` storage obfuscation.

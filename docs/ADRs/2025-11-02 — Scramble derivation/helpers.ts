@@ -7,8 +7,10 @@ export const concat = (a: ArrayBuffer, b: ArrayBuffer) =>
 
 export const fromHex = (s: string) => Uint8Array.fromHex(s).buffer;
 export const fromASCII = (s: string) => new TextEncoder().encode(s).buffer;
-export const toHex = (a: ArrayBuffer) => new Uint8Array(a).toHex();
-export const toASCII = (a: ArrayBuffer) => new TextDecoder().decode(a);
+export const toHex = (a: ArrayBuffer | Uint8Array<ArrayBuffer>) =>
+  new Uint8Array(a).toHex();
+export const toASCII = (a: ArrayBuffer | Uint8Array<ArrayBuffer>) =>
+  new TextDecoder().decode(a);
 
 export function validate(
   parentDerivationSeed: ArrayBuffer /* 32 bytes */,

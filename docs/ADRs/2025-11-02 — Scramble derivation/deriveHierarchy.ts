@@ -19,16 +19,22 @@ export async function deriveHierarchy(
   return derivationSeed;
 }
 
-const competitonSeed = fromHex(
+const rootSeed = fromHex(
   "67002dfc95e6d4288f418fbaa9150aa65b239fd5581f2d067d0293b9321a8b67",
 );
-const roundSeed = await deriveHierarchy(competitonSeed, [
-  fromASCII("EBNLEND@MABLNHJFHGFEKFIA@DNBKABHHNANA@FD@KKADJAKNFCIJNJGIFCBLEDF"), // server salt
+const roundSeed = await deriveHierarchy(rootSeed, [
+  fromASCII("EBNLEND@MABLNHJFHGFEKFIA@DNBKABHHNANA@FD@KKADJAKNFCIJNJGIFCBLEDF"), // auditor salt
+  fromASCII("scrambles"),
   fromASCII("333"),
   fromASCII("r1"),
+  fromASCII("g1"),
+  fromASCII("a1"),
+  fromASCII("333"),
+  fromASCII("sub1"),
+  fromASCII("candidate1"),
 ]);
 
 expectEqual(
   roundSeed,
-  fromHex("6703928015c02a7a58cf784afb2b44264a1d19a7eb505eb1e868ca0d6f511671"),
+  fromHex("67090777cf85e259361b2035023b0fbbbb478cc38c5d174926509ee82ec0431b"),
 );

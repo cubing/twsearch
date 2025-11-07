@@ -20,13 +20,13 @@ class MockAuditor {
   }
 }
 
-const uncommittedSeed = new Uint8Array(32);
-globalThis.crypto.getRandomValues(uncommittedSeed);
-uncommittedSeed[0] = 0x67;
-uncommittedSeed[1] = 0x00;
+const uncommittedRootSeed = new Uint8Array(32);
+globalThis.crypto.getRandomValues(uncommittedRootSeed);
+uncommittedRootSeed[0] = 0x67;
+uncommittedRootSeed[1] = 0x00;
 
 const commitmentHash = await derive(
-  uncommittedSeed.buffer,
+  uncommittedRootSeed.buffer,
   fromASCII("commitment"),
 );
 console.log("Commitment hash: ", toHex(commitmentHash));
@@ -34,7 +34,7 @@ console.log("Commitment hash: ", toHex(commitmentHash));
 const server = new MockAuditor(commitmentHash);
 console.log("Server salt: ", server.serverSaltASCII);
 const competitionSeed = await derive(
-  uncommittedSeed.buffer,
+  uncommittedRootSeed.buffer,
   fromASCII(server.serverSaltASCII),
 );
 

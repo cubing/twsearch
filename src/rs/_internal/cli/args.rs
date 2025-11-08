@@ -482,9 +482,6 @@ pub struct ScrambleAndTargetPatternOptionalArgs {
 
 #[derive(Args, Debug)]
 pub struct DeriveArgs {
-    /// Event ID (WCA or unofficial)
-    pub event_id: String,
-
     /// Derivation seed. This is a 64-char hex value (representing a 32-byte
     /// value), where:
     ///
@@ -493,6 +490,14 @@ pub struct DeriveArgs {
     ///   subcommand).
     pub root_derivation_seed: DerivationSeed,
 
+    /// Example value:
+    ///
+    /// EBNLEND@MABLNHJFHGFEKFIA@DNBKABHHNANA@FD@KKADJAKNFCIJNJGIFCBLEDF/scrambles/333/r1/g1/a1/333/sub1/candidate1
+    ///
+    /// If present:
+    ///
+    /// - Level 3 must be a valid event ID.
+    /// - Level 7 must be a valid monoscramble event ID.
     #[clap(required = true, value_delimiter = '/')]
     pub derivation_salts: Vec<DerivationSalt>,
 }

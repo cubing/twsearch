@@ -14,14 +14,17 @@ pub fn cli_derive(args: &DeriveArgs) -> Result<(), CommandError> {
         .into());
     }
 
-    let event = Event::try_from(args.event_id.as_str())?;
+    // Validate the event arg.
+    let _ = Event::try_from(args.derivation_salts[2].unhashed_salt().as_str())?;
+
+    let subevent = Event::try_from(args.derivation_salts[6].unhashed_salt().as_str())?;
     let derivation_seed = args
         .root_derivation_seed
         .derive_hierarchy(&args.derivation_salts);
 
     println!(
         "{}",
-        derive_scramble_for_event_seeded(&derivation_seed, event).unwrap()
+        derive_scramble_for_event_seeded(&derivation_seed, subevent).unwrap()
     );
     Ok(())
 }

@@ -48,13 +48,16 @@ pub fn random_scramble_for_event(event: Event) -> Result<Alg, PuzzleError> {
 }
 
 pub fn derive_scramble_for_event(
-    event: Event,
+    subevent: Event,
     derivation_seed: DerivationSeed,
 ) -> Result<Alg, PuzzleError> {
     let err = Err(PuzzleError {
-        description: format!("Scrambles are not implement for this event yet: {}", event),
+        description: format!(
+            "Scrambles are not implement for this event yet: {}",
+            subevent
+        ),
     });
-    match event {
+    match subevent {
         Event::Cube3x3x3Speedsolving => Ok(generate_fair_scramble::<TwoPhase3x3x3ScrambleFinder>(
             &TwoPhase3x3x3ScrambleOptions {
                 prefix_or_suffix_constraints: TwoPhase3x3x3PrefixOrSuffixConstraints::None,

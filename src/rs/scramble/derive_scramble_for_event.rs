@@ -129,7 +129,6 @@ impl Display for DerivationSeed {
 
 #[derive(Debug, Clone)]
 pub struct DerivationSalt {
-    #[allow(dead_code)] // For debug purposes.
     unhashed_salt: AsciiString,
     hashed_salt: [u8; DERIVATION_SEED_BYTE_LENGTH],
 }
@@ -164,10 +163,16 @@ impl From<Event> for DerivationSalt {
     }
 }
 
-const SCRAMBLE_DERIVATION_LEVEL: u8 = 5;
+impl DerivationSalt {
+    pub fn unhashed_salt(&self) -> &AsciiString {
+        &self.unhashed_salt
+    }
+}
+
+const SCRAMBLE_DERIVATION_LEVEL: u8 = 8;
 pub fn derive_scramble_for_event_seeded(
     derivation_seed: &DerivationSeed,
-    event: Event,
+    subevent: Event,
 ) -> Result<Alg, String> {
     if derivation_seed.level() != SCRAMBLE_DERIVATION_LEVEL {
         return Err(format!(
@@ -176,8 +181,8 @@ pub fn derive_scramble_for_event_seeded(
             derivation_seed.level()
         ));
     }
-    let derivation_seed = derivation_seed.derive(&event.into());
-    derive_scramble_for_event(event, derivation_seed).map_err(|e| e.description)
+    let derivation_seed = derivation_seed.derive(&subevent.into());
+    derive_scramble_for_event(subevent, derivation_seed).map_err(|e| e.description)
 }
 
 pub struct DerivationSeedRng {

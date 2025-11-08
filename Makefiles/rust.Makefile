@@ -28,8 +28,7 @@ publish-rust: publish-rust-main publish-rust-ffi
 
 .PHONY: publish-rust-main
 publish-rust-main:
-	@echo "WARNING: will fall back to \`--no-verify\` due to https://github.com/rust-lang/cargo/issues/8407" # TODO
-	cargo publish --package twsearch || cargo publish --package twsearch --no-verify
+	cargo publish --workspace
 
 .PHONY: setup-rust
 setup-rust: setup-gitignore-dirs

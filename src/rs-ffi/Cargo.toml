@@ -10,7 +10,7 @@ repository = "https://github.com/cubing/twsearch"
 default = []
 
 [dependencies]
-twsearch = { path = "../rs", version = "0.9.1-dev" }
+twsearch = { path = "../rs", version = "=0.10.0" }
 
 [lib]
 path = "./lib.rs"

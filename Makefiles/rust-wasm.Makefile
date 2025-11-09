@@ -10,4 +10,4 @@ build-rust-wasm: setup-rust setup-js
 
 .PHONY: test-rust-wasm
 test-rust-wasm: setup-rust setup-js build-rust-wasm
-	bun run "script/test-dist-wasm.ts"
+	bun test "script/test-dist-wasm.wasm.test.ts"

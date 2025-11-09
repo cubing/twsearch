@@ -116,22 +116,21 @@ pub fn wasmDeriveScrambleForEvent(
     hex_derivation_seed_str: String,
     // Blank string or a slash-separated hierarchy
     derivation_salt_hierarchy_str: String,
-    event_str: String,
+    subevent_str: String,
 ) -> Result<String, String> {
     internal_init();
 
     let derivation_seed = DerivationSeed::from_str(&hex_derivation_seed_str)?;
-    let derivation_seed = if derivation_salt_hierarchy_str.is_empty() {
-        derivation_seed
+    let hierarchy = if derivation_salt_hierarchy_str.is_empty() {
+        vec![]
     } else {
-        let hierarchy: Vec<DerivationSalt> = derivation_salt_hierarchy_str
+        derivation_salt_hierarchy_str
             .split("/")
             .map(DerivationSalt::from_str)
-            .collect::<Result<Vec<DerivationSalt>, String>>()?;
-        derivation_seed.derive_hierarchy(&hierarchy)
+            .collect::<Result<Vec<DerivationSalt>, String>>()?
     };
-    let event = Event::try_from(event_str.as_str()).map_err(|e| e.description)?;
-    match derive_scramble_for_event_seeded(&derivation_seed, event) {
+    let subevent = Event::try_from(subevent_str.as_str()).map_err(|e| e.description)?;
+    match derive_scramble_for_event_seeded(&derivation_seed, &hierarchy, subevent) {
         Ok(scramble) => Ok(scramble.to_string()),
         Err(e) => Err(e),
     }

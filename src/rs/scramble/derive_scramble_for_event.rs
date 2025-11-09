@@ -172,8 +172,17 @@ impl DerivationSalt {
 const SCRAMBLE_DERIVATION_LEVEL: u8 = 8;
 pub fn derive_scramble_for_event_seeded(
     derivation_seed: &DerivationSeed,
+    derivation_salt_hierarchy: &Vec<DerivationSalt>,
     subevent: Event,
 ) -> Result<Alg, String> {
+    if derivation_salt_hierarchy.len() > 1
+        && derivation_salt_hierarchy[derivation_salt_hierarchy.len() - 2].unhashed_salt()
+            != subevent.id()
+    {
+        return Err("Mismatched subevent in second-to-last level of hierarchy".to_owned());
+    }
+    let derivation_seed = derivation_seed.derive_hierarchy(derivation_salt_hierarchy);
+
     if derivation_seed.level() != SCRAMBLE_DERIVATION_LEVEL {
         return Err(format!(
             "Expected derivation level {}, saw: {}",

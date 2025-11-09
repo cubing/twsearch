@@ -28,7 +28,7 @@ publish-rust: publish-rust-main publish-rust-ffi
 
 .PHONY: publish-rust-main
 publish-rust-main:
-	cargo publish --workspace
+	cargo publish --workspace --exclude twsearch-cpp-wrapper --exclude cargo-bin
 
 .PHONY: setup-rust
 setup-rust: setup-gitignore-dirs

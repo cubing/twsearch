@@ -9,7 +9,7 @@ description = "Twizzle Search WASM — WASM build of twsearch for `cubing.js`"
 default = []
 
 [dependencies]
-twsearch = { path = "../rs", version = "=0.10.0" }
+twsearch = { path = "../rs", version = "0.10.1-dev" }
 getrandom = { version = "0.3.4", features = [
   # We don't use `getrandom` directly (only through `rand`), but we need to
   # declare it as a dependency in order to enable the `wasm_js` feature that we

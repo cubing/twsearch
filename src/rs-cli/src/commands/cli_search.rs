@@ -1,4 +1,4 @@
-use twsearch::{
+use twips::{
     _internal::{cli::args::SearchCommandArgs, errors::CommandError},
     experimental_lib_api::{search, KPuzzleSource, PatternSource},
 };

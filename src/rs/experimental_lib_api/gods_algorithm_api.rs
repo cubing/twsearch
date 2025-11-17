@@ -14,7 +14,7 @@ use super::common::PatternSource;
 ///
 /// ```
 /// use cubing::{alg::{parse_alg, parse_move}, puzzles::cube2x2x2_kpuzzle};
-/// use twsearch::{
+/// use twips::{
 ///     _internal::cli::args::{GeneratorArgs, GodsAlgorithmOptionalArgs}, // TODO
 ///     experimental_lib_api::gods_algorithm,
 /// };

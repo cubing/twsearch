@@ -1,15 +1,15 @@
 [package]
-name = "twsearch-wasm"
+name = "twips-wasm"
 version.workspace = true
 license.workspace = true
 edition.workspace = true
-description = "Twizzle Search WASM — WASM build of twsearch for `cubing.js`"
+description = "Twizzle Pattern Searcher WASM — WASM build of twips for `cubing.js`"
 
 [features]
 default = []
 
 [dependencies]
-twsearch = { path = "../rs", version = "0.9.1-dev" }
+twips = { path = "../rs", version = "0.9.1-dev" }
 getrandom = { version = "0.3.4", features = [
   # We don't use `getrandom` directly (only through `rand`), but we need to
   # declare it as a dependency in order to enable the `wasm_js` feature that we

@@ -2,7 +2,7 @@
 /// integer type that cannot be treated as another type without explicit
 /// conversion.
 ///
-/// This macro is public for development experimentation. Do not use outside `twsearch`.
+/// This macro is public for development experimentation. Do not use outside `twips`.
 #[macro_export]
 // TODO: use inside the project without exporting.
 macro_rules! whole_number_newtype {
@@ -69,7 +69,7 @@ macro_rules! whole_number_newtype {
 /// integer type that cannot be treated as another type without explicit
 /// conversion.
 ///
-/// This macro is public for development experimentation. Do not use outside `twsearch`.
+/// This macro is public for development experimentation. Do not use outside `twips`.
 #[macro_export]
 // TODO: use inside the project without exporting.
 macro_rules! whole_number_newtype_generic {

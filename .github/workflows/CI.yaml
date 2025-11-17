@@ -3,37 +3,6 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-  cpp:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/workflows/install-pinned-toolchains
-      - run: make build/bin/twsearch
-      - run: ./build/bin/twsearch -g samples/main/2x2x2.tws
-      - run: make test-cpp-cli
-
-  cpp-windows:
-    runs-on: windows-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/workflows/install-pinned-toolchains
-      - run: make build/bin/twsearch
-      - uses: actions/upload-artifact@v4
-        with:
-          name: twsearch-cpp-windows
-          path: build/bin/
-
-  cpp-wrapper-cli:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/workflows/install-pinned-toolchains
-      - uses: Swatinem/rust-cache@v2
-      - run: make test-twsearch-cpp-wrapper-cli
-
   rust:
     runs-on: ubuntu-latest
 

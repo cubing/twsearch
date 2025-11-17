@@ -8,7 +8,7 @@ use commands::{
     cli_search::cli_search,
     gods_algorithm::cli_gods_algorithm,
 };
-use twsearch::_internal::{
+use twips::_internal::{
     cli::args::{get_options, CliCommand},
     errors::CommandError,
 };

@@ -1,5 +1,5 @@
 use cubing::kpuzzle::{KPuzzle, KPuzzleDefinition};
-use twsearch::_internal::{
+use twips::_internal::{
     canonical_fsm::{canonical_fsm::CanonicalFSM, search_generators::SearchGenerators},
     cli::{args::CanonicalAlgsArgs, io::read_to_json},
     errors::CommandError,

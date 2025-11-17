@@ -4,7 +4,7 @@ import assert from "node:assert";
 import { mkdir, rm } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { es2022Lib } from "@cubing/dev-config/esbuild/es2022";
-import { $, file } from "bun";
+import { file } from "bun";
 import { build } from "esbuild";
 
 const distDir = fileURLToPath(new URL("../dist/wasm/", import.meta.url));
@@ -22,7 +22,7 @@ function secondsToDownloadUsing3G(numBytes: number): number {
 }
 
 const wasmSize = file(
-  new URL("../.temp/rust-wasm/twsearch_wasm_bg.wasm", import.meta.url),
+  new URL("../.temp/rust-wasm/twips_wasm_bg.wasm", import.meta.url),
 ).size;
 console.log(
   `WASM size: ${Math.round(wasmSize / KiB)} KiB (${
@@ -55,7 +55,7 @@ assert(wasmSize > 32 * KiB); // Make sure the file exists and has some contents.
  * - Worker instantiation (with half a dozen fallbacks to try first)
  * - Worker initialization and dynamic import of the base64 source.
  *
- * Since we are consolidating all scramble code in `twsearch`, this is a
+ * Since we are consolidating all scramble code in `twips`, this is a
  * bottleneck for *all* scrambles, even the trivial ones (e.g. Megaminx and
  * Clock).
  *
@@ -68,7 +68,9 @@ assert(wasmSize > 32 * KiB); // Make sure the file exists and has some contents.
  */
 assert(secondsToDownloadUsing3G(wasmSize) < 7);
 
-const version = await $`bun x -- @lgarron-bin/repo version describe`.text();
+// TODO: bump `@lgarron-bin/repo` with a fix (`latest(tags()::@-)'` instead of `latest(tags())::@-`).
+// const version = await $`bun x -- @lgarron-bin/repo version describe`.text();
+const version = "v0.9.99";
 
 build({
   ...es2022Lib(),
@@ -78,6 +80,6 @@ build({
   loader: { ".wasm": "binary" },
   outdir: distDir,
   banner: {
-    js: `// Generated from \`twsearch\` ${version}`,
+    js: `// Generated from \`twips\` ${version}`,
   },
 });

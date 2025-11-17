@@ -5,13 +5,13 @@ use std::{
     ptr::null_mut,
 };
 
-use twsearch::scramble::{
+use twips::scramble::{
     random_scramble_for_event, scramble_finder::free_memory_for_all_scramble_finders, Event,
 };
 
 /// # Safety
 ///
-/// This function can panic. If you are working in pure Rust, use [`twsearch::scramble::random_scramble_for_event`] instead.
+/// This function can panic. If you are working in pure Rust, use [`twips::scramble::random_scramble_for_event`] instead.
 ///
 /// Returns:
 /// - A null pointer for *any* error.

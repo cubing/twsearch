@@ -1,7 +1,7 @@
-// Run using: cargo run --package twsearch --release --example 2x2x2_three_phase
+// Run using: cargo run --package twips --release --example 2x2x2_three_phase
 
 use cubing::{alg::parse_move, kpuzzle::kpattern_from_json_file, puzzles::cube2x2x2_kpuzzle};
-use twsearch::{
+use twips::{
     _internal::{cli::args::VerbosityLevel, search::search_logger::SearchLogger},
     experimental_lib_api::{KPuzzleSimpleMaskPhase, MultiPhaseSearch, MultiPhaseSearchOptions},
     scramble::{random_scramble_for_event, Event},

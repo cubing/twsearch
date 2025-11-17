@@ -5,8 +5,8 @@ import {
   wasmDeriveScrambleForEvent as rawWasmDeriveScrambleForEvent,
   wasmFreeMemoryForAllScrambleFinders as rawWasmFreeMemoryForAllScrambleFinders,
   wasmRandomScrambleForEvent as rawWasmRandomScrambleForEvent,
-  wasmTwsearch as rawWasmTwsearch,
-} from "../../.temp/rust-wasm/twsearch_wasm";
+  wasmTwips as rawWasmTwips,
+} from "../../.temp/rust-wasm/twips_wasm";
 
 let cachedInitWrapper: Promise<void> | undefined;
 async function initWrapper(): Promise<void> {
@@ -16,7 +16,7 @@ async function initWrapper(): Promise<void> {
     // - https://github.com/evanw/esbuild/issues/795
     // - https://github.com/evanw/esbuild/issues/2866
     const wasmUint8Array = (
-      await import("../../.temp/rust-wasm/twsearch_wasm_bg.wasm")
+      await import("../../.temp/rust-wasm/twips_wasm_bg.wasm")
     ).default as unknown as Uint8Array;
     await init({ module_or_path: wasmUint8Array.buffer as BufferSource });
   })());
@@ -49,14 +49,14 @@ export async function wasmDeriveScrambleForEvent(
   );
 }
 
-export async function wasmTwsearch(
+export async function wasmTwips(
   kpuzzleDefinition: KPuzzleDefinition,
   searchPattern: KPattern,
   options?: { minDepth?: number },
 ): Promise<Alg> {
   await initWrapper();
   return new Alg(
-    rawWasmTwsearch(
+    rawWasmTwips(
       JSON.stringify(kpuzzleDefinition),
       // biome-ignore lint/complexity/useLiteralKeys: JSON field access
       JSON.stringify(searchPattern.toJSON()["patternData"]),

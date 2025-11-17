@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include "../../../target/release/libtwsearch_ffi.h"
+#include "../../../target/release/libtwips_ffi.h"
 
 
 void generate_scramble(const char* event_id) {

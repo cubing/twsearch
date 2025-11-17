@@ -3,15 +3,15 @@ use std::str::FromStr;
 use cubing::alg::Move;
 use cubing::kpuzzle::{KPattern, KPatternData, KPuzzle};
 use serde::{Deserialize, Serialize};
-use twsearch::_internal::cli::args::{CustomGenerators, Generators};
-use twsearch::_internal::search::iterative_deepening::individual_search::IndividualSearchOptions;
-use twsearch::_internal::search::iterative_deepening::iterative_deepening_search::{
+use twips::_internal::cli::args::{CustomGenerators, Generators};
+use twips::_internal::search::iterative_deepening::individual_search::IndividualSearchOptions;
+use twips::_internal::search::iterative_deepening::iterative_deepening_search::{
     ImmutableSearchData, IterativeDeepeningSearch,
 };
-use twsearch::scramble::scramble_finder::free_memory_for_all_scramble_finders;
+use twips::scramble::scramble_finder::free_memory_for_all_scramble_finders;
 use wasm_bindgen::prelude::*;
 
-use twsearch::scramble::{
+use twips::scramble::{
     derive_scramble_for_event_seeded, random_scramble_for_event, DerivationSalt, DerivationSeed,
     Event,
 };
@@ -22,7 +22,7 @@ pub fn internal_init() {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct WasmTwsearchOptions {
+pub struct WasmTwipsOptions {
     target_pattern: Option<KPatternData>,
     generator_moves: Option<Vec<Move>>,
 
@@ -32,7 +32,7 @@ pub struct WasmTwsearchOptions {
 
 #[wasm_bindgen]
 #[allow(non_snake_case)]
-pub fn wasmTwsearch(
+pub fn wasmTwips(
     kpuzzle_json: String,
     search_pattern_json: String,
     options_json: String, // TODO
@@ -45,7 +45,7 @@ pub fn wasmTwsearch(
     let search_pattern = KPattern::try_from_json(&kpuzzle, search_pattern_json.as_bytes());
     let search_pattern = search_pattern.map_err(|e| e.to_string())?;
 
-    let options: WasmTwsearchOptions = match serde_json::from_slice(options_json.as_bytes()) {
+    let options: WasmTwipsOptions = match serde_json::from_slice(options_json.as_bytes()) {
         Ok(options) => options,
         Err(e) => return Err(e.to_string()),
     };

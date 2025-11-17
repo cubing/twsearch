@@ -32,7 +32,7 @@ use super::common::PatternSource;
 ///
 /// ```
 /// use cubing::{alg::parse_alg, puzzles::cube3x3x3_kpuzzle};
-/// use twsearch::experimental_lib_api::{search};
+/// use twips::experimental_lib_api::{search};
 ///
 /// let kpuzzle = cube3x3x3_kpuzzle();
 /// let search_pattern = kpuzzle

@@ -1,5 +1,5 @@
 {
-  "name": "twsearch",
+  "name": "twips",
   "type": "module",
   "scripts": {
     "dev": "make dev"

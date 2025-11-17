@@ -13,20 +13,11 @@ use crate::_internal::puzzle_traits::puzzle_traits::GroupActionPuzzle;
 use crate::_internal::search::prune_table_trait::Depth;
 use crate::scramble::{DerivationSalt, DerivationSeed, Puzzle};
 
-/// twsearch-cpp-wrapper — a native Rust wrapper for `twsearch` functionality.
+/// twips — solve every puzzle.
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
-#[clap(name = "twsearch-cpp-wrapper")]
-pub struct TwsearchCppWrapperArgs {
-    #[command(subcommand)]
-    pub command: CliCommand,
-}
-
-/// twsearch — solve every puzzle.
-#[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-#[clap(name = "twsearch")]
-pub struct TwsearchArgs {
+#[clap(name = "twips")]
+pub struct TwipsArgs {
     #[command(subcommand)]
     pub command: CliCommand,
 }
@@ -291,8 +282,8 @@ pub struct CompletionsArgs {
     /// Print completions for the given shell.
     /// These can be loaded/stored permanently (e.g. when using Homebrew), but they can also be sourced directly, e.g.:
     ///
-    ///  twsearch completions fish | source # fish
-    ///  source <(twsearch completions zsh) # zsh
+    ///  twips completions fish | source # fish
+    ///  source <(twips completions zsh) # zsh
     #[clap(verbatim_doc_comment, id = "SHELL")]
     shell: Shell,
 }
@@ -524,31 +515,15 @@ pub struct BenchmarkArgs {
 }
 
 fn completions_for_shell(cmd: &mut clap::Command, generator: impl Generator) {
-    generate(generator, cmd, "twsearch", &mut stdout());
+    generate(generator, cmd, "twips", &mut stdout());
 }
 
-pub fn get_options() -> TwsearchArgs {
-    let mut command = TwsearchArgs::command();
+pub fn get_options() -> TwipsArgs {
+    let mut command = TwipsArgs::command();
 
-    let args = TwsearchArgs::parse();
+    let args = TwipsArgs::parse();
     if let CliCommand::Completions(completions_args) = args.command {
         completions_for_shell(&mut command, completions_args.shell);
-        exit(0);
-    };
-
-    args
-}
-
-fn completions_for_shell_cpp_wrapper(cmd: &mut clap::Command, generator: impl Generator) {
-    generate(generator, cmd, "twsearch-cpp-wrapper", &mut stdout());
-}
-
-pub fn get_options_cpp_wrapper() -> TwsearchCppWrapperArgs {
-    let mut command = TwsearchCppWrapperArgs::command();
-
-    let args = TwsearchCppWrapperArgs::parse();
-    if let CliCommand::Completions(completions_args) = args.command {
-        completions_for_shell_cpp_wrapper(&mut command, completions_args.shell);
         exit(0);
     };
 
@@ -586,14 +561,13 @@ pub struct ServeClientArgs {
 
 #[cfg(test)]
 mod tests {
-    use crate::_internal::cli::args::{TwsearchArgs, TwsearchCppWrapperArgs};
+    use crate::_internal::cli::args::TwipsArgs;
 
     // https://docs.rs/clap/latest/clap/_derive/_tutorial/index.html#testing
     #[test]
     fn test_clap_args() {
         use clap::CommandFactory;
 
-        TwsearchArgs::command().debug_assert();
-        TwsearchCppWrapperArgs::command().debug_assert();
+        TwipsArgs::command().debug_assert();
     }
 }

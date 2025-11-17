@@ -1,16 +1,16 @@
 [package]
-name = "twsearch-ffi"
+name = "twips-ffi"
 version.workspace = true
 license.workspace = true
 edition.workspace = true
-description = "Twizzle Search FFI — C FFI bindings for twsearch"
+description = "Twizzle Pattern Searcher FFI — C FFI bindings for twips"
 repository = "https://github.com/cubing/twsearch"
 
 [features]
 default = []
 
 [dependencies]
-twsearch = { path = "../rs", version = "0.9.1-dev" }
+twips = { path = "../rs", version = "0.9.1-dev" }
 
 [lib]
 path = "./lib.rs"

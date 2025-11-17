@@ -1,7 +1,7 @@
-// Run using: cargo run --package twsearch --release --example scramble_all_events
+// Run using: cargo run --package twips --release --example scramble_all_events
 
 use instant::Instant;
-use twsearch::scramble::{random_scramble_for_event, Event};
+use twips::scramble::{random_scramble_for_event, Event};
 
 pub fn main() {
     for event in [

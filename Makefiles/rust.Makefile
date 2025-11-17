@@ -28,7 +28,7 @@ publish-rust: publish-rust-main publish-rust-ffi
 
 .PHONY: publish-rust-main
 publish-rust-main:
-	cargo publish --workspace --exclude twsearch-cpp-wrapper --exclude cargo-bin
+	cargo publish --workspace --exclude cargo-bin
 
 .PHONY: setup-rust
 setup-rust: setup-gitignore-dirs
@@ -40,16 +40,16 @@ test-rust: test-rust-build-help test-rust-build-version test-rust-lib test-rust-
 
 .PHONY: test-rust-build-help
 test-rust-build-help: build-rust
-	./target/release/twsearch --help
+	./target/release/twips --help
 
 .PHONY: test-rust-build-version
 test-rust-build-version: build-rust
-	./target/release/twsearch --version
+	./target/release/twips --version
 
 .PHONY: test-rust-lib
 test-rust-lib: setup-rust test-cargo-doc
-	# `twsearch-ffi` is covered by `make test-rust-ffi-rs`
-	cargo test --workspace --exclude twsearch-ffi
+	# `twips-ffi` is covered by `make test-rust-ffi-rs`
+	cargo test --workspace --exclude twips-ffi
 
 .PHONY: test-cargo-doc
 test-cargo-doc: setup-rust
@@ -64,19 +64,19 @@ test-rust-examples: setup-rust \
 
 .PHONY: test-rust-example-kociemba_multiphase
 test-rust-example-kociemba_multiphase: setup-rust
-	cargo run --package twsearch --release --example kociemba_multiphase
+	cargo run --package twips --release --example kociemba_multiphase
 
 .PHONY: test-rust-example-scramble_all_events
 test-rust-example-scramble_all_events: setup-rust
-	cargo run --package twsearch --release --example scramble_all_events
+	cargo run --package twips --release --example scramble_all_events
 
 .PHONY: test-rust-example-2x2x2_three_phase
 test-rust-example-2x2x2_three_phase: setup-rust
-	cargo run --package twsearch --release --example 2x2x2_three_phase
+	cargo run --package twips --release --example 2x2x2_three_phase
 
 .PHONY: test-rust-example-readme_example
 test-rust-example-readme_example: setup-rust
-	cargo run --package twsearch --release --example readme_example
+	cargo run --package twips --release --example readme_example
 
 .PHONY: benchmark-rust
 benchmark-rust: setup-rust

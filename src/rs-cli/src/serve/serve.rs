@@ -8,7 +8,7 @@ use cubing::kpuzzle::{KPattern, KPatternData, KPuzzle, KPuzzleDefinition};
 
 use serde::{Deserialize, Serialize};
 use tower_http::cors::CorsLayer;
-use twsearch::_internal::{
+use twips::_internal::{
     canonical_fsm::search_generators::SearchGenerators,
     cli::args::{
         CustomGenerators, Generators, MetricEnum, ServeArgsForIndividualSearch, ServeClientArgs,
@@ -207,7 +207,7 @@ pub async fn serve(serve_command_args: ServeCommandArgs) -> Result<(), CommandEr
     let serve_command_args = Arc::new(serve_command_args);
     let search_request_counter = Arc::new(Mutex::<usize>::new(0));
     println!(
-        "Starting `twsearch serve` on port 2023.
+        "Starting `twips serve` on port 2023.
 Use with one of the following:
 
 - https://experiments.cubing.net/cubing.js/twsearch/text-ui.html
@@ -218,7 +218,7 @@ Use with one of the following:
     let app = Router::new()
         .route(
             "/",
-            get(|| async { "twsearch (https://github.com/cubing/twsearch)" }),
+            get(|| async { "twips (https://github.com/cubing/twsearch)" }),
         )
         .route(
             "/v0/solve/pattern",

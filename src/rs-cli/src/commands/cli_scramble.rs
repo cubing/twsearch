@@ -3,7 +3,7 @@ use std::time::Instant;
 use cubing::alg::experimental_twizzle_link::{
     experimental_twizzle_link, ExperimentalTwizzleLinkParameters,
 };
-use twsearch::{
+use twips::{
     _internal::{
         cli::args::{
             ScrambleArgs, ScrambleFinderArgs, ScrambleFinderCommand, SolveKnownPuzzleCommandArgs,

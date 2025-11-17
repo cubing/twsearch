@@ -5,7 +5,7 @@ import {
   wasmDeriveScrambleForEvent,
   wasmFreeMemoryForAllScrambleFinders,
   wasmRandomScrambleForEvent,
-  wasmTwsearch,
+  wasmTwips,
   // @ts-expect-error TS0716: Untyped
 } from "../dist/wasm/index";
 
@@ -33,14 +33,14 @@ test("wasmRandomScrambleForEvent(…)", async () => {
   }
 });
 
-test("wasmTwsearch(…)", async () => {
+test("wasmTwips(…)", async () => {
   console.log("----------------");
   console.log("Performing a basic 2x2x2 search:");
   const kpuzzle = await cube2x2x2.kpuzzle();
   const scramble = "L' U' L U F U F'";
   console.log("Scramble:", scramble);
   const pattern = kpuzzle.defaultPattern().applyAlg(scramble);
-  const solution = await wasmTwsearch(kpuzzle.definition, pattern, {
+  const solution = await wasmTwips(kpuzzle.definition, pattern, {
     generatorMoves: ["R", "U", "F"],
   });
   console.log("Solution:", solution.toString());

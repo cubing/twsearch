@@ -1,4 +1,4 @@
-use twsearch::{
+use twips::{
     _internal::{
         cli::args::DeriveArgs,
         errors::{ArgumentError, CommandError},

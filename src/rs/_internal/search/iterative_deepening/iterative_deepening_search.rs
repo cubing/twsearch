@@ -244,7 +244,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         &mut self,
         individual_search_data: &mut IndividualSearchData<TPuzzle>,
     ) -> Option<Alg> {
-        // TODO: the `min_num_solutions` semantics need a redesign throughout all of `twsearch`.
+        // TODO: the `min_num_solutions` semantics need a redesign throughout all of `twips`.
         // if individual_search_data.num_solutions_sofar
         //     >= individual_search_data
         //         .individual_search_options

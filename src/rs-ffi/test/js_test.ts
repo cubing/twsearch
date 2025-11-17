@@ -8,7 +8,7 @@ const {
     ffi_free_memory_for_all_scramble_finders,
   },
 } = dlopen(
-  import.meta.resolve(`../../../target/release/libtwsearch_ffi.${suffix}`),
+  import.meta.resolve(`../../../target/release/libtwips_ffi.${suffix}`),
   {
     ffi_random_scramble_for_event: {
       args: [FFIType.cstring],

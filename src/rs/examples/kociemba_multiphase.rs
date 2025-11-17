@@ -1,13 +1,13 @@
 /* Run using:
 
-    cargo run --package twsearch --release --example kociemba_multiphase
+    cargo run --package twips --release --example kociemba_multiphase
 
 */
 use cubing::{
     alg::{parse_alg, parse_move},
     kpuzzle::{kpattern_from_json_file, kpuzzle_from_json_file, KPuzzle},
 };
-use twsearch::{
+use twips::{
     _internal::{cli::args::VerbosityLevel, search::search_logger::SearchLogger},
     experimental_lib_api::{KPuzzleSimpleMaskPhase, MultiPhaseSearch, MultiPhaseSearchOptions},
 };

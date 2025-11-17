@@ -1,4 +1,4 @@
-use twsearch::{
+use twips::{
     _internal::{cli::args::GodsAlgorithmArgs, errors::CommandError},
     experimental_lib_api::{gods_algorithm, KPuzzleSource},
 };

@@ -1,10 +1,10 @@
 #!/usr/bin/env bun
 
 import { writeFile } from "node:fs/promises";
-import { $ } from "bun";
 import type { Move } from "cubing/alg";
 import { KPattern } from "cubing/kpuzzle";
 import { puzzles } from "cubing/puzzles";
+import { PrintableShellCommand } from "printable-shell-command";
 
 // biome-ignore lint/complexity/useLiteralKeys: Record access
 const kpuzzle = await puzzles["megaminx"].kpuzzle();
@@ -62,7 +62,7 @@ async function writeTargetPattern(
   blockingGenerators: (string | Move)[],
 ) {
   await writeFile(
-    `./src/rs/scramble/puzzles/definitions/megaminx-phase${phaseNumber}.target-pattern.json`,
+    `./src/rs/scramble/puzzles/definitions/megaminx/megaminx-phase${phaseNumber}.target-pattern.json`,
     JSON.stringify(
       maskFromBlockingGenerators(blockingGenerators).patternData,
       null,
@@ -96,4 +96,9 @@ await writeTargetPattern(9, ["U", "R"]);
 await writeTargetPattern(10, ["U"]);
 await writeTargetPattern(11, []);
 
-await $`bun x @biomejs/biome check --write "./src/rs/scramble/puzzles/definitions/"`;
+await new PrintableShellCommand("bun", [
+  ["x", "@biomejs/biome"],
+  "check",
+  "--write",
+  "./src/rs/scramble/puzzles/definitions/",
+]).shellOut();

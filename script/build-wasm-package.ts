@@ -1,16 +1,15 @@
 #!/usr/bin/env bun
 
 import assert from "node:assert";
-import { mkdir, rm } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import { es2022Lib } from "@cubing/dev-config/esbuild/es2022";
-import { file } from "bun";
 import { build } from "esbuild";
+import { Path } from "path-class";
 
-const distDir = fileURLToPath(new URL("../dist/wasm/", import.meta.url));
+const distDir = Path.resolve("../dist/wasm/", import.meta.url);
 
-await rm(distDir, { recursive: true, force: true });
-await mkdir(distDir, { recursive: true });
+await distDir.rm_rf();
+await distDir.mkdir();
 
 const BITS_PER_BYTE = 8;
 
@@ -21,8 +20,11 @@ function secondsToDownloadUsing3G(numBytes: number): number {
   return numBytes / mobile3GConnectionBytesPerSecond;
 }
 
-const wasmSize = file(
-  new URL("../.temp/rust-wasm/twips_wasm_bg.wasm", import.meta.url),
+const wasmSize = (
+  await Path.resolve(
+    "../.temp/rust-wasm/twips_wasm_bg.wasm",
+    import.meta.url,
+  ).stat()
 ).size;
 console.log(
   `WASM size: ${Math.round(wasmSize / KiB)} KiB (${
@@ -72,13 +74,13 @@ assert(secondsToDownloadUsing3G(wasmSize) < 7);
 // const version = await $`bun x -- @lgarron-bin/repo version describe`.text();
 const version = "v0.9.99";
 
-build({
+await build({
   ...es2022Lib(),
   entryPoints: [
     fileURLToPath(new URL("../src/wasm-package/index.ts", import.meta.url)),
   ],
   loader: { ".wasm": "binary" },
-  outdir: distDir,
+  outdir: distDir.path,
   banner: {
     js: `// Generated from \`twips\` ${version}`,
   },

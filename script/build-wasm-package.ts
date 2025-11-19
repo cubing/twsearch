@@ -1,7 +1,6 @@
 #!/usr/bin/env bun
 
 import assert from "node:assert";
-import { fileURLToPath } from "node:url";
 import { es2022Lib } from "@cubing/dev-config/esbuild/es2022";
 import { build } from "esbuild";
 import { Path } from "path-class";
@@ -77,7 +76,7 @@ const version = "v0.9.99";
 await build({
   ...es2022Lib(),
   entryPoints: [
-    fileURLToPath(new URL("../src/wasm-package/index.ts", import.meta.url)),
+    Path.resolve("../src/wasm-package/index.ts", import.meta.url).path,
   ],
   loader: { ".wasm": "binary" },
   outdir: distDir.path,

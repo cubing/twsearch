@@ -2,11 +2,10 @@
 
 // This script is a workaround to avoid triggering https://github.com/jj-vcs/jj/discussions/4709 for known dirs.
 
-import { spawn } from "node:child_process";
 import { exit } from "node:process";
-import { fileURLToPath } from "node:url";
 import { argv } from "bun";
 import { Path } from "path-class";
+import { PrintableShellCommand } from "printable-shell-command";
 
 const args = argv.slice(2);
 
@@ -16,15 +15,12 @@ const folders = (() => {
   }
   // The fork doesn't seem to save a lot of time on my system, but it can be beneficial if the file system is acting slow.
   // Since we only need these `.gitignore` files to be in place when switching to an old commit, we're in no hurry.
-  const childProcess = spawn(
-    "bun",
-    ["run", fileURLToPath(import.meta.url), "--pre-forked", ...args],
-    {
-      detached: true,
-      stdio: ["ignore", "ignore", "ignore"],
-    },
-  );
-  childProcess.unref();
+  new PrintableShellCommand("bun", [
+    "run",
+    new Path(import.meta.url).path,
+    "--pre-forked",
+    ...args,
+  ]).spawnDetached();
   exit(0);
 })();
 

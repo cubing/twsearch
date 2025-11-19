@@ -10,7 +10,7 @@
       "devDependencies": {
         "@biomejs/biome": "^v2.3.2",
         "@cubing/dev-config": "v0.3.6",
-        "@lgarron-bin/repo": "^0.13.8",
+        "@lgarron-bin/repo": ">=0.13.13",
         "@types/bun": "^1.3.1",
         "@types/node": "^24.9.2",
         "ba": "^0.0.5",
@@ -96,19 +96,19 @@
 
     "@esbuild/win32-x64": ["@esbuild/win32-x64@0.25.11", "", { "os": "win32", "cpu": "x64" }, "sha512-D7Hpz6A2L4hzsRpPaCYkQnGOotdUpDzSGRIv9I+1ITdHROSFUWW95ZPZWQmGka1Fg7W3zFJowyn9WGwMJ0+KPA=="],
 
-    "@lgarron-bin/repo": ["@lgarron-bin/repo@0.13.8", "", { "optionalDependencies": { "@lgarron-bin/repo-aarch64-apple-darwin": "v0.13.8", "@lgarron-bin/repo-aarch64-pc-windows": "v0.13.8", "@lgarron-bin/repo-aarch64-unknown-linux-gnu": "v0.13.8", "@lgarron-bin/repo-x86_64-apple-darwin": "v0.13.8", "@lgarron-bin/repo-x86_64-pc-windows": "v0.13.8", "@lgarron-bin/repo-x86_64-unknown-linux-gnu": "v0.13.8" }, "bin": { "repo": "repo.js" } }, "sha512-isf76ij+PMf2cx9JOqPVCZp+5i2Pwt/+hENc3nUlKcviQOJcywMuieybl6NnUrnggPfs2UtcsCErT4O9/3MnEA=="],
+    "@lgarron-bin/repo": ["@lgarron-bin/repo@0.13.13", "", { "optionalDependencies": { "@lgarron-bin/repo-aarch64-apple-darwin": "v0.13.13", "@lgarron-bin/repo-aarch64-pc-windows": "v0.13.13", "@lgarron-bin/repo-aarch64-unknown-linux-gnu": "v0.13.13", "@lgarron-bin/repo-x86_64-apple-darwin": "v0.13.13", "@lgarron-bin/repo-x86_64-pc-windows": "v0.13.13", "@lgarron-bin/repo-x86_64-unknown-linux-gnu": "v0.13.13" }, "bin": { "repo": "repo.js" } }, "sha512-cOAvC/IxUv+eCthBsWfLZ92yXMh7bQDY48U4tNawjssb30a+mBXj+7pGdYQgdFS+rocRDY8CqlqmApSwWyWtIw=="],
 
-    "@lgarron-bin/repo-aarch64-apple-darwin": ["@lgarron-bin/repo-aarch64-apple-darwin@0.13.8", "", { "os": "darwin", "cpu": "arm64", "bin": { "repo-aarch64-apple-darwin": "repo-aarch64-apple-darwin" } }, "sha512-AG4GkE2lk8/vFmL+CNaywiQMz8LbZ93SRQPFrC4J3GdCVoT7Fwh8lylCi7w7J0lDRlUZLpOnTnUBUn/zWDpTsg=="],
+    "@lgarron-bin/repo-aarch64-apple-darwin": ["@lgarron-bin/repo-aarch64-apple-darwin@0.13.13", "", { "os": "darwin", "cpu": "arm64", "bin": { "repo-aarch64-apple-darwin": "repo-aarch64-apple-darwin" } }, "sha512-djp3l1ePZYeVEJmFy9kOruRENH/WoOe8WZvq4IlSqhvX1b65cCqGefTwG0vVntOSms1bT09ZQ+N4faBwreNbcA=="],
 
-    "@lgarron-bin/repo-aarch64-pc-windows": ["@lgarron-bin/repo-aarch64-pc-windows@0.13.8", "", { "os": "win32", "cpu": "arm64", "bin": { "repo-aarch64-pc-windows": "repo-aarch64-pc-windows.exe" } }, "sha512-6ZgKOqGRL35lHy514TcHPJ5c9rWvtUqcBeQDr8cSsSDS+9knkvO8QzihDR9JYRAgTjxEc68nSe9DX6ugT6y+RQ=="],
+    "@lgarron-bin/repo-aarch64-pc-windows": ["@lgarron-bin/repo-aarch64-pc-windows@0.13.13", "", { "os": "win32", "cpu": "arm64", "bin": { "repo-aarch64-pc-windows": "repo-aarch64-pc-windows.exe" } }, "sha512-np6ZydIIjfOCtixVr2Kbbn3kCsZB0Kj1SlhTkUSiT+Lw+tACk9wwvtXDoZL+89cNgiuUy1NO6j8qW7bncymzsA=="],
 
-    "@lgarron-bin/repo-aarch64-unknown-linux-gnu": ["@lgarron-bin/repo-aarch64-unknown-linux-gnu@0.13.8", "", { "os": "linux", "cpu": "arm64", "bin": { "repo-aarch64-unknown-linux-gnu": "repo-aarch64-unknown-linux-gnu" } }, "sha512-yrDafzHs752Bxs5KiQBiLIzUS65eRphfGhF5Mh85mjIxZXS0FWfV9R7hAdcm/iUMfwa7Ns3cTpY4qYmadqIupg=="],
+    "@lgarron-bin/repo-aarch64-unknown-linux-gnu": ["@lgarron-bin/repo-aarch64-unknown-linux-gnu@0.13.13", "", { "os": "linux", "cpu": "arm64", "bin": { "repo-aarch64-unknown-linux-gnu": "repo-aarch64-unknown-linux-gnu" } }, "sha512-cr/xmUeHvJncVsbRaE5sznM4lH9VbY1xDQ8JY6xpVxXNxvbRJm8STZFYCuP0BY9gN5NNcQHMqH0xbyVEkojVeA=="],
 
-    "@lgarron-bin/repo-x86_64-apple-darwin": ["@lgarron-bin/repo-x86_64-apple-darwin@0.13.8", "", { "os": "darwin", "cpu": "x64", "bin": { "repo-x86_64-apple-darwin": "repo-x86_64-apple-darwin" } }, "sha512-6CaBCNnkBOb9G0hYnrtyfo+yj7m++v1MgUyVL1tAsA3KymFl51H8cMSb/UF965HY+9ISimMEzDvzvC62xh68fQ=="],
+    "@lgarron-bin/repo-x86_64-apple-darwin": ["@lgarron-bin/repo-x86_64-apple-darwin@0.13.13", "", { "os": "darwin", "cpu": "x64", "bin": { "repo-x86_64-apple-darwin": "repo-x86_64-apple-darwin" } }, "sha512-y2DkGuP0RohgFAssfJ8YfVYVRcgvl8Y4litJuYH78FN38/miNXHmAXTzcM2BZRmM/8H8vdtLo89aCv6y06bqoA=="],
 
-    "@lgarron-bin/repo-x86_64-pc-windows": ["@lgarron-bin/repo-x86_64-pc-windows@0.13.8", "", { "os": "win32", "cpu": "x64", "bin": { "repo-x86_64-pc-windows": "repo-x86_64-pc-windows.exe" } }, "sha512-pVnLibglt0+/GpdPhDQJ7aIvGDrLD1DsIM1gKl6qjvQQ31VFIvpSxAK4HD3j5m9hx2qKVupDr974F47sAUP9JA=="],
+    "@lgarron-bin/repo-x86_64-pc-windows": ["@lgarron-bin/repo-x86_64-pc-windows@0.13.13", "", { "os": "win32", "cpu": "x64", "bin": { "repo-x86_64-pc-windows": "repo-x86_64-pc-windows.exe" } }, "sha512-EL4HcJhRyBojQCJT8veLWDYJ4WoA1trQ4Z0e5frBYTJlN3tdULYJsFvTzps4UfhQvY0C3Izw0YBDLfIF2fU45g=="],
 
-    "@lgarron-bin/repo-x86_64-unknown-linux-gnu": ["@lgarron-bin/repo-x86_64-unknown-linux-gnu@0.13.8", "", { "os": "linux", "cpu": "x64", "bin": { "repo-x86_64-unknown-linux-gnu": "repo-x86_64-unknown-linux-gnu" } }, "sha512-q76k8BouTjn08e+uH4f6iitQrzHB8zAVxSwMxMlPyDUhab+nyoWrDNCobIggw4cEIjKZTet3E9twO82xxtp53w=="],
+    "@lgarron-bin/repo-x86_64-unknown-linux-gnu": ["@lgarron-bin/repo-x86_64-unknown-linux-gnu@0.13.13", "", { "os": "linux", "cpu": "x64", "bin": { "repo-x86_64-unknown-linux-gnu": "repo-x86_64-unknown-linux-gnu" } }, "sha512-bZObgznFt+p2pVAdJg/I7x3g6ANd7B4h5zPFB0VaUm/ehIobf4MdO15qrWfdBh4HFvCtie2jdAikevwogOJ5vQ=="],
 
     "@tweenjs/tween.js": ["@tweenjs/tween.js@23.1.3", "", {}, "sha512-vJmvvwFxYuGnF2axRtPYocag6Clbb5YS7kLL+SO/TeVFzHqDIWrNKYtcsPMibjDx9O+bu+psAy9NKfWklassUA=="],
 

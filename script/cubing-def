@@ -1,8 +1,6 @@
 #!/usr/bin/env bun
 
 import { exit } from "node:process";
-import type { Type } from "cmd-ts-too";
-import { Alg } from "cubing/alg";
 import { puzzles } from "cubing/puzzles";
 
 const {
@@ -12,13 +10,6 @@ const {
   positional,
   run,
 } = await import("cmd-ts-too");
-
-// TODO: dedup with `screenshot` implementation.
-const ReadAlg: Type<string, Alg> = {
-  async from(str) {
-    return Alg.fromString(str);
-  },
-};
 
 const app = command({
   name: "cubing-def",

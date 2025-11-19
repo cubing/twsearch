@@ -84,7 +84,8 @@ The Rust implementation contains scrambling code intended to replace [`tnoodle-l
 
 ## Build tools
 
-- Rust and `cargo` (e.g. via [`rustup.rs`](https://rustup.rs/))
+- Rust and `cargo` via [`rustup`](https://rustup.rs/).
+  - Note that this project uses [`rust-toolchain.toml`](https://rust-lang.github.io/rustup/overrides.html#the-toolchain-file), which effectively requires `rustup` to manage Rust toolchain versions.
 - [`bun`](https://bun.sh/)
 
 ## License

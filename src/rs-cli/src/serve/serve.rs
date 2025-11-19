@@ -218,7 +218,7 @@ Use with one of the following:
     let app = Router::new()
         .route(
             "/",
-            get(|| async { "twips (https://github.com/cubing/twsearch)" }),
+            get(|| async { "twips (https://github.com/cubing/twips)" }),
         )
         .route(
             "/v0/solve/pattern",

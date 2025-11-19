@@ -13,7 +13,7 @@ default-members = ["src/rs-cli"]
 version = "0.9.99"
 license = "MPL-2.0"
 edition = "2021"
-repository = "https://github.com/cubing/twsearch"
+repository = "https://github.com/cubing/twips"
 
 [workspace.dependencies]
 cubing = "0.15.0-pre.1"

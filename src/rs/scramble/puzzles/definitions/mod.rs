@@ -26,7 +26,7 @@ kpuzzle_from_json_file!(pub(crate), cube4x4x4_phase3_search, "./4x4x4/4x4x4-phas
 
 /******************************** Big cubes ********************************/
 
-/* TODO(https://github.com/cubing/twsearch/issues/138): replace these definitions with Speffz from `puzzle-geometry` once that's supported.
+/* TODO(https://github.com/cubing/twips/issues/138): replace these definitions with Speffz from `puzzle-geometry` once that's supported.
  *
  * These current definitions have a few issues:
  *

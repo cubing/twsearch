@@ -137,7 +137,7 @@ pub(crate) fn phase2_search(search_logger: Arc<SearchLogger>) -> Cube4x4x4Phase2
     let phase2_generator_moves =
         move_list_from_vec(vec!["Uw2", "U", "L", "Fw", "F", "Rw2", "R", "B", "D"]);
 
-    // This would be inline, but we need to work around https://github.com/cubing/twsearch/issues/128
+    // This would be inline, but we need to work around https://github.com/cubing/twips/issues/128
     let phase2_name =
         "Place L/R and U/D centers on correct axes and make F/B solvable with half turns"
             .to_owned();

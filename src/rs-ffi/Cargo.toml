@@ -4,7 +4,7 @@ version.workspace = true
 license.workspace = true
 edition.workspace = true
 description = "Twizzle Pattern Searcher FFI — C FFI bindings for twips"
-repository = "https://github.com/cubing/twsearch"
+repository = "https://github.com/cubing/twips"
 
 [features]
 default = []

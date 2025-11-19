@@ -65,7 +65,7 @@ assert(wasmSize > 32 * KiB); // Make sure the file exists and has some contents.
  *
  * - See https://github.com/cubing/cubing.js/issues/291 for an issue about
  *   performing more of these steps in parallel.
- * - See https://github.com/cubing/twsearch/issues/37 for an issue about
+ * - See https://github.com/cubing/twips/issues/37 for an issue about
  *   decreasing the WASM build size directly.
  */
 assert(secondsToDownloadUsing3G(wasmSize) < 7);

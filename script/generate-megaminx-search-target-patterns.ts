@@ -62,7 +62,7 @@ async function writeTargetPattern(
   blockingGenerators: (string | Move)[],
 ) {
   await writeFile(
-    `./src/rs/scramble/puzzles/definitions/megaminx/megaminx-phase${phaseNumber}.target-pattern.json`,
+    `./src/lib/scramble/puzzles/definitions/megaminx/megaminx-phase${phaseNumber}.target-pattern.json`,
     JSON.stringify(
       maskFromBlockingGenerators(blockingGenerators).patternData,
       null,
@@ -100,5 +100,5 @@ await new PrintableShellCommand("bun", [
   ["x", "@biomejs/biome"],
   "check",
   "--write",
-  "./src/rs/scramble/puzzles/definitions/",
+  "./src/lib/scramble/puzzles/definitions/",
 ]).shellOut();

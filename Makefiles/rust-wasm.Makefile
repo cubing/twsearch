@@ -3,7 +3,7 @@
 .PHONY: build-rust-wasm
 build-rust-wasm: setup-rust setup-js
 	rm -rf "./.temp/rust-wasm"
-	cargo tool-run-bin wasm-pack build --release --target web --out-dir "../../.temp/rust-wasm" src/rs-wasm
+	cargo tool-run-bin wasm-pack build --release --target web --out-dir "../../.temp/rust-wasm" src/wasm
 	node script/node-esm-compat.js
 	bun run script/node-esm-compat.js
 	bun run "./script/build-wasm-package.ts"

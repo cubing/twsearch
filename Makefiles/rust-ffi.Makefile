@@ -17,12 +17,12 @@ test-rust-ffi-rs: setup-rust build-rust-ffi
 
 .PHONY: test-rust-ffi-js
 test-rust-ffi-js: setup-rust setup-js build-rust-ffi
-	bun run "src/rs-ffi/test/js_test.ts"
+	bun run "src/ffi/test/js_test.ts"
 
 .PHONY: test-rust-ffi-c
 test-rust-ffi-c: setup-rust build-rust-ffi
-	gcc -o src/rs-ffi/test/c_test.bin -L./target/release src/rs-ffi/test/c_test.c -ltwips_ffi
-	env LD_LIBRARY_PATH=./target/release src/rs-ffi/test/c_test.bin
+	gcc -o src/ffi/test/c_test.bin -L./target/release src/ffi/test/c_test.c -ltwips_ffi
+	env LD_LIBRARY_PATH=./target/release src/ffi/test/c_test.bin
 
 .PHONY: publish-rust-ffi
 publish-rust-ffi: setup-rust

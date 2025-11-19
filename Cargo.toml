@@ -1,13 +1,7 @@
 [workspace]
 resolver = "2"
-members = [
-  "src/rs",
-  "src/rs-cli",
-  "src/rs-ffi",
-  "src/rs-wasm",
-  "script/cargo-run-bin",
-]
-default-members = ["src/rs-cli"]
+members = ["src/lib", "src/cli", "src/ffi", "src/wasm", "script/cargo-run-bin"]
+default-members = ["src/cli"]
 
 [workspace.package]
 version = "0.9.99"

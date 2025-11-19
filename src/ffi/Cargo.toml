@@ -10,7 +10,7 @@ repository = "https://github.com/cubing/twips"
 default = []
 
 [dependencies]
-twips = { path = "../rs", version = "0.9.1-dev" }
+twips = { path = "../lib", version = "0.9.1-dev" }
 
 [lib]
 path = "./lib.rs"

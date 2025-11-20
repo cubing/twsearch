@@ -20,6 +20,7 @@ fn main() {
         "readksolve.cpp",
         "rotations.cpp",
         "solve.cpp",
+        "subgroup.cpp",
         "test.cpp",
         "threads.cpp",
         "twsearch.cpp",

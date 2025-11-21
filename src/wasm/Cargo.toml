@@ -4,6 +4,7 @@ version.workspace = true
 license.workspace = true
 edition.workspace = true
 description = "Twizzle Pattern Searcher WASM — WASM build of twips for `cubing.js`"
+repository = "https://github.com/cubing/twips"
 
 [features]
 default = []

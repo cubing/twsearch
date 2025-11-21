@@ -43,7 +43,7 @@ cargo run --release -- gods-algorithm \
 
 To get completions in your shell, install using one of:
 
-- `brew install --HEAD cubing/cubing/twsearch`
+- `brew install --HEAD cubing/cubing/twips`
 - `cargo install --path ./src/cli; twips completions <your shell>`
 
 ### Scrambles

@@ -1,5 +1,4 @@
 /.temp
-/build
 /dist
 /node_modules
 
@@ -8,24 +7,22 @@
 
 # Rust
 /target
+
 # `cargo-run-bin`
 /.bin
-
-# TODO
-/*.dwo
-
-# Replaced with `bun.lock`
-/package-lock.json
 
 # Legacy top-level files
 # These are no longer produced, but we want to avoid commmiting them,
 # in case they get left in the top dir around after testing old commits.
 /.cache
 /*.o
+/*.dwo
 /*.dSYM
+/build
+/emsdk
 /twsearch
 /twsearch.wasm
-/emsdk
+/package-lock.json
 
 # Temporary ignores for dev.
 /src/ruby-gem

@@ -7,7 +7,7 @@ description = "Twizzle Pattern Searcher — Twisty puzzle search library"
 repository = "https://github.com/cubing/twips"
 
 [features]
-default = ["simd"]
+default = []
 simd = ["cubing/simd"]
 
 [dependencies]

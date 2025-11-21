@@ -5,7 +5,7 @@ build: \
 	build-rust-ffi
 
 .PHONY: setup
-setup: setup-gitignore-dirs setup-js setup-rust
+setup: setup-js setup-gitignore-dirs setup-rust
 
 .PHONY: test
 test: \
@@ -37,7 +37,7 @@ format: format-js format-rust
 publish: test-rust publish-rust
 
 .PHONY: setup-gitignore-dirs
-setup-gitignore-dirs:
+setup-gitignore-dirs: setup-js
 	bun run ./script/self-gitignore-dirs.ts ./.bin ./.temp ./build ./dist ./target
 
 .PHONY: describe-version

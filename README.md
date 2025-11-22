@@ -7,44 +7,69 @@ Twizzle Search powers alg search and scramble functionality for [Twizzle](https:
 ## Project Goals
 
 1. Maintainability
-
-- We want `twips` to serve as a foundation for the cubing software ecosystem for a long time.
-- The project has multiple maintainers from the start, and we want to focus on a sustainable model for stewardship.
-
+      - We want `twips` to serve as a foundation for the cubing software ecosystem for a long time.
+      - The project has multiple maintainers from the start, and we want to focus on a sustainable model for stewardship.
 2. Ease of use
-
-- Powerful APIs that are easy to get started with.
-- Can either be used directly, or as a library in other projects.
-- Ability to scale from mobile devices all the way to native binaries that can fully utilize high-end hardware.
-- Can be used on any website through
-    [`cubing.js`](https://js.cubing.net/cubing/), either by running in the
-    browser itself or optionally connecting to a computer.
-
+      - Powerful APIs that are easy to get started with.
+      - Can either be used directly, or as a library in other projects.
+      - Ability to scale from mobile devices all the way to native binaries that can fully utilize high-end hardware.
+      - Can be used on any website through
+          [`cubing.js`](https://js.cubing.net/cubing/), either by running in the
+          browser itself or optionally connecting to a computer.
 3. Performance
-
-- Great performance out of the box for a wide variety of puzzles.
-- Tunable optimizations for heavy-duty searches, including reusable prune tables for time-memory tradeoff.
+    - Great performance out of the box for a wide variety of puzzles.
+    - Tunable optimizations for heavy-duty searches, including reusable prune tables for time-memory tradeoff.
 
 ## Example usage
 
-Examples:
+Install using one of:
 
 ```shell
-cargo run --release -- search \
+# Homebrew
+brew install --HEAD cubing/cubing/twips
+
+# From the source repo
+git clone https://github.com/cubing/twips/ && cd twips
+cargo install --path ./src/cli
+twips completions <your shell> # Get completions for your shell
+
+# Run without installing
+git clone https://github.com/cubing/twips/ && cd twips
+cargo run --release -- # Use this instead of `twips` in the commands below.
+```
+
+Examples (using files in the repo):
+
+```shell
+# Find 10 <U, F, R> algs for T-Perm
+twips search \
   --generator-moves "U,F,R" \
   --min-num-solutions 10 \
   samples/json/3x3x3/3x3x3-Reid.def.json \
   samples/json/3x3x3/T-perm.scramble.json
+```
 
-cargo run --release -- gods-algorithm \
+```shell
+# Generate scrambles
+twips scramble --amount 7 sq1 2>/dev/null
+```
+
+```shell
+# Solve a scramble for a known puzzle.
+twips solve-known-puzzle 3x3x3 "U' F2 U' R2 F2 D' B2 D B2 U L2 U2 R2 L2 F2 L' D2 U2 B' U F2 R B' F L"
+```
+
+```shell
+# Calculate the graphs for God's algorithm for 2×2×2
+twips gods-algorithm \
   --generator-moves U,F,R \
   samples/json/2x2x2/2x2x2.kpuzzle.json
 ```
 
-To get completions in your shell, install using one of:
-
-- `brew install --HEAD cubing/cubing/twips`
-- `cargo install --path ./src/cli; twips completions <your shell>`
+```shell
+# Run a server for the web interface: https://experiments.cubing.net/cubing.js/twips/text-ui.html
+twips serve
+```
 
 ### Scrambles
 
@@ -55,7 +80,7 @@ The Rust implementation contains scrambling code intended to replace [`tnoodle-l
 `twips` implements [a protocol to derive scrambles](./docs/ADRs/2025-11-02%20—%20Scramble%20derivation/2025-11-02%20—%20Scramble%20derivation.md) from a competition root seed (a 64-character hex string). Test like this:
 
 ```shell
-cargo run --release -- \
+twips \
   derive \
   67002dfc95e6d4288f418fbaa9150aa65b239fd5581f2d067d0293b9321a8b67 \
   EBNLEND@MABLNHJFHGFEKFIA@DNBKABHHNANA@FD@KKADJAKNFCIJNJGIFCBLEDF/scrambles/333/r1/g1/a1/333/sub1

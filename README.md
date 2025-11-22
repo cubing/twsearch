@@ -28,6 +28,11 @@ Install using one of:
 # Homebrew
 brew install --HEAD cubing/cubing/twips
 
+# cargo (using `rustup`: https://rustup.rs/)
+cargo install --no-default-features twips-cli # option 1: without SIMD
+cargo +nightly install twips-cli # option 2: with experimental SIMD
+twips completions <your shell> # Get completions for your shell
+
 # From the source repo
 git clone https://github.com/cubing/twips/ && cd twips
 cargo install --path ./src/cli

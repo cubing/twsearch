@@ -25,7 +25,7 @@ Twizzle Search powers alg search and scramble functionality for [Twizzle](https:
 Install using one of:
 
 ```shell
-# Homebrew
+# Homebrew (https://brew.sh/)
 brew install --HEAD cubing/cubing/twips
 
 # cargo (using `rustup`: https://rustup.rs/)

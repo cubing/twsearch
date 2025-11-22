@@ -157,7 +157,7 @@ checksum = "d71b6127be86fdcfddb610f7182ac57211d4b18a3e9c82eb2d17662f2227ad6a"
 
 [[package]]
 name = "cargo-bin"
-version = "0.11.2"
+version = "0.11.3-dev"
 dependencies = [
  "cargo-run-bin",
 ]
@@ -1331,7 +1331,7 @@ dependencies = [
 
 [[package]]
 name = "twips"
-version = "0.11.2"
+version = "0.11.3-dev"
 dependencies = [
  "ascii",
  "cityhasher",
@@ -1356,7 +1356,7 @@ dependencies = [
 
 [[package]]
 name = "twips-cli"
-version = "0.11.2"
+version = "0.11.3-dev"
 dependencies = [
  "axum",
  "cubing",
@@ -1370,7 +1370,7 @@ dependencies = [
 
 [[package]]
 name = "twips-ffi"
-version = "0.11.2"
+version = "0.11.3-dev"
 dependencies = [
  "cubing",
  "libloading",
@@ -1380,7 +1380,7 @@ dependencies = [
 
 [[package]]
 name = "twips-wasm"
-version = "0.11.2"
+version = "0.11.3-dev"
 dependencies = [
  "console_error_panic_hook",
  "cubing",

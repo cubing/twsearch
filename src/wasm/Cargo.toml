@@ -10,7 +10,7 @@ repository = "https://github.com/cubing/twips"
 default = []
 
 [dependencies]
-twips = { path = "../lib", version = "0.11.1-dev" }
+twips = { path = "../lib", version = "0.11.2-dev" }
 getrandom = { version = "0.3.4", features = [
   # We don't use `getrandom` directly (only through `rand`), but we need to
   # declare it as a dependency in order to enable the `wasm_js` feature that we

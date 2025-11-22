@@ -10,6 +10,7 @@
   },
   "files.associations": {
     "*.html": "html",
-    "*.Makefile": "makefile"
+    "*.Makefile": "makefile",
+    "libtwips_ffi.h": "c"
   }
 }

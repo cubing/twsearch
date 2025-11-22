@@ -1,6 +1,10 @@
 # `twips`
 
-A pure Rust implementation of [`twips`](https://github.com/cubing/twips). For now, most of the code is experimental and placed in `twips::_internal`.
+Twizzle Pattern Searcher — a program to find algs and scrambles for twisty puzzles.
+
+See <https://github.com/cubing/twips> for information.
+
+This is the library crate. You are welcome to experiment, but keep in mind that the API is very unstable. (Please file issues if you have a use cases!)
 
 ## Example usage
 

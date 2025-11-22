@@ -50,6 +50,17 @@ To get completions in your shell, install using one of:
 
 The Rust implementation contains scrambling code intended to replace [`tnoodle-lib`](https://github.com/thewca/tnoodle-lib).
 
+#### Derived scrambles
+
+`twips` implements [a protocol to derive scrambles](./docs/ADRs/2025-11-02%20—%20Scramble%20derivation/2025-11-02%20—%20Scramble%20derivation.md) from a competition root seed (a 64-character hex string). Test like this:
+
+```shell
+cargo run --release -- \
+  derive \
+  67002dfc95e6d4288f418fbaa9150aa65b239fd5581f2d067d0293b9321a8b67 \
+  EBNLEND@MABLNHJFHGFEKFIA@DNBKABHHNANA@FD@KKADJAKNFCIJNJGIFCBLEDF/scrambles/333/r1/g1/a1/333/sub1
+```
+
 #### Official events
 
 | Event                   | Supported                                                                                                                                                                          | Min optimal solution moves                                                                                                                                                                   | Min scramble alg moves                                                                                                                                                                                                                                                                    | Prefix/Suffix                                                                                                                                    | Potential features                                                                                                                                   |

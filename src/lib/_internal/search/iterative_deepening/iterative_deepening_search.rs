@@ -47,6 +47,12 @@ impl<TPuzzle: SemiGroupActionPuzzle> Iterator for IterativeDeepeningSearchCursor
     type Item = Alg;
 
     fn next(&mut self) -> Option<Alg> {
+        if self
+            .individual_search_data
+            .has_min_num_solutions_been_reached()
+        {
+            return None;
+        }
         self.search
             .search_internal(&mut self.individual_search_data)
     }
@@ -61,6 +67,12 @@ impl<TPuzzle: SemiGroupActionPuzzle> Iterator for OwnedIterativeDeepeningSearchC
     type Item = Alg;
 
     fn next(&mut self) -> Option<Alg> {
+        if self
+            .individual_search_data
+            .has_min_num_solutions_been_reached()
+        {
+            return None;
+        }
         self.search
             .search_internal(&mut self.individual_search_data)
     }

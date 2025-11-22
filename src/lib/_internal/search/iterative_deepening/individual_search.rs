@@ -17,7 +17,15 @@ const MAX_SUPPORTED_SEARCH_DEPTH: Depth = Depth(500); // TODO: increase
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct IndividualSearchOptions {
-    // TODO: this doesn't do anything at the moment.
+    /// If this is specified, the search will end after:
+    ///
+    /// - the minimum number of solutions has been reached, or
+    /// - all solutions have will found.
+    ///
+    /// If this is not specified, searching will continue until all solutions
+    /// have been found (which is often infinitely many, unless
+    /// `max_depth_exclusive` is specified).
+    // TODO: pick a better name for this, or divide into multiple properties.
     pub min_num_solutions: Option<usize>,
     #[serde(rename = "minDepth")] // TODO
     pub min_depth_inclusive: Option<Depth>, // inclusive
@@ -106,5 +114,12 @@ impl<TPuzzle: SemiGroupActionPuzzle> IndividualSearchData<TPuzzle> {
             num_solutions_sofar: 0,
             individual_search_adaptations,
         }
+    }
+
+    pub fn has_min_num_solutions_been_reached(&self) -> bool {
+        let Some(min_num_solutions) = self.individual_search_options.min_num_solutions else {
+            return false;
+        };
+        self.num_solutions_sofar >= min_num_solutions
     }
 }

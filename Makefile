@@ -5,7 +5,7 @@ build: \
 	build-rust-ffi
 
 .PHONY: check
-check: build test lint
+check: lint test build
 
 .PHONY: setup
 setup: setup-js setup-gitignore-dirs setup-rust

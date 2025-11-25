@@ -23,6 +23,3 @@
 /twsearch
 /twsearch.wasm
 /package-lock.json
-
-# Temporary ignores for dev.
-/src/ruby-gem

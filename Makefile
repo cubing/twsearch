@@ -8,14 +8,15 @@ build: \
 check: lint test build
 
 .PHONY: setup
-setup: setup-js setup-gitignore-dirs setup-rust
+setup: setup-js setup-gitignore-dirs setup-rust setup-ruby
 
 .PHONY: test
 test: \
 	test-warning \
 	test-rust \
 	test-rust-ffi \
-	benchmark-rust
+	benchmark-rust \
+	test-ruby
 
 .PHONY: test-warning
 test-warning:
@@ -23,7 +24,7 @@ test-warning:
 
 .PHONY: clean
 clean:
-	rm -rf ./.temp ./build ./dist ./src/js/generated-wasm/twips.* ./package-lock.json
+	rm -rf ./.temp ./build ./dist ./src/js/generated-wasm/twips.* ./package-lock.json ./src/ruby-gem/target ./src/ruby-gem/tmp
 
 .PHONY: reset
 reset: clean
@@ -178,7 +179,6 @@ publish-rust-ffi: setup-rust
 .PHONY: setup-js
 setup-js: setup-js-deps setup-gitignore-dirs
 
-
 .PHONY: setup-js-deps
 setup-js-deps: check-engine-versions
 	bun install --frozen-lockfile > /dev/null
@@ -197,3 +197,20 @@ lint-js-tsc: setup-js build-rust-wasm
 .PHONY: format-js
 format-js: setup-js
 	bun x @biomejs/biome check --write
+
+RUBY_GEM_DIR = ./src/ruby-gem/
+RUBY_VERSION = $(shell cat ./src/ruby-gem/.ruby-version)
+RUBY = rv ruby run ${RUBY_VERSION} -- -C ./src/ruby-gem/
+
+.PHONY: test-ruby
+test-ruby: build-ruby
+	${RUBY} ./test/test-222.rb
+
+.PHONY: build-ruby
+build-ruby: setup-ruby
+	${RUBY} -S rake compile
+
+.PHONY: setup-ruby
+setup-ruby:
+	${RUBY} -e "" || rv ruby install ${RUBY_VERSION} # TODO: remove this once https://github.com/spinel-coop/rv/issues/72 is available.
+	${RUBY} -S bundle install --frozen

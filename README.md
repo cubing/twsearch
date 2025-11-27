@@ -126,6 +126,7 @@ twips \
 - Rust and `cargo` via [`rustup`](https://rustup.rs/).
   - Note that this project uses [`rust-toolchain.toml`](https://rust-lang.github.io/rustup/overrides.html#the-toolchain-file), which effectively requires `rustup` to manage Rust toolchain versions.
 - [`bun`](https://bun.sh/)
+- [`rv`](https://github.com/spinel-coop/rv)
 
 ## License
 

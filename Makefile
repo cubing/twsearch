@@ -24,11 +24,11 @@ test-warning:
 
 .PHONY: clean
 clean:
-	rm -rf ./.temp ./build ./dist ./src/js/generated-wasm/twips.* ./package-lock.json ./src/ruby-gem/target ./src/ruby-gem/tmp
+	rm -rf ./.temp ./build ./dist ./src/js/generated-wasm/twips.* ./package-lock.json ./src/ruby-gem/tmp
 
 .PHONY: reset
 reset: clean
-	rm -rf ./emsdk ./node_modules ./target ./.bin
+	rm -rf ./emsdk ./node_modules ./target ./.bin ./src/ruby-gem/target
 
 .PHONY: lint
 lint: lint-js lint-rust
@@ -41,7 +41,7 @@ publish: test-rust publish-rust
 
 .PHONY: setup-gitignore-dirs
 setup-gitignore-dirs: setup-js-deps
-	bun run ./script/self-gitignore-dirs.ts ./.bin ./.temp ./dist ./target
+	bun run ./script/self-gitignore-dirs.ts ./.bin ./.temp ./dist ./target ./src/ruby-gem/target
 
 .PHONY: check-engine-versions
 check-engine-versions:

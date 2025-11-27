@@ -11,7 +11,7 @@ check: lint test build
 setup: setup-js setup-gitignore-dirs setup-rust
 
 .PHONY: test
-	test: \
+test: \
 	test-warning \
 	test-rust \
 	test-rust-ffi \

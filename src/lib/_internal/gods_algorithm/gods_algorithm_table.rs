@@ -6,11 +6,13 @@ use thousands::Separable;
 use crate::_internal::{
     canonical_fsm::{
         canonical_fsm::{CanonicalFSM, CanonicalFSMState, CANONICAL_FSM_START_STATE},
-        search_generators::{FlatMoveIndex, SearchGenerators},
+        search_generators::{
+            FlatMoveIndex, Generators, SearchGenerators, SearchGeneratorsConstructorOptions,
+        },
     },
-    cli::args::{Generators, MetricEnum},
     errors::SearchError,
     gods_algorithm::factor_number::factor_number,
+    notation::metric::TurnMetric,
     search::indexed_vec::IndexedVec,
 };
 
@@ -72,14 +74,16 @@ impl GodsAlgorithmSearch {
         kpuzzle: KPuzzle,
         start_pattern: Option<KPattern>,
         generators: &Generators,
-        quantum_metric: &MetricEnum,
+        metric: TurnMetric,
     ) -> Result<Self, SearchError> {
         let depth_to_patterns = vec![];
         let search_generators = SearchGenerators::try_new(
             &kpuzzle,
             generators.enumerate_moves_for_kpuzzle(&kpuzzle),
-            quantum_metric,
-            false,
+            SearchGeneratorsConstructorOptions {
+                metric: Some(metric),
+                ..Default::default()
+            },
         )?;
         let canonical_fsm = CanonicalFSM::try_new(
             kpuzzle.clone(),

@@ -9,7 +9,6 @@ use rand::Rng;
 
 use crate::{
     _internal::{
-        cli::args::VerbosityLevel,
         errors::SearchError,
         search::{
             filter::filtering_decision::FilteringDecision,
@@ -24,7 +23,7 @@ use crate::{
             },
             mask_pattern::apply_mask,
             move_count::MoveCount,
-            search_logger::SearchLogger,
+            search_logger::{SearchLogger, VerbosityLevel},
         },
     },
     scramble::{

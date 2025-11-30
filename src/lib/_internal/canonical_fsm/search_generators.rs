@@ -1,15 +1,15 @@
 use std::collections::HashMap;
 
 use cubing::{
-    alg::{Move, QuantumMove},
-    kpuzzle::InvalidAlgError,
+    alg::{Alg, Move, QuantumMove},
+    kpuzzle::{InvalidAlgError, KPuzzle},
 };
 
 use crate::{
     _internal::{
-        cli::args::MetricEnum,
         errors::SearchError,
-        puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
+        notation::metric::TurnMetric,
+        puzzle_traits::puzzle_traits::{GroupActionPuzzle, SemiGroupActionPuzzle},
         search::{indexed_vec::IndexedVec, move_count::MoveCount},
     },
     whole_number_newtype,
@@ -39,6 +39,40 @@ pub type MoveTransformationMultiples<
     TPuzzle, // TODO = KPuzzle
 > = Vec<MoveTransformationInfo<TPuzzle>>;
 
+#[derive(Clone, Debug, Default)]
+pub enum Generators {
+    #[default]
+    Default,
+    Custom {
+        moves: Vec<Move>,
+        algs: Vec<Alg>,
+    },
+}
+
+impl From<Vec<Move>> for Generators {
+    fn from(moves: Vec<Move>) -> Self {
+        Self::Custom {
+            moves,
+            algs: vec![],
+        }
+    }
+}
+
+impl Generators {
+    pub fn enumerate_moves_for_kpuzzle(&self, kpuzzle: &KPuzzle) -> Vec<Move> {
+        match self {
+            Generators::Default => kpuzzle.puzzle_definition_all_moves(),
+            Generators::Custom { moves, algs } => {
+                if !algs.is_empty() {
+                    eprintln!("WARNING: Alg generators are not implemented yet. Ignoring.");
+                };
+                // TODO: avoid a clone?
+                moves.clone()
+            }
+        }
+    }
+}
+
 #[derive(Clone, Debug)]
 pub struct SearchGenerators<
     TPuzzle: SemiGroupActionPuzzle, // TODO = KPuzzle
@@ -49,12 +83,17 @@ pub struct SearchGenerators<
     pub by_move: HashMap<Move, MoveTransformationInfo<TPuzzle>>, // TODO: avoid duplicate data
 }
 
+#[derive(Default)]
+pub struct SearchGeneratorsConstructorOptions {
+    pub metric: Option<TurnMetric>,
+    pub random_start: Option<bool>,
+}
+
 impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
     pub fn try_new(
         tpuzzle: &TPuzzle,
         generator_moves: Vec<Move>,
-        metric: &MetricEnum,
-        random_start: bool,
+        options: SearchGeneratorsConstructorOptions,
     ) -> Result<SearchGenerators<TPuzzle>, SearchError> {
         let mut seen_moves = HashMap::<QuantumMove, Move>::new();
 
@@ -84,8 +123,8 @@ impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
             let mut multiples = MoveTransformationMultiples::default(); // TODO: use order to set capacity.
 
             // TODO: this should be an `Iterator` instead of a `Vec`, but this requires some type wrangling.
-            let amount_iterator: Vec<i32> = match (metric, order) {
-                (MetricEnum::Hand, order) => {
+            let amount_iterator: Vec<i32> = match (options.metric.unwrap_or_default(), order) {
+                (TurnMetric::Hand, order) => {
                     let original_amount = r#move.amount;
                     let mod_amount = (order.0 as i32) * original_amount;
                     let max_positive_amount = (order.0 as i32) / 2;
@@ -100,8 +139,8 @@ impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
                         })
                         .collect()
                 }
-                (MetricEnum::Quantum, MoveCount(2) | MoveCount(1)) => vec![1],
-                (MetricEnum::Quantum, _) => vec![1, -1],
+                (TurnMetric::Quantum, MoveCount(2) | MoveCount(1)) => vec![1],
+                (TurnMetric::Quantum, _) => vec![1, -1],
             };
 
             // TODO: we've given up O(log(average move order)) performance here to make this
@@ -135,7 +174,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> SearchGenerators<TPuzzle> {
             by_move_class.push(multiples);
         }
         // let mut rng = thread_rng();
-        if random_start {
+        if options.random_start.unwrap_or_default() {
             eprintln!(
                 "Randomization requires some code refactoring. Ignoring randomization parameter."
             );

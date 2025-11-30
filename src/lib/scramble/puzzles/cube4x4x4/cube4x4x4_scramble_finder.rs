@@ -2,11 +2,10 @@ use cubing::alg::Alg;
 use cubing::kpuzzle::{KPattern, KPuzzle};
 use rand::Rng;
 
-use crate::_internal::cli::args::VerbosityLevel;
 use crate::_internal::search::filter::filtering_decision::FilteringDecision;
 use crate::_internal::search::mask_pattern::apply_mask;
 use crate::_internal::search::move_count::MoveCount;
-use crate::_internal::search::search_logger::SearchLogger;
+use crate::_internal::search::search_logger::{SearchLogger, VerbosityLevel};
 use crate::experimental_lib_api::{
     KPuzzleSimpleMaskPhase, MultiPhaseSearch, MultiPhaseSearchOptions,
 };

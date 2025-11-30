@@ -14,7 +14,6 @@ use crate::{
             move_class_mask::MoveClassIndex,
             search_generators::SearchGenerators,
         },
-        cli::args::MetricEnum,
         search::{filter::filtering_decision::FilteringDecision, move_count::MoveCount},
     },
     scramble::{
@@ -160,8 +159,7 @@ impl<TBigCube: BigCube> Default for BigCubeScrambleFinder<TBigCube> {
         let generators = SearchGenerators::try_new(
             &info.kpuzzle,
             info.scrambling_generator_moves(),
-            &MetricEnum::Hand,
-            false,
+            Default::default(),
         )
         .unwrap();
         let canonical_fsm =

@@ -8,7 +8,7 @@ use cubing::{
     kpuzzle::{kpattern_from_json_file, kpuzzle_from_json_file, KPuzzle},
 };
 use twips::{
-    _internal::{cli::args::VerbosityLevel, search::search_logger::SearchLogger},
+    _internal::search::search_logger::{SearchLogger, VerbosityLevel},
     experimental_lib_api::{KPuzzleSimpleMaskPhase, MultiPhaseSearch, MultiPhaseSearchOptions},
 };
 

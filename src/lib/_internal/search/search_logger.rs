@@ -1,4 +1,31 @@
-use crate::_internal::cli::args::VerbosityLevel;
+use std::str::FromStr;
+
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, Default)]
+pub enum VerbosityLevel {
+    Silent,
+    Error,
+    #[default]
+    Warning,
+    Info,
+    Extra,
+}
+
+impl FromStr for VerbosityLevel {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "silent" => VerbosityLevel::Silent,
+            "error" => VerbosityLevel::Error,
+            "warning" => VerbosityLevel::Warning,
+            "info" => VerbosityLevel::Info,
+            "extra" => VerbosityLevel::Extra,
+            _ => Err("Invalid verbosity level name".to_owned())?,
+        })
+    }
+}
 
 // TODO: replace this with something less custom (ideally from the stdlib?)
 #[derive(Clone, Default)]

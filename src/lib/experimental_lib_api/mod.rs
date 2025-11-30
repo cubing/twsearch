@@ -3,14 +3,14 @@
 // accidentally export more).
 
 mod common;
-pub use common::KPuzzleSource; // TODO
-pub use common::PatternSource; // TODO
+pub use common::KPuzzleSource;
+pub use common::PatternSource; // TODO // TODO
 
 mod search_api;
-pub use search_api::search;
+pub use search_api::{search, SearchOptions};
 
 mod gods_algorithm_api;
-pub use gods_algorithm_api::gods_algorithm;
+pub use gods_algorithm_api::{gods_algorithm, GodsAlgorithmOptions};
 
 mod multi_phase_search;
 pub use multi_phase_search::{MultiPhaseSearch, MultiPhaseSearchOptions};

@@ -1,12 +1,11 @@
 use twips::{
-    _internal::{
-        cli::args::DeriveArgs,
-        errors::{ArgumentError, CommandError},
-    },
+    _internal::errors::{ArgumentError, TwipsError},
     scramble::{derive_scramble_for_event_seeded, Event},
 };
 
-pub fn cli_derive(args: &DeriveArgs) -> Result<(), CommandError> {
+use crate::args::DeriveArgs;
+
+pub fn cli_derive(args: &DeriveArgs) -> Result<(), TwipsError> {
     if args.root_derivation_seed.level() != 0 {
         return Err(Into::<ArgumentError>::into(
             "Root derivation seed must be at level 0 (second byte must be `0x00`).",

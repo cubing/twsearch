@@ -6,15 +6,15 @@ use axum::{
 };
 use cubing::kpuzzle::{KPattern, KPatternData, KPuzzle, KPuzzleDefinition};
 
+use crate::args::{ServeArgsForIndividualSearch, ServeClientArgs, ServeCommandArgs};
 use serde::{Deserialize, Serialize};
 use tower_http::cors::CorsLayer;
 use twips::_internal::{
-    canonical_fsm::search_generators::SearchGenerators,
-    cli::args::{
-        CustomGenerators, Generators, MetricEnum, ServeArgsForIndividualSearch, ServeClientArgs,
-        ServeCommandArgs,
+    canonical_fsm::search_generators::{
+        Generators, SearchGenerators, SearchGeneratorsConstructorOptions,
     },
-    errors::CommandError,
+    errors::TwipsError,
+    notation::metric::TurnMetric,
     search::{
         iterative_deepening::{
             individual_search::IndividualSearchOptions,
@@ -100,26 +100,29 @@ async fn solve_pattern(
                 .unwrap()
         }
     };
+    let generator_moves = Generators::Custom {
+        moves: move_list.clone(),
+        algs: vec![],
+    }
+    .enumerate_moves_for_kpuzzle(&kpuzzle);
     let search_generators = match SearchGenerators::try_new(
         &kpuzzle,
-        Generators::Custom(CustomGenerators {
-            moves: move_list.clone(),
-            algs: vec![],
-        })
-        .enumerate_moves_for_kpuzzle(&kpuzzle),
-        match args_for_individual_search.client_args {
-            Some(client_args) => {
-                if client_args.quantum_metric.unwrap_or_default() {
-                    &MetricEnum::Quantum
-                } else {
-                    &MetricEnum::Hand
+        generator_moves,
+        SearchGeneratorsConstructorOptions {
+            metric: match args_for_individual_search.client_args {
+                Some(client_args) => {
+                    if client_args.quantum_metric.unwrap_or_default() {
+                        Some(TurnMetric::Quantum)
+                    } else {
+                        Some(TurnMetric::Hand)
+                    }
                 }
-            }
-            None => &MetricEnum::Hand,
-        },
-        match args_for_individual_search.client_args {
-            Some(client_args) => client_args.random_start == Some(true),
-            None => false,
+                None => None,
+            },
+            random_start: args_for_individual_search
+                .client_args
+                .as_ref()
+                .map(|client_args| client_args.random_start == Some(true)),
         },
     ) {
         Ok(search_generators) => search_generators,
@@ -203,7 +206,7 @@ async fn solve_pattern(
         .unwrap()
 }
 
-pub async fn serve(serve_command_args: ServeCommandArgs) -> Result<(), CommandError> {
+pub async fn serve(serve_command_args: ServeCommandArgs) -> Result<(), TwipsError> {
     let serve_command_args = Arc::new(serve_command_args);
     let search_request_counter = Arc::new(Mutex::<usize>::new(0));
     println!(

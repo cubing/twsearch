@@ -3,7 +3,7 @@ use std::str::FromStr;
 use cubing::alg::Move;
 use cubing::kpuzzle::{KPattern, KPatternData, KPuzzle};
 use serde::{Deserialize, Serialize};
-use twips::_internal::cli::args::{CustomGenerators, Generators};
+use twips::_internal::canonical_fsm::search_generators::Generators;
 use twips::_internal::search::iterative_deepening::individual_search::IndividualSearchOptions;
 use twips::_internal::search::iterative_deepening::iterative_deepening_search::{
     ImmutableSearchData, IterativeDeepeningSearch,
@@ -65,10 +65,10 @@ pub fn wasmTwips(
         None => kpuzzle.default_pattern(),
     };
     let generators = match options.generator_moves {
-        Some(generator_moves) => Generators::Custom(CustomGenerators {
+        Some(generator_moves) => Generators::Custom {
             moves: generator_moves,
             algs: vec![],
-        }),
+        },
         None => Generators::Default,
     };
 

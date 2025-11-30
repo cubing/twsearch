@@ -2,19 +2,21 @@ use clap::{Args, CommandFactory, Parser, Subcommand, ValueEnum};
 use clap_complete::generator::generate;
 use clap_complete::{Generator, Shell};
 use cubing::alg::{Alg, Move};
-use cubing::kpuzzle::KPuzzle;
 use serde::{Deserialize, Serialize};
 use std::fmt::Display;
 use std::io::stdout;
 use std::path::PathBuf;
 use std::process::exit;
+use twips::_internal::canonical_fsm::search_generators::Generators;
+use twips::_internal::notation::metric::TurnMetric;
+use twips::_internal::search::search_logger::VerbosityLevel;
+use twips::experimental_lib_api::{KPuzzleSource, PatternSource};
 
-use crate::_internal::errors::{ArgumentError, CommandError};
-use crate::_internal::puzzle_traits::puzzle_traits::GroupActionPuzzle;
-use crate::_internal::search::iterative_deepening::continuation_condition::ContinuationCondition;
-use crate::_internal::search::iterative_deepening::solution_moves::alg_to_moves;
-use crate::_internal::search::prune_table_trait::Depth;
-use crate::scramble::{DerivationSalt, DerivationSeed, Puzzle};
+use twips::_internal::errors::{ArgumentError, TwipsError};
+use twips::_internal::search::iterative_deepening::continuation_condition::ContinuationCondition;
+use twips::_internal::search::iterative_deepening::solution_moves::alg_to_moves;
+use twips::_internal::search::prune_table_trait::Depth;
+use twips::scramble::{DerivationSalt, DerivationSeed, Puzzle};
 
 /// twips — solve every puzzle.
 #[derive(Parser, Debug)]
@@ -76,10 +78,6 @@ pub struct CommonSearchArgs {
     #[clap(long/*, visible_alias = "randomstart"`*/)]
     pub random_start: bool,
 
-    /// Print all optimal solutions.
-    #[clap(long)]
-    pub all_optimal: bool,
-
     /// Depth to start the pruning table. This can avoid multiple pruning table
     /// expansions that can already be anticipated by starting with a sufficient
     /// depth.
@@ -109,7 +107,7 @@ pub struct CommonSearchArgs {
 }
 
 impl CommonSearchArgs {
-    pub fn continuation_condition(&self) -> Result<ContinuationCondition, CommandError> {
+    pub fn continuation_condition(&self) -> Result<ContinuationCondition, TwipsError> {
         Ok(match (&self.continue_after, &self.continue_at) {
             (None, None) => ContinuationCondition::None,
             (Some(after), None) => {
@@ -123,11 +121,12 @@ impl CommonSearchArgs {
         })
     }
 
-    fn process_continuation_alg_arg(alg: &Alg) -> Result<Vec<Move>, CommandError> {
+    fn process_continuation_alg_arg(alg: &Alg) -> Result<Vec<Move>, TwipsError> {
         let Some(moves) = alg_to_moves(alg) else {
-            return Err(CommandError::ArgumentError(ArgumentError {
+            return Err((ArgumentError {
                 description: "Non-moves used in the continuation alg.".to_owned(),
-            }));
+            })
+            .into());
         };
         Ok(moves)
     }
@@ -181,16 +180,6 @@ fn puzzle_from_id(s: &str) -> Result<Puzzle, String> {
     Puzzle::try_from_id(s).map_err(|e| e.description)
 }
 
-#[derive(Debug, Clone, Copy, ValueEnum, Serialize, Deserialize, Default)]
-pub enum VerbosityLevel {
-    Silent,
-    Error,
-    #[default]
-    Warning,
-    Info,
-    Extra,
-}
-
 #[derive(Args, Debug, Default)]
 pub struct VerbosityArgs {
     #[clap(long)]
@@ -202,8 +191,8 @@ pub struct GeneratorArgs {
     /// A comma-separated list of moves to use. All multiples of these
     /// moves are considered. For example, `--moves U,F,R2` only permits
     /// half-turns on R, and all possible turns on U and F.
-    #[clap(long = "generator-moves", value_delimiter = ',')]
-    pub generator_moves_string: Option<Vec<Move>>,
+    #[clap(long, value_delimiter = ',')]
+    pub generator_moves: Option<Vec<Move>>,
 
     /// A comma-separated list of algs to use. All multiples of these
     /// algs are considered. For example, `--algs U,F,R2` only permits
@@ -212,41 +201,14 @@ pub struct GeneratorArgs {
     pub generator_algs: Option<Vec<Alg>>,
 }
 
-#[derive(Clone, Debug)]
-pub enum Generators {
-    Default,
-    Custom(CustomGenerators),
-}
-
-impl Generators {
-    pub fn enumerate_moves_for_kpuzzle(&self, kpuzzle: &KPuzzle) -> Vec<Move> {
-        if let Generators::Custom(custom_generators) = self {
-            if !custom_generators.algs.is_empty() {
-                eprintln!("WARNING: Alg generators are not implemented yet. Ignoring.");
-            }
-        };
-
-        match self {
-            Generators::Default => kpuzzle.puzzle_definition_all_moves(),
-            Generators::Custom(generators) => generators.moves.clone(),
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct CustomGenerators {
-    pub moves: Vec<Move>,
-    pub algs: Vec<Alg>,
-}
-
 impl GeneratorArgs {
-    pub fn parse(&self) -> Generators {
-        match (&self.generator_moves_string, &self.generator_algs) {
+    pub fn generators(&self) -> Generators {
+        match (&self.generator_moves, &self.generator_algs) {
             (None, None) => Generators::Default,
-            (moves, algs) => Generators::Custom(CustomGenerators {
+            (moves, algs) => Generators::Custom {
                 moves: moves.clone().unwrap_or_default(),
                 algs: algs.clone().unwrap_or_default(),
-            }),
+            },
         }
     }
 }
@@ -267,15 +229,16 @@ pub enum EnableAutoAlwaysNeverValueEnum {
     Always,
 }
 
-impl EnableAutoAlwaysNeverValueEnum {
-    pub fn enabled(&self, auto_case: fn() -> bool) -> bool {
-        match self {
-            EnableAutoAlwaysNeverValueEnum::Auto => auto_case(),
-            EnableAutoAlwaysNeverValueEnum::Never => false,
-            EnableAutoAlwaysNeverValueEnum::Always => true,
-        }
-    }
-}
+// TODO
+// impl EnableAutoAlwaysNeverValueEnum {
+//     pub fn enabled(&self, auto_case: fn() -> bool) -> bool {
+//         match self {
+//             EnableAutoAlwaysNeverValueEnum::Auto => auto_case(),
+//             EnableAutoAlwaysNeverValueEnum::Never => false,
+//             EnableAutoAlwaysNeverValueEnum::Always => true,
+//         }
+//     }
+// }
 
 impl Display for EnableAutoAlwaysNeverValueEnum {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -344,22 +307,14 @@ pub struct GodsAlgorithmOptionalArgs {
     #[command(flatten)]
     pub generator_args: GeneratorArgs,
 
-    #[clap(long/* , visible_short_alias = 'a' */, default_value_t = 20)]
-    pub num_antipodes: u32, // TODO: Change this to `Option<u32>` while still displaying a semantic default value?
-
-    /// Force the use of arrays rather than bitmaps.
-    #[clap(long/* , visible_short_alias = 'F' */)]
-    pub force_arrays: bool,
-
-    /// Use 128-bit hash to encode patterns rather than actual packed pattern representation.
-    #[clap(long/* , visible_short_alias = 'H' */)]
-    pub hash_patterns: bool,
-
     #[command(flatten)]
     pub metric_args: MetricArgs,
 
     #[command(flatten)]
     pub performance_args: PerformanceArgs,
+    // TODO
+    // #[clap(long/* , visible_short_alias = 'a' */, default_value_t = 20)]
+    // pub num_antipodes: u32, // TODO: Change this to `Option<u32>` while still displaying a semantic default value?
 }
 
 #[derive(Args, Debug)]
@@ -389,35 +344,10 @@ pub struct CanonicalAlgsArgs {
     pub performance_args: PerformanceArgs,
 }
 
-#[derive(Clone, Args, Debug)]
+#[derive(Clone, Args, Debug, Default)]
 pub struct MetricArgs {
-    #[clap(long, default_value_t = MetricEnum::Hand)]
-    pub metric: MetricEnum,
-}
-
-impl Default for MetricArgs {
-    fn default() -> Self {
-        Self {
-            // TODO: deduplicate with `IterativeDeepeningSearchConstructionOptions`
-            metric: MetricEnum::Hand,
-        }
-    }
-}
-
-#[derive(Debug, Clone, ValueEnum, Serialize, Deserialize)]
-pub enum MetricEnum {
-    Hand,
-    Quantum,
-}
-
-impl Display for MetricEnum {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let s = match self {
-            MetricEnum::Hand => "hand",
-            MetricEnum::Quantum => "quantum",
-        };
-        write!(f, "{}", s)
-    }
+    #[clap(long)]
+    pub metric: Option<TurnMetric>,
 }
 
 #[derive(Args, Debug)]
@@ -477,6 +407,12 @@ pub struct DefOnlyArgs {
     // pub debug_print_serialized_json: bool,
 }
 
+impl From<DefOnlyArgs> for KPuzzleSource {
+    fn from(def_only_args: DefOnlyArgs) -> Self {
+        Self::FilePath(def_only_args.def_file.clone())
+    }
+}
+
 #[derive(Args, Debug)]
 pub struct RequiredDefArgs {
     #[command(flatten)]
@@ -491,12 +427,39 @@ pub struct ScrambleAndTargetPatternOptionalArgs {
     /// Solve a single scramble specified directly as an argument.
     #[clap(long/*, visible_alias = "scramblealg" */, help_heading = "Scramble input", group = "scramble_input")]
     pub scramble_alg: Option<Alg>,
-    /// Solve a list of scrambles passed to standard in (separated by newlines).
-    #[clap(long, help_heading = "Scramble input", group = "scramble_input"/* , visible_short_alias = 's' */)]
-    pub stdin_scrambles: bool,
+    // TODO: also allow an alg for this?
     /// Use the target pattern from the specified file instead of the default start pattern from the defintion.
     #[clap(long, help_heading = "Scramble input")]
     pub experimental_target_pattern: Option<PathBuf>,
+}
+
+impl ScrambleAndTargetPatternOptionalArgs {
+    pub fn search_pattern(&self) -> PatternSource {
+        match (&self.scramble_alg, &self.scramble_file) {
+            (None, None) => {
+                // TODO
+                println!("No scramble specified, exiting.");
+                exit(0);
+            }
+            (None, Some(scramble_file)) => PatternSource::FilePath(scramble_file.clone()),
+            (Some(scramble_alg), None) => {
+                PatternSource::AlgAppliedToDefaultPattern(scramble_alg.clone())
+            }
+            (Some(_), Some(_)) => {
+                eprintln!("Error: specified both a scramble alg and a scramble file, exiting.");
+                exit(1);
+            }
+        }
+    }
+
+    pub fn target_pattern(&self) -> PatternSource {
+        match &self.experimental_target_pattern {
+            Some(experimental_target_pattern) => {
+                PatternSource::FilePath(experimental_target_pattern.clone())
+            }
+            None => PatternSource::DefaultFromDefinition,
+        }
+    }
 }
 
 #[derive(Args, Debug)]
@@ -527,6 +490,15 @@ pub struct StartPatternArgs {
     pub start_pattern: Option<PathBuf>,
 }
 
+impl StartPatternArgs {
+    pub fn start_pattern_source(self) -> PatternSource {
+        match self.start_pattern {
+            Some(start_pattern) => PatternSource::FilePath(start_pattern),
+            None => PatternSource::DefaultFromDefinition,
+        }
+    }
+}
+
 #[derive(Args, Debug)]
 pub struct BenchmarkArgs {
     #[command(flatten)]
@@ -546,7 +518,7 @@ fn completions_for_shell(cmd: &mut clap::Command, generator: impl Generator) {
     generate(generator, cmd, "twips", &mut stdout());
 }
 
-pub fn get_options() -> TwipsArgs {
+pub fn get_args() -> TwipsArgs {
     let mut command = TwipsArgs::command();
 
     let args = TwipsArgs::parse();
@@ -589,7 +561,7 @@ pub struct ServeClientArgs {
 
 #[cfg(test)]
 mod tests {
-    use crate::_internal::cli::args::TwipsArgs;
+    use crate::args::TwipsArgs;
 
     // https://docs.rs/clap/latest/clap/_derive/_tutorial/index.html#testing
     #[test]

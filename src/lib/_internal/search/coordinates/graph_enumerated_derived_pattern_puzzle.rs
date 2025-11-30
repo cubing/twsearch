@@ -16,7 +16,6 @@ use crate::{
         canonical_fsm::search_generators::{
             FlatMoveIndex, MoveTransformationInfo, SearchGenerators,
         },
-        cli::args::MetricEnum,
         puzzle_traits::puzzle_traits::SemiGroupActionPuzzle,
         search::{indexed_vec::IndexedVec, move_count::MoveCount, prune_table_trait::Depth},
     },
@@ -103,12 +102,10 @@ where
         start_pattern: <TSourcePuzzle as SemiGroupActionPuzzle>::Pattern,
         generator_moves: Vec<Move>,
     ) -> Self {
-        let random_start = false; // TODO: for scrambles, we may want this to be true
         let search_generators =
-            SearchGenerators::try_new(&puzzle, generator_moves, &MetricEnum::Hand, random_start)
-                .expect(
-                    "Couldn't build SearchGenerators while building DerivedPatternPuzzlePuzzle",
-                );
+            SearchGenerators::try_new(&puzzle, generator_moves, Default::default()).expect(
+                "Couldn't build SearchGenerators while building DerivedPatternPuzzlePuzzle",
+            );
 
         let mut fringe = VecDeque::<(TSourcePuzzle::Pattern, Depth)>::new();
         fringe.push_back((start_pattern, Depth(0)));

@@ -4,19 +4,18 @@ use cubing::alg::experimental_twizzle_link::{
     experimental_twizzle_link, ExperimentalTwizzleLinkParameters,
 };
 use twips::{
-    _internal::{
-        cli::args::{
-            ScrambleArgs, ScrambleFinderArgs, ScrambleFinderCommand, SolveKnownPuzzleCommandArgs,
-        },
-        errors::CommandError,
-    },
+    _internal::errors::TwipsError,
     scramble::{
         experimental_scramble_finder_filter_and_or_search, random_scramble_for_event,
         solve_known_puzzle, Event, ExperimentalFilterAndOrSearchOptions,
     },
 };
 
-pub fn cli_scramble(args: &ScrambleArgs) -> Result<(), CommandError> {
+use crate::args::{
+    ScrambleArgs, ScrambleFinderArgs, ScrambleFinderCommand, SolveKnownPuzzleCommandArgs,
+};
+
+pub fn cli_scramble(args: &ScrambleArgs) -> Result<(), TwipsError> {
     let event_id = args.event_id.as_str();
     let event = Event::try_from(event_id)?;
 
@@ -44,7 +43,7 @@ pub fn cli_scramble(args: &ScrambleArgs) -> Result<(), CommandError> {
 }
 
 // TODO: refactor this once `experimental_scramble_finder_filter_and_or_search` can support a less gnarly API.
-pub fn cli_scramble_finder(args: &ScrambleFinderArgs) -> Result<(), CommandError> {
+pub fn cli_scramble_finder(args: &ScrambleFinderArgs) -> Result<(), TwipsError> {
     let (filter_args, apply_filtering, perform_search) = match &args.command {
         ScrambleFinderCommand::Search(scramble_finder_solve_args) => (
             &scramble_finder_solve_args.filter_args,
@@ -97,7 +96,7 @@ pub fn cli_scramble_finder(args: &ScrambleFinderArgs) -> Result<(), CommandError
 
 pub fn cli_solve_known_puzzle(
     search_command_args: SolveKnownPuzzleCommandArgs,
-) -> Result<(), CommandError> {
+) -> Result<(), TwipsError> {
     let solution = solve_known_puzzle(
         search_command_args.puzzle,
         &search_command_args.scramble_setup_alg,

@@ -2,15 +2,18 @@ use cubing::kpuzzle::{KPatternBuffer, KPuzzle, KPuzzleDefinition, KTransformatio
 use instant::Instant;
 use rand::{rng, seq::IndexedRandom};
 use twips::_internal::{
-    canonical_fsm::search_generators::SearchGenerators, cli::args::BenchmarkArgs,
-    errors::CommandError, read_to_json::read_to_json,
+    canonical_fsm::search_generators::{SearchGenerators, SearchGeneratorsConstructorOptions},
+    errors::TwipsError,
+    read_to_json::read_to_json,
 };
+
+use crate::args::BenchmarkArgs;
 
 const NUM_RANDOM_MOVES: usize = 65536;
 const NUM_TEST_TRANSFORMATIONS: usize = 100_000_000;
 const ONE_MILLION: u32 = 1_000_000;
 
-pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
+pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), TwipsError> {
     let def: KPuzzleDefinition =
         read_to_json(&benchmark_args.def_args.def_file).expect("Invalid definition"); // TODO: automatic error conversion.
     let kpuzzle = KPuzzle::try_new(def).expect("Invalid definition"); // TODO: automatic error conversion.
@@ -19,10 +22,12 @@ pub fn benchmark(benchmark_args: &BenchmarkArgs) -> Result<(), CommandError> {
         &kpuzzle,
         benchmark_args
             .generator_args
-            .parse()
+            .generators()
             .enumerate_moves_for_kpuzzle(&kpuzzle),
-        &benchmark_args.metric_args.metric,
-        false,
+        SearchGeneratorsConstructorOptions {
+            metric: benchmark_args.metric_args.metric,
+            random_start: None,
+        },
     )
     .expect("Could not get search move cache"); // TODO: automatic error conversion.
 

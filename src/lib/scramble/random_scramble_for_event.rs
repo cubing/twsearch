@@ -1,7 +1,7 @@
 use cubing::{alg::Alg, kpuzzle::KPuzzle};
 
 use crate::{
-    _internal::errors::{ArgumentError, CommandError, SearchError},
+    _internal::errors::{ArgumentError, SearchError, TwipsError},
     scramble::{
         puzzles::{baby_fto::BabyFTOScrambleFinder, megaminx::megaminx_solver::MegaminxSolver},
         DerivationSeed, Puzzle,
@@ -158,8 +158,8 @@ fn solving_based_filter_and_search<
     options: &ExperimentalFilterAndOrSearchOptions,
     collapse_using_collapse_inverted_alg: bool,
     scramble_options: &ScrambleFinder::ScrambleOptions,
-) -> Result<Option<Alg>, CommandError> {
-    let alg = match solving_based_scramble_finder_cacher_map(
+) -> Result<Option<Alg>, TwipsError> {
+    let alg = solving_based_scramble_finder_cacher_map(
         |scramble_finder: &mut ScrambleFinder| -> Result<Option<Alg>, SearchError> {
             let pattern = scramble_finder
                 .get_kpuzzle()
@@ -190,10 +190,7 @@ fn solving_based_filter_and_search<
                 None
             })
         },
-    ) {
-        Ok(alg) => alg,
-        Err(err) => return Err(CommandError::SearchError(err)),
-    };
+    )?;
     Ok(alg)
 }
 
@@ -206,7 +203,7 @@ fn solving_based_filter_and_search_with_no_scramble_options<
 >(
     options: &ExperimentalFilterAndOrSearchOptions,
     collapse_using_collapse_inverted_alg: bool,
-) -> Result<Option<Alg>, CommandError> {
+) -> Result<Option<Alg>, TwipsError> {
     solving_based_filter_and_search::<ScrambleFinder>(
         options,
         collapse_using_collapse_inverted_alg,
@@ -219,9 +216,9 @@ fn random_move_filter<
 >(
     options: &ExperimentalFilterAndOrSearchOptions,
     scramble_options: &ScrambleFinder::ScrambleOptions,
-) -> Result<Option<Alg>, CommandError> {
+) -> Result<Option<Alg>, TwipsError> {
     random_move_scramble_finder_cacher_map(
-        |scramble_finder: &mut ScrambleFinder| -> Result<(), CommandError> {
+        |scramble_finder: &mut ScrambleFinder| -> Result<(), TwipsError> {
             let pattern = scramble_finder
                 .get_kpuzzle()
                 .default_pattern()
@@ -241,7 +238,7 @@ fn random_move_filter<
                 eprint!("Filtering decision: accepted")
             };
             if options.perform_search {
-                return Err(CommandError::ArgumentError(
+                return Err(TwipsError::ArgumentError(
                     "Tried to initiate a solve for a `RandomMoveScrambleFinder`".into(),
                 ));
             };
@@ -259,7 +256,7 @@ fn random_move_filter_with_no_scramble_options<
         + 'static,
 >(
     options: &ExperimentalFilterAndOrSearchOptions,
-) -> Result<Option<Alg>, CommandError> {
+) -> Result<Option<Alg>, TwipsError> {
     random_move_filter::<ScrambleFinder>(options, &NoScrambleOptions {})
 }
 
@@ -274,7 +271,7 @@ pub struct ExperimentalFilterAndOrSearchOptions<'a> {
 pub fn experimental_scramble_finder_filter_and_or_search(
     event: Event,
     options: &ExperimentalFilterAndOrSearchOptions,
-) -> Result<Option<Alg>, CommandError> {
+) -> Result<Option<Alg>, TwipsError> {
     match event {
         Event::Cube3x3x3Speedsolving => {
             solving_based_filter_and_search::<TwoPhase3x3x3ScrambleFinder>(
@@ -383,7 +380,7 @@ fn solve_using_scramble_finder<T: SolvingBasedScrambleFinder<TPuzzle = KPuzzle> 
     scramble_setup_alg: &Alg,
     mut scramble_finder: T,
     scramble_options: &T::ScrambleOptions,
-) -> Result<Option<Alg>, CommandError> {
+) -> Result<Option<Alg>, TwipsError> {
     let pattern = scramble_finder
         .get_kpuzzle()
         .default_pattern()
@@ -401,13 +398,13 @@ fn solve_using_scramble_finder_with_no_scramble_options<
 >(
     scramble_setup_alg: &Alg,
     scramble_finder: T,
-) -> Result<Option<Alg>, CommandError> {
+) -> Result<Option<Alg>, TwipsError> {
     solve_using_scramble_finder(scramble_setup_alg, scramble_finder, &NoScrambleOptions {})
 }
 pub fn solve_known_puzzle(
     puzzle: Puzzle,
     scramble_setup_alg: &Alg,
-) -> Result<Option<Alg>, CommandError> {
+) -> Result<Option<Alg>, TwipsError> {
     let alg = match puzzle {
         Puzzle::Megaminx => solve_using_scramble_finder_with_no_scramble_options(
             scramble_setup_alg,

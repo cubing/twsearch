@@ -8,8 +8,8 @@ use crate::_internal::{
         },
         search_generators::SearchGenerators,
     },
-    cli::args::MetricEnum,
     errors::SearchError,
+    notation::metric::TurnMetric,
     puzzle_traits::puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
     search::{
         hash_prune_table::{HashPruneTable, HashPruneTableSizeBounds},
@@ -126,7 +126,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> ImmutableSearchData<TPuzzle> {
         options: ImmutableSearchDataConstructionOptions,
     ) -> Result<Self, SearchError> {
         let search_generators =
-            SearchGenerators::try_new(&tpuzzle, generator_moves.clone(), &MetricEnum::Hand, false)
+            SearchGenerators::try_new(&tpuzzle, generator_moves.clone(), Default::default())
                 .unwrap();
         Self::try_from_common_options(tpuzzle, search_generators, target_patterns, options)
     }
@@ -140,26 +140,14 @@ pub struct IterativeDeepeningSearch<TPuzzle: SemiGroupActionPuzzle = KPuzzle> {
     pub prune_table: Box<dyn PruneTable<TPuzzle>>,
 }
 
+#[derive(Default)]
 pub struct IterativeDeepeningSearchConstructionOptions {
     pub search_logger: Arc<SearchLogger>,
-    pub metric: MetricEnum,
+    pub metric: TurnMetric,
     pub random_start: bool,
     pub min_prune_table_size: Option<usize>,
     pub max_prune_table_size: Option<usize>,
     pub canonical_fsm_construction_options: CanonicalFSMConstructionOptions,
-}
-
-impl Default for IterativeDeepeningSearchConstructionOptions {
-    fn default() -> Self {
-        Self {
-            search_logger: Default::default(),
-            metric: MetricEnum::Hand,
-            random_start: Default::default(),
-            min_prune_table_size: Default::default(),
-            max_prune_table_size: Default::default(),
-            canonical_fsm_construction_options: Default::default(),
-        }
-    }
 }
 
 // TODO: this is needed because the struct directly owns the prune table.

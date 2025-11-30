@@ -68,7 +68,7 @@ pub(crate) fn alg_from_moves(moves: &[Move]) -> Alg {
     Alg { nodes }
 }
 
-pub(crate) fn alg_to_moves(alg: &Alg) -> Option<Vec<Move>> {
+pub fn alg_to_moves(alg: &Alg) -> Option<Vec<Move>> {
     let mut moves: Vec<Move> = vec![];
     for alg_node in &alg.nodes {
         let AlgNode::MoveNode(r#move) = alg_node else {

@@ -1,23 +1,24 @@
+mod args;
 mod commands;
 mod serve;
 
 use commands::{
-    benchmark::benchmark,
-    canonical_algs::canonical_algs,
+    cli_benchmark::benchmark,
+    cli_canonical_algs::canonical_algs,
     cli_scramble::{cli_scramble, cli_scramble_finder, cli_solve_known_puzzle},
     cli_search::cli_search,
     gods_algorithm::cli_gods_algorithm,
 };
-use twips::_internal::{
-    cli::args::{get_options, CliCommand},
-    errors::CommandError,
+use twips::_internal::errors::TwipsError;
+
+use crate::{
+    args::{get_args, CliCommand},
+    commands::cli_derive::cli_derive,
 };
 
-use crate::commands::cli_derive::cli_derive;
-
 #[tokio::main]
-async fn main() -> Result<(), CommandError> {
-    let args = get_options();
+async fn main() -> Result<(), TwipsError> {
+    let args = get_args();
 
     match args.command {
         CliCommand::Completions(_completions_args) => {

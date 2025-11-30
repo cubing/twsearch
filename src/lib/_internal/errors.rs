@@ -1,7 +1,7 @@
 use crate::scramble::{EventError, PuzzleError};
 
 #[derive(derive_more::From, Debug)]
-pub enum CommandError {
+pub enum TwipsError {
     ArgumentError(ArgumentError),
     SearchError(SearchError),
     PuzzleError(PuzzleError),

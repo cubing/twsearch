@@ -7,7 +7,6 @@ use cubing::{
 
 use crate::{
     _internal::{
-        cli::args::VerbosityLevel,
         errors::SearchError,
         puzzle_traits::puzzle_traits::{HashablePatternPuzzle, SemiGroupActionPuzzle},
         search::{
@@ -24,7 +23,7 @@ use crate::{
                     IterativeDeepeningSearch,
                 },
             },
-            search_logger::SearchLogger,
+            search_logger::{SearchLogger, VerbosityLevel},
         },
     },
     experimental_lib_api::{derived_puzzle_search_phase::DerivedPuzzleSearchPhase, SearchPhase},

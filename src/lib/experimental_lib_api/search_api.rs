@@ -1,9 +1,11 @@
 use std::sync::Arc;
 
 use crate::_internal::{
-    canonical_fsm::search_generators::SearchGenerators,
-    cli::args::{SearchCommandOptionalArgs, VerbosityLevel},
-    errors::CommandError,
+    canonical_fsm::search_generators::{
+        Generators, SearchGenerators, SearchGeneratorsConstructorOptions,
+    },
+    errors::TwipsError,
+    notation::metric::TurnMetric,
     search::{
         hash_prune_table::HashPruneTableSizeBounds,
         iterative_deepening::{
@@ -14,12 +16,30 @@ use crate::_internal::{
             },
             search_adaptations::StoredSearchAdaptations,
         },
-        search_logger::SearchLogger,
+        search_logger::{SearchLogger, VerbosityLevel},
     },
 };
 use cubing::kpuzzle::{KPattern, KPuzzle};
 
-use super::common::PatternSource;
+#[derive(Debug, Default)]
+pub struct SearchOptions {
+    pub target_pattern: Option<KPattern>,
+    // TODO: make this optional, or move it out of `SearchOptions`.
+    pub generators: Generators,
+    pub metric: Option<TurnMetric>,
+    pub random_start: Option<bool>,
+    pub verbosity: Option<VerbosityLevel>,
+    pub individual_search_options: IndividualSearchOptions,
+}
+
+impl From<&SearchOptions> for SearchGeneratorsConstructorOptions {
+    fn from(value: &SearchOptions) -> Self {
+        Self {
+            metric: value.metric,
+            random_start: value.random_start,
+        }
+    }
+}
 
 /// Note: the `search_command_optional_args` argument is not yet ergonomic, and will be refactored.
 ///
@@ -43,30 +63,14 @@ use super::common::PatternSource;
 pub fn search(
     kpuzzle: &KPuzzle,
     search_pattern: &KPattern,
-    search_command_optional_args: SearchCommandOptionalArgs,
-) -> Result<OwnedIterativeDeepeningSearchCursor, CommandError> {
-    if search_command_optional_args.search_args.all_optimal {
-        eprintln!("⚠️ --all-optimal was specified, but is not currently implemented. Ignoring.");
-    }
-
-    let target_pattern = match search_command_optional_args
-        .scramble_and_target_pattern_optional_args
-        .experimental_target_pattern
-    {
-        Some(path_buf) => PatternSource::FilePath(path_buf).pattern(kpuzzle)?,
+    options: SearchOptions,
+) -> Result<OwnedIterativeDeepeningSearchCursor, TwipsError> {
+    let generator_moves = options.generators.enumerate_moves_for_kpuzzle(kpuzzle);
+    let search_generators = SearchGenerators::try_new(kpuzzle, generator_moves, (&options).into())?;
+    let target_pattern = match options.target_pattern {
+        Some(target_pattern) => target_pattern,
         None => kpuzzle.default_pattern(),
     };
-
-    let generator_moves = search_command_optional_args
-        .generator_args
-        .parse()
-        .enumerate_moves_for_kpuzzle(kpuzzle);
-    let search_generators = SearchGenerators::try_new(
-        kpuzzle,
-        generator_moves,
-        &search_command_optional_args.metric_args.metric,
-        search_command_optional_args.search_args.random_start,
-    )?;
     let iterative_deepening_search = <IterativeDeepeningSearch<KPuzzle>>::new_with_hash_prune_table(
         ImmutableSearchData::try_from_common_options(
             kpuzzle.clone(),
@@ -74,10 +78,7 @@ pub fn search(
             vec![target_pattern], // TODO: support multiple target patterns in API
             ImmutableSearchDataConstructionOptions {
                 search_logger: Arc::new(SearchLogger {
-                    verbosity: search_command_optional_args
-                        .verbosity_args
-                        .verbosity
-                        .unwrap_or(VerbosityLevel::Error),
+                    verbosity: options.verbosity.unwrap_or_default(),
                 }),
                 ..Default::default()
             },
@@ -86,18 +87,9 @@ pub fn search(
         HashPruneTableSizeBounds::default(),
     );
 
-    let root_continuation_condition = search_command_optional_args
-        .search_args
-        .continuation_condition()?;
     let solutions = iterative_deepening_search.owned_search(
         search_pattern,
-        IndividualSearchOptions {
-            min_num_solutions: search_command_optional_args.min_num_solutions,
-            min_depth_inclusive: search_command_optional_args.search_args.min_depth,
-            max_depth_exclusive: search_command_optional_args.search_args.max_depth,
-            root_continuation_condition,
-            ..Default::default()
-        },
+        options.individual_search_options,
         Default::default(),
     );
 
@@ -112,8 +104,8 @@ mod tests {
     };
 
     use crate::{
-        _internal::cli::args::{GeneratorArgs, SearchCommandOptionalArgs},
-        experimental_lib_api::search,
+        _internal::canonical_fsm::search_generators::Generators,
+        experimental_lib_api::{search, search_api::SearchOptions},
     };
 
     #[test]
@@ -130,14 +122,11 @@ mod tests {
         let mut solutions = search(
             kpuzzle,
             &search_pattern,
-            SearchCommandOptionalArgs {
-                generator_args: GeneratorArgs {
-                    generator_moves_string: Some(vec![
-                        parse_move!("R").clone(),
-                        parse_move!("U").clone(),
-                    ]),
-                    ..Default::default()
-                },
+            SearchOptions {
+                generators: Generators::from(vec![
+                    parse_move!("R").clone(),
+                    parse_move!("U").clone(),
+                ]),
                 ..Default::default()
             },
         )

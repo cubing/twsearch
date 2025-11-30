@@ -2,7 +2,7 @@
 
 use cubing::{alg::parse_move, kpuzzle::kpattern_from_json_file, puzzles::cube2x2x2_kpuzzle};
 use twips::{
-    _internal::{cli::args::VerbosityLevel, search::search_logger::SearchLogger},
+    _internal::search::search_logger::{SearchLogger, VerbosityLevel},
     experimental_lib_api::{KPuzzleSimpleMaskPhase, MultiPhaseSearch, MultiPhaseSearchOptions},
     scramble::{random_scramble_for_event, Event},
 };

@@ -24,7 +24,7 @@ test-warning:
 
 .PHONY: clean
 clean:
-	rm -rf ./.temp ./build ./dist ./src/js/generated-wasm/twips.* ./package-lock.json ./src/ruby-gem/tmp
+	rm -rf ./.temp ./build ./dist ./src/js/generated-wasm/twips.* ./package-lock.json ./src/ruby-gem/tmp ./src/ruby-gem/lib/twips/twips_rb.bundle 
 
 .PHONY: reset
 reset: clean

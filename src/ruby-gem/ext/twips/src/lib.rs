@@ -3,8 +3,8 @@ use std::str::FromStr;
 use magnus::{function, prelude::*, Error, Ruby};
 
 use twips::scramble::{
-    derive_scramble_for_event_seeded, random_scramble_for_event, DerivationSalt, DerivationSeed,
-    Event,
+    derive_scramble_for_event_seeded, random_scramble_for_event,
+    scramble_finder::free_memory_for_all_scramble_finders, DerivationSalt, DerivationSeed, Event,
 };
 
 fn rb_random_scramble_for_event(ruby: &Ruby, event_str: String) -> Result<String, Error> {
@@ -40,6 +40,12 @@ fn rb_derive_scramble_for_event(
         .map_err(|e| Error::new(ruby.exception_runtime_error(), e))
 }
 
+fn rb_free_memory_for_all_scramble_finders() -> u32 {
+    // We cast to `u32` for the public API so that it's more stable across environments (including WASM).
+    // If we've allocated more than `u32::MAX` scramble finders, I'd be *very* impressed.
+    free_memory_for_all_scramble_finders() as u32
+}
+
 #[magnus::init]
 fn init(ruby: &Ruby) -> Result<(), Error> {
     let module = ruby.define_module("Twips")?;
@@ -52,6 +58,11 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
     module.define_singleton_method(
         "derive_scramble_for_event",
         function!(rb_derive_scramble_for_event, 3),
+    )?;
+
+    module.define_singleton_method(
+        "free_memory_for_all_scramble_finders",
+        function!(rb_free_memory_for_all_scramble_finders, 0),
     )?;
 
     Ok(())

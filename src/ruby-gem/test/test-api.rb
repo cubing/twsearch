@@ -10,3 +10,4 @@ puts(Twips::derive_scramble_for_event(
   ["EBNLEND@MABLNHJFHGFEKFIA@DNBKABHHNANA@FD@KKADJAKNFCIJNJGIFCBLEDF", "scrambles", "333", "r1", "g1", "a1", "333", "sub1"],
   "333"
 ))
+puts(Twips::free_memory_for_all_scramble_finders())

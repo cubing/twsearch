@@ -3,11 +3,9 @@ use derive_more::From;
 use std::{path::PathBuf, process::exit};
 
 use crate::_internal::{
-    cli::{
-        args::{DefOnlyArgs, ScrambleAndTargetPatternOptionalArgs},
-        io::read_to_json,
-    },
+    cli::args::{DefOnlyArgs, ScrambleAndTargetPatternOptionalArgs},
     errors::{ArgumentError, CommandError},
+    read_to_json::read_to_json,
 };
 use cubing::{
     alg::Alg,

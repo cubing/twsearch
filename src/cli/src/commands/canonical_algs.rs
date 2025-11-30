@@ -1,8 +1,9 @@
 use cubing::kpuzzle::{KPuzzle, KPuzzleDefinition};
 use twips::_internal::{
     canonical_fsm::{canonical_fsm::CanonicalFSM, search_generators::SearchGenerators},
-    cli::{args::CanonicalAlgsArgs, io::read_to_json},
+    cli::args::CanonicalAlgsArgs,
     errors::CommandError,
+    read_to_json::read_to_json,
 };
 
 pub fn canonical_algs(args: &CanonicalAlgsArgs) -> Result<(), CommandError> {

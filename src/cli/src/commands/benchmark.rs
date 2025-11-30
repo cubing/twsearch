@@ -2,9 +2,8 @@ use cubing::kpuzzle::{KPatternBuffer, KPuzzle, KPuzzleDefinition, KTransformatio
 use instant::Instant;
 use rand::{rng, seq::IndexedRandom};
 use twips::_internal::{
-    canonical_fsm::search_generators::SearchGenerators,
-    cli::{args::BenchmarkArgs, io::read_to_json},
-    errors::CommandError,
+    canonical_fsm::search_generators::SearchGenerators, cli::args::BenchmarkArgs,
+    errors::CommandError, read_to_json::read_to_json,
 };
 
 const NUM_RANDOM_MOVES: usize = 65536;

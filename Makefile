@@ -76,7 +76,7 @@ publish-rust: publish-rust-main publish-rust-ffi
 
 .PHONY: publish-rust-main
 publish-rust-main:
-	cargo publish --workspace --exclude cargo-bin --exclude twips-ffi
+	cargo publish --workspace --exclude cargo-bin --exclude twips-rb --exclude twips-ffi
 
 .PHONY: setup-rust
 setup-rust: setup-gitignore-dirs
@@ -204,7 +204,7 @@ RUBY = rv ruby run ${RUBY_VERSION} -- -C ./src/ruby-gem/
 
 .PHONY: test-ruby
 test-ruby: build-ruby
-	${RUBY} ./test/test-222.rb
+	${RUBY} ./test/test-api.rb
 
 .PHONY: build-ruby
 build-ruby: setup-ruby

@@ -1,6 +1,13 @@
 [workspace]
 resolver = "2"
-members = ["src/lib", "src/cli", "src/ffi", "src/wasm", "script/cargo-run-bin"]
+members = [
+  "src/lib",
+  "src/cli",
+  "src/ffi",
+  "src/ruby-gem/ext/twips",
+  "src/wasm",
+  "script/cargo-run-bin",
+]
 default-members = ["src/cli"]
 
 [workspace.package]

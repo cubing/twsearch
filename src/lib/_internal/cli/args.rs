@@ -9,7 +9,10 @@ use std::io::stdout;
 use std::path::PathBuf;
 use std::process::exit;
 
+use crate::_internal::errors::{ArgumentError, CommandError};
 use crate::_internal::puzzle_traits::puzzle_traits::GroupActionPuzzle;
+use crate::_internal::search::iterative_deepening::continuation_condition::ContinuationCondition;
+use crate::_internal::search::iterative_deepening::solution_moves::alg_to_moves;
 use crate::_internal::search::prune_table_trait::Depth;
 use crate::scramble::{DerivationSalt, DerivationSeed, Puzzle};
 
@@ -94,15 +97,40 @@ pub struct CommonSearchArgs {
     /// Continue (or start) search after this alg.
     /// If the alg is a valid solution, it will be skipped.
     #[clap(long, group = "continue_search")]
-    pub continue_after: Option<Alg>,
+    continue_after: Option<Alg>,
 
     /// Continue (or start) search at this alg.
     /// If the alg is a valid solution, it will be the first one returned.
     #[clap(long, group = "continue_search")]
-    pub continue_at: Option<Alg>,
+    continue_at: Option<Alg>,
 
     #[command(flatten)]
     pub performance_args: PerformanceArgs,
+}
+
+impl CommonSearchArgs {
+    pub fn continuation_condition(&self) -> Result<ContinuationCondition, CommandError> {
+        Ok(match (&self.continue_after, &self.continue_at) {
+            (None, None) => ContinuationCondition::None,
+            (Some(after), None) => {
+                ContinuationCondition::After(Self::process_continuation_alg_arg(after)?)
+            }
+            (None, Some(at)) => ContinuationCondition::At(Self::process_continuation_alg_arg(at)?),
+            (Some(_), Some(_)) => {
+                // TODO: figure out how to make this unrepresentable using idiomatic `clap` config.
+                panic!("Specifying `--continue-after` and `--continue-at` simultaneously is supposed to be impossible.");
+            }
+        })
+    }
+
+    fn process_continuation_alg_arg(alg: &Alg) -> Result<Vec<Move>, CommandError> {
+        let Some(moves) = alg_to_moves(alg) else {
+            return Err(CommandError::ArgumentError(ArgumentError {
+                description: "Non-moves used in the continuation alg.".to_owned(),
+            }));
+        };
+        Ok(moves)
+    }
 }
 
 #[derive(Args, Debug)]

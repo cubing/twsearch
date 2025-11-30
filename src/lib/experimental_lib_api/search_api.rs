@@ -3,26 +3,21 @@ use std::sync::Arc;
 use crate::_internal::{
     canonical_fsm::search_generators::SearchGenerators,
     cli::args::{SearchCommandOptionalArgs, VerbosityLevel},
-    errors::{ArgumentError, CommandError},
+    errors::CommandError,
     search::{
         hash_prune_table::HashPruneTableSizeBounds,
         iterative_deepening::{
-            continuation_condition::ContinuationCondition,
             individual_search::IndividualSearchOptions,
             iterative_deepening_search::{
                 ImmutableSearchData, ImmutableSearchDataConstructionOptions,
                 IterativeDeepeningSearch, OwnedIterativeDeepeningSearchCursor,
             },
             search_adaptations::StoredSearchAdaptations,
-            solution_moves::alg_to_moves,
         },
         search_logger::SearchLogger,
     },
 };
-use cubing::{
-    alg::{Alg, Move},
-    kpuzzle::{KPattern, KPuzzle},
-};
+use cubing::kpuzzle::{KPattern, KPuzzle};
 
 use super::common::PatternSource;
 
@@ -91,22 +86,9 @@ pub fn search(
         HashPruneTableSizeBounds::default(),
     );
 
-    let root_continuation_condition = {
-        match (
-            search_command_optional_args.search_args.continue_after,
-            search_command_optional_args.search_args.continue_at,
-        ) {
-            (None, None) => ContinuationCondition::None,
-            (Some(after), None) => {
-                ContinuationCondition::After(process_continuation_alg_arg(&after)?)
-            }
-            (None, Some(at)) => ContinuationCondition::At(process_continuation_alg_arg(&at)?),
-            (Some(_), Some(_)) => {
-                // TODO: figure out how to make this unrepresentable using idiomatic `clap` config.
-                panic!("Specifying `--continue-after` and `--continue-at` simultaneously is supposed to be impossible.");
-            }
-        }
-    };
+    let root_continuation_condition = search_command_optional_args
+        .search_args
+        .continuation_condition()?;
     let solutions = iterative_deepening_search.owned_search(
         search_pattern,
         IndividualSearchOptions {
@@ -120,15 +102,6 @@ pub fn search(
     );
 
     Ok(solutions)
-}
-
-fn process_continuation_alg_arg(alg: &Alg) -> Result<Vec<Move>, CommandError> {
-    let Some(moves) = alg_to_moves(alg) else {
-        return Err(CommandError::ArgumentError(ArgumentError {
-            description: "Non-moves used in the continuation alg.".to_owned(),
-        }));
-    };
-    Ok(moves)
 }
 
 #[cfg(test)]

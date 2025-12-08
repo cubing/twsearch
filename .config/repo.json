@@ -1,0 +1,6 @@
+{
+  "$schema": "../node_modules/@lgarron-bin/repo/schemas/repo.json",
+  "scripts": {
+    "postVersion": ["./script/ruby-version/sync.ts"]
+  }
+}

@@ -31,7 +31,7 @@ reset: clean
 	rm -rf ./emsdk ./node_modules ./target ./.bin ./src/ruby-gem/target
 
 .PHONY: lint
-lint: lint-js lint-rust
+lint: lint-js lint-rust lint-ruby
 
 .PHONY: format
 format: format-js format-rust
@@ -205,6 +205,10 @@ RUBY = rv ruby run ${RUBY_VERSION} -- -C ./src/ruby-gem/
 .PHONY: test-ruby
 test-ruby: build-ruby
 	${RUBY} ./test/test-api.rb
+
+.PHONY: lint-ruby
+lint-ruby:
+	bun run -- script/ruby-version/check.ts
 
 .PHONY: build-ruby
 build-ruby: setup-ruby

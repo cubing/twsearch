@@ -66,6 +66,7 @@ jobs:
       # TODO: XDG conventions 😕
       - run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - run: make test-ruby
+      - run: make lint-ruby
 
   build-x86_64-apple-darwin:
     runs-on: macos-latest

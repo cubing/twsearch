@@ -23,7 +23,7 @@
     "cmd-ts-too": "^0.15.3",
     "compare-versions": "^6.1.1",
     "esbuild": "^0.25.11",
-    "path-class": "^0.7.2",
+    "path-class": "^0.10.3",
     "printable-shell-command": "^2.7.4"
   }
 }

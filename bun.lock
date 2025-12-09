@@ -18,7 +18,7 @@
         "cmd-ts-too": "^0.15.3",
         "compare-versions": "^6.1.1",
         "esbuild": "^0.25.11",
-        "path-class": "^0.7.2",
+        "path-class": "^0.10.3",
         "printable-shell-command": "^2.7.4",
       },
     },
@@ -158,7 +158,7 @@
 
     "ms": ["ms@2.1.3", "", {}, "sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA=="],
 
-    "path-class": ["path-class@0.7.2", "", { "dependencies": { "@types/node": "^24.7.1", "xdg-basedir": "^5.1.0" } }, "sha512-vXj1HNmjXZTSPNLaFStTCAIFlMVls9TW44lpI+CFeFbP7vZu7hvQ76ObHABm88NcWrizYQcqqOWeHRnc1TRZtA=="],
+    "path-class": ["path-class@0.10.3", "", { "dependencies": { "@types/node": "^24.7.1", "xdg-basedir": "^5.1.0" } }, "sha512-teUDitVwoVlJTDOXb/WGwDcxRvcwVVdDh8IpfYzZ+E4FaPNtfE7py0eNE2mCNZ10m1IckTpQjCG2cujpw42tTw=="],
 
     "printable-shell-command": ["printable-shell-command@2.7.4", "", { "dependencies": { "path-class": ">=0.10.3", "type-fest": ">=5.1.0" }, "optionalDependencies": { "@types/bun": "^1.2.20", "@types/node": "^24.2.0" } }, "sha512-J5yL44IhDKrFXkdkH2mdNE+weTuiZum8fQDeIc83/Zju+Vpy64paS8RemC5gVhxu0A0j5SWsZZymXh6CTDzybA=="],
 
@@ -175,7 +175,5 @@
     "undici-types": ["undici-types@7.16.0", "", {}, "sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw=="],
 
     "xdg-basedir": ["xdg-basedir@5.1.0", "", {}, "sha512-GCPAHLvrIH13+c0SuacwvRYj2SxJXQ4kaVTT5xgL3kPrz56XxkF21IGhjSE1+W0aw7gpBWRGXLCPnPby6lSpmQ=="],
-
-    "printable-shell-command/path-class": ["path-class@0.10.3", "", { "dependencies": { "@types/node": "^24.7.1", "xdg-basedir": "^5.1.0" } }, "sha512-teUDitVwoVlJTDOXb/WGwDcxRvcwVVdDh8IpfYzZ+E4FaPNtfE7py0eNE2mCNZ10m1IckTpQjCG2cujpw42tTw=="],
   }
 }

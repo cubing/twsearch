@@ -1,0 +1,4 @@
+#!/usr/bin/env -S bun run --
+
+// We place the implementation in a `.ts` file, to avoid edge cases with editors and code tooling.
+import "../ruby.ts";

@@ -65,3 +65,11 @@ fn init(ruby: &Ruby) -> Result<(), Error> {
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn stub_test() -> Result<(), String> {
+        Ok(())
+    }
+}

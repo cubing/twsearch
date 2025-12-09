@@ -219,3 +219,7 @@ build-ruby: setup-ruby
 setup-ruby:
 	${RUBY} -e "" || rv ruby install ${RUBY_VERSION} # TODO: remove this once https://github.com/spinel-coop/rv/issues/72 is available.
 	${RUBY} -S bundle install
+
+.PHONY: ruby-update-lockfile
+ruby-update-lockfile:
+	${RUBY} -S bundle lock

@@ -97,7 +97,7 @@ test-rust-build-version: build-rust
 .PHONY: test-rust-lib
 test-rust-lib: setup-rust test-cargo-doc
 	# `twips-ffi` is covered by `make test-rust-ffi-rs`
-	cargo test --workspace --exclude twips-ffi
+	cargo test --workspace --exclude twips-ffi --exclude twips-rb
 
 .PHONY: test-cargo-doc
 test-cargo-doc: setup-rust
@@ -205,6 +205,7 @@ RUBY = rv ruby run ${RUBY_VERSION} -- -C ./src/ruby-gem/
 .PHONY: test-ruby
 test-ruby: build-ruby
 	${RUBY} ./test/test-api.rb
+	cargo test --package twips-rb
 
 .PHONY: lint-ruby
 lint-ruby:

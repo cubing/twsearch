@@ -40,10 +40,8 @@ fn rb_derive_scramble_for_event(
         .map_err(|e| Error::new(ruby.exception_runtime_error(), e))
 }
 
-fn rb_free_memory_for_all_scramble_finders() -> u32 {
-    // We cast to `u32` for the public API so that it's more stable across environments (including WASM).
-    // If we've allocated more than `u32::MAX` scramble finders, I'd be *very* impressed.
-    free_memory_for_all_scramble_finders() as u32
+fn rb_free_memory_for_all_scramble_finders() -> usize {
+    free_memory_for_all_scramble_finders()
 }
 
 #[magnus::init]

@@ -64,6 +64,7 @@ jobs:
       - uses: ./.github/workflows/install-pinned-toolchains
       # TODO: XDG conventions 😕
       - run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - run: make setup-ruby
       - run: make test-ruby
       - run: make lint-ruby
 

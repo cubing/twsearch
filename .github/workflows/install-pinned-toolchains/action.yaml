@@ -4,15 +4,16 @@ description: "Install pinned toolchains"
 runs:
   using: "composite"
   steps:
-  # We don't install rust here becasue `cargo` is pre-installed and `rust-toolchain.toml` handles the rest.
-  # We don't install a specific C++ compiler here because the default in the GH Actions runner works for us.
-  - uses: actions/checkout@v4
-    with:
+    # We don't install Rust here because `cargo` is pre-installed and `rust-toolchain.toml` handles the rest.
+    - uses: actions/checkout@v4
+      with:
         fetch-depth: 0 # needed for tags for `git describe --tags`
-  - uses: actions/setup-node@v4
-    with:
-      node-version: 22.3.0
-  - uses: oven-sh/setup-bun@v2
-    with:
-      bun-version: 1.2.7
-  - run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/spinel-coop/rv/releases/download/v0.3.0/rv-installer.sh | sh
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 22.3.0
+    - uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: 1.2.7
+    - shell: bash
+      # We don't need this for all the jobs, but it's wicked fast to just download the binary and allows us to avoid hacks for the engine version checks.
+      run: ./script/install-rv-for-ci.ts

@@ -3,6 +3,7 @@
 // TOOD: remove this once https://github.com/oven-sh/bun/issues/5846 is implemented.
 // TODO: turn this into a package?
 
+import { platform } from "node:os";
 import { exit } from "node:process";
 import { satisfies } from "compare-versions";
 import { Path } from "path-class";
@@ -17,8 +18,12 @@ let exitCode = 0;
 async function checkEngine(
   engineID: string,
   versionCommand: PrintableShellCommand,
-  options?: { trimPrefix?: string },
+  options?: { trimPrefix?: string; skipForOS?: Set<string> },
 ) {
+  if (options?.skipForOS?.has(platform())) {
+    console.info(`Skipping version check for ${engineID} on ${platform()}`);
+    return;
+  }
   const engineRequirement = engines[engineID];
 
   let engineVersion: string;
@@ -58,6 +63,7 @@ async function checkEngines(): Promise<void> {
     checkEngine("node", new PrintableShellCommand("node", ["--version"])),
     checkEngine("rv", new PrintableShellCommand("rv", ["--version"]), {
       trimPrefix: "rv ",
+      skipForOS: new Set(["win32"]),
     }),
   ]);
 }

@@ -15,3 +15,4 @@ runs:
   - uses: oven-sh/setup-bun@v2
     with:
       bun-version: 1.2.7
+  - run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/spinel-coop/rv/releases/download/v0.3.0/rv-installer.sh | sh

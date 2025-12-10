@@ -62,7 +62,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/workflows/install-pinned-toolchains
-      - run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/spinel-coop/rv/releases/download/v0.2.0/rv-installer.sh | sh
       # TODO: XDG conventions 😕
       - run: echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
       - run: make test-ruby

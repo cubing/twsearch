@@ -17,6 +17,7 @@ let exitCode = 0;
 async function checkEngine(
   engineID: string,
   versionCommand: PrintableShellCommand,
+  options?: { trimPrefix?: string },
 ) {
   const engineRequirement = engines[engineID];
 
@@ -31,6 +32,14 @@ async function checkEngine(
     );
     exitCode = 1;
     return;
+  }
+  if (options?.trimPrefix) {
+    if (!engineVersion.startsWith(options.trimPrefix)) {
+      throw new Error(
+        "Version command output does not start with the expected prefix.",
+      );
+    }
+    engineVersion = engineVersion.slice(options.trimPrefix.length);
   }
 
   if (!satisfies(engineVersion, engineRequirement)) {
@@ -47,6 +56,9 @@ async function checkEngines(): Promise<void> {
   await Promise.all([
     checkEngine("bun", new PrintableShellCommand("bun", ["--version"])),
     checkEngine("node", new PrintableShellCommand("node", ["--version"])),
+    checkEngine("rv", new PrintableShellCommand("rv", ["--version"]), {
+      trimPrefix: "rv ",
+    }),
   ]);
 }
 

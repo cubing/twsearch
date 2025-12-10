@@ -7,7 +7,8 @@
   "engines-comment": "`node` 22.3.0 and `bun` 1.2.7 are needed for `globalThis.process.getBuiltinModule(…)`, which helps bundlers avoid thinking our `node` shims require packages from a package manager.",
   "engines": {
     "node": ">=22.3.0",
-    "bun": ">=1.2.7"
+    "bun": ">=1.2.7",
+    "rv": ">=0.3.0"
   },
   "dependencies": {
     "cubing": "v0.59.0"

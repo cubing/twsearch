@@ -7,10 +7,5 @@
   },
   "[json]": {
     "editor.defaultFormatter": "biomejs.biome"
-  },
-  "files.associations": {
-    "*.html": "html",
-    "*.Makefile": "makefile",
-    "libtwips_ffi.h": "c"
   }
 }

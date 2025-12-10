@@ -205,6 +205,7 @@ RUBY = rv ruby run ${RUBY_VERSION} -- -C ./src/ruby-gem/
 .PHONY: test-ruby
 test-ruby: build-ruby
 	${RUBY} ./test/test-api.rb
+	# TODO: https://github.com/spinel-coop/rv/issues/233
 	${RUBY} -e "system(\"cargo test --package twips-rb\")"
 
 .PHONY: lint-ruby

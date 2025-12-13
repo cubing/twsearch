@@ -2,6 +2,11 @@
 strip = false # TODO: why does `true` and `"symbols"` not work? (Also, this setting might not even affect the WASM output?)
 opt-level = "z"
 lto = true
+codegen-units = 1
+panic = "abort"
 
 [build]
 rustflags = ["-C", "target-feature=+bulk-memory"]
+
+[unstable]
+build-std = ["core", "alloc", "std", "panic_abort"]

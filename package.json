@@ -15,7 +15,7 @@
   "devDependencies": {
     "@biomejs/biome": "^v2.3.2",
     "@cubing/dev-config": "v0.3.6",
-    "@lgarron-bin/repo": ">=0.13.14",
+    "@lgarron-bin/repo": ">=0.14.0",
     "@types/bun": "^1.3.1",
     "@types/node": "^24.9.2",
     "ba": "^0.0.5",

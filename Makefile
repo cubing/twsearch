@@ -127,7 +127,7 @@ test-rust-example-readme_example: setup-rust
 
 .PHONY: benchmark-rust
 benchmark-rust: setup-rust
-	cargo run --release -- benchmark samples/json/benchmark/benchmark-3x3x3.def.json
+	cargo run --release -- benchmark samples/benchmark/benchmark-3x3x3.def.json
 
 # Rust WASM
 

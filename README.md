@@ -50,8 +50,8 @@ Examples (using files in the repo):
 twips search \
   --generator-moves "U,F,R" \
   --min-num-solutions 10 \
-  samples/json/3x3x3/3x3x3-Reid.def.json \
-  samples/json/3x3x3/T-perm.scramble.json
+  samples/3x3x3/3x3x3-Reid.def.json \
+  samples/3x3x3/T-perm.scramble.json
 ```
 
 ```shell
@@ -68,7 +68,7 @@ twips solve-known-puzzle 3x3x3 "U' F2 U' R2 F2 D' B2 D B2 U L2 U2 R2 L2 F2 L' D2
 # Calculate the graphs for God's algorithm for 2×2×2
 twips gods-algorithm \
   --generator-moves U,F,R \
-  samples/json/2x2x2/2x2x2.kpuzzle.json
+  samples/2x2x2/2x2x2.kpuzzle.json
 ```
 
 ```shell

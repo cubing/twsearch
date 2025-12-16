@@ -29,8 +29,8 @@ Install using one of:
 brew install --HEAD cubing/cubing/twips
 
 # cargo (using `rustup`: https://rustup.rs/)
-cargo install --no-default-features twips-cli # option 1: without SIMD
-cargo +nightly install twips-cli # option 2: with experimental SIMD
+cargo install --locked --no-default-features twips-cli # option 1: without SIMD
+cargo +nightly install --locked twips-cli # option 2: with experimental SIMD
 twips completions <your shell> # Get completions for your shell
 
 # From the source repo

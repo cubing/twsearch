@@ -67,7 +67,7 @@ lint-rust: test-cargo-doc
 
 .PHONY: format-rust
 format-rust:
-	cargo clippy --fix --allow-no-vcs
+	cargo clippy --fix
 	cargo fmt
 
 .PHONY: publish-rust

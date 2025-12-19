@@ -62,12 +62,12 @@ build-rust:
 
 .PHONY: lint-rust
 lint-rust: test-cargo-doc
-	cargo clippy -- --deny warnings
+	cargo clippy --workspace --all-targets -- --deny warnings
 	cargo fmt --check
 
 .PHONY: format-rust
 format-rust:
-	cargo clippy --fix
+	cargo clippy --workspace --all-targets --fix --allow-dirty -- --deny warnings
 	cargo fmt
 
 .PHONY: publish-rust

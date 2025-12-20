@@ -25,6 +25,7 @@
     "compare-versions": "^6.1.1",
     "esbuild": "^0.25.11",
     "path-class": ">=0.10.13",
-    "printable-shell-command": "^4.0.3"
+    "printable-shell-command": "^4.0.3",
+    "typescript": "^5.9.3"
   }
 }

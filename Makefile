@@ -15,11 +15,16 @@ test: \
 	test-warning \
 	test-rust \
 	test-rust-ffi \
-	benchmark-rust
+	benchmark-rust \
+	test-scripts
 
 .PHONY: test-warning
 test-warning:
 	@echo "Warning: tests are slow to run right now."
+
+.PHONY: test-scripts
+test-scripts:
+	bun run -- 'script/cubing-def.ts' 2x2x2
 
 .PHONY: clean
 clean:

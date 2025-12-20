@@ -13,7 +13,6 @@
         "@lgarron-bin/repo": ">=0.14.0",
         "@types/bun": "^1.3.1",
         "@types/node": "^24.9.2",
-        "ba": "^0.0.5",
         "barely-a-dev-server": "^0.8.1",
         "cmd-ts-too": "^0.15.3",
         "compare-versions": "^6.1.1",
@@ -130,15 +129,11 @@
 
     "ansi-regex": ["ansi-regex@6.1.0", "", {}, "sha512-7HSX4QQb4CspciLpVFwyRe79O3xsIZDDLER21kERQ71oaPodF8jL725AgJMFAYbooIqolJoRLuM81SpeUkpkvA=="],
 
-    "ba": ["ba@0.0.5", "", { "dependencies": { "cli": "0.3.6" }, "bin": { "ba": "./bin/ba" } }, "sha512-n1dOi02tuCCR5uT3Zq/o0QLq7XnapCJYLLyrtjMlmb1/eZy5LYIUGp3pVk5OZcv2gfdyi5MXZ6GEdluSfpiBig=="],
-
     "barely-a-dev-server": ["barely-a-dev-server@0.8.1", "", { "dependencies": { "@cubing/dev-config": "^0.3.1" }, "peerDependencies": { "esbuild": "^0.25.0" } }, "sha512-RKncr0hjC8zNt3WCcD7fDUBHERPBEOarKtlXZrbkF8M8fK8nBhOl9283AcMWzlbgxMEjS34x+Fah3kLf4snm5Q=="],
 
     "bun-types": ["bun-types@1.3.1", "", { "dependencies": { "@types/node": "*" }, "peerDependencies": { "@types/react": "^19" } }, "sha512-NMrcy7smratanWJ2mMXdpatalovtxVggkj11bScuWuiOoXTiKIu2eVS1/7qbyI/4yHedtsn175n4Sm4JcdHLXw=="],
 
     "chalk": ["chalk@5.4.1", "", {}, "sha512-zgVZuo2WcZgfUEmsn6eO3kINexW8RAE4maiQ8QNs8CtpPCSyMiYsULR3HQYkm3w8FIA3SberyMJMSldGsW+U3w=="],
-
-    "cli": ["cli@0.3.6", "", {}, "sha512-pkpbZfMM4vG4qlkujkBIy/sLDfk9f07GN2vcssb9WuQDLfvg2wpxPmhNoFyZ7WQIfqdQM3ZniAuyqUO7dS4Ssg=="],
 
     "cmd-ts-too": ["cmd-ts-too@0.15.3", "", { "dependencies": { "chalk": "^5.3.0", "debug": "^4.3.7", "didyoumean": "^1.2.2", "strip-ansi": "^7.1.0" } }, "sha512-B16GQEn0fENaOfFXxJRJDecYjDxs8Mcm2cU4jhMwxl+fbgTnLjoD+dIw/yTdMDDNQssgoDqbiTSCKcXTitisvA=="],
 

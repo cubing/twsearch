@@ -20,7 +20,17 @@ Twizzle Search powers alg search and scramble functionality for [Twizzle](https:
     - Great performance out of the box for a wide variety of puzzles.
     - Tunable optimizations for heavy-duty searches, including reusable prune tables for time-memory tradeoff.
 
-## Example usage
+## Usage
+
+### Using `cubing.js`
+
+`twips` powers scrambling and searching in `cubing.js`:
+
+- [`randomScrambleForEvent(…)`](https://js.cubing.net/cubing/scramble/)
+- [`experimentalSolveTwips(…)`](https://js.cubing.net/cubing/api/functions/search.experimentalSolveTwips.html)
+- [Experimental text UI](https://experiments.cubing.net/cubing.js/twips/text-ui.html)
+
+### Command-line usage
 
 Install using one of:
 

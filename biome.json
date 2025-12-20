@@ -2,7 +2,7 @@
   "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
   "extends": ["./node_modules/@cubing/dev-config/biome/biome.json"],
   "files": {
-    "includes": ["**", "!.bin", "!.temp", "!dist"]
+    "includes": ["**", "!.bin", "!.temp", "!dist", "!target"]
   },
   "linter": {
     "rules": {

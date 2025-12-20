@@ -16,6 +16,7 @@
         "@types/bun": "^1.3.1",
         "@types/node": "^24.9.2",
         "barely-a-dev-server": "^0.8.1",
+        "bun-dx": "^0.1.3",
         "compare-versions": "^6.1.1",
         "esbuild": "^0.25.11",
         "path-class": ">=0.10.13",
@@ -135,6 +136,8 @@
     "ansi-regex": ["ansi-regex@6.1.0", "", {}, "sha512-7HSX4QQb4CspciLpVFwyRe79O3xsIZDDLER21kERQ71oaPodF8jL725AgJMFAYbooIqolJoRLuM81SpeUkpkvA=="],
 
     "barely-a-dev-server": ["barely-a-dev-server@0.8.1", "", { "dependencies": { "@cubing/dev-config": "^0.3.1" }, "peerDependencies": { "esbuild": "^0.25.0" } }, "sha512-RKncr0hjC8zNt3WCcD7fDUBHERPBEOarKtlXZrbkF8M8fK8nBhOl9283AcMWzlbgxMEjS34x+Fah3kLf4snm5Q=="],
+
+    "bun-dx": ["bun-dx@0.1.3", "", { "bin": { "bun-dx": "bin/bun-dx.ts" } }, "sha512-ZtX+hJxnhW7FaEF4PkzC/ANvHRHx4JYRP5UoQVVNEyg6rzXcx8f9FPT+tQTYXv9ewUVUqmAH17mDjb54m/vqcw=="],
 
     "bun-types": ["bun-types@1.3.1", "", { "dependencies": { "@types/node": "*" }, "peerDependencies": { "@types/react": "^19" } }, "sha512-NMrcy7smratanWJ2mMXdpatalovtxVggkj11bScuWuiOoXTiKIu2eVS1/7qbyI/4yHedtsn175n4Sm4JcdHLXw=="],
 

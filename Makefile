@@ -193,12 +193,12 @@ lint-js: lint-js-biome lint-js-tsc
 
 .PHONY: lint-js-biome
 lint-js-biome: setup-js
-	bun x @biomejs/biome check
+	bun x -- bun-dx --package @biomejs/biome biome -- check
 
 .PHONY: lint-js-tsc
 lint-js-tsc: setup-js build-rust-wasm
-	bun x tsc --noEmit --project .
+	bun x -- bun-dx --package typescript tsc -- --noEmit --project ./tsconfig.json
 
 .PHONY: format-js
 format-js: setup-js
-	bun x @biomejs/biome check --write
+	bun x -- bun-dx --package @biomejs/biome biome -- check --write

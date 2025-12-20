@@ -1,36 +1,30 @@
-#!/usr/bin/env bun
+#!/usr/bin/env -S bun run --
 
-import { exit } from "node:process";
+import { argv } from "node:process";
+import { argument, choice, message, object } from "@optique/core";
+import { run } from "@optique/run";
 import { puzzles } from "cubing/puzzles";
+import { Path } from "path-class";
 
-const {
-  binary,
-  string: cmdString,
-  command,
-  positional,
-  run,
-} = await import("cmd-ts-too");
-
-const app = command({
-  name: "cubing-def",
-  description: "Example: cubing-def 3x3x3",
-  args: {
-    puzzleID: positional({
-      type: cmdString,
-      displayName: "puzzle ID",
-    }),
+const { puzzleID } = run(
+  object({
+    puzzleID: argument(choice(Object.keys(puzzles), { metavar: "PUZZLE" })),
+  }),
+  {
+    programName: new Path(argv[1]).basename.path,
+    description: message`Example: cubing-def 3x3x3`,
+    help: "option",
+    completion: {
+      mode: "option",
+      name: "plural",
+    },
   },
-  handler: async ({ puzzleID }) => {
-    const puzzle = puzzles[puzzleID];
-    if (!puzzle) {
-      console.error("Invalid puzzle ID!");
-      exit(1);
-    }
+);
 
-    console.log(
-      JSON.stringify((await puzzle.kpuzzle()).definition, null, "  "),
-    );
-  },
-});
+const puzzle = puzzles[puzzleID];
+if (!puzzle) {
+  // This should have been prevented by the parser.
+  throw new Error("Invalid puzzle ID!") as never;
+}
 
-await run(binary(app), process.argv);
+console.log(JSON.stringify((await puzzle.kpuzzle()).definition, null, "  "));

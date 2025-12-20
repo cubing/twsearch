@@ -11,10 +11,11 @@
         "@biomejs/biome": "^v2.3.2",
         "@cubing/dev-config": ">=0.8.1",
         "@lgarron-bin/repo": ">=0.14.2",
+        "@optique/core": "^0.8.1",
+        "@optique/run": "^0.8.1",
         "@types/bun": "^1.3.1",
         "@types/node": "^24.9.2",
         "barely-a-dev-server": "^0.8.1",
-        "cmd-ts-too": "^0.15.3",
         "compare-versions": "^6.1.1",
         "esbuild": "^0.25.11",
         "path-class": ">=0.10.13",
@@ -108,6 +109,10 @@
     "@lgarron-bin/repo-x86_64-pc-windows": ["@lgarron-bin/repo-x86_64-pc-windows@0.14.2", "", { "os": "win32", "cpu": "x64", "bin": { "repo-x86_64-pc-windows": "repo-x86_64-pc-windows.exe" } }, "sha512-5NfCtG9aEkx5LUDajWyW00lxNpCRvjYObdTOMSOWRCgDCVGdHu6DG1smvl33AeIYnGSFKdQtpXnka363nUQvqg=="],
 
     "@lgarron-bin/repo-x86_64-unknown-linux-gnu": ["@lgarron-bin/repo-x86_64-unknown-linux-gnu@0.14.2", "", { "os": "linux", "cpu": "x64", "bin": { "repo-x86_64-unknown-linux-gnu": "repo-x86_64-unknown-linux-gnu" } }, "sha512-kdwf0tis0VxPRG3QJa/S2lvpWVc6kxmJPMnnpgSgs4l5tKa1EQsEjs6be0dbO4VkUSy8OLF+78IBLlKX7fER4g=="],
+
+    "@optique/core": ["@optique/core@0.8.1", "", {}, "sha512-0QMSjnAi2KY7iquK68unTiSPQfFTVm9P4p67MRWloJiBCgAVOxveYgn8cGYH49vHSWA7CWv53bP5AJb6qQyf5w=="],
+
+    "@optique/run": ["@optique/run@0.8.1", "", { "dependencies": { "@optique/core": "0.8.1" } }, "sha512-lgGFktZCoRI0tfmPqrbxwMpt0itSC2lK24ES+axdqS6gckDMjCG8Tti3MHDdvFXfBF2PQXUZcqn4p/wmOqBdTA=="],
 
     "@tweenjs/tween.js": ["@tweenjs/tween.js@23.1.3", "", {}, "sha512-vJmvvwFxYuGnF2axRtPYocag6Clbb5YS7kLL+SO/TeVFzHqDIWrNKYtcsPMibjDx9O+bu+psAy9NKfWklassUA=="],
 

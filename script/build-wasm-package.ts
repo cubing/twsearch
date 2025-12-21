@@ -86,6 +86,6 @@ await build({
   loader: { ".wasm": "binary" },
   outdir: distDir.path,
   banner: {
-    js: `// Generated from \`twips\` ${version}`,
+    js: `// Generated from \`twips\` ${version}\n\n// @ts-nocheck\n`,
   },
 });

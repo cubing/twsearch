@@ -6,7 +6,6 @@ import {
   wasmFreeMemoryForAllScrambleFinders,
   wasmRandomScrambleForEvent,
   wasmTwips,
-  // @ts-expect-error TS0716: Untyped
 } from "../dist/wasm/index";
 
 test("wasmRandomScrambleForEvent(…)", async () => {

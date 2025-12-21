@@ -2,9 +2,6 @@
 /dist
 /node_modules
 
-# Prevent `.jj` objects from being indexed and searched in VS Code
-/.jj
-
 # Rust
 /target
 
@@ -14,14 +11,6 @@
 # Legacy top-level files
 # These are no longer produced, but we want to avoid commmiting them,
 # in case they get left in the top dir around after testing old commits.
-/.cache
-/*.o
-/*.dwo
-/*.dSYM
-/build
-/emsdk
-/twsearch
-/twsearch.wasm
 /package-lock.json
 
 # Temporary ignores for dev.

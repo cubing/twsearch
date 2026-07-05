@@ -18,7 +18,7 @@ pub fn apply_flat_alg<TPuzzle: SemiGroupActionPuzzle>(
             AlgNode::PauseNode(_) => {}
             AlgNode::LineCommentNode(_) => {}
             AlgNode::NewlineNode(_) => {}
-            _ => todo!("Saw a nested alg node where a flat alg was expected."),
+            _ => unimplemented!("Saw a nested alg node where a flat alg was expected."),
         }
     }
     Some(pattern)

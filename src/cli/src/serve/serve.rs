@@ -242,5 +242,7 @@ Use with one of the following:
     let listener = tokio::net::TcpListener::bind("0.0.0.0:2023").await.unwrap();
     axum::serve(listener, app).await.unwrap();
 
-    todo!()
+    // This is unreachable by the semantics of `axum::serve()`, so it doesn't
+    // matter what we return. We return `Ok(())` for simplicity.
+    Ok(())
 }

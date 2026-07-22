@@ -1,14 +1,18 @@
 [package]
 name = "twips"
 version.workspace = true
-license.workspace = true
 edition.workspace = true
 description = "Twizzle Pattern Searcher — Twisty puzzle search library"
 repository = "https://github.com/cubing/twips"
+license.workspace = true
 
-[features]
-default = []
-simd = ["cubing/simd"]
+[lib]
+crate-type = ["rlib"]
+path = "./mod.rs"
+
+[[bin]]
+name = "bench4x4x4"
+path = "bin/bench4x4x4.rs"
 
 [dependencies]
 ascii = "1.1.0"
@@ -22,12 +26,12 @@ instant = { version = "0.1.13", features = ["wasm-bindgen"] }
 multiset = "0.0.5"
 num-integer = "0.1.46"
 rand = "0.9.3"
-serde = { version = "1.0.228", features = ["derive", "rc"] }
-sha2 = "0.10.9"
-serde_json = "1.0.145"
-thousands = "0.2.0"
 rand_core = "0.9.3"
+serde = { version = "1.0.228", features = ["derive", "rc"] }
+serde_json = "1.0.145"
+sha2 = "0.10.9"
+thousands = "0.2.0"
 
-[lib]
-path = "./mod.rs"
-crate-type = ["rlib"]
+[features]
+default = []
+simd = ["cubing/simd"]

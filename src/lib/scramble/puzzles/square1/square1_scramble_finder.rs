@@ -327,7 +327,7 @@ impl SolvingBasedScrambleFinder for Square1ScrambleFinder {
     }
 
     fn solve_pattern(
-        &mut self,
+        &self,
         pattern: &KPattern,
         _scramble_options: &Self::ScrambleOptions,
     ) -> Result<cubing::alg::Alg, crate::_internal::errors::SearchError> {

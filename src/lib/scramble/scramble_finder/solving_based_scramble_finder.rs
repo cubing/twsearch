@@ -25,7 +25,7 @@ pub trait SolvingBasedScrambleFinder: ScrambleFinder {
     ) -> <<Self as ScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern;
 
     fn solve_pattern(
-        &mut self,
+        &self,
         pattern: &<<Self as ScrambleFinder>::TPuzzle as SemiGroupActionPuzzle>::Pattern,
         scramble_options: &Self::ScrambleOptions,
     ) -> Result<Alg, SearchError>;

@@ -130,7 +130,7 @@ impl SolvingBasedScrambleFinder for Cube2x2x2ScrambleFinder {
     }
 
     fn solve_pattern(
-        &mut self,
+        &self,
         pattern: &KPattern,
         _scramble_options: &Self::ScrambleOptions,
     ) -> Result<Alg, SearchError> {

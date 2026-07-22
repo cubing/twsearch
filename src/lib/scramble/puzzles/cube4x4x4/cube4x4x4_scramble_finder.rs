@@ -121,7 +121,7 @@ impl SolvingBasedScrambleFinder for Cube4x4x4ScrambleFinder {
     }
 
     fn solve_pattern(
-        &mut self,
+        &self,
         pattern: &KPattern,
         _scramble_options: &Self::ScrambleOptions,
     ) -> Result<Alg, SearchError> {

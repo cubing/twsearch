@@ -60,7 +60,7 @@ where
     }
 
     fn solutions(
-        &mut self,
+        &self,
         phase_search_pattern: &TSourcePuzzle::Pattern,
     ) -> Result<Box<dyn Iterator<Item = Alg> + '_>, SearchError> {
         let Some(search_pattern) = self.derived_puzzle.derive_pattern(phase_search_pattern) else {
@@ -85,7 +85,7 @@ where
     TDerivedPuzzle::Transformation: Send + Sync,
 {
     pub fn solutions_using_individual_search_adaptations(
-        &mut self,
+        &self,
         phase_search_pattern: &TSourcePuzzle::Pattern,
         individual_search_adaptations: IndividualSearchAdaptations<TDerivedPuzzle>,
     ) -> Result<Box<dyn Iterator<Item = Alg> + '_>, SearchError> {

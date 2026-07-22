@@ -140,7 +140,7 @@ impl SolvingBasedScrambleFinder for PyraminxScrambleFinder {
     }
 
     fn solve_pattern(
-        &mut self,
+        &self,
         pattern: &KPattern,
         _scramble_options: &Self::ScrambleOptions,
     ) -> Result<Alg, SearchError> {

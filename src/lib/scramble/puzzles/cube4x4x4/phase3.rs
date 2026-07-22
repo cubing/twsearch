@@ -23,6 +23,7 @@ use crate::{
                     IterativeDeepeningSearch,
                 },
             },
+            prune_table_trait::Depth,
             search_logger::{SearchLogger, VerbosityLevel},
         },
     },
@@ -448,8 +449,7 @@ impl Default for Cube4x4x4Phase3Search {
                 cube4x4x4_phase3_puzzle,
                 phase3_iterative_deepening_search,
                 IndividualSearchOptions {
-                    // TODO: Use this max depth once `MultiPhaseSearch` can handle it.
-                    // max_depth_exclusive: Some(Depth(14)),
+                    max_depth_exclusive: Some(Depth(15)),
                     ..Default::default()
                 },
             );
@@ -465,7 +465,7 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase3Search {
     }
 
     fn solutions(
-        &mut self,
+        &self,
         phase_search_pattern: &KPattern,
     ) -> Result<Box<dyn Iterator<Item = Alg> + '_>, SearchError> {
         self.derived_puzzle_search_phase

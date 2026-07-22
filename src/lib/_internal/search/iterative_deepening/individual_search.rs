@@ -103,7 +103,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IndividualSearchData<TPuzzle> {
     /// Note that search is pull-based. You must call `.next()` (or invoke
     /// something that does) on the return value for the search to begine.
     pub fn new(
-        search: &mut IterativeDeepeningSearch<TPuzzle>,
+        search: &IterativeDeepeningSearch<TPuzzle>,
         search_pattern: &TPuzzle::Pattern,
         mut individual_search_options: IndividualSearchOptions,
         individual_search_adaptations: IndividualSearchAdaptations<TPuzzle>,

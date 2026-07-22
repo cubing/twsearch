@@ -203,7 +203,7 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase2Search {
     }
 
     fn solutions(
-        &mut self,
+        &self,
         phase_search_pattern: &KPattern,
     ) -> Result<Box<dyn Iterator<Item = Alg> + '_>, SearchError> {
         let phase_search_pattern_owned = phase_search_pattern.clone();

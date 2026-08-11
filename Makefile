@@ -30,11 +30,11 @@ RM_RF = bun -e 'process.argv.slice(1).map(p => process.getBuiltinModule("node:fs
 
 .PHONY: clean
 clean:
-	${RM_RF} ./.temp ./dist
+	${RM_RF} ./.temp/ ./dist/
 
 .PHONY: reset
 reset: clean
-	${RM_RF} ./node_modules ./target ./.bin
+	${RM_RF} ./node_modules/ ./target/ ./.bin/
 
 .PHONY: lint
 lint: lint-js lint-rust
@@ -47,7 +47,7 @@ publish: test-rust publish-rust
 
 .PHONY: setup-gitignore-dirs
 setup-gitignore-dirs: setup-js-deps
-	bun run ./script/self-gitignore-dirs.ts ./.bin ./.temp ./dist ./target
+	bun run ./script/self-gitignore-dirs.ts ./.bin/ ./.temp/ ./dist/ ./target/
 
 .PHONY: check-engine-versions
 check-engine-versions:

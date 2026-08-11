@@ -140,7 +140,7 @@ benchmark-rust: setup-rust
 
 .PHONY: build-rust-wasm
 build-rust-wasm: check-engine-versions setup-rust setup-js
-	rm -rf "./.temp/rust-wasm"
+	${RM_RF} "./.temp/rust-wasm/"
 	cargo tool-run-bin wasm-pack build --release --target web --out-dir "../../.temp/rust-wasm" src/wasm
 	node script/node-esm-compat.js
 	bun run script/node-esm-compat.js

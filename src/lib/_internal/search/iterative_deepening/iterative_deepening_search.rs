@@ -240,7 +240,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         }
     }
 
-    // TODO: ideally the return should be represented by a fallible iterator (since it can fail caller-provided input deep in the stack).
+    // TODO: ideally the return should be represented by a fallible iterator (since it can fail from caller-provided input deep in the stack).
     fn search_internal(
         &mut self,
         individual_search_data: &mut IndividualSearchData<TPuzzle>,

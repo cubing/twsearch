@@ -289,7 +289,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         // Make `initial_depth_continuation_condition` mutable
         let mut initial_depth_continuation_condition = initial_depth_continuation_condition;
 
-        // TODO: combine `KPatternStack` with `SolutionMoves`?
+        // TODO: combine `PatternStack` with `SolutionMoves`?
         let mut pattern_stack = PatternStack::new(
             self.immutable_search_data.tpuzzle.clone(),
             individual_search_data.search_pattern.clone(),

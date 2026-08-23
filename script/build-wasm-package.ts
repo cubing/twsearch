@@ -75,8 +75,11 @@ const version = await new PrintableShellCommand("bun", [
   "--",
   "@lgarron-bin/repo",
   "version",
-  "describe",
+  "get",
 ]).text();
+const hash = await new PrintableShellCommand("git", ["rev-parse", "HEAD"]).text(
+  { trimTrailingNewlines: "single-required" },
+);
 
 await build({
   ...es2022Lib(),
@@ -86,6 +89,6 @@ await build({
   loader: { ".wasm": "binary" },
   outdir: distDir.path,
   banner: {
-    js: `// Generated from \`twips\` ${version}\n\n// @ts-nocheck\n`,
+    js: `// Generated from \`twips\` ${version} at commit ${hash}.\n\n// @ts-nocheck\n`,
   },
 });

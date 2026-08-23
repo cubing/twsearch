@@ -25,6 +25,6 @@
     "bun-dx": "^0.1.3",
     "esbuild": "^0.25.11",
     "path-class": ">=0.10.13",
-    "printable-shell-command": "^4.0.3"
+    "printable-shell-command": "^5.3.1"
   }
 }

@@ -159,7 +159,7 @@ impl SolvingBasedScrambleFinder for MegaminxSolver {
     }
 
     fn solve_pattern(
-        &mut self,
+        &self,
         pattern: &KPattern,
         _scramble_options: &Self::ScrambleOptions,
     ) -> Result<Alg, crate::_internal::errors::SearchError> {

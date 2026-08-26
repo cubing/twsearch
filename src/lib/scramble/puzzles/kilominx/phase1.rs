@@ -42,7 +42,7 @@ impl SearchPhase<KPuzzle> for KilominxPhase1Search {
     }
 
     fn solutions(
-        &mut self,
+        &self,
         phase_search_pattern: &KPattern,
     ) -> Result<Box<dyn Iterator<Item = Alg> + '_>, SearchError> {
         let back_pieces_owned = self.back_pieces.clone(); // TODO: avoid a clone

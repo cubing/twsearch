@@ -1,4 +1,4 @@
-use std::{cmp::max, sync::Arc};
+use std::{cell::RefCell, cmp::max, sync::Arc};
 
 use crate::_internal::{
     canonical_fsm::{
@@ -40,7 +40,7 @@ enum SearchRecursionResult {
 }
 
 pub struct IterativeDeepeningSearchCursor<'a, TPuzzle: SemiGroupActionPuzzle = KPuzzle> {
-    search: &'a mut IterativeDeepeningSearch<TPuzzle>,
+    search: &'a IterativeDeepeningSearch<TPuzzle>,
     individual_search_data: IndividualSearchData<TPuzzle>,
 }
 
@@ -138,7 +138,7 @@ pub struct IterativeDeepeningSearch<TPuzzle: SemiGroupActionPuzzle = KPuzzle> {
     pub immutable_search_data: Arc<ImmutableSearchData<TPuzzle>>,
     pub stored_search_adaptations: StoredSearchAdaptations<TPuzzle>,
     // We require a prune table to avoid accidentally constructing a super slow search. The caller can explicitly pass in a useless prune table if they want.
-    pub prune_table: Box<dyn PruneTable<TPuzzle>>,
+    pub prune_table: RefCell<Box<dyn PruneTable<TPuzzle>>>,
 }
 
 #[derive(Default)]
@@ -189,14 +189,14 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
         Self {
             immutable_search_data: immutable_search_data.into(),
             stored_search_adaptations,
-            prune_table,
+            prune_table: RefCell::new(prune_table),
         }
     }
 
     /// Note that search is pull-based. You must call `.next()` on the return
     /// value (or invoke something that does) for the search to begin/continue.
     pub fn search<'a>(
-        &'a mut self,
+        &'a self,
         search_pattern: &TPuzzle::Pattern,
         individual_search_options: IndividualSearchOptions,
         individual_search_adaptations: IndividualSearchAdaptations<TPuzzle>,
@@ -223,13 +223,13 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
     /// Note that search is pull-based. You must call `.next()` (or invoke
     /// something that does) on the return value for the search to begine.
     pub fn owned_search(
-        mut self,
+        self,
         search_pattern: &TPuzzle::Pattern,
         individual_search_options: IndividualSearchOptions,
         individual_search_adaptations: IndividualSearchAdaptations<TPuzzle>,
     ) -> OwnedIterativeDeepeningSearchCursor<TPuzzle> {
         let individual_search_data = IndividualSearchData::new(
-            &mut self,
+            &self,
             search_pattern,
             individual_search_options,
             individual_search_adaptations,
@@ -242,7 +242,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
 
     // TODO: ideally the return should be represented by a fallible iterator (since it can fail from caller-provided input deep in the stack).
     fn search_internal(
-        &mut self,
+        &self,
         individual_search_data: &mut IndividualSearchData<TPuzzle>,
     ) -> Option<Alg> {
         // TODO: the `min_num_solutions` semantics need a redesign throughout all of `twips`.
@@ -304,7 +304,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                 .search_logger
                 .write_info("----------------");
 
-            self.prune_table.extend_for_search_depth(
+            self.prune_table.borrow_mut().extend_for_search_depth(
                 remaining_depth,
                 individual_search_data
                     .recursive_work_tracker
@@ -388,7 +388,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> IterativeDeepeningSearch<TPuzzle> {
                 continuation_condition,
             );
         }
-        let prune_table_depth = self.prune_table.lookup(current_pattern);
+        let prune_table_depth = self.prune_table.borrow().lookup(current_pattern);
         if prune_table_depth > remaining_depth + Depth(1) {
             return SearchRecursionResult::ContinueSearchingExcludingCurrentMoveClass;
         }

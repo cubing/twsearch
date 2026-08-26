@@ -10,7 +10,7 @@ pub trait SearchPhase<TPuzzle: SemiGroupActionPuzzle>: Send + Sync {
     fn phase_name(&self) -> &str;
 
     fn solutions<'a>(
-        &'a mut self,
+        &'a self,
         phase_search_pattern: &TPuzzle::Pattern,
     ) -> Result<Box<dyn Iterator<Item = Alg> + 'a>, SearchError>;
 

@@ -155,7 +155,7 @@ impl SolvingBasedScrambleFinder for BabyFTOScrambleFinder {
     }
 
     fn solve_pattern(
-        &mut self,
+        &self,
         pattern: &KPattern,
         _scramble_options: &NoScrambleOptions,
     ) -> Result<Alg, SearchError> {

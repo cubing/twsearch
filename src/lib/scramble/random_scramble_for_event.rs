@@ -378,7 +378,7 @@ pub fn experimental_scramble_finder_filter_and_or_search(
 
 fn solve_using_scramble_finder<T: SolvingBasedScrambleFinder<TPuzzle = KPuzzle> + GetKPuzzle>(
     scramble_setup_alg: &Alg,
-    mut scramble_finder: T,
+    scramble_finder: T,
     scramble_options: &T::ScrambleOptions,
 ) -> Result<Option<Alg>, TwipsError> {
     let pattern = scramble_finder

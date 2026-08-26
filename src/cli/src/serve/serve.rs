@@ -150,7 +150,7 @@ async fn solve_pattern(
                 .unwrap()
         }
     };
-    let mut search = <IterativeDeepeningSearch<KPuzzle>>::new_with_hash_prune_table(
+    let search = <IterativeDeepeningSearch<KPuzzle>>::new_with_hash_prune_table(
         immutable_search_data,
         StoredSearchAdaptations::default(),
         Default::default(),

@@ -75,7 +75,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> FilteredSearch<TPuzzle> {
 
     /// This function depends on the caller to pass parameters that will always result in an alg.
     pub fn solve(
-        &mut self,
+        &self,
         scramble_pattern: &TPuzzle::Pattern,
         min_scramble_moves: Option<MoveCount>,
     ) -> Option<Alg> {
@@ -94,7 +94,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> FilteredSearch<TPuzzle> {
 
     /// This function depends on the caller to pass parameters that will always result in an alg.
     pub fn solve_or_error(
-        &mut self,
+        &self,
         scramble_pattern: &TPuzzle::Pattern,
         min_scramble_moves: Option<MoveCount>,
     ) -> Result<Alg, SearchError> {
@@ -108,7 +108,7 @@ impl<TPuzzle: SemiGroupActionPuzzle> FilteredSearch<TPuzzle> {
 
     /// This function depends on the caller to pass parameters that will always result in an alg.
     pub fn generate_scramble(
-        &mut self,
+        &self,
         scramble_pattern: &TPuzzle::Pattern,
         min_scramble_moves: Option<MoveCount>,
     ) -> Alg {

@@ -124,7 +124,7 @@ impl SearchPhase<KPuzzle> for KPuzzleSimpleMaskPhase {
     }
 
     fn solutions(
-        &mut self,
+        &self,
         phase_search_pattern: &KPattern,
     ) -> Result<Box<dyn Iterator<Item = Alg> + '_>, SearchError> {
         let Ok(masked_pattern) = apply_mask(phase_search_pattern, &self.mask) else {

@@ -177,7 +177,7 @@ impl SolvingBasedScrambleFinder for KilominxScrambleFinder {
     }
 
     fn solve_pattern(
-        &mut self,
+        &self,
         pattern: &KPattern,
         _scramble_options: &Self::ScrambleOptions,
     ) -> Result<Alg, SearchError> {

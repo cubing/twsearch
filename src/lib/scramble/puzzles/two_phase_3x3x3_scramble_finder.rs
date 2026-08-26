@@ -146,7 +146,7 @@ impl SolvingBasedScrambleFinder for TwoPhase3x3x3ScrambleFinder {
 
     // TODO: handle all `unwrap()`s.
     fn solve_pattern(
-        &mut self,
+        &self,
         pattern: &KPattern,
         scramble_options: &TwoPhase3x3x3ScrambleOptions,
     ) -> Result<Alg, SearchError> {

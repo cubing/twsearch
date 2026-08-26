@@ -104,7 +104,7 @@ impl SearchPhase<KPuzzle> for Cube4x4x4Phase4Search {
     }
 
     fn solutions(
-        &mut self,
+        &self,
         phase_search_pattern: &KPattern,
     ) -> Result<Box<dyn Iterator<Item = Alg>>, SearchError> {
         let Some(pattern) = self

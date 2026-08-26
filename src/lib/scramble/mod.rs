@@ -16,8 +16,8 @@ pub use event::{Event, EventError};
 
 mod random_scramble_for_event;
 pub use random_scramble_for_event::{
-    experimental_scramble_finder_filter_and_or_search, random_scramble_for_event,
-    solve_known_puzzle, ExperimentalFilterAndOrSearchOptions,
+    derive_scramble_for_event, experimental_scramble_finder_filter_and_or_search,
+    random_scramble_for_event, solve_known_puzzle, ExperimentalFilterAndOrSearchOptions,
 };
 
 mod derive_scramble_for_event;
